@@ -12,15 +12,16 @@ from app.domains.opportunity.validators import DELIVERY_STAGE_ORDER
 from app.domains.organization.models import UserProfile
 from app.domains.organization.repository import TEAM_SCOPE_BUILDERS, UNRESTRICTED_ROLES
 from app.domains.planning.models import (
+    BrandAnnualTarget,
     BrandVendorTarget,
-    SbuTarget,
+    PersonQuarterTarget,
+    SbuSeasonalPattern,
     TargetPlan,
     TargetPlanAccount,
     TargetPlanBrandSplit,
 )
 from app.domains.product.models import Product
 from app.domains.reference.models import (
-    SBU,
     Brand,
     OpportunityStage,
     OpportunityStatus,
@@ -320,18 +321,145 @@ class BrandVendorTargetRepository(BaseRepository[BrandVendorTarget]):
         return list(self.db.scalars(stmt).all())
 
 
-class SbuTargetRepository(BaseRepository[SbuTarget]):
-    def __init__(self, db: Session):
-        super().__init__(SbuTarget, db)
+def sbu_targets(db: Session, planning_period: str) -> dict[uuid.UUID, Decimal | None]:
+    """Every active SBU -> its brands' total for the quarter (D47, D55), or
+    None if no brand has a figure or the caller may not see it. Goes through
+    cabio_app_sbu_targets() (SECURITY DEFINER, migration 0062) because brand
+    figures are Admin/GM-only under RLS (D23) while an SBU Manager may see
+    their own SBU's total (D26)."""
+    rows = db.execute(
+        text("SELECT sbu_id, target_amount_lakhs FROM cabio_app_sbu_targets(:period)"),
+        {"period": planning_period},
+    ).all()
+    return {row.sbu_id: (None if row.target_amount_lakhs is None else Decimal(row.target_amount_lakhs)) for row in rows}
 
-    def get_by_sbu_period(self, sbu_id: uuid.UUID, planning_period: str) -> SbuTarget | None:
-        stmt = select(SbuTarget).where(SbuTarget.sbu_id == sbu_id, SbuTarget.planning_period == planning_period)
+
+class AnnualTargetRepository(BaseRepository[BrandAnnualTarget]):
+    """Brand yearly figures and SBU seasonal patterns (Annual Target
+    Planning, D23-D25). Admin/GM only under RLS."""
+
+    def __init__(self, db: Session):
+        super().__init__(BrandAnnualTarget, db)
+
+    def get_brand(self, brand_id: uuid.UUID) -> Brand | None:
+        return self.db.get(Brand, brand_id)
+
+    def list_active_brands(self, sbu_id: uuid.UUID) -> list[Brand]:
+        stmt = select(Brand).where(Brand.sbu_id == sbu_id, Brand.is_active.is_(True)).order_by(Brand.name)
+        return list(self.db.scalars(stmt).all())
+
+    def get_annual(self, brand_id: uuid.UUID, start_year: int) -> BrandAnnualTarget | None:
+        stmt = select(BrandAnnualTarget).where(
+            BrandAnnualTarget.brand_id == brand_id, BrandAnnualTarget.start_year == start_year
+        )
         return self.db.scalars(stmt).first()
 
-    def list_by_period(self, planning_period: str) -> list[SbuTarget]:
-        """RLS narrows this: Admin/GM see every SBU, an SBU Manager their own."""
-        stmt = select(SbuTarget).where(SbuTarget.planning_period == planning_period)
+    def brand_has_annual(self, brand_id: uuid.UUID) -> bool:
+        stmt = select(func.count()).where(BrandAnnualTarget.brand_id == brand_id)
+        return (self.db.scalar(stmt) or 0) > 0
+
+    def list_annual(self, sbu_id: uuid.UUID, start_year: int) -> list[BrandAnnualTarget]:
+        stmt = (
+            select(BrandAnnualTarget)
+            .join(Brand, Brand.id == BrandAnnualTarget.brand_id)
+            .where(Brand.sbu_id == sbu_id, BrandAnnualTarget.start_year == start_year)
+        )
         return list(self.db.scalars(stmt).all())
+
+    def list_following_sbu_pattern(self, sbu_id: uuid.UUID, start_year: int) -> list[BrandAnnualTarget]:
+        """The SBU's brand years starting in start_year with no pattern of
+        their own (D50)."""
+        return [a for a in self.list_annual(sbu_id, start_year) if a.pct_jan_mar is None]
+
+    def get_pattern(self, sbu_id: uuid.UUID, year: int) -> SbuSeasonalPattern | None:
+        stmt = select(SbuSeasonalPattern).where(SbuSeasonalPattern.sbu_id == sbu_id, SbuSeasonalPattern.year == year)
+        return self.db.scalars(stmt).first()
+
+    def add(self, obj):
+        self.db.add(obj)
+        self.db.flush()
+        return obj
+
+    def vendor_targets(
+        self, brand_ids: list[uuid.UUID], planning_periods: list[str]
+    ) -> dict[tuple[uuid.UUID, str], Decimal]:
+        if not brand_ids or not planning_periods:
+            return {}
+        stmt = select(
+            BrandVendorTarget.brand_id, BrandVendorTarget.planning_period, BrandVendorTarget.vendor_target_amount_lakhs
+        ).where(BrandVendorTarget.brand_id.in_(brand_ids), BrandVendorTarget.planning_period.in_(planning_periods))
+        return {(b, p): v for b, p, v in self.db.execute(stmt).all()}
+
+    def get_vendor_target(self, brand_id: uuid.UUID, planning_period: str) -> BrandVendorTarget | None:
+        stmt = select(BrandVendorTarget).where(
+            BrandVendorTarget.brand_id == brand_id, BrandVendorTarget.planning_period == planning_period
+        )
+        return self.db.scalars(stmt).first()
+
+
+class PersonQuarterTargetRepository(BaseRepository[PersonQuarterTarget]):
+    """Per-person quarterly targets (D30, D45). RLS narrows reads to the
+    caller, those below them, or everyone for Admin/GM."""
+
+    def __init__(self, db: Session):
+        super().__init__(PersonQuarterTarget, db)
+
+    def get_user(self, user_id: uuid.UUID) -> UserProfile | None:
+        return self.db.get(UserProfile, user_id)
+
+    def get_target(self, user_id: uuid.UUID, sbu_id: uuid.UUID, planning_period: str) -> PersonQuarterTarget | None:
+        stmt = select(PersonQuarterTarget).where(
+            PersonQuarterTarget.user_id == user_id,
+            PersonQuarterTarget.sbu_id == sbu_id,
+            PersonQuarterTarget.planning_period == planning_period,
+        )
+        return self.db.scalars(stmt).first()
+
+    def targets_for(
+        self, user_ids: list[uuid.UUID], sbu_id: uuid.UUID, planning_period: str
+    ) -> dict[uuid.UUID, Decimal]:
+        if not user_ids:
+            return {}
+        stmt = select(PersonQuarterTarget.user_id, PersonQuarterTarget.target_amount_lakhs).where(
+            PersonQuarterTarget.user_id.in_(user_ids),
+            PersonQuarterTarget.sbu_id == sbu_id,
+            PersonQuarterTarget.planning_period == planning_period,
+        )
+        return dict(self.db.execute(stmt).all())
+
+    def direct_reports(self, manager_id: uuid.UUID, sbu_id: uuid.UUID) -> list[UserProfile]:
+        stmt = (
+            select(UserProfile)
+            .where(
+                UserProfile.manager_id == manager_id,
+                UserProfile.sbu_id == sbu_id,
+                UserProfile.is_active.is_not(False),
+            )
+            .order_by(UserProfile.display_name)
+        )
+        return list(self.db.scalars(stmt).unique().all())
+
+    def sbu_top_people(self, sbu_id: uuid.UUID) -> list[UserProfile]:
+        """The SBU's people who report to no one, or straight to an Admin or
+        GM -- the first level below the SBU target (D45: today the Area
+        Managers, who report to Haroon). Admin/GM themselves excluded."""
+        manager = aliased(UserProfile)
+        manager_role = aliased(Role)
+        own_role = aliased(Role)
+        stmt = (
+            select(UserProfile)
+            .join(own_role, own_role.id == UserProfile.role_id)
+            .outerjoin(manager, manager.id == UserProfile.manager_id)
+            .outerjoin(manager_role, manager_role.id == manager.role_id)
+            .where(
+                UserProfile.sbu_id == sbu_id,
+                UserProfile.is_active.is_not(False),
+                own_role.role_name.not_in(UNRESTRICTED_ROLES),
+                or_(UserProfile.manager_id.is_(None), manager_role.role_name.in_(UNRESTRICTED_ROLES)),
+            )
+            .order_by(UserProfile.display_name)
+        )
+        return list(self.db.scalars(stmt).unique().all())
 
 
 class TargetVsActualRepository:
@@ -687,18 +815,19 @@ class TargetVsActualRepository:
         return [(o, n, int(c)) for o, n, c in self.db.execute(stmt).all()]
 
     def active_sbu_targets(self, planning_period: str) -> dict[uuid.UUID, Decimal | None]:
-        """Every active SBU -> its GM-entered target for the quarter, or None
-        if not set. RLS on sbu_target narrows: Admin/GM see every SBU's
-        figure, an SBU Manager only their own (others come back None)."""
-        stmt = (
-            select(SBU.id, SbuTarget.target_amount_lakhs)
-            .outerjoin(
-                SbuTarget,
-                (SbuTarget.sbu_id == SBU.id) & (SbuTarget.planning_period == planning_period),
-            )
-            .where(SBU.is_active.is_not(False))
+        """Every active SBU -> its brands' total for the quarter, or None
+        (see sbu_targets): Admin/GM see every SBU's figure, an SBU Manager
+        only their own (others come back None)."""
+        return sbu_targets(self.db, planning_period)
+
+    def person_targets(self, sbu_id: uuid.UUID, planning_period: str) -> dict[uuid.UUID, Decimal]:
+        """Each person's own quarterly target in the SBU (D49). RLS on
+        person_quarter_target narrows to the caller and those below them
+        (Admin/GM: everyone)."""
+        stmt = select(PersonQuarterTarget.user_id, PersonQuarterTarget.target_amount_lakhs).where(
+            PersonQuarterTarget.sbu_id == sbu_id, PersonQuarterTarget.planning_period == planning_period
         )
-        return {s: (None if v is None else Decimal(v)) for s, v in self.db.execute(stmt).all()}
+        return dict(self.db.execute(stmt).all())
 
     def summary_totals(
         self,

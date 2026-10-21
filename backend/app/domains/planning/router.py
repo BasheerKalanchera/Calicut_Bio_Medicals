@@ -9,37 +9,50 @@ from app.api.schemas import APIResponse
 from app.db.session import get_db
 from app.domains.organization.models import UserProfile
 from app.domains.planning.repository import (
+    AnnualTargetRepository,
     BrandVendorTargetRepository,
-    SbuTargetRepository,
+    PersonQuarterTargetRepository,
     TargetPlanRepository,
     TargetVsActualRepository,
 )
 from app.domains.planning.schemas import (
+    BrandAnnualTargetRow,
+    BrandAnnualTargetSet,
     BrandRollupResponse,
     BrandVendorTargetResponse,
     BrandVendorTargetSet,
+    BrandYearStartSet,
     EligibleAccountResponse,
+    PersonQuarterTargetResponse,
+    PersonQuarterTargetSet,
     PlanWarning,
+    SbuSeasonalPatternResponse,
+    SbuSeasonalPatternSet,
     SbuTargetResponse,
-    SbuTargetSet,
     TargetPlanApprovalDecision,
     TargetPlanCreate,
     TargetPlanResponse,
     TargetPlanUpdate,
     TargetRosterResponse,
     TargetVsActualResponse,
+    TeamTargetsResponse,
 )
 from app.domains.planning.service import (
+    AnnualTargetService,
     BrandVendorTargetService,
+    PersonTargetService,
     SbuTargetService,
     TargetPlanService,
     TargetVsActualService,
 )
 from app.domains.reference.repository import BrandRepository
+from app.domains.reference.schemas import BrandResponse
 
 router = APIRouter(prefix="/planning/targets", tags=["Target Planning"])
 brand_vendor_router = APIRouter(prefix="/planning/brand-vendor-targets", tags=["Target Planning"])
 sbu_target_router = APIRouter(prefix="/planning/sbu-targets", tags=["Target Planning"])
+# Annual Target Planning Part 1: brand years, seasonal patterns, person targets.
+annual_target_router = APIRouter(prefix="/planning", tags=["Target Planning"])
 
 
 def _get_service(
@@ -63,7 +76,21 @@ def _get_target_vs_actual_service(
 def _get_sbu_target_service(
     db: Session = Depends(get_db),
 ) -> SbuTargetService:
-    return SbuTargetService(repository=SbuTargetRepository(db))
+    return SbuTargetService(repository=TargetVsActualRepository(db))
+
+
+def _get_annual_target_service(
+    db: Session = Depends(get_db),
+) -> AnnualTargetService:
+    return AnnualTargetService(repository=AnnualTargetRepository(db))
+
+
+def _get_person_target_service(
+    db: Session = Depends(get_db),
+) -> PersonTargetService:
+    return PersonTargetService(
+        repository=PersonQuarterTargetRepository(db), sbu_target_repository=TargetVsActualRepository(db)
+    )
 
 
 @router.get("")
@@ -281,18 +308,84 @@ def list_sbu_targets(
     current_user: UserProfile = Depends(get_current_user),
     service: SbuTargetService = Depends(_get_sbu_target_service),
 ) -> APIResponse[list[SbuTargetResponse]]:
-    """Admin, GM, SBU Manager and Area Manager (RLS narrows SBU and Area
-    Managers to their own SBU)."""
-    sbu_targets = service.list_by_period(planning_period, current_user=current_user)
-    return APIResponse(data=[SbuTargetResponse.model_validate(t) for t in sbu_targets])
+    """Admin and GM see every SBU; an SBU Manager their own. Read-only: the
+    figure is the SBU's brands' total (Annual Target Planning D47, D55)."""
+    return APIResponse(data=service.list_by_period(planning_period, current_user=current_user))
 
 
-@sbu_target_router.post("", status_code=201)
-def set_sbu_target(
-    body: SbuTargetSet,
+@annual_target_router.put("/brands/{brand_id}/year-start")
+def set_brand_year_start(
+    brand_id: uuid.UUID,
+    body: BrandYearStartSet,
     current_user: UserProfile = Depends(get_current_user),
-    service: SbuTargetService = Depends(_get_sbu_target_service),
-) -> APIResponse[SbuTargetResponse]:
-    """Upsert, Admin/GM only. No delete -- a wrong figure is corrected, not removed."""
-    sbu_target = service.set_target(body, current_user=current_user)
-    return APIResponse(data=SbuTargetResponse.model_validate(sbu_target))
+    service: AnnualTargetService = Depends(_get_annual_target_service),
+) -> APIResponse[BrandResponse]:
+    """Admin/GM. Refused once the brand has a yearly figure."""
+    brand = service.set_year_start(brand_id, body.year_start_month, current_user=current_user)
+    return APIResponse(data=BrandResponse.model_validate(brand))
+
+
+@annual_target_router.get("/brand-annual-targets")
+def list_brand_annual_targets(
+    sbu_id: uuid.UUID = Query(...),
+    calendar_year: int = Query(..., ge=2000, le=2100),
+    current_user: UserProfile = Depends(get_current_user),
+    service: AnnualTargetService = Depends(_get_annual_target_service),
+) -> APIResponse[list[BrandAnnualTargetRow]]:
+    """Admin/GM. Each active brand's year starting in calendar_year (D43)."""
+    return APIResponse(data=service.list_annual(sbu_id, calendar_year, current_user=current_user))
+
+
+@annual_target_router.put("/brand-annual-targets")
+def set_brand_annual_target(
+    body: BrandAnnualTargetSet,
+    current_user: UserProfile = Depends(get_current_user),
+    service: AnnualTargetService = Depends(_get_annual_target_service),
+) -> APIResponse[BrandAnnualTargetRow]:
+    """Admin/GM upsert; also saves the brand's quarterly targets (D46)."""
+    return APIResponse(data=service.set_annual(body, current_user=current_user))
+
+
+@annual_target_router.get("/seasonal-patterns")
+def get_seasonal_pattern(
+    sbu_id: uuid.UUID = Query(...),
+    year: int = Query(..., ge=2000, le=2100),
+    current_user: UserProfile = Depends(get_current_user),
+    service: AnnualTargetService = Depends(_get_annual_target_service),
+) -> APIResponse[SbuSeasonalPatternResponse | None]:
+    """Admin/GM. None until the GM sets the SBU's pattern for that year."""
+    pattern = service.get_pattern(sbu_id, year, current_user=current_user)
+    return APIResponse(data=SbuSeasonalPatternResponse.model_validate(pattern) if pattern else None)
+
+
+@annual_target_router.put("/seasonal-patterns")
+def set_seasonal_pattern(
+    body: SbuSeasonalPatternSet,
+    current_user: UserProfile = Depends(get_current_user),
+    service: AnnualTargetService = Depends(_get_annual_target_service),
+) -> APIResponse[SbuSeasonalPatternResponse]:
+    """Admin/GM upsert; brands following the SBU's pattern are saved again (D50)."""
+    pattern = service.set_pattern(body, current_user=current_user)
+    return APIResponse(data=SbuSeasonalPatternResponse.model_validate(pattern))
+
+
+@annual_target_router.get("/person-targets")
+def get_team_targets(
+    sbu_id: uuid.UUID = Query(...),
+    planning_period: str = Query(..., pattern=r"^\d{4}-Q[1-4]$"),
+    current_user: UserProfile = Depends(get_current_user),
+    service: PersonTargetService = Depends(_get_person_target_service),
+) -> APIResponse[TeamTargetsResponse]:
+    """The caller's own target and their direct reports' (D33, D57)."""
+    return APIResponse(data=service.get_team_targets(sbu_id, planning_period, current_user=current_user))
+
+
+@annual_target_router.put("/person-targets")
+def set_person_target(
+    body: PersonQuarterTargetSet,
+    current_user: UserProfile = Depends(get_current_user),
+    service: PersonTargetService = Depends(_get_person_target_service),
+) -> APIResponse[PersonQuarterTargetResponse]:
+    """The person's manager, Admin or GM; upsert, no delete (D45)."""
+    target = service.set_target(body, current_user=current_user)
+    return APIResponse(data=PersonQuarterTargetResponse.model_validate(target))

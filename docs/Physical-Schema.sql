@@ -11,8 +11,8 @@
 -- it is not consumed by Alembic or the application at runtime, and cannot be
 -- used as an `alembic stamp <rev>` checkpoint.
 --
--- Regenerated 2026-10-09 from the Dev database, catching up migration
--- 0061: sbu_target: Area Manager may read their own SBU's target
+-- Regenerated 2026-10-21 from the Dev database, catching up migration
+-- 0062: Annual Target Planning Part 1: brand years, seasonal patterns, person targets
 -- See docs/Backend-Implementation-Standards.md's migration workflow.
 --
 -- Regenerate with: .\scripts\regen_physical_schema.ps1
@@ -22,7 +22,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict pcak6wY3YMoxn2Afn47befhEVmloNvDhxnBa6mSUNYdsZpdc81Tawlw1qyNjisi
+\restrict j6zZEWx7N6S6eEaG8llEWS5s7S7SrkmIINkDGbdPPeByteHH5gI0S5OIhsgHcVl
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.11 (Debian 17.11-1.pgdg13+2)
@@ -178,6 +178,26 @@ CREATE FUNCTION public.cabio_app_has_split(p_opportunity_id uuid) RETURNS boolea
 
 
 --
+-- Name: cabio_app_is_above(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.cabio_app_is_above(p_user_id uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+            WITH RECURSIVE chain(id) AS (
+                SELECT manager_id FROM user_profile
+                WHERE id = p_user_id AND manager_id IS NOT NULL
+                UNION
+                SELECT up.manager_id FROM user_profile up
+                JOIN chain c ON up.id = c.id
+                WHERE up.manager_id IS NOT NULL
+            )
+            SELECT EXISTS (SELECT 1 FROM chain WHERE id = cabio_app_uid())
+        $$;
+
+
+--
 -- Name: cabio_app_opportunity_in_account(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -242,6 +262,30 @@ CREATE FUNCTION public.cabio_app_role_name() RETURNS text
 CREATE FUNCTION public.cabio_app_sbu_id() RETURNS uuid
     LANGUAGE sql STABLE
     AS $$ SELECT NULLIF(current_setting('app.current_sbu_id', true), '')::uuid $$;
+
+
+--
+-- Name: cabio_app_sbu_targets(text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.cabio_app_sbu_targets(p_period text) RETURNS TABLE(sbu_id uuid, target_amount_lakhs numeric)
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+            SELECT s.id,
+                   CASE
+                       WHEN cabio_app_role_name() IN ('Admin', 'General Manager')
+                         OR (cabio_app_role_name() = 'SBU Manager' AND s.id = cabio_app_sbu_id())
+                       THEN (
+                           SELECT sum(bvt.vendor_target_amount_lakhs)
+                           FROM brand_vendor_target bvt
+                           JOIN brand b ON b.id = bvt.brand_id
+                           WHERE b.sbu_id = s.id AND bvt.planning_period = p_period
+                       )
+                   END
+            FROM sbu s
+            WHERE s.is_active IS NOT false
+        $$;
 
 
 --
@@ -416,7 +460,33 @@ CREATE TABLE public.brand (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     sbu_id uuid NOT NULL,
     name character varying(100) NOT NULL,
-    is_active boolean DEFAULT true NOT NULL
+    is_active boolean DEFAULT true NOT NULL,
+    year_start_month smallint DEFAULT 1 NOT NULL,
+    CONSTRAINT ck_brand_year_start_month CHECK ((year_start_month = ANY (ARRAY[1, 4, 7, 10])))
+);
+
+
+--
+-- Name: brand_annual_target; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.brand_annual_target (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    brand_id uuid NOT NULL,
+    start_year integer NOT NULL,
+    vendor_amount_lakhs numeric(15,2) NOT NULL,
+    stretch_pct numeric(5,2) DEFAULT 0 NOT NULL,
+    pct_jan_mar numeric(5,2),
+    pct_apr_jun numeric(5,2),
+    pct_jul_sep numeric(5,2),
+    pct_oct_dec numeric(5,2),
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    created_by uuid,
+    updated_by uuid,
+    CONSTRAINT ck_brand_annual_target_pattern CHECK ((((pct_jan_mar IS NULL) AND (pct_apr_jun IS NULL) AND (pct_jul_sep IS NULL) AND (pct_oct_dec IS NULL)) OR ((pct_jan_mar >= (0)::numeric) AND (pct_apr_jun >= (0)::numeric) AND (pct_jul_sep >= (0)::numeric) AND (pct_oct_dec >= (0)::numeric) AND ((((pct_jan_mar + pct_apr_jun) + pct_jul_sep) + pct_oct_dec) = (100)::numeric)))),
+    CONSTRAINT ck_brand_annual_target_stretch_nonneg CHECK ((stretch_pct >= (0)::numeric)),
+    CONSTRAINT ck_brand_annual_target_vendor_nonneg CHECK ((vendor_amount_lakhs >= (0)::numeric))
 );
 
 
@@ -730,6 +800,26 @@ CREATE TABLE public.opportunity_status (
 
 
 --
+-- Name: person_quarter_target; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.person_quarter_target (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    sbu_id uuid NOT NULL,
+    planning_period character varying(10) NOT NULL,
+    target_amount_lakhs numeric(15,2) NOT NULL,
+    set_by uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    created_by uuid,
+    updated_by uuid,
+    CONSTRAINT ck_person_quarter_target_nonneg CHECK ((target_amount_lakhs >= (0)::numeric)),
+    CONSTRAINT ck_person_quarter_target_planning_period CHECK (((planning_period)::text ~ '^\d{4}-Q[1-4]$'::text))
+);
+
+
+--
 -- Name: product; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -824,20 +914,22 @@ CREATE TABLE public.sbu (
 
 
 --
--- Name: sbu_target; Type: TABLE; Schema: public; Owner: -
+-- Name: sbu_seasonal_pattern; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.sbu_target (
+CREATE TABLE public.sbu_seasonal_pattern (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     sbu_id uuid NOT NULL,
-    planning_period character varying(10) NOT NULL,
-    target_amount_lakhs numeric(15,2) NOT NULL,
+    year integer NOT NULL,
+    pct_jan_mar numeric(5,2) NOT NULL,
+    pct_apr_jun numeric(5,2) NOT NULL,
+    pct_jul_sep numeric(5,2) NOT NULL,
+    pct_oct_dec numeric(5,2) NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     created_by uuid,
     updated_by uuid,
-    CONSTRAINT ck_sbu_target_nonneg CHECK ((target_amount_lakhs >= (0)::numeric)),
-    CONSTRAINT ck_sbu_target_planning_period CHECK (((planning_period)::text ~ '^\d{4}-Q[1-4]$'::text))
+    CONSTRAINT ck_sbu_seasonal_pattern_pct CHECK (((pct_jan_mar >= (0)::numeric) AND (pct_apr_jun >= (0)::numeric) AND (pct_jul_sep >= (0)::numeric) AND (pct_oct_dec >= (0)::numeric) AND ((((pct_jan_mar + pct_apr_jun) + pct_jul_sep) + pct_oct_dec) = (100)::numeric)))
 );
 
 
@@ -1074,6 +1166,14 @@ ALTER TABLE ONLY public.audit_log
 
 
 --
+-- Name: brand_annual_target brand_annual_target_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.brand_annual_target
+    ADD CONSTRAINT brand_annual_target_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: brand brand_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1282,6 +1382,14 @@ ALTER TABLE ONLY public.opportunity_status
 
 
 --
+-- Name: person_quarter_target person_quarter_target_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.person_quarter_target
+    ADD CONSTRAINT person_quarter_target_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: product product_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1354,11 +1462,11 @@ ALTER TABLE ONLY public.sbu
 
 
 --
--- Name: sbu_target sbu_target_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: sbu_seasonal_pattern sbu_seasonal_pattern_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.sbu_target
-    ADD CONSTRAINT sbu_target_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.sbu_seasonal_pattern
+    ADD CONSTRAINT sbu_seasonal_pattern_pkey PRIMARY KEY (id);
 
 
 --
@@ -1418,6 +1526,14 @@ ALTER TABLE ONLY public.target_plan
 
 
 --
+-- Name: brand_annual_target uq_brand_annual_target; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.brand_annual_target
+    ADD CONSTRAINT uq_brand_annual_target UNIQUE (brand_id, start_year);
+
+
+--
 -- Name: brand uq_brand_sbu_name; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1450,11 +1566,19 @@ ALTER TABLE ONLY public.model
 
 
 --
--- Name: sbu_target uq_sbu_target; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: person_quarter_target uq_person_quarter_target; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.sbu_target
-    ADD CONSTRAINT uq_sbu_target UNIQUE (sbu_id, planning_period);
+ALTER TABLE ONLY public.person_quarter_target
+    ADD CONSTRAINT uq_person_quarter_target UNIQUE (user_id, sbu_id, planning_period);
+
+
+--
+-- Name: sbu_seasonal_pattern uq_sbu_seasonal_pattern; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sbu_seasonal_pattern
+    ADD CONSTRAINT uq_sbu_seasonal_pattern UNIQUE (sbu_id, year);
 
 
 --
@@ -1871,6 +1995,13 @@ CREATE TRIGGER trg_audit_brand AFTER DELETE OR UPDATE ON public.brand FOR EACH R
 
 
 --
+-- Name: brand_annual_target trg_audit_brand_annual_target; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_audit_brand_annual_target AFTER DELETE OR UPDATE ON public.brand_annual_target FOR EACH ROW EXECUTE FUNCTION public.audit_log_row_change();
+
+
+--
 -- Name: category trg_audit_category; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -1927,6 +2058,13 @@ CREATE TRIGGER trg_audit_opportunity_stakeholder AFTER INSERT OR DELETE OR UPDAT
 
 
 --
+-- Name: person_quarter_target trg_audit_person_quarter_target; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_audit_person_quarter_target AFTER DELETE OR UPDATE ON public.person_quarter_target FOR EACH ROW EXECUTE FUNCTION public.audit_log_row_change();
+
+
+--
 -- Name: product trg_audit_product; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -1941,10 +2079,10 @@ CREATE TRIGGER trg_audit_project AFTER DELETE OR UPDATE ON public.project FOR EA
 
 
 --
--- Name: sbu_target trg_audit_sbu_target; Type: TRIGGER; Schema: public; Owner: -
+-- Name: sbu_seasonal_pattern trg_audit_sbu_seasonal_pattern; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER trg_audit_sbu_target AFTER DELETE OR UPDATE ON public.sbu_target FOR EACH ROW EXECUTE FUNCTION public.audit_log_row_change();
+CREATE TRIGGER trg_audit_sbu_seasonal_pattern AFTER DELETE OR UPDATE ON public.sbu_seasonal_pattern FOR EACH ROW EXECUTE FUNCTION public.audit_log_row_change();
 
 
 --
@@ -2025,6 +2163,13 @@ CREATE TRIGGER trg_updated_at BEFORE UPDATE ON public.account FOR EACH ROW EXECU
 
 
 --
+-- Name: brand_annual_target trg_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_updated_at BEFORE UPDATE ON public.brand_annual_target FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+
+
+--
 -- Name: brand_vendor_target trg_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -2060,6 +2205,13 @@ CREATE TRIGGER trg_updated_at BEFORE UPDATE ON public.opportunity_stakeholder FO
 
 
 --
+-- Name: person_quarter_target trg_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_updated_at BEFORE UPDATE ON public.person_quarter_target FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+
+
+--
 -- Name: product trg_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -2081,10 +2233,10 @@ CREATE TRIGGER trg_updated_at BEFORE UPDATE ON public.reminder FOR EACH ROW EXEC
 
 
 --
--- Name: sbu_target trg_updated_at; Type: TRIGGER; Schema: public; Owner: -
+-- Name: sbu_seasonal_pattern trg_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER trg_updated_at BEFORE UPDATE ON public.sbu_target FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+CREATE TRIGGER trg_updated_at BEFORE UPDATE ON public.sbu_seasonal_pattern FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
 
 
 --
@@ -2238,6 +2390,30 @@ ALTER TABLE ONLY public.activity
 
 ALTER TABLE ONLY public.audit_log
     ADD CONSTRAINT audit_log_changed_by_fkey FOREIGN KEY (changed_by) REFERENCES public.user_profile(id);
+
+
+--
+-- Name: brand_annual_target brand_annual_target_brand_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.brand_annual_target
+    ADD CONSTRAINT brand_annual_target_brand_id_fkey FOREIGN KEY (brand_id) REFERENCES public.brand(id);
+
+
+--
+-- Name: brand_annual_target brand_annual_target_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.brand_annual_target
+    ADD CONSTRAINT brand_annual_target_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.user_profile(id);
+
+
+--
+-- Name: brand_annual_target brand_annual_target_updated_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.brand_annual_target
+    ADD CONSTRAINT brand_annual_target_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.user_profile(id);
 
 
 --
@@ -2665,6 +2841,46 @@ ALTER TABLE ONLY public.opportunity
 
 
 --
+-- Name: person_quarter_target person_quarter_target_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.person_quarter_target
+    ADD CONSTRAINT person_quarter_target_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.user_profile(id);
+
+
+--
+-- Name: person_quarter_target person_quarter_target_sbu_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.person_quarter_target
+    ADD CONSTRAINT person_quarter_target_sbu_id_fkey FOREIGN KEY (sbu_id) REFERENCES public.sbu(id);
+
+
+--
+-- Name: person_quarter_target person_quarter_target_set_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.person_quarter_target
+    ADD CONSTRAINT person_quarter_target_set_by_fkey FOREIGN KEY (set_by) REFERENCES public.user_profile(id);
+
+
+--
+-- Name: person_quarter_target person_quarter_target_updated_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.person_quarter_target
+    ADD CONSTRAINT person_quarter_target_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.user_profile(id);
+
+
+--
+-- Name: person_quarter_target person_quarter_target_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.person_quarter_target
+    ADD CONSTRAINT person_quarter_target_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.user_profile(id);
+
+
+--
 -- Name: product product_brand_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2793,27 +3009,27 @@ ALTER TABLE ONLY public.reminder
 
 
 --
--- Name: sbu_target sbu_target_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: sbu_seasonal_pattern sbu_seasonal_pattern_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.sbu_target
-    ADD CONSTRAINT sbu_target_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.user_profile(id);
-
-
---
--- Name: sbu_target sbu_target_sbu_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.sbu_target
-    ADD CONSTRAINT sbu_target_sbu_id_fkey FOREIGN KEY (sbu_id) REFERENCES public.sbu(id);
+ALTER TABLE ONLY public.sbu_seasonal_pattern
+    ADD CONSTRAINT sbu_seasonal_pattern_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.user_profile(id);
 
 
 --
--- Name: sbu_target sbu_target_updated_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: sbu_seasonal_pattern sbu_seasonal_pattern_sbu_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.sbu_target
-    ADD CONSTRAINT sbu_target_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.user_profile(id);
+ALTER TABLE ONLY public.sbu_seasonal_pattern
+    ADD CONSTRAINT sbu_seasonal_pattern_sbu_id_fkey FOREIGN KEY (sbu_id) REFERENCES public.sbu(id);
+
+
+--
+-- Name: sbu_seasonal_pattern sbu_seasonal_pattern_updated_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sbu_seasonal_pattern
+    ADD CONSTRAINT sbu_seasonal_pattern_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.user_profile(id);
 
 
 --
@@ -3144,6 +3360,33 @@ CREATE POLICY audit_log_admin_gm_read ON public.audit_log FOR SELECT USING ((pub
 ALTER TABLE public.brand ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: brand_annual_target; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.brand_annual_target ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: brand_annual_target brand_annual_target_insert; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY brand_annual_target_insert ON public.brand_annual_target FOR INSERT WITH CHECK ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])));
+
+
+--
+-- Name: brand_annual_target brand_annual_target_read; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY brand_annual_target_read ON public.brand_annual_target FOR SELECT USING ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])));
+
+
+--
+-- Name: brand_annual_target brand_annual_target_update; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY brand_annual_target_update ON public.brand_annual_target FOR UPDATE USING ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text]))) WITH CHECK ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])));
+
+
+--
 -- Name: brand brand_insert; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -3181,7 +3424,7 @@ CREATE POLICY brand_vendor_target_insert ON public.brand_vendor_target FOR INSER
 -- Name: brand_vendor_target brand_vendor_target_read; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY brand_vendor_target_read ON public.brand_vendor_target FOR SELECT USING (true);
+CREATE POLICY brand_vendor_target_read ON public.brand_vendor_target FOR SELECT USING ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])));
 
 
 --
@@ -3406,6 +3649,39 @@ CREATE POLICY opportunity_tier_visibility ON public.opportunity USING (((public.
 
 
 --
+-- Name: person_quarter_target; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.person_quarter_target ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: person_quarter_target person_quarter_target_insert; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY person_quarter_target_insert ON public.person_quarter_target FOR INSERT WITH CHECK (((user_id IN ( SELECT user_profile.id
+   FROM public.user_profile
+  WHERE (user_profile.manager_id = public.cabio_app_uid()))) OR (public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text]))));
+
+
+--
+-- Name: person_quarter_target person_quarter_target_read; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY person_quarter_target_read ON public.person_quarter_target FOR SELECT USING (((user_id = public.cabio_app_uid()) OR public.cabio_app_is_above(user_id) OR (public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text]))));
+
+
+--
+-- Name: person_quarter_target person_quarter_target_update; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY person_quarter_target_update ON public.person_quarter_target FOR UPDATE USING (((user_id IN ( SELECT user_profile.id
+   FROM public.user_profile
+  WHERE (user_profile.manager_id = public.cabio_app_uid()))) OR (public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])))) WITH CHECK (((user_id IN ( SELECT user_profile.id
+   FROM public.user_profile
+  WHERE (user_profile.manager_id = public.cabio_app_uid()))) OR (public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text]))));
+
+
+--
 -- Name: product; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -3471,30 +3747,30 @@ CREATE POLICY reminder_update ON public.reminder FOR UPDATE USING ((activity_id 
 
 
 --
--- Name: sbu_target; Type: ROW SECURITY; Schema: public; Owner: -
+-- Name: sbu_seasonal_pattern; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
-ALTER TABLE public.sbu_target ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.sbu_seasonal_pattern ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: sbu_target sbu_target_insert; Type: POLICY; Schema: public; Owner: -
+-- Name: sbu_seasonal_pattern sbu_seasonal_pattern_insert; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY sbu_target_insert ON public.sbu_target FOR INSERT WITH CHECK ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])));
-
-
---
--- Name: sbu_target sbu_target_read; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY sbu_target_read ON public.sbu_target FOR SELECT USING (((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])) OR ((public.cabio_app_role_name() = ANY (ARRAY['SBU Manager'::text, 'Area Manager'::text])) AND (sbu_id = public.cabio_app_sbu_id()))));
+CREATE POLICY sbu_seasonal_pattern_insert ON public.sbu_seasonal_pattern FOR INSERT WITH CHECK ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])));
 
 
 --
--- Name: sbu_target sbu_target_update; Type: POLICY; Schema: public; Owner: -
+-- Name: sbu_seasonal_pattern sbu_seasonal_pattern_read; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY sbu_target_update ON public.sbu_target FOR UPDATE USING ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text]))) WITH CHECK ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])));
+CREATE POLICY sbu_seasonal_pattern_read ON public.sbu_seasonal_pattern FOR SELECT USING ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])));
+
+
+--
+-- Name: sbu_seasonal_pattern sbu_seasonal_pattern_update; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY sbu_seasonal_pattern_update ON public.sbu_seasonal_pattern FOR UPDATE USING ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text]))) WITH CHECK ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])));
 
 
 --
@@ -3676,5 +3952,5 @@ CREATE POLICY target_plan_write ON public.target_plan FOR INSERT WITH CHECK ((us
 -- PostgreSQL database dump complete
 --
 
-\unrestrict pcak6wY3YMoxn2Afn47befhEVmloNvDhxnBa6mSUNYdsZpdc81Tawlw1qyNjisi
+\unrestrict j6zZEWx7N6S6eEaG8llEWS5s7S7SrkmIINkDGbdPPeByteHH5gI0S5OIhsgHcVl
 

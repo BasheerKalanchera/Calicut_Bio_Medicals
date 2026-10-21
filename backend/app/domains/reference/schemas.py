@@ -89,6 +89,9 @@ class BrandResponse(BaseModel):
     sbu_id: uuid.UUID
     name: str
     is_active: bool
+    # Month the brand's own year starts in: 1, 4, 7 or 10 (Annual Target
+    # Planning D40).
+    year_start_month: int
 
 
 class CategoryResponse(BaseModel):

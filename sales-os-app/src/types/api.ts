@@ -1629,16 +1629,104 @@ export interface paths {
         };
         /**
          * List Sbu Targets
-         * @description Admin, GM, SBU Manager and Area Manager (RLS narrows SBU and Area
-         *     Managers to their own SBU).
+         * @description Admin and GM see every SBU; an SBU Manager their own. Read-only: the
+         *     figure is the SBU's brands' total (Annual Target Planning D47, D55).
          */
         get: operations["list_sbu_targets_api_v1_planning_sbu_targets_get"];
         put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/planning/brands/{brand_id}/year-start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
         /**
-         * Set Sbu Target
-         * @description Upsert, Admin/GM only. No delete -- a wrong figure is corrected, not removed.
+         * Set Brand Year Start
+         * @description Admin/GM. Refused once the brand has a yearly figure.
          */
-        post: operations["set_sbu_target_api_v1_planning_sbu_targets_post"];
+        put: operations["set_brand_year_start_api_v1_planning_brands__brand_id__year_start_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/planning/brand-annual-targets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Brand Annual Targets
+         * @description Admin/GM. Each active brand's year starting in calendar_year (D43).
+         */
+        get: operations["list_brand_annual_targets_api_v1_planning_brand_annual_targets_get"];
+        /**
+         * Set Brand Annual Target
+         * @description Admin/GM upsert; also saves the brand's quarterly targets (D46).
+         */
+        put: operations["set_brand_annual_target_api_v1_planning_brand_annual_targets_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/planning/seasonal-patterns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Seasonal Pattern
+         * @description Admin/GM. None until the GM sets the SBU's pattern for that year.
+         */
+        get: operations["get_seasonal_pattern_api_v1_planning_seasonal_patterns_get"];
+        /**
+         * Set Seasonal Pattern
+         * @description Admin/GM upsert; brands following the SBU's pattern are saved again (D50).
+         */
+        put: operations["set_seasonal_pattern_api_v1_planning_seasonal_patterns_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/planning/person-targets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Team Targets
+         * @description The caller's own target and their direct reports' (D33, D57).
+         */
+        get: operations["get_team_targets_api_v1_planning_person_targets_get"];
+        /**
+         * Set Person Target
+         * @description The person's manager, Admin or GM; upsert, no delete (D45).
+         */
+        put: operations["set_person_target_api_v1_planning_person_targets_put"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1704,6 +1792,20 @@ export interface components {
              */
             message: string;
             data: components["schemas"]["ActivityResponse"];
+        };
+        /** APIResponse[BrandAnnualTargetRow] */
+        APIResponse_BrandAnnualTargetRow_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["BrandAnnualTargetRow"];
         };
         /** APIResponse[BrandResponse] */
         APIResponse_BrandResponse_: {
@@ -2013,6 +2115,20 @@ export interface components {
             message: string;
             data: components["schemas"]["PaginatedResponse_WorkspaceProjectWithAccount_"];
         };
+        /** APIResponse[PersonQuarterTargetResponse] */
+        APIResponse_PersonQuarterTargetResponse_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["PersonQuarterTargetResponse"];
+        };
         /** APIResponse[PipelineOpportunity] */
         APIResponse_PipelineOpportunity_: {
             /**
@@ -2139,8 +2255,8 @@ export interface components {
             message: string;
             data: components["schemas"]["SalesSummaryResponse"];
         };
-        /** APIResponse[SbuTargetResponse] */
-        APIResponse_SbuTargetResponse_: {
+        /** APIResponse[SbuSeasonalPatternResponse] */
+        APIResponse_SbuSeasonalPatternResponse_: {
             /**
              * Success
              * @default true
@@ -2151,7 +2267,7 @@ export interface components {
              * @default
              */
             message: string;
-            data: components["schemas"]["SbuTargetResponse"];
+            data: components["schemas"]["SbuSeasonalPatternResponse"];
         };
         /** APIResponse[SplitEditPermission] */
         APIResponse_SplitEditPermission_: {
@@ -2250,6 +2366,34 @@ export interface components {
              */
             message: string;
             data: components["schemas"]["TargetVsActualResponse"];
+        };
+        /** APIResponse[TeamTargetsResponse] */
+        APIResponse_TeamTargetsResponse_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["TeamTargetsResponse"];
+        };
+        /** APIResponse[Union[SbuSeasonalPatternResponse, NoneType]] */
+        APIResponse_Union_SbuSeasonalPatternResponse__NoneType__: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["SbuSeasonalPatternResponse"] | null;
         };
         /** APIResponse[UnreadCountResponse] */
         APIResponse_UnreadCountResponse_: {
@@ -2427,6 +2571,21 @@ export interface components {
             message: string;
             /** Data */
             data: components["schemas"]["ActivityCommentResponse"][];
+        };
+        /** APIResponse[list[BrandAnnualTargetRow]] */
+        APIResponse_list_BrandAnnualTargetRow__: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            /** Data */
+            data: components["schemas"]["BrandAnnualTargetRow"][];
         };
         /** APIResponse[list[BrandResponse]] */
         APIResponse_list_BrandResponse__: {
@@ -3260,6 +3419,64 @@ export interface components {
             /** File */
             file: string;
         };
+        /** BrandAnnualTargetQuarter */
+        BrandAnnualTargetQuarter: {
+            /** Planning Period */
+            planning_period: string;
+            /** Saved Lakhs */
+            saved_lakhs: string | null;
+        };
+        /**
+         * BrandAnnualTargetRow
+         * @description One brand on Brand Target Tracking for a calendar year (D43): its
+         *     year starting in that calendar year, and its four quarters.
+         */
+        BrandAnnualTargetRow: {
+            /**
+             * Brand Id
+             * Format: uuid
+             */
+            brand_id: string;
+            /** Brand Name */
+            brand_name: string;
+            /**
+             * Sbu Id
+             * Format: uuid
+             */
+            sbu_id: string;
+            /** Year Start Month */
+            year_start_month: number;
+            /** Start Year */
+            start_year: number;
+            /** Vendor Amount Lakhs */
+            vendor_amount_lakhs: string | null;
+            /** Stretch Pct */
+            stretch_pct: string | null;
+            /** Stretched Lakhs */
+            stretched_lakhs: string | null;
+            own_pattern: components["schemas"]["SeasonalPattern-Output"] | null;
+            effective_pattern: components["schemas"]["SeasonalPattern-Output"] | null;
+            /** Quarters */
+            quarters: components["schemas"]["BrandAnnualTargetQuarter"][];
+        };
+        /** BrandAnnualTargetSet */
+        BrandAnnualTargetSet: {
+            /**
+             * Brand Id
+             * Format: uuid
+             */
+            brand_id: string;
+            /** Start Year */
+            start_year: number;
+            /** Vendor Amount Lakhs */
+            vendor_amount_lakhs: number | string;
+            /**
+             * Stretch Pct
+             * @default 0
+             */
+            stretch_pct: number | string;
+            pattern?: components["schemas"]["SeasonalPattern-Input"] | null;
+        };
         /** BrandCreate */
         BrandCreate: {
             /**
@@ -3296,6 +3513,8 @@ export interface components {
             name: string;
             /** Is Active */
             is_active: boolean;
+            /** Year Start Month */
+            year_start_month: number;
         };
         /** BrandRollupResponse */
         BrandRollupResponse: {
@@ -3368,6 +3587,11 @@ export interface components {
             planning_period: string;
             /** Vendor Target Amount Lakhs */
             vendor_target_amount_lakhs: number | string;
+        };
+        /** BrandYearStartSet */
+        BrandYearStartSet: {
+            /** Year Start Month */
+            year_start_month: number;
         };
         /**
          * BusinessPotential
@@ -4361,6 +4585,35 @@ export interface components {
          * @enum {string}
          */
         PayerBehavior: "GOOD" | "AVERAGE" | "PROBLEMATIC" | "UNKNOWN";
+        /** PersonQuarterTargetResponse */
+        PersonQuarterTargetResponse: {
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /**
+             * Sbu Id
+             * Format: uuid
+             */
+            sbu_id: string;
+            /** Planning Period */
+            planning_period: string;
+            /** Target Amount Lakhs */
+            target_amount_lakhs: string;
+        };
+        /** PersonQuarterTargetSet */
+        PersonQuarterTargetSet: {
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /** Planning Period */
+            planning_period: string;
+            /** Target Amount Lakhs */
+            target_amount_lakhs: number | string;
+        };
         /**
          * PipelineOpportunity
          * @description Full nested response used by GET /opportunities/pipeline (Kanban + List views).
@@ -4949,14 +5202,50 @@ export interface components {
             /** Zone Exact */
             zone_exact?: boolean | null;
         };
-        /** SbuTargetResponse */
+        /** SbuSeasonalPatternResponse */
+        SbuSeasonalPatternResponse: {
+            /** Pct Jan Mar */
+            pct_jan_mar: string;
+            /** Pct Apr Jun */
+            pct_apr_jun: string;
+            /** Pct Jul Sep */
+            pct_jul_sep: string;
+            /** Pct Oct Dec */
+            pct_oct_dec: string;
+            /**
+             * Sbu Id
+             * Format: uuid
+             */
+            sbu_id: string;
+            /** Year */
+            year: number;
+        };
+        /** SbuSeasonalPatternSet */
+        SbuSeasonalPatternSet: {
+            /** Pct Jan Mar */
+            pct_jan_mar: number | string;
+            /** Pct Apr Jun */
+            pct_apr_jun: number | string;
+            /** Pct Jul Sep */
+            pct_jul_sep: number | string;
+            /** Pct Oct Dec */
+            pct_oct_dec: number | string;
+            /**
+             * Sbu Id
+             * Format: uuid
+             */
+            sbu_id: string;
+            /** Year */
+            year: number;
+        };
+        /**
+         * SbuTargetResponse
+         * @description The SBU's quarterly target: its brands' quarterly total (D47, D53,
+         *     D55). None when no brand has a figure for the quarter, or the caller may
+         *     not see this SBU's total (D26).
+         */
         SbuTargetResponse: {
             /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /**
              * Sbu Id
              * Format: uuid
              */
@@ -4964,19 +5253,35 @@ export interface components {
             /** Planning Period */
             planning_period: string;
             /** Target Amount Lakhs */
-            target_amount_lakhs: string;
+            target_amount_lakhs: string | null;
         };
-        /** SbuTargetSet */
-        SbuTargetSet: {
-            /**
-             * Sbu Id
-             * Format: uuid
-             */
-            sbu_id: string;
-            /** Planning Period */
-            planning_period: string;
-            /** Target Amount Lakhs */
-            target_amount_lakhs: number | string;
+        /**
+         * SeasonalPattern
+         * @description Shares of a year by calendar quarter, adding up to 100 (D25, D41).
+         */
+        "SeasonalPattern-Input": {
+            /** Pct Jan Mar */
+            pct_jan_mar: number | string;
+            /** Pct Apr Jun */
+            pct_apr_jun: number | string;
+            /** Pct Jul Sep */
+            pct_jul_sep: number | string;
+            /** Pct Oct Dec */
+            pct_oct_dec: number | string;
+        };
+        /**
+         * SeasonalPattern
+         * @description Shares of a year by calendar quarter, adding up to 100 (D25, D41).
+         */
+        "SeasonalPattern-Output": {
+            /** Pct Jan Mar */
+            pct_jan_mar: string;
+            /** Pct Apr Jun */
+            pct_apr_jun: string;
+            /** Pct Jul Sep */
+            pct_jul_sep: string;
+            /** Pct Oct Dec */
+            pct_oct_dec: string;
         };
         /** SplitCreate */
         SplitCreate: {
@@ -5466,6 +5771,8 @@ export interface components {
             plan_status: components["schemas"]["RosterStatus"];
             /** Previous Approved Total Lakhs */
             previous_approved_total_lakhs: string | null;
+            /** Target Lakhs */
+            target_lakhs?: string | null;
             /** Planned Lakhs */
             planned_lakhs: string;
             /** Po Received Lakhs */
@@ -5566,6 +5873,39 @@ export interface components {
             planned_lakhs: string;
             /** Won Lakhs */
             won_lakhs: string;
+        };
+        /** TeamTargetPerson */
+        TeamTargetPerson: {
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /** Display Name */
+            display_name: string;
+            /** Role Name */
+            role_name: string | null;
+            /** Target Lakhs */
+            target_lakhs: string | null;
+        };
+        /**
+         * TeamTargetsResponse
+         * @description Target & Coverage Planning's "Your target" line and Team targets
+         *     panel for one quarter (D30, D33, D45, D57).
+         */
+        TeamTargetsResponse: {
+            /** Planning Period */
+            planning_period: string;
+            /** Sbu Id */
+            sbu_id: string | null;
+            /** Own Target Lakhs */
+            own_target_lakhs: string | null;
+            /** Reports */
+            reports: components["schemas"]["TeamTargetPerson"][];
+            /** Reports Total Lakhs */
+            reports_total_lakhs: string;
+            /** Compare To Lakhs */
+            compare_to_lakhs: string | null;
         };
         /** UnreadCountResponse */
         UnreadCountResponse: {
@@ -10155,7 +10495,78 @@ export interface operations {
             };
         };
     };
-    set_sbu_target_api_v1_planning_sbu_targets_post: {
+    set_brand_year_start_api_v1_planning_brands__brand_id__year_start_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                brand_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BrandYearStartSet"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_BrandResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_brand_annual_targets_api_v1_planning_brand_annual_targets_get: {
+        parameters: {
+            query: {
+                sbu_id: string;
+                calendar_year: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_list_BrandAnnualTargetRow__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_brand_annual_target_api_v1_planning_brand_annual_targets_put: {
         parameters: {
             query?: never;
             header?: {
@@ -10166,17 +10577,155 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["SbuTargetSet"];
+                "application/json": components["schemas"]["BrandAnnualTargetSet"];
             };
         };
         responses: {
             /** @description Successful Response */
-            201: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["APIResponse_SbuTargetResponse_"];
+                    "application/json": components["schemas"]["APIResponse_BrandAnnualTargetRow_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_seasonal_pattern_api_v1_planning_seasonal_patterns_get: {
+        parameters: {
+            query: {
+                sbu_id: string;
+                year: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_Union_SbuSeasonalPatternResponse__NoneType__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_seasonal_pattern_api_v1_planning_seasonal_patterns_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SbuSeasonalPatternSet"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_SbuSeasonalPatternResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_team_targets_api_v1_planning_person_targets_get: {
+        parameters: {
+            query: {
+                sbu_id: string;
+                planning_period: string;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_TeamTargetsResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_person_target_api_v1_planning_person_targets_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PersonQuarterTargetSet"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_PersonQuarterTargetResponse_"];
                 };
             };
             /** @description Validation Error */

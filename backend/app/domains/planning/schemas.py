@@ -277,6 +277,9 @@ class TargetVsActualPerson(BaseModel):
     # BR-PL-05: set while a revision of an approved plan is in flight --
     # the screen notes "was ₹X approved" beside the revised figure.
     previous_approved_total_lakhs: Decimal | None
+    # The person's own quarterly target (D49); None if not set or not
+    # visible to the caller (person_quarter_target RLS).
+    target_lakhs: Decimal | None = None
     planned_lakhs: Decimal
     # Opportunities whose PO date falls in the quarter, whatever their status
     # now (Lost excluded); counted separately from Won.
@@ -371,10 +374,108 @@ class TargetRosterResponse(BaseModel):
     people: list[TargetRosterPerson]
 
 
-class SbuTargetSet(BaseModel):
+class SbuTargetResponse(BaseModel):
+    """The SBU's quarterly target: its brands' quarterly total (D47, D53,
+    D55). None when no brand has a figure for the quarter, or the caller may
+    not see this SBU's total (D26)."""
+
     sbu_id: uuid.UUID
     planning_period: str
-    target_amount_lakhs: Decimal = Field(..., ge=0)
+    target_amount_lakhs: Decimal | None
+
+
+# --- Annual Target Planning Part 1 -----------------------------------------
+
+YEAR_START_MONTHS = (1, 4, 7, 10)
+_PCT = Field(..., ge=0, le=100, decimal_places=2)
+
+
+class SeasonalPattern(BaseModel):
+    """Shares of a year by calendar quarter, adding up to 100 (D25, D41)."""
+
+    pct_jan_mar: Decimal = _PCT
+    pct_apr_jun: Decimal = _PCT
+    pct_jul_sep: Decimal = _PCT
+    pct_oct_dec: Decimal = _PCT
+
+    @field_validator("pct_oct_dec")
+    @classmethod
+    def validate_sum(cls, v: Decimal, info) -> Decimal:
+        others = [info.data.get(k) for k in ("pct_jan_mar", "pct_apr_jun", "pct_jul_sep")]
+        if all(o is not None for o in others) and sum(others, v) != 100:
+            raise ValueError("The four quarters' shares must add up to 100%.")
+        return v
+
+    def by_month(self) -> dict[int, Decimal]:
+        """Calendar quarter start month -> share."""
+        return {1: self.pct_jan_mar, 4: self.pct_apr_jun, 7: self.pct_jul_sep, 10: self.pct_oct_dec}
+
+
+class BrandYearStartSet(BaseModel):
+    year_start_month: int
+
+    @field_validator("year_start_month")
+    @classmethod
+    def validate_month(cls, v: int) -> int:
+        if v not in YEAR_START_MONTHS:
+            raise ValueError("A brand's year can start in January, April, July or October only.")
+        return v
+
+
+class BrandAnnualTargetSet(BaseModel):
+    brand_id: uuid.UUID
+    # The calendar year the brand's own year starts in.
+    start_year: int = Field(..., ge=2000, le=2100)
+    vendor_amount_lakhs: Decimal = Field(..., ge=0, max_digits=15, decimal_places=2)
+    stretch_pct: Decimal = Field(Decimal("0"), ge=0, le=999.99, decimal_places=2)
+    # The brand's own seasonal pattern; None = follow the SBU's (D25).
+    pattern: SeasonalPattern | None = None
+
+
+class BrandAnnualTargetQuarter(BaseModel):
+    planning_period: str
+    # What is saved in the brand's quarterly targets for that quarter
+    # (brand_vendor_target), whether worked out from the year or typed in
+    # before 2026-Q3 (D46a).
+    saved_lakhs: Decimal | None
+
+
+class BrandAnnualTargetRow(BaseModel):
+    """One brand on Brand Target Tracking for a calendar year (D43): its
+    year starting in that calendar year, and its four quarters."""
+
+    brand_id: uuid.UUID
+    brand_name: str
+    sbu_id: uuid.UUID
+    year_start_month: int
+    start_year: int
+    # None until the GM enters the brand's figure (D42).
+    vendor_amount_lakhs: Decimal | None
+    stretch_pct: Decimal | None
+    stretched_lakhs: Decimal | None
+    own_pattern: SeasonalPattern | None
+    # The pattern its quarters are worked out with: its own, else its SBU's
+    # for start_year; None if neither is set.
+    effective_pattern: SeasonalPattern | None
+    quarters: list[BrandAnnualTargetQuarter]
+
+
+class SbuSeasonalPatternSet(SeasonalPattern):
+    sbu_id: uuid.UUID
+    year: int = Field(..., ge=2000, le=2100)
+
+
+class SbuSeasonalPatternResponse(SeasonalPattern):
+    model_config = ConfigDict(from_attributes=True)
+
+    sbu_id: uuid.UUID
+    year: int
+
+
+class PersonQuarterTargetSet(BaseModel):
+    user_id: uuid.UUID
+    planning_period: str
+    target_amount_lakhs: Decimal = Field(..., ge=0, max_digits=15, decimal_places=2)
 
     @field_validator("planning_period")
     @classmethod
@@ -384,10 +485,34 @@ class SbuTargetSet(BaseModel):
         return v
 
 
-class SbuTargetResponse(BaseModel):
+class PersonQuarterTargetResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: uuid.UUID
+    user_id: uuid.UUID
     sbu_id: uuid.UUID
     planning_period: str
     target_amount_lakhs: Decimal
+
+
+class TeamTargetPerson(BaseModel):
+    user_id: uuid.UUID
+    display_name: str
+    role_name: str | None
+    target_lakhs: Decimal | None
+
+
+class TeamTargetsResponse(BaseModel):
+    """Target & Coverage Planning's "Your target" line and Team targets
+    panel for one quarter (D30, D33, D45, D57)."""
+
+    planning_period: str
+    sbu_id: uuid.UUID | None
+    # The caller's own target; None if not set (or Admin/GM, who have none).
+    own_target_lakhs: Decimal | None
+    # The people who report to the caller in this SBU (Admin/GM: those with
+    # no manager or who report to Admin/GM -- the top of each SBU).
+    reports: list[TeamTargetPerson]
+    reports_total_lakhs: Decimal
+    # What the reports' total is checked against: the caller's own target,
+    # or for Admin/GM the SBU target (the brands' total).
+    compare_to_lakhs: Decimal | None

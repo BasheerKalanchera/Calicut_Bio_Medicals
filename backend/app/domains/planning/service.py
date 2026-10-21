@@ -1,31 +1,44 @@
 import uuid
 from dataclasses import dataclass
-from datetime import UTC, datetime
-from decimal import Decimal
+from datetime import UTC, date, datetime
+from decimal import ROUND_HALF_UP, Decimal
 
 from sqlalchemy import func
 
 from app.core.exceptions import AuthorizationError, ConflictError, NotFoundError, ValidationError
-from app.core.periods import period_bounds, quarter_dates, today_ist
+from app.core.periods import period_bounds, quarter_dates, quarter_of, today_ist
 from app.domains.account.models import Account
 from app.domains.organization.models import UserProfile
-from app.domains.planning.models import BrandVendorTarget, SbuTarget, TargetPlan
+from app.domains.planning.models import (
+    BrandAnnualTarget,
+    BrandVendorTarget,
+    PersonQuarterTarget,
+    SbuSeasonalPattern,
+    TargetPlan,
+)
 from app.domains.planning.repository import (
     SUBMITTED_PLAN_STATUSES,
+    AnnualTargetRepository,
     BrandVendorTargetRepository,
-    SbuTargetRepository,
+    PersonQuarterTargetRepository,
     TargetPlanRepository,
     TargetVsActualRepository,
 )
 from app.domains.planning.schemas import (
+    BrandAnnualTargetQuarter,
+    BrandAnnualTargetRow,
+    BrandAnnualTargetSet,
     BrandSplitEntry,
     BrandVendorTargetSet,
+    PersonQuarterTargetSet,
     PlanAccountEntry,
     PlanWarning,
     PlanWarningKind,
     QuarterState,
     RosterStatus,
-    SbuTargetSet,
+    SbuSeasonalPatternSet,
+    SbuTargetResponse,
+    SeasonalPattern,
     TargetPlanCreate,
     TargetPlanResponse,
     TargetPlanUpdate,
@@ -38,12 +51,16 @@ from app.domains.planning.schemas import (
     TargetVsActualResponse,
     TargetVsActualSummaryRow,
     TargetVsActualZone,
+    TeamTargetPerson,
+    TeamTargetsResponse,
 )
+from app.domains.reference.models import Brand
 from app.domains.reference.repository import BrandRepository
 
 _OVERLAY_ROLES = ("Admin", "General Manager")
-# Who may read SBU targets -- matches sbu_target's read policy (migration 0061).
-_SBU_TARGET_READ_ROLES = ("Admin", "General Manager", "SBU Manager", "Area Manager")
+# Who may read SBU targets (Annual Target Planning D26, D34) -- matches
+# cabio_app_sbu_targets() (migration 0062).
+_SBU_TARGET_READ_ROLES = ("Admin", "General Manager", "SBU Manager")
 
 # Who may plan any hospital, not just their own territory. Same role set as
 # account/service.py's _ZONE_ASSIGNMENT_EXEMPT_ROLES and master_data.py's
@@ -569,35 +586,295 @@ class _PersonAcc:
 
 
 class SbuTargetService:
-    """The GM-entered target for a whole SBU per quarter (Plan vs Actuals
-    Tracking redesign, 2026-10-05). Admin/GM write; SBU Manager and above
-    read (RLS also narrows an SBU Manager to their own SBU); no delete."""
+    """The SBU's quarterly target: its brands' quarterly total, never typed
+    (Annual Target Planning D47, D53, D55). Admin, GM and the SBU's own SBU
+    Manager see it (D26); Area Managers no longer do (D34)."""
 
-    def __init__(self, repository: SbuTargetRepository):
+    def __init__(self, repository: TargetVsActualRepository):
         self.repository = repository
 
-    def set_target(self, data: SbuTargetSet, *, current_user: UserProfile) -> SbuTarget:
-        """Upsert -- a quarter's figure can be corrected, not just entered once."""
+    def list_by_period(self, planning_period: str, *, current_user: UserProfile) -> list[SbuTargetResponse]:
+        role_name = current_user.role.role_name
+        if role_name not in _SBU_TARGET_READ_ROLES:
+            raise AuthorizationError("Only SBU Managers and above may see SBU targets.")
+        targets = self.repository.active_sbu_targets(planning_period)
+        return [
+            SbuTargetResponse(sbu_id=sbu_id, planning_period=planning_period, target_amount_lakhs=amount)
+            for sbu_id, amount in targets.items()
+            if role_name in _OVERLAY_ROLES or sbu_id == current_user.sbu_id
+        ]
+
+
+# --- Annual Target Planning Part 1 -----------------------------------------
+
+# D46a, D38: brand quarters are worked out and saved from Oct-Dec 2026 on;
+# earlier quarters keep the figures typed in by hand.
+FIRST_SAVED_PERIOD = "2026-Q3"
+
+
+def brand_year_quarters(year_start_month: int, start_year: int) -> list[tuple[int, str]]:
+    """The four quarters of a brand year, in order, as (calendar quarter's
+    first month, Cabio period). Each brand quarter is exactly one Cabio
+    quarter, as brand years start in Jan, Apr, Jul or Oct only (D40)."""
+    quarters = []
+    year, month = start_year, year_start_month
+    for _ in range(4):
+        quarters.append((month, quarter_of(date(year, month, 1))))
+        year, month = (year + 1, month - 9) if month == 10 else (year, month + 3)
+    return quarters
+
+
+def stretched_amount(vendor_amount: Decimal, stretch_pct: Decimal) -> Decimal:
+    """The brand's own figure plus Cabio's stretch on it (D24)."""
+    return (vendor_amount * (1 + stretch_pct / 100)).quantize(_CENT, rounding=ROUND_HALF_UP)
+
+
+def split_brand_year(stretched: Decimal, pct_by_month: dict[int, Decimal], months: list[int]) -> list[Decimal]:
+    """Spread a stretched brand year over its quarters by the seasonal
+    pattern (D25, D41), rounded to paise; the last quarter with a share
+    takes the rounding remainder, so the quarters add back to the year."""
+    amounts = [(stretched * pct_by_month[m] / 100).quantize(_CENT, rounding=ROUND_HALF_UP) for m in months]
+    last = max((i for i, m in enumerate(months) if pct_by_month[m] > 0), default=len(months) - 1)
+    amounts[last] = stretched - sum(a for i, a in enumerate(amounts) if i != last)
+    return amounts
+
+
+def _own_pattern(annual: BrandAnnualTarget | None) -> SeasonalPattern | None:
+    if annual is None or annual.pct_jan_mar is None:
+        return None
+    return SeasonalPattern(
+        pct_jan_mar=annual.pct_jan_mar,
+        pct_apr_jun=annual.pct_apr_jun,
+        pct_jul_sep=annual.pct_jul_sep,
+        pct_oct_dec=annual.pct_oct_dec,
+    )
+
+
+def _sbu_pattern(pattern: SbuSeasonalPattern | None) -> SeasonalPattern | None:
+    return None if pattern is None else SeasonalPattern.model_validate(pattern, from_attributes=True)
+
+
+class AnnualTargetService:
+    """Brand yearly figures, stretch and seasonal split, saved as the brand's
+    quarterly targets (D23-D25, D40, D46, D46a, D50, D51). Admin/GM only."""
+
+    def __init__(self, repository: AnnualTargetRepository):
+        self.repository = repository
+
+    def set_year_start(self, brand_id: uuid.UUID, year_start_month: int, *, current_user: UserProfile) -> Brand:
         _require_admin_or_gm(current_user)
-        existing = self.repository.get_by_sbu_period(data.sbu_id, data.planning_period)
+        brand = self.repository.get_brand(brand_id)
+        if brand is None:
+            raise NotFoundError("Brand not found.")
+        if year_start_month != brand.year_start_month and self.repository.brand_has_annual(brand_id):
+            # Its saved quarters were worked out from the old start month.
+            raise ConflictError("This brand already has a yearly figure; its year start can't be changed now.")
+        brand.year_start_month = year_start_month
+        self.repository.db.flush()
+        return brand
+
+    def list_annual(
+        self, sbu_id: uuid.UUID, calendar_year: int, *, current_user: UserProfile
+    ) -> list[BrandAnnualTargetRow]:
+        """Each active brand's year starting in calendar_year (D43)."""
+        _require_admin_or_gm(current_user)
+        brands = self.repository.list_active_brands(sbu_id)
+        annual_by_brand = {a.brand_id: a for a in self.repository.list_annual(sbu_id, calendar_year)}
+        sbu_pattern = _sbu_pattern(self.repository.get_pattern(sbu_id, calendar_year))
+        quarters_by_brand = {b.id: brand_year_quarters(b.year_start_month, calendar_year) for b in brands}
+        saved = self.repository.vendor_targets(
+            [b.id for b in brands], sorted({p for qs in quarters_by_brand.values() for _, p in qs})
+        )
+        return [
+            self._row(b, calendar_year, annual_by_brand.get(b.id), sbu_pattern, quarters_by_brand[b.id], saved)
+            for b in brands
+        ]
+
+    def set_annual(self, data: BrandAnnualTargetSet, *, current_user: UserProfile) -> BrandAnnualTargetRow:
+        _require_admin_or_gm(current_user)
+        brand = self.repository.get_brand(data.brand_id)
+        if brand is None:
+            raise NotFoundError("Brand not found.")
+        sbu_pattern = _sbu_pattern(self.repository.get_pattern(brand.sbu_id, data.start_year))
+        if data.pattern is None and sbu_pattern is None:
+            raise ValidationError(
+                f"Set the SBU's seasonal pattern for {data.start_year} first, or give this brand its own."
+            )
+        own = data.pattern.by_month() if data.pattern else dict.fromkeys((1, 4, 7, 10))
+        annual = self.repository.get_annual(data.brand_id, data.start_year)
+        if annual is None:
+            annual = BrandAnnualTarget(brand_id=data.brand_id, start_year=data.start_year, created_by=current_user.id)
+            self.repository.db.add(annual)
+        annual.vendor_amount_lakhs = data.vendor_amount_lakhs
+        annual.stretch_pct = data.stretch_pct
+        annual.pct_jan_mar, annual.pct_apr_jun, annual.pct_jul_sep, annual.pct_oct_dec = (
+            own[1], own[4], own[7], own[10]
+        )
+        annual.updated_by = current_user.id
+        self.repository.db.flush()
+
+        quarters = brand_year_quarters(brand.year_start_month, data.start_year)
+        self._save_quarters(annual, quarters, data.pattern or sbu_pattern, current_user)
+        saved = self.repository.vendor_targets([brand.id], [p for _, p in quarters])
+        return self._row(brand, data.start_year, annual, sbu_pattern, quarters, saved)
+
+    def get_pattern(self, sbu_id: uuid.UUID, year: int, *, current_user: UserProfile) -> SbuSeasonalPattern | None:
+        _require_admin_or_gm(current_user)
+        return self.repository.get_pattern(sbu_id, year)
+
+    def set_pattern(self, data: SbuSeasonalPatternSet, *, current_user: UserProfile) -> SbuSeasonalPattern:
+        """Upsert, then save again the quarters of every brand of that SBU and
+        year that follows the SBU's pattern (D50); a brand with its own
+        pattern is left alone."""
+        _require_admin_or_gm(current_user)
+        pattern = self.repository.get_pattern(data.sbu_id, data.year)
+        if pattern is None:
+            pattern = SbuSeasonalPattern(sbu_id=data.sbu_id, year=data.year, created_by=current_user.id)
+            self.repository.db.add(pattern)
+        pattern.pct_jan_mar, pattern.pct_apr_jun = data.pct_jan_mar, data.pct_apr_jun
+        pattern.pct_jul_sep, pattern.pct_oct_dec = data.pct_jul_sep, data.pct_oct_dec
+        pattern.updated_by = current_user.id
+        self.repository.db.flush()
+
+        for annual in self.repository.list_following_sbu_pattern(data.sbu_id, data.year):
+            brand = self.repository.get_brand(annual.brand_id)
+            quarters = brand_year_quarters(brand.year_start_month, annual.start_year)
+            self._save_quarters(annual, quarters, data, current_user)
+        return pattern
+
+    def _save_quarters(
+        self,
+        annual: BrandAnnualTarget,
+        quarters: list[tuple[int, str]],
+        pattern: SeasonalPattern,
+        current_user: UserProfile,
+    ) -> None:
+        """Save the brand's quarters into brand_vendor_target -- only from
+        2026-Q3 on (D46a) and only quarters not yet ended (D51)."""
+        today = today_ist()
+        stretched = stretched_amount(annual.vendor_amount_lakhs, annual.stretch_pct)
+        amounts = split_brand_year(stretched, pattern.by_month(), [m for m, _ in quarters])
+        for (_, period), amount in zip(quarters, amounts, strict=True):
+            if period < FIRST_SAVED_PERIOD or quarter_dates(period)[1] < today:
+                continue
+            existing = self.repository.get_vendor_target(annual.brand_id, period)
+            if existing:
+                existing.vendor_target_amount_lakhs = amount
+                existing.updated_by = current_user.id
+            else:
+                self.repository.db.add(
+                    BrandVendorTarget(
+                        brand_id=annual.brand_id,
+                        planning_period=period,
+                        vendor_target_amount_lakhs=amount,
+                        created_by=current_user.id,
+                        updated_by=current_user.id,
+                    )
+                )
+        self.repository.db.flush()
+
+    @staticmethod
+    def _row(
+        brand: Brand,
+        start_year: int,
+        annual: BrandAnnualTarget | None,
+        sbu_pattern: SeasonalPattern | None,
+        quarters: list[tuple[int, str]],
+        saved: dict[tuple[uuid.UUID, str], Decimal],
+    ) -> BrandAnnualTargetRow:
+        own = _own_pattern(annual)
+        return BrandAnnualTargetRow(
+            brand_id=brand.id,
+            brand_name=brand.name,
+            sbu_id=brand.sbu_id,
+            year_start_month=brand.year_start_month,
+            start_year=start_year,
+            vendor_amount_lakhs=annual.vendor_amount_lakhs if annual else None,
+            stretch_pct=annual.stretch_pct if annual else None,
+            stretched_lakhs=stretched_amount(annual.vendor_amount_lakhs, annual.stretch_pct) if annual else None,
+            own_pattern=own,
+            effective_pattern=own or sbu_pattern,
+            quarters=[
+                BrandAnnualTargetQuarter(planning_period=p, saved_lakhs=saved.get((brand.id, p))) for _, p in quarters
+            ],
+        )
+
+
+class PersonTargetService:
+    """Per-person quarterly targets (D30, D32, D33, D45, D57): set by the
+    person's direct manager (the reporting line plan approvals use), Admin
+    or GM; seen by the person, those above them, Admin and GM (RLS)."""
+
+    def __init__(self, repository: PersonQuarterTargetRepository, sbu_target_repository: TargetVsActualRepository):
+        self.repository = repository
+        self.sbu_target_repository = sbu_target_repository
+
+    def get_team_targets(
+        self, sbu_id: uuid.UUID, planning_period: str, *, current_user: UserProfile
+    ) -> TeamTargetsResponse:
+        is_overlay = current_user.role.role_name in _OVERLAY_ROLES
+        own = None
+        if not is_overlay:
+            own_row = self.repository.get_target(current_user.id, sbu_id, planning_period)
+            own = own_row.target_amount_lakhs if own_row else None
+        reports = (
+            self.repository.sbu_top_people(sbu_id)
+            if is_overlay
+            else self.repository.direct_reports(current_user.id, sbu_id)
+        )
+        targets = self.repository.targets_for([r.id for r in reports], sbu_id, planning_period)
+        # Admin/GM divide the SBU target itself; everyone else divides their
+        # own figure (D33, D57).
+        compare_to = (
+            self.sbu_target_repository.active_sbu_targets(planning_period).get(sbu_id) if is_overlay else own
+        )
+        return TeamTargetsResponse(
+            planning_period=planning_period,
+            sbu_id=sbu_id,
+            own_target_lakhs=own,
+            reports=[
+                TeamTargetPerson(
+                    user_id=r.id,
+                    display_name=r.display_name,
+                    role_name=r.role.role_name if r.role else None,
+                    target_lakhs=targets.get(r.id),
+                )
+                for r in reports
+            ],
+            reports_total_lakhs=sum(targets.values(), _ZERO),
+            compare_to_lakhs=compare_to,
+        )
+
+    def set_target(self, data: PersonQuarterTargetSet, *, current_user: UserProfile) -> PersonQuarterTarget:
+        """Upsert -- a wrong figure is corrected, not removed. The SBU is the
+        person's own."""
+        person = self.repository.get_user(data.user_id)
+        if person is None:
+            raise NotFoundError("Person not found.")
+        if person.id == current_user.id:
+            raise AuthorizationError("Your own target is set by the person you report to.")
+        # The same reporting line plan approvals use (get_approver_id, D45).
+        if person.manager_id != current_user.id and current_user.role.role_name not in _OVERLAY_ROLES:
+            raise AuthorizationError("Only the person's manager, Admin or GM may set their target.")
+        if person.sbu_id is None:
+            raise ValidationError("This person has no SBU, so they can't be given a target.")
+        existing = self.repository.get_target(person.id, person.sbu_id, data.planning_period)
         if existing:
             existing.target_amount_lakhs = data.target_amount_lakhs
+            existing.set_by = current_user.id
             existing.updated_by = current_user.id
             return self.repository.update(existing)
-
-        sbu_target = SbuTarget(
-            sbu_id=data.sbu_id,
-            planning_period=data.planning_period,
-            target_amount_lakhs=data.target_amount_lakhs,
-            created_by=current_user.id,
-            updated_by=current_user.id,
+        return self.repository.create(
+            PersonQuarterTarget(
+                user_id=person.id,
+                sbu_id=person.sbu_id,
+                planning_period=data.planning_period,
+                target_amount_lakhs=data.target_amount_lakhs,
+                set_by=current_user.id,
+                created_by=current_user.id,
+                updated_by=current_user.id,
+            )
         )
-        return self.repository.create(sbu_target)
-
-    def list_by_period(self, planning_period: str, *, current_user: UserProfile) -> list[SbuTarget]:
-        if current_user.role.role_name not in _SBU_TARGET_READ_ROLES:
-            raise AuthorizationError("Only Area Managers and above may see SBU targets.")
-        return self.repository.list_by_period(planning_period)
 
 
 class TargetVsActualService:
@@ -723,7 +1000,8 @@ class TargetVsActualService:
                 )
 
         ordered = sorted(people.values(), key=lambda p: p.display_name.lower())
-        rows = [self._person_response(p, state) for p in ordered]
+        person_targets = repo.person_targets(sbu_id, planning_period)
+        rows = [self._person_response(p, state, person_targets.get(p.user_id)) for p in ordered]
         # Totals count every credited person, so real wins by someone outside
         # the roster (another SBU's person, someone since deactivated) stay in
         # the headline and zone/brand tables; only the person rows follow the
@@ -742,9 +1020,10 @@ class TargetVsActualService:
         sbu_row = company_row = team_row = None
         role_name = current_user.role.role_name
         if role_name == "Area Manager" and current_user.sbu_id == sbu_id:
-            # The team's own totals (the headline) against the SBU target,
-            # read-only (plan step 6c). No SBU-wide figures for this role.
-            target = repo.active_sbu_targets(planning_period).get(sbu_id)
+            # The team's own totals (the headline) against the Area Manager's
+            # own target (Annual Target Planning D49) -- they no longer see
+            # the SBU target (D34). No SBU-wide figures for this role.
+            target = person_targets.get(current_user.id)
             team_row = TargetVsActualSummaryRow(
                 target_lakhs=target,
                 planned_lakhs=planned,
@@ -856,7 +1135,7 @@ class TargetVsActualService:
         )
 
     @staticmethod
-    def _person_response(p: _PersonAcc, state: QuarterState) -> TargetVsActualPerson:
+    def _person_response(p: _PersonAcc, state: QuarterState, target: Decimal | None) -> TargetVsActualPerson:
         planned, won = p.planned, p.won.quantize(_CENT)
         expected = None if state is QuarterState.PAST else (p.expected or _ZERO).quantize(_CENT)
         hospitals = [
@@ -888,6 +1167,7 @@ class TargetVsActualService:
             display_name=p.display_name,
             plan_status=p.plan_status,
             previous_approved_total_lakhs=p.previous_approved_total,
+            target_lakhs=target,
             planned_lakhs=planned,
             po_received_lakhs=p.po_received.quantize(_CENT),
             won_lakhs=won,

@@ -15,8 +15,8 @@ from app.core.exceptions import AuthorizationError
 from app.core.periods import IST, quarter_dates, quarter_of
 from app.domains.organization.models import UserProfile
 from app.domains.planning import service as service_module
-from app.domains.planning.repository import SbuTargetRepository, TargetVsActualRepository
-from app.domains.planning.schemas import QuarterState, RosterStatus, SbuTargetSet, TargetPlanResponse
+from app.domains.planning.repository import TargetVsActualRepository
+from app.domains.planning.schemas import QuarterState, RosterStatus, TargetPlanResponse
 from app.domains.planning.service import SbuTargetService, TargetVsActualService
 
 SBU_ID = uuid.uuid4()
@@ -105,6 +105,7 @@ def _repo(**overrides) -> MagicMock:
     repo.late_opportunities.return_value = []
     repo.undated_counts.return_value = []
     repo.active_sbu_targets.return_value = {}
+    repo.person_targets.return_value = {}
     repo.summary_totals.return_value = (Decimal(0), Decimal(0), Decimal(0))
     for k, v in overrides.items():
         getattr(repo, k).return_value = v
@@ -311,18 +312,23 @@ def test_staff_get_no_summary_rows(monkeypatch):
     repo.summary_totals.assert_not_called()
 
 
-def test_area_manager_gets_their_team_against_the_sbu_target(monkeypatch):
-    # Plan step 6c (Basheer, 2026-10-09): the team's own totals against the
-    # SBU target -- never the SBU-wide figures.
+def test_area_manager_gets_their_team_against_their_own_target(monkeypatch):
+    # Plan step 6c (Basheer, 2026-10-09): the team's own totals, never the
+    # SBU-wide figures; measured against the Area Manager's own target, not
+    # the SBU target (Annual Target Planning D49, D34).
     rep, acc = uuid.uuid4(), uuid.uuid4()
+    am = _user_with_role("Area Manager")
     repo = _repo(
         roster=[(rep, "Asha")],
         list_plans=[_plan(rep, "Asha", [(acc, "A", "100")])],
         won_by_person_account=[(rep, "Asha", acc, None, None, Decimal("30.00"))],
         po_received_by_person=[(rep, "Asha", Decimal("40.00"))],
-        active_sbu_targets={SBU_ID: Decimal("150")},
+        active_sbu_targets={SBU_ID: Decimal("999")},
+        person_targets={am.id: Decimal("150"), rep: Decimal("90")},
     )
-    resp = _run(repo, IN_QUARTER, monkeypatch, user=_user_with_role("Area Manager"))
+    resp = _run(repo, IN_QUARTER, monkeypatch, user=am)
+    repo.active_sbu_targets.assert_not_called()
+    assert [p.target_lakhs for p in resp.people] == [Decimal("90")]
     row = resp.team_row
     assert (row.target_lakhs, row.planned_lakhs, row.po_received_lakhs, row.won_lakhs) == (
         Decimal("150"),
@@ -686,54 +692,35 @@ def test_roster_and_target_vs_actuals_agree_on_people_statuses_and_total(monkeyp
 # --- SBU target service -----------------------------------------------------
 
 
-def _target_body() -> SbuTargetSet:
-    return SbuTargetSet(sbu_id=SBU_ID, planning_period=PERIOD, target_amount_lakhs=Decimal("250"))
-
-
-@pytest.mark.parametrize("role", ["SBU Manager", "Area Manager", "Sales Rep"])
-def test_only_admin_or_gm_may_set_an_sbu_target(role):
-    repo = MagicMock(spec=SbuTargetRepository)
-    with pytest.raises(AuthorizationError):
-        SbuTargetService(repo).set_target(_target_body(), current_user=_user_with_role(role))
-    repo.create.assert_not_called()
-
-
-def test_setting_an_sbu_target_creates_then_corrects():
-    gm = _user_with_role("General Manager", sbu_id=None)
-    repo = MagicMock(spec=SbuTargetRepository)
-    repo.get_by_sbu_period.return_value = None
-    repo.create.side_effect = lambda obj: obj
-    created = SbuTargetService(repo).set_target(_target_body(), current_user=gm)
-    assert (created.sbu_id, created.target_amount_lakhs, created.created_by) == (SBU_ID, Decimal("250"), gm.id)
-
-    existing = MagicMock(target_amount_lakhs=Decimal("100"))
-    repo.get_by_sbu_period.return_value = existing
-    repo.update.side_effect = lambda obj: obj
-    SbuTargetService(repo).set_target(_target_body(), current_user=gm)
-    assert existing.target_amount_lakhs == Decimal("250")
-    assert existing.updated_by == gm.id
-    repo.create.assert_called_once()  # the correction updated, it didn't add a second row
-
-
 @pytest.mark.parametrize(
     ("role", "allowed"),
     [
         ("SBU Manager", True),
         ("General Manager", True),
-        ("Area Manager", True),  # own SBU only, via the read policy (migration 0061)
+        ("Area Manager", False),  # Annual Target Planning D34
         ("Sales Rep", False),
         ("Marketing User", False),
     ],
 )
 def test_who_may_read_sbu_targets(role, allowed):
-    repo = MagicMock(spec=SbuTargetRepository)
-    repo.list_by_period.return_value = []
+    repo = MagicMock(spec=TargetVsActualRepository)
+    repo.active_sbu_targets.return_value = {}
     service = SbuTargetService(repo)
     if allowed:
         assert service.list_by_period(PERIOD, current_user=_user_with_role(role)) == []
     else:
         with pytest.raises(AuthorizationError):
             service.list_by_period(PERIOD, current_user=_user_with_role(role))
+
+
+def test_sbu_manager_reads_only_their_own_sbus_target():
+    other = uuid.uuid4()
+    repo = MagicMock(spec=TargetVsActualRepository)
+    repo.active_sbu_targets.return_value = {SBU_ID: Decimal("200"), other: None}
+    sbu_mgr = SbuTargetService(repo).list_by_period(PERIOD, current_user=_user_with_role("SBU Manager"))
+    assert [(t.sbu_id, t.target_amount_lakhs) for t in sbu_mgr] == [(SBU_ID, Decimal("200"))]
+    gm = SbuTargetService(repo).list_by_period(PERIOD, current_user=_user_with_role("General Manager", None))
+    assert {t.sbu_id for t in gm} == {SBU_ID, other}
 
 
 # --- repository SQL ---------------------------------------------------------
@@ -861,11 +848,22 @@ def test_no_po_date_counts_outside_current_quarter_are_won_in_quarter_only():
     assert "closed_at >=" in sql
 
 
-def test_active_sbu_targets_lists_only_active_sbus():
-    sql = _sql_of("active_sbu_targets", PERIOD)
-    assert "LEFT OUTER JOIN sbu_target" in sql
-    assert "is_active IS NOT false" in sql
+def test_active_sbu_targets_come_from_the_brand_total_function():
+    # Brand figures are Admin/GM-only under RLS, so the SBU total is read
+    # through cabio_app_sbu_targets() (migration 0062, D47, D26).
+    db = MagicMock()
+    db.execute.return_value.all.return_value = [SimpleNamespace(sbu_id=SBU_ID, target_amount_lakhs=Decimal("12.5"))]
+    assert TargetVsActualRepository(db).active_sbu_targets(PERIOD) == {SBU_ID: Decimal("12.5")}
+    stmt, params = db.execute.call_args.args
+    assert "cabio_app_sbu_targets(:period)" in str(stmt)
+    assert params == {"period": PERIOD}
+
+
+def test_person_targets_are_for_the_sbu_and_quarter():
+    sql = _sql_of("person_targets", SBU_ID, PERIOD)
+    assert "FROM person_quarter_target" in sql
     assert f"'{PERIOD}'" in sql
+    assert SBU_ID.hex in sql.replace("-", "")
 
 
 def _summary_sql(sbu_id) -> str:

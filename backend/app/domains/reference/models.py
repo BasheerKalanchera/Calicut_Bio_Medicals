@@ -9,6 +9,7 @@ from sqlalchemy import (
     Index,
     Integer,
     Numeric,
+    SmallInteger,
     String,
     Text,
     UniqueConstraint,
@@ -108,12 +109,17 @@ class Brand(Base):
     SBU's catalog, same as Product itself."""
 
     __tablename__ = "brand"
-    __table_args__ = (UniqueConstraint("sbu_id", "name", name="uq_brand_sbu_name"),)
+    __table_args__ = (
+        UniqueConstraint("sbu_id", "name", name="uq_brand_sbu_name"),
+        CheckConstraint("year_start_month IN (1, 4, 7, 10)", name="ck_brand_year_start_month"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     sbu_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("sbu.id"), nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="true")
+    # The month the brand's own year starts in (Annual Target Planning, D40).
+    year_start_month: Mapped[int] = mapped_column(SmallInteger, nullable=False, server_default="1")
 
     models: Mapped[list["Model"]] = relationship(back_populates="brand", lazy="select")
 

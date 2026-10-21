@@ -74,8 +74,11 @@ def test_all_28_tables_registered():
     # dropped the never-used coverage_plan, coverage_plan_entry
     # (0055_hospital_wise_target_planning.py).
     # 38, not 37: Target vs Actuals added sbu_target (0060_po_date_and_sbu_target.py).
+    # 40, not 38: Annual Target Planning added brand_annual_target,
+    # sbu_seasonal_pattern, person_quarter_target and dropped sbu_target
+    # (0062_annual_target_planning.py).
     table_count = len(Base.metadata.tables)
-    assert table_count == 38, f"Expected 38 tables, found {table_count}"
+    assert table_count == 40, f"Expected 40 tables, found {table_count}"
 
 
 def test_mapper_configuration_succeeds():
@@ -147,7 +150,9 @@ def test_all_relationships_resolve():
     # (0057) -- one-directional onto UserProfile, like gate_override_set_by_user.
     # 117, not 116: Target vs Actuals added SbuTarget.sbu (0060) --
     # one-directional onto SBU.
-    assert rel_count == 117, f"Expected 117 relationships, found {rel_count}"
+    # 116, not 117: Annual Target Planning dropped SbuTarget.sbu (0062); its
+    # three new tables have no relationships.
+    assert rel_count == 116, f"Expected 116 relationships, found {rel_count}"
 
 
 def test_reference_models_importable():

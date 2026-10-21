@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import UUID, CheckConstraint, DateTime, ForeignKey, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import UUID, CheckConstraint, DateTime, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import AuditMixin, Base
@@ -98,32 +98,91 @@ class TargetPlanAccount(AuditMixin, Base):
     account: Mapped["Account"] = relationship(lazy="joined")
 
 
-class SbuTarget(AuditMixin, Base):
-    """The GM-entered target for a whole SBU for a quarter (Plan vs Actuals
-    Tracking redesign, 2026-10-05). Separate from the sum of people's plans,
-    which is what the SBU Target Rollup shows. SBU Manager and above read;
-    Admin/GM write; no delete."""
+_PCT_SUM = "pct_jan_mar + pct_apr_jun + pct_jul_sep + pct_oct_dec = 100"
 
-    __tablename__ = "sbu_target"
+
+class BrandAnnualTarget(AuditMixin, Base):
+    """A brand's own yearly figure and Cabio's stretch on it, for the brand
+    year starting in start_year (docs/Annual-Target-Planning-Implementation-
+    Plan.md, D23, D24, D40). The pct_* columns are the brand's own seasonal
+    pattern -- all null means it follows its SBU's pattern (D25). Saving
+    works out its quarters into BrandVendorTarget (D46). Admin/GM only."""
+
+    __tablename__ = "brand_annual_target"
     __table_args__ = (
-        UniqueConstraint("sbu_id", "planning_period", name="uq_sbu_target"),
-        CheckConstraint("planning_period ~ '^\\d{4}-Q[1-4]$'", name="ck_sbu_target_planning_period"),
-        CheckConstraint("target_amount_lakhs >= 0", name="ck_sbu_target_nonneg"),
+        UniqueConstraint("brand_id", "start_year", name="uq_brand_annual_target"),
+        CheckConstraint("vendor_amount_lakhs >= 0", name="ck_brand_annual_target_vendor_nonneg"),
+        CheckConstraint("stretch_pct >= 0", name="ck_brand_annual_target_stretch_nonneg"),
+        CheckConstraint(
+            "(pct_jan_mar IS NULL AND pct_apr_jun IS NULL AND pct_jul_sep IS NULL AND pct_oct_dec IS NULL) OR "
+            f"(pct_jan_mar >= 0 AND pct_apr_jun >= 0 AND pct_jul_sep >= 0 AND pct_oct_dec >= 0 AND {_PCT_SUM})",
+            name="ck_brand_annual_target_pattern",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    brand_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("brand.id"), nullable=False)
+    start_year: Mapped[int] = mapped_column(Integer, nullable=False)
+    vendor_amount_lakhs: Mapped[Decimal] = mapped_column(Numeric(15, 2), nullable=False)
+    stretch_pct: Mapped[Decimal] = mapped_column(Numeric(5, 2), nullable=False, server_default="0")
+    pct_jan_mar: Mapped[Decimal | None] = mapped_column(Numeric(5, 2), nullable=True)
+    pct_apr_jun: Mapped[Decimal | None] = mapped_column(Numeric(5, 2), nullable=True)
+    pct_jul_sep: Mapped[Decimal | None] = mapped_column(Numeric(5, 2), nullable=True)
+    pct_oct_dec: Mapped[Decimal | None] = mapped_column(Numeric(5, 2), nullable=True)
+
+
+class SbuSeasonalPattern(AuditMixin, Base):
+    """How an SBU's brand years spread across the calendar quarters, per
+    calendar year (D25, D41). Tied to the months, not a brand's first
+    quarter. Admin/GM only."""
+
+    __tablename__ = "sbu_seasonal_pattern"
+    __table_args__ = (
+        UniqueConstraint("sbu_id", "year", name="uq_sbu_seasonal_pattern"),
+        CheckConstraint(
+            f"pct_jan_mar >= 0 AND pct_apr_jun >= 0 AND pct_jul_sep >= 0 AND pct_oct_dec >= 0 AND {_PCT_SUM}",
+            name="ck_sbu_seasonal_pattern_pct",
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     sbu_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("sbu.id"), nullable=False)
+    year: Mapped[int] = mapped_column(Integer, nullable=False)
+    pct_jan_mar: Mapped[Decimal] = mapped_column(Numeric(5, 2), nullable=False)
+    pct_apr_jun: Mapped[Decimal] = mapped_column(Numeric(5, 2), nullable=False)
+    pct_jul_sep: Mapped[Decimal] = mapped_column(Numeric(5, 2), nullable=False)
+    pct_oct_dec: Mapped[Decimal] = mapped_column(Numeric(5, 2), nullable=False)
+
+
+class PersonQuarterTarget(AuditMixin, Base):
+    """One person's target for a quarter -- an Area Manager's share of the
+    SBU, or a rep's share of their Area Manager's (D30, D32, D33, D45, D57).
+    Set by the person's direct manager, Admin or GM; seen by the person,
+    those above them, Admin and GM (RLS, migration 0062). No delete."""
+
+    __tablename__ = "person_quarter_target"
+    __table_args__ = (
+        UniqueConstraint("user_id", "sbu_id", "planning_period", name="uq_person_quarter_target"),
+        CheckConstraint("planning_period ~ '^\\d{4}-Q[1-4]$'", name="ck_person_quarter_target_planning_period"),
+        CheckConstraint("target_amount_lakhs >= 0", name="ck_person_quarter_target_nonneg"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("user_profile.id"), nullable=False)
+    sbu_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("sbu.id"), nullable=False)
     planning_period: Mapped[str] = mapped_column(String(10), nullable=False)
     target_amount_lakhs: Mapped[Decimal] = mapped_column(Numeric(15, 2), nullable=False)
-
-    sbu: Mapped["SBU"] = relationship(lazy="joined")
+    set_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("user_profile.id"), nullable=False)
 
 
 class BrandVendorTarget(AuditMixin, Base):
     """The number a brand/vendor actually promised Cabio for a quarter --
     Admin/GM only (docs/Brand-Level-Target-Planning-Implementation-Plan.md
-    decision #2). Compared against the SUM of TargetPlanBrandSplit rows for
-    the same brand/period to show the committed-vs-vendor gap."""
+    decision #2; read narrowed to Admin/GM by migration 0062, D23). From
+    2026-Q3 on, saved from the brand's yearly figure (BrandAnnualTarget,
+    D46). Compared against the SUM of TargetPlanBrandSplit rows for the
+    same brand/period to show the committed-vs-vendor gap; summed per SBU
+    as the SBU target (D47, D55)."""
 
     __tablename__ = "brand_vendor_target"
     __table_args__ = (
