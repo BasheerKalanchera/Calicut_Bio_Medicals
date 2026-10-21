@@ -31,6 +31,7 @@ import type { BrandResponse } from "../types/api-aliases";
 import { sumAllocation, isAllocationBalanced, roundToPrecision } from "../utils/allocationSplit";
 import { VISIT_FREQUENCY_LABEL, VISIT_FREQUENCIES } from "../utils/visitFrequency";
 import { BUSINESS_POTENTIAL_LABEL, toBusinessPotential } from "../utils/businessPotential";
+import { formatPlanningPeriod } from "../utils/formatter";
 
 const DEFAULT_VISIT_FREQUENCY: VisitFrequency = "MONTHLY";
 
@@ -203,7 +204,7 @@ export default function TargetPlanDialog({ sbuId, period, existing, onClose, onS
     onSaved();
   };
 
-  const title = `${existing && !isDraft ? "Revise " : ""}Plan & Coverage — ${period}`;
+  const title = `${existing && !isDraft ? "Revise " : ""}Plan & Coverage — ${formatPlanningPeriod(period)}`;
 
   return (
     <FormModal

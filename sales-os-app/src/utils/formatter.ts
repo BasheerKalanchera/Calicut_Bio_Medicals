@@ -46,6 +46,19 @@ export function getPlanningYearQuarters(fyStartYear: number): string[] {
   return [1, 2, 3, 4].map((q) => `${fyStartYear}-Q${q}`);
 }
 
+const QUARTER_MONTHS = ["Apr–Jun", "Jul–Sep", "Oct–Dec", "Jan–Mar"];
+
+// A "YYYY-Qn" planning period as screens show it (Annual Target Planning
+// D39): "2026-Q3" -> "Oct–Dec 2026", "2026-Q4" -> "Jan–Mar 2027". The code
+// alone reads as a calendar quarter (Q3 = Jul–Sep), which it isn't.
+export function formatPlanningPeriod(period: string): string {
+  const match = period.match(/^(\d{4})-Q([1-4])$/);
+  if (!match) return period;
+  const fyStartYear = parseInt(match[1], 10);
+  const q = parseInt(match[2], 10);
+  return `${QUARTER_MONTHS[q - 1]} ${q === 4 ? fyStartYear + 1 : fyStartYear}`;
+}
+
 // Steps a "YYYY-Qn" planning period forward/backward by `delta` quarters --
 // the quarter picker's prev/next arrows. Annual view reuses this with
 // delta=+/-4 to step a full fiscal year at a time.

@@ -215,6 +215,8 @@ export interface TargetVsActualPerson {
   plan_status: RosterStatus;
   // BR-PL-05: set while a revision of an approved plan is in flight ("was ₹X approved").
   previous_approved_total_lakhs: string | null;
+  // Their own quarterly target (D49); null if not set or not visible to the caller.
+  target_lakhs: string | null;
   planned_lakhs: string;
   // PO date in the quarter, Lost excluded; separate from Won.
   po_received_lakhs: string;
@@ -241,7 +243,7 @@ export interface TargetVsActualZone {
 }
 
 // The SBU row (SBU Manager and above), company row (Admin/GM) or team row
-// (Area Manager: their team's totals against their SBU's target).
+// (Area Manager: their team's totals against their own target, D49).
 // target_lakhs null = not entered yet (company: until every SBU has one).
 export interface TargetVsActualSummaryRow {
   target_lakhs: string | null;
@@ -274,16 +276,102 @@ export interface TargetVsActualResponse {
   brands: TargetVsActualBrand[];
 }
 
-// One GM-entered target per SBU per quarter (sbu_target register).
+// The SBU's quarterly target: its brands' quarterly total, never typed
+// (Annual Target Planning D47, D53, D55). null = no brand has a figure.
 export interface SbuTarget {
-  id: string;
+  sbu_id: string;
+  planning_period: string;
+  target_amount_lakhs: string | null;
+}
+
+// --- Annual Target Planning Part 1 ---
+
+// Shares of a year by calendar quarter, adding up to 100 (D25, D41).
+export interface SeasonalPattern {
+  pct_jan_mar: string;
+  pct_apr_jun: string;
+  pct_jul_sep: string;
+  pct_oct_dec: string;
+}
+
+export interface SeasonalPatternInput {
+  pct_jan_mar: number;
+  pct_apr_jun: number;
+  pct_jul_sep: number;
+  pct_oct_dec: number;
+}
+
+export interface SbuSeasonalPattern extends SeasonalPattern {
+  sbu_id: string;
+  year: number;
+}
+
+export interface SbuSeasonalPatternSet extends SeasonalPatternInput {
+  sbu_id: string;
+  year: number;
+}
+
+export interface BrandAnnualTargetQuarter {
+  planning_period: string;
+  // What is saved as the brand's quarterly target (worked out from the
+  // year, or typed in before 2026-Q3, D46a).
+  saved_lakhs: string | null;
+}
+
+// One brand on Brand Target Tracking for a calendar year (D43).
+export interface BrandAnnualTargetRow {
+  brand_id: string;
+  brand_name: string;
+  sbu_id: string;
+  year_start_month: number;
+  start_year: number;
+  // null until the GM enters the brand's figure (D42).
+  vendor_amount_lakhs: string | null;
+  stretch_pct: string | null;
+  stretched_lakhs: string | null;
+  own_pattern: SeasonalPattern | null;
+  // Its own pattern, else its SBU's for start_year; null if neither.
+  effective_pattern: SeasonalPattern | null;
+  quarters: BrandAnnualTargetQuarter[];
+}
+
+export interface BrandAnnualTargetSet {
+  brand_id: string;
+  start_year: number;
+  vendor_amount_lakhs: number;
+  stretch_pct: number;
+  // null = follow the SBU's pattern (D25).
+  pattern: SeasonalPatternInput | null;
+}
+
+// Target & Coverage Planning's "Your target" line and Team targets panel.
+export interface TeamTargetPerson {
+  user_id: string;
+  display_name: string;
+  role_name: string | null;
+  target_lakhs: string | null;
+}
+
+export interface TeamTargetsResponse {
+  planning_period: string;
+  sbu_id: string | null;
+  // null if not set, or Admin/GM (who have none).
+  own_target_lakhs: string | null;
+  reports: TeamTargetPerson[];
+  reports_total_lakhs: string;
+  // The caller's own target; for Admin/GM the SBU target.
+  compare_to_lakhs: string | null;
+}
+
+export interface PersonQuarterTargetSet {
+  user_id: string;
+  planning_period: string;
+  target_amount_lakhs: number;
+}
+
+export interface PersonQuarterTarget {
+  user_id: string;
   sbu_id: string;
   planning_period: string;
   target_amount_lakhs: string;
-}
-
-export interface SbuTargetSet {
-  sbu_id: string;
-  planning_period: string;
-  target_amount_lakhs: number;
 }

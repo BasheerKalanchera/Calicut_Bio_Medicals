@@ -16,7 +16,7 @@ import type {
   TargetVsActualPerson,
   TargetVsActualSummaryRow,
 } from "../types/targetPlanning";
-import { formatLakhs, getCurrentPlanningPeriod, shiftPlanningPeriod } from "../utils/formatter";
+import { formatLakhs, formatPlanningPeriod, getCurrentPlanningPeriod, shiftPlanningPeriod } from "../utils/formatter";
 
 // Local stopgap type -- listSbus returns Promise<unknown> today (see
 // docs/Backlog.md "Type the shared frontend service functions properly").
@@ -169,15 +169,16 @@ function PersonDetail({ person }: { person: TargetVsActualPerson }) {
   );
 }
 
-// Team plans (bottom-up) as a share of the GM's SBU target (top-down); a dash
-// until a target is set.
+// Team plans (bottom-up) as a share of the target (top-down); a dash until
+// a target is set.
 function plansVsTarget(row: TargetVsActualSummaryRow): string | null {
   const target = row.target_lakhs === null ? 0 : parseFloat(row.target_lakhs);
   return target > 0 ? String((parseFloat(row.planned_lakhs) / target) * 100) : null;
 }
 
-// The team row (Area Manager), SBU row (SBU Manager and above) and company
-// row (Admin/GM), measured against the GM-entered SBU target(s).
+// The team row (Area Manager: against their own target), SBU row (SBU
+// Manager and above: against the SBU target, its brands' total) and company
+// row (Admin/GM: against every SBU's target) -- Annual Target Planning D49.
 function SummaryRows({ teamRow, sbuRow, companyRow }: { teamRow: TargetVsActualSummaryRow | null; sbuRow: TargetVsActualSummaryRow | null; companyRow: TargetVsActualSummaryRow | null }) {
   const rows: { key: string; label: string; row: TargetVsActualSummaryRow; notSet: string }[] = [];
   if (teamRow) rows.push({ key: "team", label: "Your team", row: teamRow, notSet: "Target not set" });
@@ -189,13 +190,13 @@ function SummaryRows({ teamRow, sbuRow, companyRow }: { teamRow: TargetVsActualS
       <Table size="small">
         <TableHead>
           <TableRow>
-            <TableCell sx={headCellSx}>Against SBU target</TableCell>
-            <TableCell sx={numHeadSx}>SBU target (GM)</TableCell>
+            <TableCell sx={headCellSx}>Against target</TableCell>
+            <TableCell sx={numHeadSx}>Target</TableCell>
             <TableCell sx={numHeadSx}>Team plans</TableCell>
-            <TableCell sx={numHeadSx}>Plans vs SBU target</TableCell>
+            <TableCell sx={numHeadSx}>Plans vs target</TableCell>
             <TableCell sx={numHeadSx}>PO received</TableCell>
             <TableCell sx={numHeadSx}>Won (paid)</TableCell>
-            <TableCell sx={numHeadSx}>% of SBU target</TableCell>
+            <TableCell sx={numHeadSx}>Won % of target</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -267,7 +268,7 @@ export default function TargetVsActualsSection() {
       <IconButton size="small" aria-label="Previous quarter" onClick={() => setPeriod((p) => shiftPlanningPeriod(p, -1))}>
         <ChevronLeftIcon fontSize="small" />
       </IconButton>
-      <Box sx={{ fontSize: "0.8125rem", fontWeight: 700, minWidth: 64, textAlign: "center" }}>{period}</Box>
+      <Box sx={{ fontSize: "0.8125rem", fontWeight: 700, minWidth: 96, textAlign: "center" }}>{formatPlanningPeriod(period)}</Box>
       <IconButton size="small" aria-label="Next quarter" onClick={() => setPeriod((p) => shiftPlanningPeriod(p, 1))}>
         <ChevronRightIcon fontSize="small" />
       </IconButton>
@@ -319,6 +320,7 @@ export default function TargetVsActualsSection() {
                   <TableCell sx={{ width: 40 }} />
                   <TableCell sx={headCellSx}>Person</TableCell>
                   <TableCell sx={headCellSx}>Status</TableCell>
+                  <TableCell sx={numHeadSx}>Target</TableCell>
                   <TableCell sx={numHeadSx}>Rep Plan</TableCell>
                   <TableCell sx={numHeadSx}>PO received</TableCell>
                   <TableCell sx={numHeadSx}>Won (paid)</TableCell>
@@ -351,6 +353,7 @@ export default function TargetVsActualsSection() {
                         <TableCell sx={{ fontSize: "0.75rem", fontWeight: 700, color: STATUS_COLOR[p.plan_status], whiteSpace: "nowrap" }}>
                           {STATUS_LABEL[p.plan_status]}
                         </TableCell>
+                        <TableCell sx={numCellSx}>{lakhs(p.target_lakhs)}</TableCell>
                         <TableCell sx={numCellSx}>
                           {submitted || lastApproved ? lakhs(p.planned_lakhs) : DASH}
                           {submitted && p.previous_approved_total_lakhs !== null && (
@@ -369,7 +372,7 @@ export default function TargetVsActualsSection() {
                       {open && (
                         <TableRow>
                           <TableCell />
-                          <TableCell colSpan={8}>
+                          <TableCell colSpan={9}>
                             <PersonDetail person={p} />
                           </TableCell>
                         </TableRow>

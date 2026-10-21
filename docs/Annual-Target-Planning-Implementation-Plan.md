@@ -309,6 +309,11 @@ this replan: D8, D12, D12a, D14.
 - D63. A brand made inactive still counts in its SBU's target for any
   quarter it has a saved figure, so a quarter's total doesn't drop when
   a brand is switched off — Basheer, 2026-10-21.
+- D64. Brand Target Tracking shows one line per brand (own figure,
+  stretch, stretched); its four quarters, each with target, committed
+  and gap, open under the line. Not four quarter columns: twelve figures
+  don't fit, and brands whose year starts in another month wouldn't line
+  up under month headings — Basheer, 2026-10-21.
 
 ## Figures and sources
 

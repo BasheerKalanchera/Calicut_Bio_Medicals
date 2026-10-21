@@ -21,6 +21,7 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import FormModal from "../components/FormModal";
 import SbuTargetBox from "../components/SbuTargetBox";
+import TeamTargetsPanel, { YourTargetLine } from "../components/TeamTargetsPanel";
 import TargetPlanDetails from "../components/TargetPlanDetails";
 import TargetPlanDialog from "../components/TargetPlanDialog";
 import { useAuth } from "../contexts/AuthContext";
@@ -41,6 +42,7 @@ import {
   getFiscalYearOfPeriod,
   getPlanningYearQuarters,
   formatLakhs,
+  formatPlanningPeriod,
 } from "../utils/formatter";
 import type { RosterStatus, TargetPlan, TargetPlanSbu, TargetPlanStatus } from "../types/targetPlanning";
 import type { BrandResponse } from "../types/api-aliases";
@@ -54,11 +56,14 @@ interface SbuOption { id: string; name: string }
 // else (SBU Manager/Area Manager/Admin/GM) does, scoped by RLS.
 const ROLLUP_VISIBLE_ROLES = new Set(["Admin", "General Manager", "SBU Manager", "Area Manager"]);
 
-// The GM-entered SBU target (Target vs Actuals): Admin/GM set it, an SBU
-// Manager or Area Manager sees their own SBU's read-only -- matches the
-// /planning/sbu-targets permissions.
-const SBU_TARGET_VIEW_ROLES = new Set(["Admin", "General Manager", "SBU Manager", "Area Manager"]);
-const SBU_TARGET_EDIT_ROLES = new Set(["Admin", "General Manager"]);
+// The SBU target (its brands' total, read-only): Admin, GM and an SBU
+// Manager only -- matches /planning/sbu-targets (Annual Target Planning
+// D26, D34: Area Managers see only their own target).
+const SBU_TARGET_VIEW_ROLES = new Set(["Admin", "General Manager", "SBU Manager"]);
+
+// Admin/GM have no quarterly target of their own (no one above them sets
+// one, D45); they divide the SBU target instead (D62).
+const COMPANY_WIDE_ROLES = new Set(["Admin", "General Manager"]);
 
 // Admin is purely an oversight/approval account -- unlike GM, who sells
 // personally alongside running the company (Basheer's call, 2026-09-17),
@@ -200,6 +205,7 @@ export default function TargetPlanningScreen() {
   // one) needs to choose which SBU a target/rollup applies to. Anyone with
   // a real home SBU never sees a picker at all.
   const needsSbuChoice = !userProfile?.sbu;
+  const isCompanyWide = !!roleName && COMPANY_WIDE_ROLES.has(roleName);
 
   const [viewMode, setViewMode] = useState<"quarterly" | "annual">("quarterly");
   const [period, setPeriod] = useState(() => getCurrentPlanningPeriod());
@@ -225,7 +231,7 @@ export default function TargetPlanningScreen() {
   const fyStartYear = getFiscalYearOfPeriod(period);
   const yearQuarters = getPlanningYearQuarters(fyStartYear);
   const isAnnual = viewMode === "annual";
-  const periodLabel = isAnnual ? fiscalYearLabel(fyStartYear) : period;
+  const periodLabel = isAnnual ? fiscalYearLabel(fyStartYear) : formatPlanningPeriod(period);
 
   const { data: sbus = [] } = useQuery({
     queryKey: ["sbus"],
@@ -420,6 +426,7 @@ export default function TargetPlanningScreen() {
           <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5 }}>My Plan</Typography>
           {!isAnnual ? (
             <>
+              {!isCompanyWide && userProfile?.sbu && <YourTargetLine sbuId={userProfile.sbu.id} period={period} />}
               {mySbus.length > 1 && (
                 <Typography sx={{ mb: 1.5 }}>
                   Total across SBUs: <strong>{formatLakhs(myPeriodTotal)}</strong>
@@ -451,7 +458,7 @@ export default function TargetPlanningScreen() {
                     <TableRow key={sbu.id}>
                       <TableCell>{sbu.name}</TableCell>
                       <TableCell colSpan={2}>
-                        <Typography color="text.secondary">No plan set for {period} yet.</Typography>
+                        <Typography color="text.secondary">No plan set for {formatPlanningPeriod(period)} yet.</Typography>
                       </TableCell>
                       <TableCell align="right">
                         <Button size="small" variant="contained" onClick={() => openTargetDialog(period, null, sbu.id)}>Plan</Button>
@@ -490,7 +497,7 @@ export default function TargetPlanningScreen() {
                         const t = block.byQuarter[q];
                         return (
                           <TableRow key={`${block.sbu.id}-${q}`}>
-                            <TableCell sx={{ pl: 3, color: "text.secondary" }}>{q}</TableCell>
+                            <TableCell sx={{ pl: 3, color: "text.secondary" }}>{formatPlanningPeriod(q)}</TableCell>
                             <TableCell>
                               {t ? <PlanAmount amount={t.target_amount_lakhs} note={previousApprovedNote(t.status, t.previous_approved_total_lakhs)} /> : "—"}
                             </TableCell>
@@ -549,7 +556,7 @@ export default function TargetPlanningScreen() {
                               so in the team list this tag would never go away. */}
                           {t.change_note && <Chip label="Revised" variant="outlined" size="small" sx={{ ml: 0.5 }} />}
                         </TableCell>
-                        <TableCell>{t.planning_period}</TableCell>
+                        <TableCell>{formatPlanningPeriod(t.planning_period)}</TableCell>
                         <TableCell align="right">{hospitalCount(t)}</TableCell>
                         <TableCell>
                           <Box component="span" sx={belowApproved ? { color: "warning.main", fontWeight: 700 } : undefined}>
@@ -604,7 +611,10 @@ export default function TargetPlanningScreen() {
             {!isAnnual ? (
               <>
                 {rollupSbuId && roleName && SBU_TARGET_VIEW_ROLES.has(roleName) && (
-                  <SbuTargetBox key={`${rollupSbuId}-${period}`} sbuId={rollupSbuId} period={period} canEdit={SBU_TARGET_EDIT_ROLES.has(roleName)} />
+                  <SbuTargetBox sbuId={rollupSbuId} period={period} />
+                )}
+                {rollupSbuId && (
+                  <TeamTargetsPanel key={`${rollupSbuId}-${period}`} sbuId={rollupSbuId} period={period} isCompanyWide={isCompanyWide} />
                 )}
                 {roster && (
                   <Typography sx={{ mb: 1.5 }}>
@@ -680,7 +690,7 @@ export default function TargetPlanningScreen() {
                     {roster && roster.people.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={5}>
-                          <Typography color="text.secondary">No one in this team for {period}.</Typography>
+                          <Typography color="text.secondary">No one in this team for {formatPlanningPeriod(period)}.</Typography>
                         </TableCell>
                       </TableRow>
                     )}
@@ -713,7 +723,7 @@ export default function TargetPlanningScreen() {
                           const t = p.byQuarter[q];
                           return (
                             <TableRow key={`${p.user.id}-${q}`}>
-                              <TableCell sx={{ pl: 3, color: "text.secondary" }}>{q}</TableCell>
+                              <TableCell sx={{ pl: 3, color: "text.secondary" }}>{formatPlanningPeriod(q)}</TableCell>
                               <TableCell>
                                 {t ? <PlanAmount amount={t.target_amount_lakhs} note={previousApprovedNote(t.status, t.previous_approved_total_lakhs)} /> : "—"}
                               </TableCell>
@@ -762,7 +772,7 @@ export default function TargetPlanningScreen() {
         submitLabel={decision?.status === "APPROVED" ? "Approve" : "Reject"}
       >
         <Typography color="text.secondary">
-          {decision && `${decision.targetPlan.planning_period} · ${formatLakhs(Number(decision.targetPlan.target_amount_lakhs))}`}
+          {decision && `${formatPlanningPeriod(decision.targetPlan.planning_period)} ·${formatLakhs(Number(decision.targetPlan.target_amount_lakhs))}`}
         </Typography>
         <TextField
           label="Note (optional)"
