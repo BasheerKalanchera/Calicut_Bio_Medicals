@@ -4068,3 +4068,13 @@ moved to after the restart (Basheer).
   live-data/UAT/lost-work slips only; 31 tracker items accepted, not
   counted (Claude's sorting, Basheer: "I will go with your judgement");
   open 9 + 1 partly built. The paperwork and right-pack checks dropped.
+
+### Retro (Plan & Chore, 2026-10-21) — new short form
+
+- **Corrections from Basheer this session: 2.** (1) Took "retire" the
+  `/build` note as delete it; Basheer: "Why should we delete the /build's
+  handover note? We can keep it right." (2) Listed the items to accept by
+  P-number only; Basheer: "Just by number I can't say what is what."
+  Counted from the session's messages (the earlier part from the context
+  summary's list of his messages).
+- No guard-fixable or live-data/UAT/lost-work slip; tracker unchanged.

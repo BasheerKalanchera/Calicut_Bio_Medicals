@@ -314,6 +314,12 @@ this replan: D8, D12, D12a, D14.
   and gap, open under the line. Not four quarter columns: twelve figures
   don't fit, and brands whose year starts in another month wouldn't line
   up under month headings — Basheer, 2026-10-21.
+- D65. Step 4's docs leave out two items: the in-app help for these
+  screens is written in step 3 of
+  `docs/User-Manual-And-Help-Catchup-Implementation-Plan.md`, which
+  already covers them; Traceability row 3.1's note is added once, after
+  Part 2, since the Year view finishes the "annual" part — Basheer,
+  2026-10-21.
 
 ## Figures and sources
 
@@ -498,9 +504,10 @@ Each gets a check before and after, in the E2E test plan.
 - ADR-019 (Planning Calendar Model): addendum — brand years start in any
   calendar quarter; screens label quarters by month; storage unchanged.
 - Traceability row 3.1: note that the annual part is built by this plan
-  (D10).
-- `docs/UAT-User-Manual.md` and in-app help for the three screens;
-  its "Set the quarter's SBU target" section goes (D55).
+  (D10) — after Part 2 (D65).
+- `docs/UAT-User-Manual.md` for the three screens; its "Set the
+  quarter's SBU target" section goes (D55). In-app help: the Help
+  Catch-up plan's step 3 (D65).
 - Where the typed SBU target is described as current (D55):
   `docs/Target-Coverage-Roster-Implementation-Plan.md` and
   `docs/Plan-vs-Actuals-Tracking-Implementation-Plan.md` (a "replaced by"

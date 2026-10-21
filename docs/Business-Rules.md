@@ -128,6 +128,60 @@ the matrix; for an edit that changes no rule (e.g. a typo), add
 * **Origin:** Hospital-wise planning decisions, 2026-09-27; own-area limit
   Basheer 2026-09-30. Build: same plan.
 
+### BR-PL-10: A Brand's Yearly Target Is Stretched and Spread by Season
+* **Rule:** only Admin and General Manager see or set brand targets. Each
+  brand has a month its year starts in — January, April, July or October
+  only, so each brand quarter is exactly one Cabio quarter. The GM enters
+  the brand's own yearly figure (₹ Lakhs, 0 or more) when the brand sends
+  it, and a stretch percentage; the stretched target is the brand's figure
+  plus the stretch. It is spread over the brand's four quarters by the
+  SBU's **seasonal pattern** for the calendar year the brand's year starts
+  in (four shares tied to the months Jan–Mar, Apr–Jun, Jul–Sep, Oct–Dec,
+  adding up to 100 %), or by the brand's own pattern if the GM gives it one.
+* **Saved quarters:** the four quarters are saved as the brand's quarterly
+  targets. Only quarters from Oct–Dec 2026 on are saved, and a later change
+  (figure, stretch or pattern) re-saves only the quarter in progress and
+  later ones — quarters already ended keep their targets. Changing an SBU's
+  pattern re-saves every brand that follows it; a brand with its own
+  pattern is left alone.
+* **Constraints:** the year-start month can't change once the brand has a
+  yearly figure. A yearly figure can't be saved while neither the brand nor
+  its SBU has a seasonal pattern for that year. A brand made inactive still
+  counts in its SBU's target for any quarter it has a saved figure.
+* **Origin:** Annual Target Planning D23–D25, D40–D43, D46, D46a, D50, D51,
+  D59, D60, D63 (Basheer, 2026-10-17 to 2026-10-21). Build:
+  `docs/Annual-Target-Planning-Implementation-Plan.md`.
+
+### BR-PL-11: The SBU's Quarterly Target Is Its Brands' Total
+* **Rule:** an SBU's target for a quarter is the total of its brands'
+  quarterly targets (BR-PL-10), for every quarter. It can't be typed in.
+  Target vs Actuals measures the SBU and Company rows against it.
+* **Who sees it:** Admin, General Manager and that SBU's SBU Manager only.
+  Area Managers and reps don't see it (they see their own target,
+  BR-PL-12).
+* **Origin:** Annual Target Planning D26, D34, D47, D53, D55 (Basheer,
+  2026-10-17 to 2026-10-20). Replaces the GM's typed SBU target (Plan vs
+  Actuals Tracking, 2026-10). Build: same plan.
+
+### BR-PL-12: Each Person's Quarterly Target Is Set by Their Manager
+* **Rule:** each person in an SBU may have one target per quarter, set by
+  the person they report to (the same reporting line plan approvals use),
+  or by Admin or General Manager. No one sets their own. A target is
+  separate from the person's plan: the plan is how they mean to reach it.
+* **Who sees it:** the person, anyone above them in the reporting line,
+  Admin and General Manager.
+* **Team targets (warn only):** a manager divides their own quarterly
+  target among the people who report to them, one figure per person; while
+  the figures don't add up to the manager's target, a warning shows how far
+  short or over they are. Saving is still allowed. Admin and General
+  Manager divide the SBU target (BR-PL-11) among the people at the top of
+  the SBU (today the Area Managers), against the SBU target.
+* **Target vs Actuals:** an Area Manager's "Your team" row is measured
+  against the Area Manager's own target; each rep's target shows beside
+  their plan.
+* **Origin:** Annual Target Planning D30, D33, D35, D45, D49, D57, D61, D62
+  (Basheer, 2026-10-19 to 2026-10-21). Build: same plan.
+
 ---
 
 # 3. Opportunity Management & Stage Gates

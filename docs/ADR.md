@@ -116,6 +116,16 @@ This document serves as the formal Architecture Decision Register for the Cabio 
   * Fiscal quarter mapping: Q1 = April–June, Q2 = July–September, Q3 = October–December, Q4 = January–March.
   * All fiscal period references across the system must follow this convention.
 * **Affected Modules:** Target Planning, Coverage Planning, Reporting, Forecasting.
+* **Addendum (2026-10-21, Annual Target Planning D39–D41):**
+  * A brand's own year may start in January, April, July or October only,
+    so each brand quarter is exactly one fiscal quarter; a brand's quarterly
+    targets are stored under the same `YYYY-Qn` periods (e.g. Jan–Mar 2027
+    = `2026-Q4`). Seasonal patterns are tied to calendar months, not to a
+    brand's first quarter.
+  * Screens label quarters by month and year ("Oct–Dec 2026", via
+    `formatPlanningPeriod`), because a code like "2026-Q3" reads as
+    July–September in calendar terms. Year labels ("FY 2026-27") stay.
+  * Storage is unchanged: `planning_period` stays `YYYY-Qn`.
 
 ### ADR-022: Project Ownership Model
 

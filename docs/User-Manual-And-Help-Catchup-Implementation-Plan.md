@@ -53,8 +53,10 @@ After this work:
   make my quarter's plan", while an Admin sees "How do I rate hospitals"
   and "How do I approve a plan".
 - The manual and help use "plan" for a rep's own figure and "target"
-  only for the GM's SBU target and vendor brand targets (Frontend
-  Standards 6.10, built `25fbeab` 2026-10-14).
+  only for a figure set from the top: a brand's target, the SBU target,
+  or a person's quarterly target set by the person they report to
+  (Frontend Standards 6.10, built `25fbeab` 2026-10-14; widened for
+  Annual Target Planning 2026-10-21).
 - A test stops a new screen from shipping without help, and each future
   feature updates its own help as part of the same change.
 

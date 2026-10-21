@@ -149,21 +149,6 @@ Moved from the handover note 2026-10-12; none of these blocks the E2E.
 - **Dev test Opportunity "Test +lead screen" (Basheer K):** reassign,
   don't delete (it has Activity rows).
 
-### Area targets under the SBU target — parked (Basheer, 2026-10-13)
-
-**Parked 2026-10-13:** not happening now (Basheer). Reopen only if
-leadership asks for per-area figures.
-
-
-Raised at the Target vs Actuals E2E (D6): should the GM or SBU Manager
-split each SBU's quarterly target into a target per area (e.g. Imaging
-₹100L as Shruthi's area ₹40L, Fazal's ₹60L), with each Area Manager
-measured against their own figure? Not built: it needs a new stored
-figure, a screen to enter it, and a rule for area figures that don't add
-up to the SBU target. Meanwhile Area Managers see the whole SBU target
-against their team's own totals ("Your team" row; Plan-vs-Actuals plan,
-step 6c). The share view stays as is.
-
 ### Target Planning: screen keeps its own copy of who sees the SBU target — not started (2026-10-10)
 
 Found by the step 6c code review. Target Planning decides whether to show

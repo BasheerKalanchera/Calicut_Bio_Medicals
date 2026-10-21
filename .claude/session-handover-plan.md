@@ -18,6 +18,15 @@ session edits this note._
   `7dceac8` with the retro. Part 1 is now built by Build & Test, not
   `/build` (Basheer, 21 Oct).
 
+## From Build & Test — for the docs batch due now (Basheer's yes, 21 Oct)
+
+- Include Build & Test's uncommitted Part 1 step 4 docs: Business-Rules
+  BR-PL-10/11/12 + Matrix, ADR-019 addendum, UAT-User-Manual, Frontend
+  Standards 6.10, Plan vs Actuals note, Annual Target plan D65.
+- This session's two edits made 21 Oct: Help Catch-up plan "target"
+  wording widened; Backlog "Area targets under the SBU target" removed
+  (Plan vs Actuals pointer reworded). Next: Basheer approves the batch.
+
 ## Next full UAT move — what goes, and what must land first
 
 - **Must land first:** User Manual and Help Catch-up plan. Draft PDF
@@ -36,7 +45,9 @@ session edits this note._
 
 - 21 Oct: exercise cut down (Basheer) — weekly review, retro = count of
   his corrections; 31 judgement items accepted, open 9 (Reviews line in
-  the tracker; archive 21 Oct entry). Next review 2026-10-28.
+  the tracker; archive 21 Oct entry). Committed with the doc tidy-up in
+  `1f5b425`, pushed. Next review 2026-10-28. 21 Oct retro (archive,
+  2 corrections) and this line uncommitted — next docs batch (Basheer).
   The paperwork and right-pack checks are dropped with it.
 
 ## Chores

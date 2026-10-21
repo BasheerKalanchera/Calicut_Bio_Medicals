@@ -1,7 +1,8 @@
 # Cabio Sales OS — User Manual
 
 **For:** the UAT release after the October 2026 move. Written from the Dev
-build of 15 October 2026 (User Manual and Help Catch-up plan, step 2).
+build of 15 October 2026 (User Manual and Help Catch-up plan, step 2);
+targets updated 21 October 2026 for Annual Target Planning Part 1.
 **Status:** draft for Basheer's review (plan decision D8); goes out as a PDF
 with the UAT move (D5).
 
@@ -159,6 +160,8 @@ In **Edit**, change **Status**.
 4. **Complete**.
 
 ### Make your quarterly plan
+**My Plan** shows **Your target for** the quarter (e.g. Oct–Dec 2026), set
+by your manager — or **Not set yet**. Your plan is how you mean to reach it.
 1. **Target & Coverage Planning** → **Quarterly** → **My Plan**.
 2. **Plan** next to your SBU (or **Continue** for a draft, **Revise** for a
    submitted one).
@@ -195,10 +198,19 @@ Everything in A2, plus:
 **Reject** (with an optional note). A revised plan shows **Revised** and
 the rep's reason.
 
-### See the team's plans and the SBU target
+### See the team's plans
 On **Target & Coverage Planning**, **SBU Target & Plans** shows every
-plan in your scope, with the GM's SBU target for the quarter (read-only for
-you). **Annual** shows the four quarters added up.
+plan in your scope. **Annual** shows the four quarters added up. An SBU
+Manager also sees the **SBU target** for the quarter: the total of the
+SBU's brand targets, read-only. An Area Manager doesn't; they see their own
+target (**Your target for** the quarter, set by the person they report to).
+
+### Divide your target among your team
+**Target & Coverage Planning** → **Quarterly** → **SBU Target & Plans** →
+**Team targets** → **Set target** (or **Change**) next to a person → amount
+in ₹ Lakhs → **Save**. One figure per person who reports to you. While the
+figures don't add up to your own target, a warning shows how far short or
+over they are; you can still save. You can't set your own target.
 
 ### Watch the team
 **Insights Dashboard** has two extra tabs for you: **Team Activity** (last
@@ -224,16 +236,30 @@ waits for you; the notification is for your awareness.
 Your menu has no Marketing Lead Queue or Next Actions; it adds the
 **ADMINISTRATION** group.
 
-### Set the quarter's SBU target
-**Target & Coverage Planning** → **Quarterly** → **SBU Target & Plans** →
-**Set target** (or **Change**) → amount in ₹ Lakhs → **Save**. Target vs
-Actuals measures the SBU's Won against it.
-
 ### Set brand targets
-**Brand Target Tracking** → pick the SBU and quarter → **Set Target** (or
-**Revise**) next to a brand → **Vendor Target Amount (₹ Lakhs)** → **Save**.
-The screen shows each brand's **Vendor Target**, **Team Committed** (from
-submitted plans) and **Gap**.
+**Brand Target Tracking** → pick the year (◀ ▶) and the SBU.
+1. **Seasonal pattern for** the year: how the SBU's year is shared across
+   **Jan–Mar**, **Apr–Jun**, **Jul–Sep** and **Oct–Dec** (adding up to
+   100 %) → **Save pattern**. Set it before entering brand targets for that
+   year.
+2. **Set target** (or **Revise**) next to a brand → **Year starts in**
+   (January, April, July or October; can't be changed once the brand has a
+   yearly figure) → **Brand's own yearly figure (₹ Lakhs)** → **Stretch
+   (%)** (the stretched target shows below it) → tick **This brand has its
+   own seasonal pattern** only if it differs → **Save**.
+- The stretched target is spread over the brand's four quarters and saved
+  as its quarterly targets. Open a brand (▸) to see each quarter's
+  **Target**, **Team committed** (from submitted plans) and **Gap**.
+- Changing a figure, stretch or pattern later changes only the quarter in
+  progress and later ones; quarters already ended keep their targets.
+  Changing the SBU's pattern also changes every brand that follows it.
+- The SBU's target for a quarter is the total of its brands' targets; it
+  can't be typed. Target vs Actuals measures the SBU's Won against it.
+
+### Divide the SBU target
+**Target & Coverage Planning** → **Quarterly** → **SBU Target & Plans** →
+pick the SBU → **Team targets**: one figure for each person at the top of
+the SBU (today the Area Managers), against the SBU target.
 
 ### Create an Opportunity for either SBU
 In the New Opportunity form you must choose the **SBU**. Other roles always
@@ -378,9 +404,11 @@ How you, or your team, are doing.
 - **Target vs Actuals**: for the quarter — **PO received** (POs dated in
   the quarter), **Won (paid)**, **Expected this quarter** (open
   Opportunities, adjusted by their chance) and **Likely finish** (Won +
-  Expected), against the plan and the SBU target. Broken down by zone and
-  by person. Flags Opportunities whose closing date has passed. Arrows move
-  between quarters.
+  Expected), against the plan and the target — the SBU target (Admin, GM,
+  SBU Manager) or, for an Area Manager's **Your team** row, their own
+  target. Broken down by zone and by person, with each person's target
+  beside their plan. Flags Opportunities whose closing date has passed.
+  Arrows move between quarters.
 - **Pipeline**: **Active Pipeline Value** and **Weighted Forecast** (value
   adjusted by chance), grouped by Stage, Rep, SBU, Zone, Product or Brand.
   Click a bar to see its Opportunities.
@@ -393,13 +421,16 @@ Quarterly plans: which hospitals each person will cover and how much they
 expect to bring in.
 - **Quarterly** shows one quarter; **Annual** adds up the four quarters
   of the year.
-- **My Plan** (everyone except Admin): your plan and its status — Not
-  started, Draft, Pending Approval, Approved, Rejected, or Needs Brand
-  Split.
+- Quarters are shown by month, e.g. **Oct–Dec 2026**.
+- **My Plan** (everyone except Admin): **Your target for** the quarter (not
+  for GM), your plan and its status — Not started, Draft, Pending Approval,
+  Approved, Rejected, or Needs Brand Split.
 - **Needs Your Approval** (managers): plans waiting for you. A revised plan
   is marked **Revised** with the reason.
-- **SBU Target & Plans** (managers, Admin, GM): every plan in your scope
-  against the GM's SBU target for the quarter.
+- **SBU Target & Plans** (managers, Admin, GM): every plan in your scope;
+  the **SBU target** (brands' total, read-only; Admin, GM and SBU Manager
+  only); and **Team targets**, where you divide your target among the people
+  who report to you.
 
 ## Product Catalog
 
@@ -436,8 +467,10 @@ zone views, a zone's figures include the zones under it.
 - **Audit Log**: who added, changed or removed what, and when.
 - **Rate Hospitals**: set each hospital's Business Potential (High,
   Medium, Low) with a reason.
-- **Brand Target Tracking**: each brand's vendor target for the quarter,
-  against what the team has committed in submitted plans, and the gap.
+- **Brand Target Tracking**: by calendar year — the SBU's seasonal
+  pattern, and each brand's own yearly figure, stretch and stretched
+  target, with its four quarters (target, what the team has committed in
+  submitted plans, and the gap).
 
 See A4 for the steps.
 
