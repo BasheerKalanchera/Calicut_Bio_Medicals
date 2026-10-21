@@ -6,10 +6,11 @@ keeps its own note: `.claude/session-handover-build.md`. Only the Plan & Chore
 session edits this note._
 
 - Forecast plan (untracked, other session): not in commits; at review, line 110 → BR-FIN-09.
-- 21 Oct (Basheer's yes): `/build` note fixed — live copy in the
-  worktree brought up to date (uncommitted; `/build` commits it before
-  merging `main`); main-folder copy made a frozen pointer, goes in the
-  next docs batch.
+- **In progress 21 Oct (Basheer):** `/build` closed. (1) docs batch
+  incl. Build & Test's D22 checklist edits; (2) merge `worktree-build`
+  (docs only, `59e3940`) into `main`, both sides' lines kept; retire
+  `session-handover-build-parallel.md`; (3) remove the worktree and
+  branch (local + GitHub), asking first. Each commit shown first.
 
 ## Annual Target Planning — approved 2026-10-20 (D1–D56)
 
@@ -18,9 +19,9 @@ session edits this note._
   `006f4cb`, both pushed 2026-10-20 — `/build` can take in `main` now.
 - 21 Oct: Part 1 E2E plan written (sections A–H, uncommitted) and D57
   added to the plan (SBU Manager gets one figure from Haroon, divides it
-  among their Area Managers) — Basheer's yes. `/build` must hear of D57
-  before step 2 (Basheer passes it on). Both files go in the next docs
-  batch. After that: two sessions only (Build & Test, `/build`).
+  among their Area Managers) — Basheer's yes. Committed and pushed in
+  `7dceac8` with the retro. Part 1 is now built by Build & Test, not
+  `/build` (Basheer, 21 Oct).
 - **Next after the restart (Basheer, 21 Oct):** doc tidy-up and Harness
   Engineering review, both due today; retro already done.
 

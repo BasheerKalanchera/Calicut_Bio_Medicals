@@ -3948,3 +3948,13 @@ moved to after the restart (Basheer).
 - Checked: P1, P3, P11, P14, P15, P67, P88, P93 and the watch list.
 - Change for next time: after the last push of a session, do the retro
   and offer the docs batch before suggesting `/exit`.
+
+## 2026-10-21 — D22 post-commit checklist; Part 1 moves here (Build & Test)
+
+- D22 checklist: archive entry already written (20 and 21 Oct above); no
+  Backlog entry of its own; Traceability unchanged (Commitment beyond
+  contract row 19 stays "being rolled out" until UAT);
+  `generate_scorecard.py --check` OK, 34 Done / 11 Partial / 5 Not
+  started; no client page changes.
+- Basheer 21 Oct: Annual Target Planning Part 1 is built in Build &
+  Test, not `/build` (which had no code for it yet).

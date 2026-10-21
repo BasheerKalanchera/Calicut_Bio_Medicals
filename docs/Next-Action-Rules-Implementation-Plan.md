@@ -9,8 +9,10 @@ lint only; manual E2E at step 5). Step 4 dropped 2026-10-16 (D21).
 Step 5 built 2026-10-16: data-quality script `f93397f`; pre-E2E
 review fixes `4bec886`. **Built on Dev, manual E2E passed 2026-10-18, 32 of
 32** (`docs/Next-Action-Rules-Manual-E2E-Test-Plan.md`); E2E fixes
-`856d041` (On Hold follow-up date) and `06b41a0` (pop-up wording). Not yet
-on UAT.
+`856d041` (On Hold follow-up date) and `06b41a0` (pop-up wording).
+D22 (close several at once, added after the run) built 2026-10-20:
+`60410cd`, with `c9d8d2b` (api.ts); E2E section H passed 2026-10-21,
+H0–H4. Not yet on UAT.
 **Traceability rows:** none in the signed requirements (new rules BR-ACT-11,
 BR-OP-21, BR-OP-22, the BR-ACT-05 change and the On Hold next action;
 BR-ACC-05 withdrawn, D21); listed as "Commitment beyond contract" row 19,

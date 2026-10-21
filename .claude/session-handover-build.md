@@ -5,24 +5,28 @@ items go to Progress-Archive; unstarted work goes to Backlog. Plan & Chore
 keeps its own note: `.claude/session-handover-plan.md`. Only the Build & Test
 session edits this note._
 
-## Next-action rules — close several at once (plan D22): E2E section H
-- Built and committed as a checkpoint: `60410cd` (fix: D22, with pre-E2E
-  review fixes 1–5, BR-ACT-05 + matrix status, E2E plan section H) and
-  `c9d8d2b` (api.ts regenerated) — both pushed 20 Oct. Backend 1325
-  passed, ruff, tsc clean, eslint old warnings only.
-- Review findings left as they are (Basheer's yes 20 Oct): same-second
-  double close (old pattern, Backlog if he wants), "main" pick (no
-  effect), produced-Opportunity path (already refused, `service.py:556`),
-  50-row cap (UAT max 5).
-- **E2E section H done 21 Oct:** H0–H4 all Pass, recorded in
-  `docs/Next-Action-Rules-Manual-E2E-Test-Plan.md`; no fixes, so no
-  `fix:` commit. Findings in Progress-Archive-2026-10 (H2 first try lost
-  to a page reload; the error message that stays on screen is how every
-  form works, not a bug). Committed and pushed `abee672`.
-- **Next:** post-commit checklist for D22 (`cabio-post-commit`), then
-  the UAT move plan below. Check in first.
+## D22 post-commit checklist (21 Oct, in progress)
+- Done: handover trimmed, archive line, Traceability unchanged (row 19
+  stays "being rolled out" until UAT), no Backlog entry for D22,
+  `generate_scorecard.py --check` OK (34 Done, 11 Partial, 5 Not started).
+- Proposed to Basheer, not yet written: D22 hashes (`60410cd`, `c9d8d2b`)
+  and the section H pass in the Next-action rules plan's Status line and
+  its E2E plan's "Built" line. Edits go in the next docs batch (Basheer).
+- Retro addendum for the next docs batch: after the D22 push, the
+  checklist was left out of the docs batch without saying so; Basheer
+  asked why. P80 4 → 5.
 - api.ts guard is on (`5ca17aa`): a backend fix commit must carry the
   matching api.ts (`sh .githooks/check-api-types.sh --write` stages it).
+
+## Next: Annual Target Planning Part 1, built here
+- Basheer 21 Oct: this session takes Part 1 over from `/build` after the
+  D22 checklist. `/build` has no code for it (worktree `f48f8ff` = docs
+  only). Built in the main folder, so 0062 is applied to Dev at step 1
+  as the plan says (no merge wait). Proposed: `/build` commits its
+  unsaved note edit and exits; Plan & Chore merges `worktree-build`
+  (docs only) into main and removes the worktree/branch, asking first.
+- Step 1 check-in shown 21 Oct: read-only Dev count of brand and SBU
+  quarterly targets (SBU Manager count already done 21 Oct, plan D57).
 
 ## UAT move
 - Basheer 20 Oct: "move everything together" — no Wednesday 21 Oct
@@ -44,5 +48,3 @@ session edits this note._
 ## Not yet scheduled
 - The other 6 rule gaps: Backlog "Business rules vs code — 6 gaps
   awaiting decision".
-- Annual Target Planning Part 1: `/build` builds it; this session (or
-  `/test`) runs its E2E on Dev after the merge, never alongside another.

@@ -7,7 +7,7 @@ D10, added 2026-10-14) is checked inside the four close forms' existing
 steps — A3, B2, C3 and D2 — so it needs no extra saves on Dev.
 Section H (added 2026-10-20) covers plan D22, closing several at once,
 built after the 2026-10-18 run; it is run on its own.
-**Built:** step 1 `3d38e75` (2026-10-15, checkpoint); step 2 `bd92e4a` + `4fc8531` (2026-10-16, checkpoints); step 3 `c4e1ca3` (2026-10-16); step 4 dropped (plan D21); step 5: script `f93397f`, pre-E2E review fixes `4bec886` (2026-10-16); E2E fixes `856d041` (On Hold follow-up date) and `06b41a0` (pop-up wording) (2026-10-17). Run finished 2026-10-18, 32 of 32 Pass. Commit hashes filled in after the fact.
+**Built:** step 1 `3d38e75` (2026-10-15, checkpoint); step 2 `bd92e4a` + `4fc8531` (2026-10-16, checkpoints); step 3 `c4e1ca3` (2026-10-16); step 4 dropped (plan D21); step 5: script `f93397f`, pre-E2E review fixes `4bec886` (2026-10-16); E2E fixes `856d041` (On Hold follow-up date) and `06b41a0` (pop-up wording) (2026-10-17). Run finished 2026-10-18, 32 of 32 Pass. D22: `60410cd` + `c9d8d2b` (api.ts) (2026-10-20); section H run 2026-10-21, H0–H4 Pass. Commit hashes filled in after the fact.
 **Where:** Dev.
 
 Every Opportunity in the steps is named with its hospital in brackets, so
