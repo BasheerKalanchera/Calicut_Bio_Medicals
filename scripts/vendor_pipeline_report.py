@@ -4,7 +4,7 @@
 Backlog: docs/Backlog.md "Vendor pipeline report -- Export to Excel for
 Admin/GM". Layout: docs/Master List for Q4 2026- Cabio Kerala.xlsx
 (SonoScape's 19 columns) + a Sales Owner column. One row per product line
-on every open (non-terminal) deal.
+on every open (non-terminal) Opportunity.
 
     python scripts/vendor_pipeline_report.py --brand SonoScape
     python scripts/vendor_pipeline_report.py --sbu Imaging
@@ -37,7 +37,7 @@ REPO = Path(__file__).resolve().parent.parent
 ENV_FILE = REPO / "backend" / ".env.uat"
 TEMPLATE = REPO / "docs" / "Master List for Q4 2026- Cabio Kerala.xlsx"
 NCOLS = 20  # the vendor's 19 columns + Sales Owner (vendor asked, 2026-09-26)
-COMPETITORS = [  # name shown -> pattern searched in the deal's notes (case-insensitive)
+COMPETITORS = [  # name shown -> pattern searched in the Opportunity's notes (case-insensitive)
     ("Samsung", r"samsung"), ("GE", r"\bge\b|voluson|logiq|vivid"),
     ("Philips", r"philips|affiniti|epiq"), ("Mindray", r"mindray|resona|\bdc-?\d"),
     ("Siemens", r"siemens|acuson"), ("Canon/Toshiba", r"canon|toshiba|aplio"),
@@ -50,7 +50,7 @@ HINT = PatternFill("solid", fgColor="FFF2CC")
 ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
 scope = ap.add_mutually_exclusive_group(required=True)
 scope.add_argument("--brand", help="only product lines of this brand, e.g. SonoScape")
-scope.add_argument("--sbu", help="every line on the SBU's open deals, e.g. Imaging")
+scope.add_argument("--sbu", help="every line on the SBU's open Opportunities, e.g. Imaging")
 ap.add_argument("--out", type=Path, help="output .xlsx (default: Desktop)")
 args = ap.parse_args()
 label = args.brand or args.sbu
@@ -115,7 +115,7 @@ ORDER BY z.name, acc.name, o.name, p.name
 """, (scope_arg,))
 rows = cur.fetchall()
 opp_ids = list({r["opp_id"] for r in rows})
-print(f"Open deals for {label}: {len(opp_ids)}, lines: {len(rows)}")
+print(f"Open Opportunities for {label}: {len(opp_ids)}, lines: {len(rows)}")
 if not rows:
     sys.exit("Nothing to report.")
 
@@ -197,7 +197,7 @@ for r in rows:
     vals = {
         1: sn, 2: "CABIO Kerala", 3: r["zone_name"], 4: r["acc_name"], 5: type1,
         6: "Replacement" if oid in trade_in else None, 7: None, 8: decision_maker(oid),
-        9: None, 10: r["product_name"] or "(no product on deal)", 11: r["quantity"],
+        9: None, 10: r["product_name"] or "(no product on Opportunity)", 11: r["quantity"],
         12: None, 13: status, 14: r["expected_closure_date"],
         15: day((visits.get(oid) or [{}])[0].get("d")),
         16: day((followups.get(oid) or [{}])[0].get("d")),
@@ -216,21 +216,21 @@ for r in rows:
     if type1 == "Check: medical college":
         ws.cell(row=sn + 1, column=5).fill = HINT
 
-scope_text = (f"Open deals with a {args.brand} product, one row per {args.brand} product."
-              if args.brand else f"All open {args.sbu} deals, one row per product.")
+scope_text = (f"Open Opportunities with a {args.brand} product, one row per {args.brand} product."
+              if args.brand else f"All open {args.sbu} Opportunities, one row per product.")
 readme = [
     ("Generated", f"{date.today():%d-%b-%Y} from the Cabio Sales OS (UAT), read-only. {scope_text}"),
-    ("Order Status", "The deal's stage. Deals On Hold are included and marked 'On Hold (stage)'."),
+    ("Order Status", "The Opportunity's stage. Opportunities On Hold are included and marked 'On Hold (stage)'."),
     ("City", "The district the hospital is filed under."),
     ("Customer Type I", "Government for government hospitals, Private otherwise. Medical colleges are marked 'Check' (yellow)."),
-    ("Customer Type II", "'Replacement' only where the deal includes a trade-in of old equipment. Otherwise blank -- not recorded in the system."),
+    ("Customer Type II", "'Replacement' only where the Opportunity includes a trade-in of old equipment. Otherwise blank -- not recorded in the system."),
     ("Area (department)", "Not recorded in the system -- left blank."),
-    ("Main Competitor", "Found by searching the deal's visit notes for known competitor names (yellow) -- please check. Not a recorded field."),
-    ("Sales Owner", "Extra column (T) the vendor asked for: the salesperson who owns the deal."),
+    ("Main Competitor", "Found by searching the Opportunity's visit notes for known competitor names (yellow) -- please check. Not a recorded field."),
+    ("Sales Owner", "Extra column (T) the vendor asked for: the salesperson who owns the Opportunity."),
     ("Blank by design", "Purchase Type III, Total Amount, Won with PI No., Lost with Reason."),
 ]
 if args.brand:
-    readme.append(("Not included", f"Open deals with no product added can't be matched to {args.brand} and are left out."))
+    readme.append(("Not included", f"Open Opportunities with no product added can't be matched to {args.brand} and are left out."))
 rm = wb.create_sheet("Read me")
 rm.column_dimensions["A"].width = 22
 rm.column_dimensions["B"].width = 110
