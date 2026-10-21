@@ -3820,6 +3820,10 @@ P15, P23, P24, P76, P77 and the watch list.
 - Checked: P1, P3, P14, P15, P24, P85, P86, P89 and the watch list.
 - Change for next time: before saying how a tool behaves, run the
   one-line test first.
+- Added after `4f68881`: the handover's "Order agreed" section still
+  listed switching the guard on; only the Chores line had been removed.
+  P74 2 → 3. Change: when closing a job in the note, search the whole
+  note for it.
 
 ## 2026-10-20 — D22 committed and pushed; Build & Test evening retro (Build & Test)
 
@@ -3852,6 +3856,54 @@ P15, P23, P24, P76, P77 and the watch list.
   earlier words ✓ (borderline); "Not done tonight" ✓.
 - Change for next time: do the retro at the end of a session without
   offering to defer it. Open list 34 (counted with grep after this retro).
+
+## 2026-10-21 — UAT backup, /build note fix, Dev check for Part 1 E2E (Plan & Chore)
+
+- UAT backup: `cabio_uat_2026-10-21_0740.dump` (687,099 bytes, 472 TOC
+  entries); pruned `cabio_uat_2026-10-06_0601.dump`; 14 kept.
+- `/build` note (Basheer's yes): the 20 Oct approval had gone into the
+  frozen main-folder copy (`92cab23`, `006f4cb`) while the hooks show the
+  worktree copy, which still said "do not build". Worktree copy brought
+  up to date (uncommitted; `/build` commits it before `git merge main`,
+  keeping its own copy on the clash); main copy now a frozen pointer.
+- Three sessions today until the Part 1 E2E plan is committed, then two
+  (Build & Test, `/build`) — Basheer. Commit lock: not built today.
+- Dev check, read-only, as Haroon (GM), all three RLS settings verified,
+  rolled back; output in the session scratchpad. 12 active users;
+  roles: Admin 1, Area Manager 4, GM 1, Marketing User 2, Sales Staff 3,
+  SBU Manager 1 (Basheer K, Imaging, reports to Haroon; no one reports
+  to him) — D45 says no one holds that role. Brands: Imaging 1
+  (SonoScape), Critical Care 9 active + Legacy Data inactive. Brand
+  targets: one row, EDAN 2026-Q3 ₹120 L. Typed SBU targets (to go under
+  D55): Critical Care Q3 ₹150 L / Q4 ₹120 L, Imaging Q3 ₹100 L / Q4
+  ₹160 L. Rep plans 2026-Q3 on: 10, including three new 2027-Q1 plans
+  (Arun Adarsh, Nishad K V, Vivek) — 16 Oct had none for FY 2027-28.
+- Part 1 E2E plan written (sections A–H; replaces the 17 Oct on-hold
+  version), including Shruthi moved under Basheer K to test the SBU
+  Manager path, and back. Drafting it raised what an SBU Manager's own
+  target is: Basheer chose one figure from Haroon, divided among the
+  Area Managers reporting to the SBU Manager — D57 in the plan. On Dev,
+  Basheer K must stay blank on Haroon's panel while Shruthi still reports
+  to Haroon, or Shruthi's share is counted twice.
+
+**Retro (Plan & Chore, 2026-10-21).** Doc tidy-up and Harness review
+moved to after the restart (Basheer).
+- P3 +1 (33 → 34): D57 option (b) said "the same money would be counted
+  twice" with no example; Basheer had to ask. The follow-up with the
+  test's figures (₹160 + ₹120 + ₹120 = ₹400 L against ₹280 L) worked.
+- P76 +1 (4 → 5): wrote "Today: two sessions" into the handover before
+  Basheer decided; removed before he saw it.
+- Watch list, new: the 20 Oct approval written into the frozen `/build`
+  note copy; the approved plan not saying what an SBU Manager's own
+  target is (found writing the E2E plan).
+- Spot-checks ✓: EDAN 2026-Q3 ₹120 L, "10 rep plans from 2026-Q3", both
+  against the 21 Oct Dev check output; User Directory "Manager" label at
+  `UserDirectoryScreen.tsx:374`.
+- Plain-language check of 2 replies: D57 option (b) ✗ (above); the
+  double-counting explanation ✓.
+- Checked: P1, P3, P68, P74, P76, P86 and the watch list.
+- Change for next time: when offering options, give each option's
+  downside with the real figures, not a one-line label.
 
 ## 2026-10-21 — D22 E2E section H, findings so far (Build & Test)
 

@@ -1,12 +1,13 @@
 # Annual Target Planning — Implementation Plan
 
-**Status:** Approved — Basheer, 2026-10-20 (D1–D56). Replanned
+**Status:** Approved — Basheer, 2026-10-20 (D1–D56; D57 added
+2026-10-21). Replanned
 2026-10-17 to 2026-10-20 (calendar-year brand targets, Haroon and
 Latheef Bhai via Basheer; D23 onwards; incentive year settled
 2026-10-19, D29; Part 1 / Part 2, D44–D49; review 2026-10-20, D50–D56).
 First approved 2026-10-16. E2E test plan:
-`docs/Annual-Target-Planning-Manual-E2E-Test-Plan.md` (on hold; rewritten
-for Part 1 after this plan is approved). Build: Part 1 aimed at next week,
+`docs/Annual-Target-Planning-Manual-E2E-Test-Plan.md` (Part 1, written
+2026-10-21). Build: Part 1 aimed at next week,
 so the Oct–Dec 2026 targets can be entered (D38, D44); it reaches the
 team with the full UAT move (D52).
 **Traceability rows:** signed 3.1 ("Target splitting by product category,
@@ -283,6 +284,11 @@ this replan: D8, D12, D12a, D14.
 - D56. ~~"Brands Billing to Cabio": quarters need not add up; hand-changed
   quarters kept on a re-split (Q-J)~~ — withdrawn 2026-10-20: no
   per-quarter editing (D54).
+- D57. An SBU Manager gets one quarterly figure from the person they
+  report to (today Haroon) and divides it among the Area Managers who
+  report to them; their Team targets warning compares against that
+  figure, not the SBU target. They still see the SBU target (D26).
+  Refines D32 and D45 — Basheer, 2026-10-21.
 
 ## Figures and sources
 
@@ -310,7 +316,9 @@ this replan: D8, D12, D12a, D14.
   2026-10-19.
 - "SBU Manager" is a currently-empty role tier — `docs/Backlog.md:1548`,
   read 2026-10-19 (D45); a September note, so re-checked on Dev in build
-  step 1's read-only count.
+  step 1's read-only count. Dev, 2026-10-21: one test SBU Manager,
+  Basheer K (Imaging, reports to Haroon); none on UAT or at Cabio yet —
+  Dev query and Basheer, 2026-10-21 (D57).
 - UAT's code lacks migrations 0055–0061 — `docs/Progress-Archive-2026-10.md:2206`;
   the `uat` branch's newest migration is `0054_fix_target_plan_brand_split_read_rls.py`
   (`git ls-tree uat`, 2026-10-20) (D52).

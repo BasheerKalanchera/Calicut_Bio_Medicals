@@ -6,32 +6,23 @@ keeps its own note: `.claude/session-handover-build.md`. Only the Plan & Chore
 session edits this note._
 
 - Forecast plan (untracked, other session): not in commits; at review, line 110 → BR-FIN-09.
+- 21 Oct (Basheer's yes): `/build` note fixed — live copy in the
+  worktree brought up to date (uncommitted; `/build` commits it before
+  merging `main`); main-folder copy made a frozen pointer, goes in the
+  next docs batch.
 
 ## Annual Target Planning — approved 2026-10-20 (D1–D56)
 
 - Plan approved by Basheer 2026-10-20 (archive 20 Oct entry); `/build`
   note updated with his yes (Part 1, steps 1–4). In `92cab23` + repair
   `006f4cb`, both pushed 2026-10-20 — `/build` can take in `main` now.
-- **Next:** Part 1 E2E plan rewrite
-  (`docs/Annual-Target-Planning-Manual-E2E-Test-Plan.md`, old on-hold
-  version). First a read-only Dev check (users, roles, SBU, managers,
-  brands, brand/SBU quarter targets, 2026-Q3/Q4), shown first, three RLS
-  settings as Haroon (`cabio-db-and-scripting`). Then write, show before
-  saving: hide-checks with real people, labels as descriptions until the
-  code exists, Opportunity (hospital), saves "Basheer clicks, Claude
-  watches", SBU-total checks on Target vs Actuals.
-
-## Order agreed for the three sessions (Basheer asked, 2026-10-20)
-
-- Plan & Chore: docs batch (lets `/build` start) → `api.ts` chore (build
-  and test the guard, not switched on) → Dev check + Part 1 E2E plan →
-  switch the guard on after Build & Test's two commits.
-- Build & Test: D22 review + E2E → `fix:` commit → `api.ts` refresh
-  commit → UAT move plan, which must now include Part 1 and 0062 (D52).
-  **Open:** Basheer to say whether Plan & Chore adds that line to its note.
-- `/build`: merge main → step 1 check-in → build in worktree → merge
-  once after Build & Test's D22 E2E and Basheer's go; 0062 applied to Dev
-  then. Only shared file: `src/types/api.ts` (regenerate, don't merge).
+- 21 Oct: Part 1 E2E plan written (sections A–H, uncommitted) and D57
+  added to the plan (SBU Manager gets one figure from Haroon, divides it
+  among their Area Managers) — Basheer's yes. `/build` must hear of D57
+  before step 2 (Basheer passes it on). Both files go in the next docs
+  batch. After that: two sessions only (Build & Test, `/build`).
+- **Next after the restart (Basheer, 21 Oct):** doc tidy-up and Harness
+  Engineering review, both due today; retro already done.
 
 ## Next full UAT move — what goes, and what must land first
 

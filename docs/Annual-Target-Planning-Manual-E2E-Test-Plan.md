@@ -1,195 +1,265 @@
 <!-- e2e-template v1: checked on save by .claude/hooks/test_plan_guard.py -->
-# Annual Target Planning — Manual E2E Test Plan
+# Annual Target Planning (Part 1) — Manual E2E Test Plan
 
-**On hold, 2026-10-17:** waiting for the implementation plan's replan
-(calendar-year brand targets) to be finished and approved. The steps
-below test the old plan and will be rewritten after that; don't run them.
-
-**Covers:** `docs/Annual-Target-Planning-Implementation-Plan.md`, steps 1–5
-(one combined run after step 5, as the plan's step 6 says).
-**Built:** not yet — commit hashes filled in after the fact.
-**Where:** Dev.
+**Covers:** `docs/Annual-Target-Planning-Implementation-Plan.md`, Part 1
+(build steps 1–4). Part 2 gets its own sections later.
+**Built:** not yet (filled in after the fact).
+**Where:** Dev, after `/build` merges into `main` and migration 0062 is
+applied. Replaces the 17 Oct on-hold version, which tested the withdrawn
+yearly SBU figure (D4–D15, D22a).
 
 ## Checked against live data
 
-Checked read-only on Dev, 2026-10-16, as Haroon Sidheeq (General Manager)
-with all three RLS settings (user, role, SBU) set and verified — a first
-run without them returned too few rows and was discarded. Re-checked just
-before the run (these records may change meanwhile), and the hide-checks
-in sections A, C, D and E re-run then too.
+Checked read-only on Dev, 2026-10-21, as Haroon Sidheeq (GM), with all
+three RLS settings (user, role, SBU) set and verified. Re-run just before
+the E2E (P4): the build changes these tables.
 
-- **Who sees:** testers are Haroon Sidheeq (General Manager), Fazal (Area
-  Manager, Imaging, reports to Haroon), Fahad (Sales Staff, Imaging,
-  reports to Fazal), Shruthi (Area Manager, Imaging, reports to Haroon —
-  not Fahad's manager), Vivek (Sales Staff, Critical Care, reports to Arun
-  Adarsh) and Abdul Latheef P (Admin). Brand Target Tracking is Admin/GM
-  only today (`BrandTargetTrackingScreen.tsx:34`, `:87`). Target vs
-  Actuals: Admin/GM company-wide, Area Manager their team
-  (`TargetVsActualsSection.tsx:227`, `:230`).
-- **Who can approve:** Fahad's plan — Fazal (his manager). Haroon has no
-  manager, so no one is notified when he submits (plan D18); Admin
-  approves his plan.
-- **Who can save:** Admin and GM set brand and SBU targets; each rep saves
-  their own plan.
-- **Existing values:** on Dev, 2026-10-16:
-  - Brands: Imaging has one, SonoScape; Critical Care has nine active
-    (Aeonmed, AVI Health care, E2E Test Brand, EDAN, ELECTROSCIENCE,
-    Kolkatta, Magnamed, Maquet, Medion) and one inactive (Legacy Data).
-  - Brand targets: one row in all — EDAN, 2026-Q3, ₹120 L.
-  - SBU targets: Critical Care 2026-Q3 ₹150 L, 2026-Q4 ₹120 L; Imaging
-    2026-Q3 ₹100 L, 2026-Q4 ₹160 L. No FY 2027-28 figures.
-  - FY 2026-27 plans: Arun Adarsh Q3 Approved ₹50 L, Q4 Pending ₹30 L;
-    Haroon Q2 Approved ₹80 L (Critical Care) and ₹120 L (Imaging); Nishad
-    Q4 Pending ₹10 L; Vivek Q2 Approved ₹65 L, Q3 Pending ₹66 L, Q4
-    Rejected ₹45 L; Basheer K Q3 Pending ₹55 L; Rudrappa Q3 Approved
-    ₹10 L. No FY 2027-28 plans.
-  - Notifications today: only Opportunity, activity and marketing-lead
-    kinds; none about plans.
+- **Who sees:** Brand Target Tracking: Admin and GM only, as today —
+  Abdul Latheef P, Haroon Sidheeq. SBU target after the build (D26):
+  Admin, GM and the one SBU Manager, Basheer K (Imaging). Area Managers
+  (Arun Adarsh, Nishad K V, Fazal, Shruthi) and reps (Vivek, Fahad,
+  Rudrappa) don't.
+- **Who can approve:** plan approvals unchanged, checked passively only:
+  Fahad → Fazal, Rudrappa → Shruthi, Vivek → Arun Adarsh; the four Area
+  Managers and Basheer K → Haroon Sidheeq.
+- **Who can save:** person targets, each by the person's manager (D45,
+  D57): Haroon → Arun Adarsh, Nishad K V, Fazal, Shruthi, Basheer K;
+  Fazal → Fahad; Shruthi → Rudrappa; Arun Adarsh → Vivek; Nishad K V → no
+  one (no reps). Admin and GM any. Brand figures and seasonal patterns:
+  Admin and GM. Shruthi's manager: Admin, on User Directory's "Manager"
+  picker.
+- **Existing values:** brand quarterly targets: only EDAN Oct–Dec 2026
+  ₹120 L. Typed SBU targets (removed by 0062, D55): Critical Care Oct–Dec
+  2026 ₹150 L, Jan–Mar 2027 ₹120 L; Imaging ₹100 L, ₹160 L. Person
+  targets: none (table arrives with 0062). Brands: Imaging — SonoScape
+  only; Critical Care — Aeonmed, AVI Health care, E2E Test Brand, EDAN,
+  ELECTROSCIENCE, Kolkatta, Magnamed, Maquet, Medion (Legacy Data
+  inactive). Plans: Oct–Dec 2026 — Arun Adarsh approved ₹50 L, Basheer K
+  pending ₹55 L, Rudrappa approved ₹10 L, Vivek pending ₹66 L; Jan–Mar
+  2027 and Apr–Jun 2027 — Arun Adarsh pending ₹30 L, Nishad K V pending
+  ₹10 L, Vivek rejected ₹45 L.
 
 Button labels, messages and the order of checks are taken from the code,
-not the design doc. Nothing is built yet, so every label and message
-below is a description, not exact wording; each is replaced with the
-built code's wording before the run.
+not the design doc. Nothing is built yet, so every label and message below
+is a description; each is replaced with the built code's wording before
+the run.
 
 ## Figures and sources
 
-- Users, roles, SBUs, managers, brands, brand and SBU targets, plans and
-  notification kinds above — Dev query, 2026-10-16
-- 2026-Q3 = 01 Oct 2026 to 31 Dec 2026; 2027-Q1 = 01 Apr 2027 to 30 Jun
-  2027 — `scripts/quarter.py`, 2026-10-16
-- Who sees Brand Target Tracking and Target vs Actuals — code, read
-  2026-10-16 (lines above)
-- SonoScape ₹500 L / ₹480 L / ₹450 L, Imaging own figure ₹500 L, quarters
-  ₹120 L / ₹100 L, Fahad's plan ₹20 L, notes "Add one more hospital" and
-  "Added Baby Memorial" — made-up example values for this run
-- ₹270 L / ₹260 L (FY 2026-27 SBU yearly targets) — the Dev SBU targets
-  above added up (150 + 120; 100 + 160)
-- Won figures for E2–E4 — not known yet; read from the Quarter view at
-  pre-flight P4 and the re-check before the run
+- Users, roles, managers, SBUs, brands, brand and SBU quarterly targets,
+  plans — Dev query as Haroon, 2026-10-21
+- Oct–Dec 2026 = 2026-Q3, Jan–Mar 2027 = 2026-Q4, Apr–Jun 2027 = 2027-Q1
+  — `scripts/quarter.py`, 2026-10-21; Jul–Sep 2026 = 2026-Q2 —
+  `scripts/quarter.py`, 2026-10-19 (implementation plan)
+- 21 Oct 2026 falls in Oct–Dec 2026, the quarter in progress (D51) —
+  `scripts/quarter.py`, 2026-10-21
+- Basheer K is SBU Manager on Dev; none on UAT or at Cabio yet — Basheer,
+  2026-10-21
+- Brand Target Tracking Admin/GM only — `BrandTargetTrackingScreen.tsx:34`,
+  read 2026-10-21
+- User Directory "Manager" picker — `UserDirectoryScreen.tsx:374-391`
+- Patterns: Imaging 2026 15/20/30/35; Critical Care 2026 20/20/30/30, then
+  10/20/30/40; Maquet's own 25/25/25/25 — made-up
+- SonoScape ₹400 L + 100 %; EDAN ₹200 L + 50 %; Maquet ₹100 L + 0 %;
+  Medion ₹100 L + 0 %, year starting April — made-up
+- SonoScape Oct–Dec ₹280 L; EDAN ₹90 L then ₹120 L; Maquet ₹25 L; Medion
+  ₹30 L / ₹20 L then ₹40 L / ₹10 L; Critical Care ₹145 L then ₹185 L —
+  worked out from the made-up figures above
+- Fazal ₹160 L, Shruthi ₹100 L → ₹120 L → ₹130 L → ₹120 L, Basheer K
+  ₹120 L, Arun Adarsh ₹100 L, Nishad K V ₹85 L, Fahad ₹140 L, Rudrappa
+  ₹100 L, Vivek ₹90 L — made-up
+- Won and committed figures — not known yet; read at P5
 
 **Tags:** every step starts with `[Simple]` (one click/type/verify-a-value,
-Basheer runs it) or `[Complex: <reason>]` (Claude drives: layout shift,
-multi-step, cross-screen/cross-role, or a genuine visual check). Saves to
-Dev are "Basheer clicks, Claude watches"; Claude reads the record back in
-the app.
+Basheer runs it) or `[Complex: <reason>]` (Claude drives). Saves to Dev
+are "Basheer clicks, Claude watches"; Claude reads the record back in the
+app.
 
-**Left on Dev permanently:** SonoScape's FY 2027-28 yearly target;
-Imaging's FY 2027-28 quarterly SBU targets (2027-Q1 to Q4); Fahad's
-2027-Q1 plan and its history; the plan notifications created below.
-Haroon's 2027-Q1 test plan (D8) is deleted at the end; Imaging's own
-yearly figure is cleared in B4.
+**Opportunities:** none named or created in this plan.
+
+**Left on Dev permanently:** the 2026 brand figures, patterns and saved
+brand quarters below (EDAN's ₹120 L replaced); Medion's year starting in
+April; the Oct–Dec 2026 person targets. Shruthi's manager is put back to
+Haroon in G7.
 
 ## Pre-flight
 
 - P1. [Simple] Dev backend restarted since the feature's last backend change. —
 - P2. [Simple] Dev's `alembic current` = 0062 (head), and
   `docs/Physical-Schema.sql` regenerated since. —
-- P3. [Simple] Testers can sign in: Haroon, Fazal, Fahad, Shruthi, Vivek,
-  Abdul Latheef P. —
-- P4. [Complex: before-and-after record of other screens] Before testing,
-  note on Dev: Target vs Actuals Quarter view for Critical Care 2026-Q3
-  and Imaging 2026-Q3 (every figure); Target & Coverage Planning SBU box
-  for Critical Care 2026-Q3 (₹150 L); and that one existing activity
-  comment notification opens its activity. —
+- P3. [Simple] Testers can sign in: Abdul Latheef P, Haroon Sidheeq,
+  Basheer K, Fazal, Shruthi, Arun Adarsh, Nishad K V, Fahad, Rudrappa,
+  Vivek. —
+- P4. [Complex: read-only Dev query, shown first] Re-run the 21 Oct check
+  (managers, roles, brand quarterly targets, plans; person targets
+  expected none); update "Checked against live data" if anything moved. —
+- P5. [Complex: before-record across two screens] As Haroon, before any
+  save, note every figure on Target vs Actuals, Oct–Dec 2026 and Jul–Sep
+  2026, Imaging and Critical Care; and on Brand Target Tracking,
+  SonoScape's and EDAN's Oct–Dec 2026 committed and gap. **Expected:**
+  Imaging Oct–Dec 2026 target not set; Critical Care Oct–Dec 2026 ₹120 L
+  (EDAN only — the typed ₹150 L is gone, D55). —
 
-## A — Brand Target Tracking becomes yearly (D12, D12a, D4)
+## A — Brand Target Tracking by calendar year (D23–D25, D39–D43, D46, D46a, D48, D50)
 
-1. [Simple] As Haroon, open Brand Target Tracking, Critical Care.
-   **Expected:** a year (FY 2026-27) with year arrows, no quarter arrows;
-   EDAN's yearly target ₹120 L (its one quarterly figure, added up); other
-   brands show no target; SBU yearly total ₹120 L. —
-2. [Simple] Switch to Imaging. **Expected:** SonoScape shows no target;
-   SBU total shows none (₹0 or a dash, as the code shows). —
-3. [Complex: save, then read back after a reload] Move to FY 2027-28 and
-   type SonoScape ₹500 L; save. **Expected:** saved; after a reload
-   SonoScape ₹500 L, SBU total ₹500 L. —
-4. [Simple] Change SonoScape to ₹480 L and save. **Expected:** SBU total
-   ₹480 L. —
-5. [Simple] Read SonoScape's Team Committed and Gap for FY 2027-28.
-   **Expected:** committed ₹0 (no FY 2027-28 plans yet), gap ₹480 L. —
-6. [Simple] Hide-check: as Fazal, look for Brand Target Tracking.
-   **Expected:** not offered, as today (Admin/GM only). —
+1. [Simple] As Haroon, open Brand Target Tracking. **Expected:** moves by
+   calendar year ("2026", year arrows, no quarter arrows); quarters read
+   "Oct–Dec 2026", never "2026-Q3". —
+2. [Complex: save, then read back after a reload] Imaging, 2026: pattern
+   Jan–Mar 15, Apr–Jun 20, Jul–Sep 30, Oct–Dec 35; save. **Expected:**
+   after a reload, the same four figures. —
+3. [Simple] Change Oct–Dec to 25 (adds to 90) and try to save.
+   **Expected:** refused, saying it must add to 100; cancel; saved pattern
+   unchanged. —
+4. [Complex: save, then read back] SonoScape ("SonoScape · Jan–Dec 2026"):
+   own figure ₹400 L, stretch 100 %; save. **Expected:** stretched ₹800 L
+   beside the own figure; Oct–Dec 2026 ₹280 L; Jan–Mar, Apr–Jun and
+   Jul–Sep 2026 show no target (before Oct–Dec 2026, not saved, D46a). —
+5. [Simple] SonoScape's Oct–Dec 2026 committed and gap. **Expected:**
+   committed as at P5; gap = ₹280 L minus it. —
+6. [Complex: save, then read back] Critical Care, 2026: pattern 20 / 20 /
+   30 / 30; save. Then EDAN: own ₹200 L, stretch 50 %; save.
+   **Expected:** stretched ₹300 L; Oct–Dec 2026 ₹90 L, replacing the
+   ₹120 L typed earlier (D48). —
+7. [Complex: a brand's own pattern] Maquet: own ₹100 L, stretch 0 %, own
+   pattern 25 / 25 / 25 / 25; save. **Expected:** Oct–Dec 2026 ₹25 L;
+   Maquet shown as using its own pattern. —
+8. [Complex: year-start change, then save] Medion: "year starts in" →
+   April; then own ₹100 L, stretch 0 %; save. **Expected:** shown under
+   2026 as "Medion · Apr 2026–Mar 2027"; Oct–Dec 2026 ₹30 L, Jan–Mar 2027
+   ₹20 L (pattern follows the months, D41); Apr–Jun and Jul–Sep 2026 not
+   saved. —
+9. [Complex: one save re-works several brands] Change Critical Care's 2026
+   pattern to 10 / 20 / 30 / 40; save. **Expected:** EDAN Oct–Dec 2026 →
+   ₹120 L; Medion Oct–Dec 2026 → ₹40 L, Jan–Mar 2027 → ₹10 L; Maquet stays
+   ₹25 L (own pattern, D50). —
+10. [Simple] Move to 2027. **Expected:** no brand has a figure (none sent
+    yet, D42); Medion listed as "Apr 2027–Mar 2028". —
 
-## B — SBU yearly target (D4–D6, D11, D13, D15, D22a)
+## B — SBU target box: the brands' total, read-only (D26, D34, D47, D53, D55)
 
-1. [Simple] As Haroon, Target & Coverage Planning, Annual view, Imaging,
-   FY 2027-28. **Expected:** yearly target ₹480 L, shown as the brand
-   total (not the GM's own figure). —
-2. [Complex: save, then read back] Type the GM's own figure ₹500 L; save.
-   **Expected:** ₹500 L as the GM's figure, brand total ₹480 L beside it. —
-3. [Complex: cross-screen] On Brand Target Tracking, change SonoScape to
-   ₹450 L; back on Target & Coverage Planning. **Expected:** SBU yearly
-   target still ₹500 L (D5: once set it stays); brand total ₹450 L. —
-4. [Complex: cross-screen] Clear the GM's own figure (D13). **Expected:**
-   the yearly target follows the brand total, ₹450 L. Then set SonoScape
-   back to ₹480 L on Brand Target Tracking; **Expected:** yearly target
-   ₹480 L. —
-5. [Complex: four saves and a warning] Type the four quarters by hand:
-   2027-Q1 ₹120 L, Q2 ₹120 L, Q3 ₹120 L, Q4 ₹100 L. **Expected:** no
-   automatic split anywhere (D11); a warning that the quarters are ₹20 L
-   short of ₹480 L. —
-6. [Simple] Change Q4 to ₹120 L. **Expected:** the warning goes. —
-7. [Simple] Quarterly view, Imaging, 2027-Q1. **Expected:** SBU target box
-   ₹120 L, with the year it belongs to (FY 2027-28). —
-8. [Simple] Quarterly view, Critical Care, 2026-Q3. **Expected:** SBU
-   target box ₹150 L, as at P4 — unchanged. —
-9. [Simple] Annual view, Critical Care, FY 2026-27. **Expected:** yearly
-   target ₹270 L, its quarterly targets added up (D22a), not the brand
-   total ₹120 L. Imaging FY 2026-27: ₹260 L. —
+1. [Simple] As Haroon, Target & Coverage Planning, Imaging, Oct–Dec 2026.
+   **Expected:** SBU target ₹280 L; no way to type or edit it. —
+2. [Simple] Critical Care, Oct–Dec 2026. **Expected:** ₹185 L (EDAN 120 +
+   Maquet 25 + Medion 40). —
+3. [Simple] Critical Care, Jan–Mar 2027. **Expected:** ₹10 L (Medion only;
+   the typed ₹120 L is gone, D55). —
+4. [Simple] Imaging, Jan–Mar 2027. **Expected:** target not set (D42). —
+5. [Simple] Imaging, Jul–Sep 2026. **Expected:** as at P5. —
+6. [Simple] As Basheer K (SBU Manager), Imaging, Oct–Dec 2026.
+   **Expected:** SBU target ₹280 L, read-only (D26). —
+7. [Simple] Hide-check: as Basheer K, Critical Care. **Expected:** no
+   Critical Care SBU target (Basheer K's SBU is Imaging). —
+8. [Simple] Hide-check: as Fazal (Area Manager), Imaging, Oct–Dec 2026.
+   **Expected:** no SBU target box; ₹280 L nowhere on the screen (D34). —
+9. [Simple] Hide-check: as Fahad (rep), Oct–Dec 2026. **Expected:** no SBU
+   target box (D26). —
 
-## C — Reps see their SBU's targets (D8, D14)
+## C — Haroon divides the SBU target among the Area Managers (D33, D45)
 
-1. [Simple] As Fahad, Target & Coverage Planning, 2027-Q1. **Expected:** a
-   read-only line above "My Plan": Imaging target FY 2027-28 ₹480 L · this
-   quarter ₹120 L; nothing to type in. —
-2. [Simple] As Fahad, 2026-Q3. **Expected:** the line shows this quarter
-   ₹100 L; FY 2026-27 ₹260 L (Imaging's quarterly targets added up,
-   D22a). —
-3. [Simple] Hide-check: as Vivek, 2026-Q3. **Expected:** Critical Care's
-   line (this quarter ₹150 L); no Imaging figure anywhere on the screen. —
+1. [Complex: new panel, first look] As Haroon, Imaging, Oct–Dec 2026, Team
+   targets panel. **Expected:** rows for Fazal, Shruthi and Basheer K, all
+   blank, totalled against ₹280 L. Basheer K's row stays blank until
+   section G: no one reports to Basheer K yet, and a figure there would
+   count Shruthi's share twice (D57). —
+2. [Complex: save with a warning] Fazal ₹160 L, Shruthi ₹100 L; save.
+   **Expected:** saved; warning: ₹20 L short of ₹280 L. —
+3. [Simple] Shruthi → ₹120 L; save. **Expected:** the warning goes. —
+4. [Complex: save, then read back] Critical Care, Oct–Dec 2026: Arun Adarsh
+   ₹100 L, Nishad K V ₹85 L; save. **Expected:** no warning (₹185 L); no
+   Imaging people listed. —
+5. [Simple] As Abdul Latheef P (Admin), Imaging, Oct–Dec 2026, Team
+   targets. **Expected:** Fazal ₹160 L, Shruthi ₹120 L shown and editable
+   (D45). No save. —
 
-## D — Plan notifications (D18–D21)
+## D — Area Managers divide among their reps; "Your target" (D30, D33, D35)
 
-1. [Complex: save, then check another user's bell] As Fahad, start a
-   2027-Q1 plan with one hospital, ₹20 L, and save it as a draft.
-   **Expected:** Fazal's bell shows nothing new (a draft isn't
-   submitted). —
-2. [Complex: cross-role] Fahad submits it. **Expected:** Fazal's bell
-   shows Fahad's plan for Apr–Jun 2027 waiting for approval. —
-3. [Complex: hide-check across three users] **Expected:** Shruthi's,
-   Haroon's and Abdul Latheef P's bells show nothing new for it (D18:
-   only the approver). —
-4. [Complex: cross-screen] Fazal clicks the notification. **Expected:**
-   Target & Coverage Planning opens at 2027-Q1 on Fahad's plan (D21). —
-5. [Complex: cross-role] Fazal rejects it with the note "Add one more
-   hospital". **Expected:** Fahad's bell shows the rejection with that
-   note; clicking it opens his 2027-Q1 plan. —
-6. [Complex: cross-role] Fahad revises the plan with the change note
-   "Added Baby Memorial" and resubmits. **Expected:** Fazal's bell shows
-   a revision, carrying "Added Baby Memorial". —
-7. [Complex: cross-role] Fazal approves. **Expected:** Fahad's bell shows
-   the approval. —
-8. [Complex: cross-role, then clean-up] As Haroon (no manager), submit a
-   2027-Q1 plan for Imaging. **Expected:** no one's bell shows anything
-   for it (Abdul Latheef P's checked). Then delete that plan. —
-9. [Simple] Click the activity comment notification noted at P4.
-   **Expected:** it opens its activity, as before. —
+1. [Simple] As Fazal, Imaging, Oct–Dec 2026. **Expected:** "Your target
+   for Oct–Dec 2026: ₹160 L". —
+2. [Complex: save with a warning, then read back] Fazal's Team targets:
+   Fahad only; ₹140 L; save. **Expected:** saved; warning ₹20 L short of
+   ₹160 L (left as is). —
+3. [Complex: save, then read back] As Shruthi: "Your target" ₹120 L; Team
+   targets: Rudrappa ₹100 L; save. **Expected:** saved; warning ₹20 L
+   short. —
+4. [Complex: save, then read back] As Arun Adarsh: "Your target" ₹100 L;
+   Team targets: Vivek ₹90 L; save. **Expected:** saved; warning ₹10 L
+   short. —
+5. [Simple] As Nishad K V: "Your target" ₹85 L. **Expected:** Team targets
+   shows no one (no reps report to Nishad K V). —
+6. [Simple] As Fahad. **Expected:** "Your target for Oct–Dec 2026:
+   ₹140 L"; no Team targets panel. —
+7. [Simple] As Rudrappa: ₹100 L. As Vivek: ₹90 L. —
 
-## E — Target vs Actuals, Year view (D16, D22, D22a)
+## E — Who must not see what (D23, D26, D34, D35)
 
-1. [Simple] As Haroon, Insights Dashboard → Target vs Actuals, Quarter
-   view, Critical Care 2026-Q3 and Imaging 2026-Q3. **Expected:** every
-   figure as noted at P4. —
-2. [Complex: figures across four quarters] Year view, Critical Care,
-   FY 2026-27. **Expected:** SBU target ₹270 L (D22a); each rep's yearly
-   plan figure equals the four quarters' "Team plans" figures for that
-   rep added up (D22) — e.g. Vivek's, from his Q1–Q4 figures noted at the
-   re-check; Won for the year (filled in at the re-check). —
-3. [Complex: figures across four quarters] Year view, Imaging, FY 2027-28.
-   **Expected:** SBU target ₹480 L; Fahad's plan ₹20 L (his one 2027-Q1
-   plan, approved in D7); Brands table SonoScape yearly target ₹480 L against
-   Won. —
-4. [Simple] Open Fahad's row (▸). **Expected:** his brands and hospitals
-   for the year. —
-5. [Simple] Hide-check: as Fazal, Year view. **Expected:** only his team
-   (Fahad), as the Quarter view shows today. —
+1. [Simple] As Fahad: ₹160 L (Fazal's) and ₹280 L (Imaging) appear
+   nowhere; no Brand Target Tracking in the menu. —
+2. [Simple] As Fazal: Shruthi's ₹120 L and Rudrappa's ₹100 L appear
+   nowhere; no Brand Target Tracking in the menu. —
+3. [Simple] As Shruthi: Fazal's ₹160 L and Fahad's ₹140 L appear
+   nowhere. —
+4. [Simple] As Arun Adarsh: nothing from Imaging; Critical Care's ₹185 L
+   appears nowhere (D34). —
+5. [Complex: look for an edit the screen shouldn't offer] As Fazal: no way
+   to change Fazal's own, Shruthi's or Rudrappa's target. —
+6. [Simple] As Basheer K: no Brand Target Tracking in the menu (D23). —
+
+## F — Target vs Actuals (Insights Dashboard) (D49, D55)
+
+1. [Complex: every figure against P5] As Haroon, Oct–Dec 2026.
+   **Expected:** Imaging target ₹280 L, Critical Care ₹185 L (brand
+   totals, D55); Won and plan figures exactly as at P5. —
+2. [Simple] Jul–Sep 2026. **Expected:** every figure as at P5. —
+3. [Complex: team and rep rows] As Fazal, Oct–Dec 2026. **Expected:**
+   "Your team" measured against ₹160 L (Fazal's own target, D49), not the
+   SBU target; Fahad's row shows target ₹140 L beside the plan. —
+4. [Simple] As Arun Adarsh, Oct–Dec 2026. **Expected:** team row against
+   ₹100 L; Vivek's row shows target ₹90 L. —
+5. [Simple] Hide-check: as Fazal, no Rudrappa row (as today). —
+6. [Simple] Unchanged: as Arun Adarsh, Target & Coverage Planning,
+   Critical Care, Oct–Dec 2026: Vivek's ₹66 L plan still waiting for
+   approval. No action. —
+
+## G — An SBU Manager sets the target: Shruthi reports to Basheer K (D32, D45, D57)
+
+Dev has one test SBU Manager, Basheer K (Imaging); UAT and Cabio have
+none yet. This checks the app is ready for one: Haroon gives Basheer K one
+figure, and Basheer K divides it among the Area Managers reporting to
+Basheer K (D57). Shruthi goes back to Haroon in G7.
+
+1. [Complex: save on another screen, then read back] As Abdul Latheef P,
+   User Directory, Shruthi: "Manager" Haroon Sidheeq → Basheer K; save.
+   **Expected:** after a reload, Basheer K. —
+2. [Complex: save, then read back] As Haroon, Imaging, Oct–Dec 2026, Team
+   targets. **Expected:** Shruthi no longer listed; Fazal ₹160 L, Basheer
+   K blank, ₹120 L short. Give Basheer K ₹120 L; save. **Expected:** total
+   ₹280 L, no warning. —
+3. [Complex: save, then read back as another user] As Basheer K, Team
+   targets. **Expected:** "Your target for Oct–Dec 2026: ₹120 L" (D57);
+   Shruthi listed with ₹120 L (set by Haroon in C); Fazal not listed.
+   Change Shruthi → ₹130 L; save. **Expected:** warning ₹10 L over ₹120 L;
+   as Shruthi, "Your target" ₹130 L. —
+4. [Complex: cross-role] As Haroon. **Expected:** can still see Shruthi's
+   ₹130 L and change it (D32), where the code puts that. No save. —
+5. [Simple] Hide-check: as Fazal, Shruthi's ₹130 L and Basheer K's ₹120 L
+   nowhere; no way to change either. —
+6. [Simple] Hide-check: as Shruthi, Basheer K's ₹120 L and the SBU's
+   ₹280 L nowhere. —
+7. [Complex: save on another screen, then read back] As Abdul Latheef P,
+   Shruthi's "Manager" back to Haroon Sidheeq; save. **Expected:** after a
+   reload, Haroon Sidheeq. —
+8. [Complex: two saves, then read back] As Haroon, Imaging Team targets.
+   **Expected:** Fazal ₹160 L, Shruthi ₹130 L, Basheer K ₹120 L — ₹130 L
+   over ₹280 L. Clear Basheer K's figure (or ₹0 if the screen can't clear)
+   and set Shruthi → ₹120 L; save. **Expected:** the warning goes. —
+9. [Simple] As Basheer K, Team targets. **Expected:** Shruthi no longer
+   listed. —
+
+## H — Month labels (D39)
+
+1. [Complex: visual sweep of three screens] As Haroon: Brand Target
+   Tracking, Target & Coverage Planning (SBU box, Team targets, "Your
+   target", plan dialog, messages), Target vs Actuals. **Expected:**
+   quarters read like "Oct–Dec 2026"; no "2026-Q3"-style code anywhere;
+   "FY 2026-27" year labels unchanged. —
