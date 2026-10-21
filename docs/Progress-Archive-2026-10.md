@@ -3871,3 +3871,28 @@ P15, P23, P24, P76, P77 and the watch list.
   the form opens or on the next save press. Not a D22 bug, so no fix.
 - H3, H4 Pass. Section H done: H0–H4 all Pass, no fixes found, so no
   `fix:` commit for D22.
+- Committed and pushed `abee672` (3 files). Post-commit checklist for
+  D22 and the UAT move plan are next (handover).
+
+### Retro (Build & Test, 2026-10-21)
+- Suggested `/exit` after the last push without doing the retro or
+  offering the docs batch; Basheer asked for both. P93 2 → 3, P67 2 → 3.
+- Said the session was "past the 2-hour mark" without measuring; the
+  session record shows 1 h 58 min (the stop was still due: turn count
+  well past 25). P1 47 → 48.
+- After-push reply's plain part opened with a commit hash and "D22
+  checklist". P3 32 → 33.
+- A `cd` into the project folder during the retro's checks. P14 40 → 41.
+- "Hasn't heard from you" prompt during the retro's checks. P15 30 → 31.
+- New, watch list: a `find` ref opened the wrong next-action card
+  (cancelled, nothing saved); the browser type action dropped letters in
+  long text.
+- Not counted: H2's lost first attempt — cause unproven, nothing shows I
+  reloaded the tab (P88 checked).
+- Spot-check of 3 figures: "`abee672` has 3 files" = git ✓; "backend
+  1325 passed" = `60410cd`'s message ✓; "past 2 hours" ✗ (1 h 58 min).
+- Plain-language check of 2 replies: the "error message is how every
+  form works" note ✓; the after-push reply ✗ (above).
+- Checked: P1, P3, P11, P14, P15, P67, P88, P93 and the watch list.
+- Change for next time: after the last push of a session, do the retro
+  and offer the docs batch before suggesting `/exit`.

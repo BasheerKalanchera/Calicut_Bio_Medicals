@@ -18,7 +18,7 @@ session edits this note._
   `docs/Next-Action-Rules-Manual-E2E-Test-Plan.md`; no fixes, so no
   `fix:` commit. Findings in Progress-Archive-2026-10 (H2 first try lost
   to a page reload; the error message that stays on screen is how every
-  form works, not a bug).
+  form works, not a bug). Committed and pushed `abee672`.
 - **Next:** post-commit checklist for D22 (`cabio-post-commit`), then
   the UAT move plan below. Check in first.
 - api.ts guard is on (`5ca17aa`): a backend fix commit must carry the
