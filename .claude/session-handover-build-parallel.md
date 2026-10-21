@@ -8,48 +8,33 @@ note. It lives in the worktree, on the build branch, and reaches `main` at
 the merge (Basheer, 2026-10-17)._
 
 - Worktree: `.claude/worktrees/build`, created 2026-10-17 from
-  `origin/main`; `main` merged in up to `107bccc` the same day. Branch:
-  `worktree-build`, no code on it yet; last commit `1340e25` (docs
-  batch), pushed to `origin/worktree-build`. Migration number last chosen:
-  **0062** (`main`'s latest is 0061, checked 2026-10-17).
+  `origin/main`. Branch `worktree-build`, no code on it; `main` merged in
+  up to `4f68881` on 2026-10-21 (merge `f48f8ff`, after note commit
+  `a2cfbff`), pushed to `origin/worktree-build`.
 - Frontend packages installed with `npm ci --legacy-peer-deps` (a plain
   `npm install` fails; Backlog "`sales-os-app` has a real
   `typescript`/`openapi-typescript` peer dependency conflict").
-- Merge into `main`: once, at the end of the build, after Build & Test's
-  Next-Action E2E (D22, section H) is done and Basheer says go (Basheer,
-  2026-10-17, 2026-10-20).
+- On 20 Oct the Annual Target approval was written into the main-folder
+  copy of this note by mistake (`92cab23`, `006f4cb`); that copy is a
+  frozen pointer. At any merge into `main`, keep this copy.
 
-## Bringing `main` in first (Plan & Chore, Basheer's yes 2026-10-21)
-- On 20 Oct the approval below was written into the main-folder copy of
-  this note by mistake (`92cab23`, `006f4cb`); that copy is now a frozen
-  pointer. This copy was brought up to date on 21 Oct, uncommitted.
-- So: commit this note on the branch first (shown to Basheer), then
-  `git merge main`. It will clash on this note only — keep this copy
-  (`git checkout --ours .claude/session-handover-build-parallel.md`).
-
-## Annual Target Planning — next to build
-- Plan **approved 2026-10-20** (D1–D56),
-  `docs/Annual-Target-Planning-Implementation-Plan.md`. The 16 Oct
-  version (D1–D22a) is superseded; build from its section 2.
-- Build **Part 1 first** (steps 1–4): brand yearly figure, stretch and
-  seasonal split saved as brand quarters; SBU target = brands' total
-  (typed SBU target table removed, D55); Team targets panel; "Your
-  target" line; month labels. Part 1 goes to UAT with the full UAT move
-  (D52); Part 2 (steps 5–7) later.
-- E2E test plan for Part 1: being rewritten by Plan & Chore; the E2E runs
-  on Dev after the merge (Build & Test or `/test`), never alongside
-  another test.
-- The two step-1 proposals from 17 Oct (a removal rule on a yearly SBU
-  target table, was D13; change history on that table) look moot: D13
-  was withdrawn 2026-10-19 and D53/D55 make the SBU target the brands'
-  total, typed by no one. Check against section 2; don't treat them as
-  open or as decided — ask Basheer if the plan leaves doubt.
-- **Next:** merge `main` (above), then step 1 — check in first:
-  read-only Dev count of brand and SBU quarterly targets and of who
-  holds the SBU Manager role, shown first; then migration 0062, written
-  and tested in the worktree, applied to Dev only after the merge.
-- Only file shared with Build & Test: `sales-os-app/src/types/api.ts` —
-  at the merge, regenerate it, don't merge it by hand.
-- api.ts guard on (`5ca17aa`, 20 Oct): each backend commit carries an
-  api.ts made with
-  `sh C:/Users/Basheer/GitHub/Calicut_Bio_Medicals/.githooks/check-api-types.sh --write`.
+## Nothing lined up to build
+- Annual Target Planning Part 1 goes to **Build & Test** instead of this
+  session (Basheer, 2026-10-21). Nothing of it was written here; no
+  migration number is held by this session (0062 is free for Build & Test).
+- Passed to Basheer for Build & Test, 2026-10-21 (this session can't edit
+  that note):
+  - Read-only Dev count, 21 Oct: brand quarterly targets — 1 row (2026-Q3
+    Critical Care, 120 L); typed SBU targets — 4 rows (2026-Q3 CC 150,
+    Imaging 100; 2026-Q4 CC 120, Imaging 160); SBU Manager role — Basheer
+    K (Imaging, active) and "Test - SBU Manager" (inactive). Output:
+    scratchpad `dev_target_counts.txt` of session eebb66fb.
+  - `sbu_target` has no incoming foreign keys (Physical-Schema at 0061);
+    check live before the apply.
+  - Backend tests use stand-ins, no database; Basheer chose (21 Oct) to
+    review `alembic upgrade 0061:0062 --sql` output, first real run on
+    Dev, no throwaway database.
+  - The 17 Oct step-1 proposals (removal rule, change history on a yearly
+    SBU target table) are moot: plan section 6 drops `sbu_target` (D55).
+- **Next:** wait for Basheer to name what this session builds; this
+  branch's docs reach `main` at the next merge into `main`, when he says go.
