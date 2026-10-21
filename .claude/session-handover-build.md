@@ -6,7 +6,8 @@ keeps its own note: `.claude/session-handover-plan.md`. Only the Build & Test
 session edits this note._
 
 ## Reminders
-- Retro for 21 Oct done (Progress-Archive). Next session: step 3.
+- Retros for both 21 Oct sessions done (Progress-Archive). Next
+  session: the parked review fixes below.
 - api.ts guard is on (`5ca17aa`): a backend fix commit must carry the
   matching api.ts (`sh .githooks/check-api-types.sh --write` stages it).
 
@@ -18,9 +19,36 @@ session edits this note._
   (migration 0062, server, tests, Physical-Schema, api.ts). Applied to
   Dev 21 Oct, `alembic current` = 0062 (head). pytest 1346, ruff/tsc
   clean, lint 0 errors. D59–D63 in the plan (uncommitted, docs batch).
-- Until step 3: the SBU target box on Target & Coverage Planning can't
-  save; yearly target screens don't exist yet.
-- Next: check in with Basheer, then step 3 (screens).
+- Step 3 (screens) committed and pushed 21 Oct as `642f04c` (with
+  D64): Brand Target Tracking
+  rewritten (calendar year, seasonal pattern box, one line per brand with
+  quarters underneath, D64), SBU box read-only, new TeamTargetsPanel +
+  "Your target" line, Target vs Actuals Target column and wording, month
+  labels. tsc clean, lint 0 errors. Not yet tried in the browser.
+- Step 4 docs (BR-PL-10/11/12, ADR-019 addendum, User Manual, etc.)
+  went out in Plan & Chore's docs batch `20eea0a`, pushed.
+- Pre-E2E review 21 Oct: Dev at 0062 (head), Physical-Schema current;
+  pytest 1346 passed, ruff/tsc clean, lint 0 errors (133 warnings).
+  `/code-review high` found 10, all checked against the code. Parked by
+  Basheer 21 Oct evening — resume tomorrow morning. Nothing edited yet.
+- Fixes as re-sorted for him (fix, then E2E):
+  1. Brand Target Tracking pattern box loses unsaved typing on window
+     switch (`key` has `dataUpdatedAt`, BrandTargetTrackingScreen:322).
+  2. "Year starts in" box open when the brand has a figure in another
+     year, then errors (:450; add a has-any-figure field to the row).
+  3. Missing space before ₹, approve/reject dialog
+     (TargetPlanningScreen:775) — small-fixes batch at E2E end.
+  Quiet fixes: negative quarter from rounding (`split_brand_year`,
+  service:632 — largest share takes remainder); refresh list after a
+  refused save (:268); remove old hand-typed brand quarter route
+  (router:283–302, follows D54 — Basheer asked, answered: no hand
+  editing). Dropped: N+1 lookups, duplicate repository helpers.
+- **Open, for Basheer:** Q2 — Team targets panel lists only SBU
+  Manager / Area Manager / Sales Rep (`sbu_top_people`, repository:442)?
+  Q3 — heading "Team Plans" for Area Managers instead of "SBU Target &
+  Plans" (TargetPlanningScreen:594)? Recommended yes to both.
+- Lesson (21 Oct): he found the raw review list hard to follow — bring
+  it sorted by what users would notice, screen first, from the start.
 - Committed and pushed 21 Oct: vendor script wording `187fe06`; docs
   batch `c6708f9` (D58–D63, SonoScape examples rule).
 

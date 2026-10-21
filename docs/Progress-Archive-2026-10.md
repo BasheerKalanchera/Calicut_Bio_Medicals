@@ -4078,3 +4078,35 @@ moved to after the restart (Basheer).
   Counted from the session's messages (the earlier part from the context
   summary's list of his messages).
 - No guard-fixable or live-data/UAT/lost-work slip; tracker unchanged.
+
+### Annual Target Part 1 — pre-E2E review (Build & Test, 2026-10-21)
+
+- Checks: Dev `alembic current` = 0062 (head); Physical-Schema regenerated
+  in `f2f5edd`; pytest 1346 passed, ruff and tsc clean, lint 0 errors
+  (133 warnings).
+- `/code-review high` on `f2f5edd^..642f04c` found 10; all checked against
+  the code and confirmed. Re-sorted for Basheer by what users would notice:
+  pattern box on Brand Target Tracking loses unsaved typing on a window
+  switch; "Year starts in" box looks changeable when the brand has a
+  figure in another year, then errors; missing space before ₹ on the
+  approve/reject dialog. Plus the "SBU Target & Plans" heading shown to
+  Area Managers (spotted earlier). Quiet fixes: rounding can make one
+  brand quarter slightly negative; list not refreshed after a refused
+  save; old hand-typed brand quarter route still live (removing it
+  follows D54, which dropped hand editing of brand quarters; Basheer had
+  asked whether Haroon could still edit them).
+  Dropped: repeated lookups, duplicate helpers.
+- Parked by Basheer to the morning of 22 Oct; open for him: Q2 (Team
+  targets lists sales roles only?) and Q3 ("Team Plans" heading for Area
+  Managers?). Detail in the Build & Test handover note.
+
+### Retro (Build & Test, 2026-10-21, second session)
+
+- **Corrections from Basheer this session: 3.** (1) "What does this -
+  Traceability left until Part 2 - mean?" — label used without
+  explaining it. (2) "What is this test run?" — ran the checks without
+  saying what they were. (3) "Didn't understand this … Overall I am not
+  happy with the review comments" — passed on the reviewer's ten findings
+  in its own technical form, equally weighted, instead of sorted by what
+  users would notice. Counted from the session's messages (transcript).
+- No guard-fixable or live-data/UAT/lost-work slip; tracker unchanged.
