@@ -7,6 +7,9 @@ Rule origins (the incident behind each dated tag) live in
 - This is a Sales OS, not a CRM — see PRD for the full definition.
 - Pipeline model: Target → Coverage → Opportunity → Revenue (see PRD and ADR-013).
 - Stage/Status decoupling: Won/Lost are statuses, not pipeline stages — preserve this modeling invariant (see ADR-028).
+- Made-up examples use SonoScape (a brand Cabio sells), never Mindray, GE
+  or another competitor — name a competitor only when pointing it out as
+  one. *(2026-09, 2026-10-17, 2026-10-21)*
 - Terminology: say "Opportunity", never "deal", in code, comments, docs,
   commit messages and chat with Basheer. *(2026-10-01)*
 

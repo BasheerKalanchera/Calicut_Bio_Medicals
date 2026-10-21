@@ -289,10 +289,30 @@ this replan: D8, D12, D12a, D14.
   report to them; their Team targets warning compares against that
   figure, not the SBU target. They still see the SBU target (D26).
   Refines D32 and D45 — Basheer, 2026-10-21.
+- D58. Build steps 1 (database) and 2 (server) are built together, with
+  one checkpoint commit. Reason: removing the typed SBU target table
+  while the server still reads it would break the SBU target box and
+  Target vs Actuals on Dev between the two steps; no one uses those
+  screens on Dev meanwhile — Basheer, 2026-10-21.
+- D59. Once a brand has a yearly figure, its "year starts in" month
+  can't be changed; the saved quarters were worked out from the old
+  month — Basheer, 2026-10-21.
+- D60. A brand's yearly figure can't be saved while neither the brand
+  nor its SBU has a seasonal pattern for that year; the app asks for
+  the SBU's pattern first rather than splitting the year evenly —
+  Basheer, 2026-10-21.
+- D61. No one sets their own quarterly target; only the person they
+  report to, Admin or GM can — Basheer, 2026-10-21.
+- D62. Admin/GM's Team targets panel lists the SBU's people who report
+  to no one or straight to Admin/GM (today the Area Managers), and
+  compares their total with the SBU target — Basheer, 2026-10-21.
+- D63. A brand made inactive still counts in its SBU's target for any
+  quarter it has a saved figure, so a quarter's total doesn't drop when
+  a brand is switched off — Basheer, 2026-10-21.
 
 ## Figures and sources
 
-- Mindray ₹400 L, SonoScape ₹500 L, other brands ₹300 L, Imaging total
+- SonoScape ₹400 L, a second brand ₹500 L, other brands ₹300 L, Imaging total
   ₹1,200 L, GM's figure ₹1,300 L, ₹325 L a quarter — made-up examples.
 - 2026-Q3 = 01 Oct 2026 to 31 Dec 2026; 2026-Q4 = 01 Jan 2027 to 31 Mar
   2027; 2027-Q1 = 01 Apr 2027 to 30 Jun 2027 — `scripts/quarter.py`,
@@ -390,7 +410,8 @@ UAT with the full UAT move; Part 2 follows in a later move (D52).
 
 ## 2. Build order
 
-**Part 1**
+**Part 1** (steps 1 and 2 built together, one checkpoint commit; D58 —
+`f2f5edd`, 0062 applied to Dev 21 Oct)
 1. **Database** (migration 0062). Brand "year starts in" month; brand
    yearly figure and stretch; SBU seasonal pattern with a per-brand
    change; a quarterly target per person; brand figures readable by

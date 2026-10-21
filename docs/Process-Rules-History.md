@@ -5,6 +5,11 @@ skill, moved here verbatim on 2026-09-23 (`docs/CLAUDE-md-Refactor-Plan.md`) so
 `CLAUDE.md` stays short. Rules carry a date tag, e.g. *(2026-09-18)*; grep this
 file for that date to find the story. Not loaded at session start.
 
+## Product
+
+- **Rule:** Made-up examples use SonoScape (a brand Cabio sells), never Mindray, GE or another competitor — name a competitor only when pointing it out as one.
+  **Why:** 2026-10-21 — third time: competitor brands used as examples in a 2026-09 retro, the incentive options doc on 2026-10-17 (Basheer changed Mindray to SonoScape; logged in Process-Improvements), and the Annual Target Planning chat, plan and tests on 2026-10-21. Basheer: Mindray competes with SonoScape, Cabio's customer's brand. Until now it lived only in a watch-list line, so it never reached the rules read at session start.
+
 ## Session handoff
 
 - **Rule:** **Phase 1 planning/sequencing:** `docs/Phase1-Completion-Sprint-Plan.md` is deprecated as a planning source, as of ~2026-09-12 — it still exists in the repo, bu…

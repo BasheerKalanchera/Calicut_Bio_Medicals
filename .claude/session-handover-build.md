@@ -5,28 +5,25 @@ items go to Progress-Archive; unstarted work goes to Backlog. Plan & Chore
 keeps its own note: `.claude/session-handover-plan.md`. Only the Build & Test
 session edits this note._
 
-## D22 post-commit checklist (21 Oct, in progress)
-- Done: handover trimmed, archive line, Traceability unchanged (row 19
-  stays "being rolled out" until UAT), no Backlog entry for D22,
-  `generate_scorecard.py --check` OK (34 Done, 11 Partial, 5 Not started).
-- Proposed to Basheer, not yet written: D22 hashes (`60410cd`, `c9d8d2b`)
-  and the section H pass in the Next-action rules plan's Status line and
-  its E2E plan's "Built" line. Edits go in the next docs batch (Basheer).
-- Retro addendum for the next docs batch: after the D22 push, the
-  checklist was left out of the docs batch without saying so; Basheer
-  asked why. P80 4 → 5.
+## For this session's end retro (21 Oct)
+- After the D22 push, the checklist was left out of the docs batch
+  without saying so; Basheer asked why. P80 4 → 5 (not yet written).
 - api.ts guard is on (`5ca17aa`): a backend fix commit must carry the
   matching api.ts (`sh .githooks/check-api-types.sh --write` stages it).
 
 ## Next: Annual Target Planning Part 1, built here
-- Basheer 21 Oct: this session takes Part 1 over from `/build` after the
-  D22 checklist. `/build` has no code for it (worktree `f48f8ff` = docs
-  only). Built in the main folder, so 0062 is applied to Dev at step 1
-  as the plan says (no merge wait). Proposed: `/build` commits its
-  unsaved note edit and exits; Plan & Chore merges `worktree-build`
-  (docs only) into main and removes the worktree/branch, asking first.
-- Step 1 check-in shown 21 Oct: read-only Dev count of brand and SBU
-  quarterly targets (SBU Manager count already done 21 Oct, plan D57).
+- Built in the main folder (Basheer 21 Oct); `/build` is idle, its
+  worktree and branch removed (merged `d8e1d03`).
+- Steps 1+2 in one checkpoint (D58, Basheer 21 Oct: no one uses the old
+  screens meanwhile). Committed and pushed as checkpoint `f2f5edd`
+  (migration 0062, server, tests, Physical-Schema, api.ts). Applied to
+  Dev 21 Oct, `alembic current` = 0062 (head). pytest 1346, ruff/tsc
+  clean, lint 0 errors. D59–D63 in the plan (uncommitted, docs batch).
+- Until step 3: the SBU target box on Target & Coverage Planning can't
+  save; yearly target screens don't exist yet.
+- Next: check in with Basheer, then step 3 (screens).
+- Committed and pushed 21 Oct: vendor script wording `187fe06`; docs
+  batch (D58–D63, SonoScape examples rule) right after it.
 
 ## UAT move
 - Basheer 20 Oct: "move everything together" — no Wednesday 21 Oct

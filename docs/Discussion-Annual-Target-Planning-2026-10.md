@@ -113,7 +113,7 @@ the new one uses Target & Coverage Planning as today.
 ## 6. Questions
 
 **Q1. Brand targets: yearly, quarterly, or both?** Example (figures made
-up): Mindray gives ₹400 L for the year. Option A: enter ₹400 L once; the
+up): SonoScape gives ₹400 L for the year. Option A: enter ₹400 L once; the
 app splits it ₹100 L per quarter, each quarter adjustable. Option B:
 yearly only, no per-quarter brand figure. *Answered (Basheer, 2026-10-15,
 for now):* A.

@@ -4002,3 +4002,12 @@ moved to after the restart (Basheer).
   started; no client page changes.
 - Basheer 21 Oct: Annual Target Planning Part 1 is built in Build &
   Test, not `/build` (which had no code for it yet).
+- Steps 1 and 2 committed and pushed as checkpoint `f2f5edd` (migration
+  0062 + server, D58); detail choices D59–D63 answered by Basheer as
+  recommended. Applied to Dev by Basheer, `alembic current` = 0062
+  (head); full pytest 1346 passed. First `!` command given with
+  backslashes failed in the Bash shell; full-path forward-slash form
+  worked. Until step 3, the SBU target box can't save on Dev.
+- Basheer: Mindray is a competitor of SonoScape; made-up examples use
+  SonoScape. Third repeat, so made a CLAUDE.md rule (Product). Vendor
+  report script wording "deal" → "Opportunity" (Basheer).
