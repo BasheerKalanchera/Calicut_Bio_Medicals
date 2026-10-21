@@ -5,71 +5,65 @@ items go to Progress-Archive; unstarted work goes to Backlog. Build & Test
 keeps its own note: `.claude/session-handover-build.md`. Only the Plan & Chore
 session edits this note._
 
-- Untracked plan doc from another session (Forecast): leave it out of commits.
-  At its review, update its line 110 to BR-FIN-09.
+- Forecast plan (untracked, other session): not in commits; at review, line 110 → BR-FIN-09.
 
-## Annual Target Planning — being replanned (calendar-year brand targets)
+## Annual Target Planning — approved 2026-10-20 (D1–D56)
 
-- 2026-10-17: plan marked "do not build"; D23–D28 recorded (D8, D12,
-  D12a, D14 withdrawn). Incentive-year options doc + PDF made for Haroon
-  and Latheef Bhai (link in the plan's "Open:" line). **Next:** Basheer's
-  answers on incentive year, Area Manager split (A1–A3), old Q5–Q7, and
-  whether D23–D28 stand; then rewrite plan sections 1–6 and the E2E
-  plan. Hold line for the `/build` note: only with Basheer's yes.
+- Plan approved by Basheer 2026-10-20 (archive 20 Oct entry); `/build`
+  note updated with his yes (Part 1, steps 1–4). In `92cab23` + repair
+  `006f4cb`, both pushed 2026-10-20 — `/build` can take in `main` now.
+- **Next:** Part 1 E2E plan rewrite
+  (`docs/Annual-Target-Planning-Manual-E2E-Test-Plan.md`, old on-hold
+  version). First a read-only Dev check (users, roles, SBU, managers,
+  brands, brand/SBU quarter targets, 2026-Q3/Q4), shown first, three RLS
+  settings as Haroon (`cabio-db-and-scripting`). Then write, show before
+  saving: hide-checks with real people, labels as descriptions until the
+  code exists, Opportunity (hospital), saves "Basheer clicks, Claude
+  watches", SBU-total checks on Target vs Actuals.
+
+## Order agreed for the three sessions (Basheer asked, 2026-10-20)
+
+- Plan & Chore: docs batch (lets `/build` start) → `api.ts` chore (build
+  and test the guard, not switched on) → Dev check + Part 1 E2E plan →
+  switch the guard on after Build & Test's two commits.
+- Build & Test: D22 review + E2E → `fix:` commit → `api.ts` refresh
+  commit → UAT move plan, which must now include Part 1 and 0062 (D52).
+  **Open:** Basheer to say whether Plan & Chore adds that line to its note.
+- `/build`: merge main → step 1 check-in → build in worktree → merge
+  once after Build & Test's D22 E2E and Basheer's go; 0062 applied to Dev
+  then. Only shared file: `src/types/api.ts` (regenerate, don't merge).
 
 ## Next full UAT move — what goes, and what must land first
 
-- **Must land first:** User Manual and Help Catch-up plan. Steps 1–2 done
-  2026-10-15 (`docs/UAT-User-Manual.md` rewritten). Draft PDF:
-  `Desktop\cabio\Cabio-Sales-OS-User-Manual.pdf` (11 pages). **Next:**
-  Basheer reviews the PDF, then step 3 (in-app help); check in first.
-  Open (unanswered): Backlog items for deletes with no "Are you sure?"
-  (Opportunity documents, stakeholder links) and the Lead Source picker
-  showing "REPEAT_ORDER"-style codes?
-- **Must land first, too:** Annual Target Planning (D17) — replan above.
-- **The move plan** (to write, own approval) starts with Query Load plan
-  section 9, steps 2–9 (UAT's fix 3 copy into `main`, remove `uat-fix3`)
-  — Basheer, 2026-10-14.
-- **Goes with it, all built and E2E-passed on Dev:** Target vs Actuals +
-  Target & Coverage roster; Audit Trail Redesign (migration 0059 + its
-  plan's steps 2–4; step 5 has the pre-move cautions); Win Probability +
-  one create form; Rep plan wording; Duplicate hospitals Part A (then its
-  test plan step 19 on UAT). Each plan's Status line has its commits.
-- After the move: Target vs Actuals card redesign (roster plan step 6d),
-  shaped by the sales team's feedback on UAT (plan step 7).
+- **Must land first:** User Manual and Help Catch-up plan. Draft PDF
+  `Desktop\cabio\Cabio-Sales-OS-User-Manual.pdf`. **Next:** Basheer
+  reviews it, then step 3 (in-app help); check in first. Open
+  (unanswered): Backlog items for deletes with no "Are you sure?" and the
+  Lead Source picker showing "REPEAT_ORDER"-style codes? Annual Target
+  Part 1 lands first too (D52). The move plan (Build & Test) starts with
+  Query Load plan section 9, steps 2–9 — Basheer, 2026-10-14.
+- **Goes with it, E2E-passed on Dev:** Target vs Actuals + roster; Audit
+  Trail Redesign (0059; plan step 5 cautions); Win Probability + one
+  create form; Rep plan wording; Duplicate hospitals Part A (then step 19
+  on UAT). Each plan's Status line has its commits.
 
-## Harness Engineering — plan approved 2026-10-08, building
+## Harness Engineering
 
-- Plan: `docs/Harness-Engineering-Implementation-Plan.md`; tracker
-  `docs/Process-Improvements.md`, open list 28 (counted 2026-10-17 after
-  the evening retro added P86; 29 once Build & Test's P85 is saved).
-- **Next:** next review 2026-10-19; pick fixes that save Basheer's time
-  (P15 left out 17 Oct as cosmetic). Ten watch-list lines drop 2026-10-24
-  if not seen again.
-- **Waiting on Basheer:** fix the P16 reminder so it also fires on a quiet
-  commit (`git commit -q` hides the line it reads) — proposed 2026-10-17.
-- Still to write, shown first: paperwork check in `cabio-post-commit`
-  (feat/fix only, all living docs + handover); right-pack check in
-  `harness-engineering` (its review steps written 2026-10-15).
+- Tracker `docs/Process-Improvements.md`; open list count in the 20 Oct
+  Plan & Chore retro (Progress-Archive-2026-10). **Next review
+  2026-10-21:** P88, P87, P89 first. P15 hits the 7-day skip limit
+  2026-10-24; ten watch-list lines too.
+- Still to write, shown first: paperwork check (`cabio-post-commit`),
+  right-pack check (`harness-engineering`).
 
-## Chores left to the planning and chores session
+## Chores
 
-- Delete the Dev test data from Duplicate hospitals Part A: five "zz Test
-  duplicate guard…" hospitals and the "zz Test contact" stakeholder
-  (Basheer, 2026-10-14; read-only check shown first; load
-  `cabio-db-and-scripting`).
-- Open: Basheer to decide whether to deactivate the test Marketing User
-  login from the 2026-10-10 browser check.
+- Delete Dev test data from Duplicate hospitals Part A (five "zz Test
+  duplicate guard…" hospitals, "zz Test contact"); read-only check first.
+  Open: deactivate the test Marketing User login (2026-10-10)?
 
-## Weekly Follow-up / My Work — plan drafted 2026-10-11, decisions in progress
-- `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md`. Decided
-  2026-10-14 (Basheer): D1 (opens on own work; managers get a "Showing:
-  Me ▾" switch), D3 (four sections; PRD's high-priority and 70 %+ lists
-  merged), D3a, D4 (a) and (b), D6–D6d, D11 (pre-fill moved to the
-  Next-Action plan), D12, D13 (step 3 kept, reduced: uses the Next-Action
-  plan's step 1, built first; My Work's E2E tests it through My Work's
-  buttons). BR-OP-20 and BR-OP-06 (switched off) saved in Business-Rules.
-- **Next (Plan & Chore session):** last round, proposed D5, D7, D8, D9b,
-  D10, D14; then the plan's "what could be affected" pass and approval.
-- **Open question for Basheer (14 Oct, unanswered):** Keep the
-  pre-fill in all four close forms, or Log Activity only?
+## Weekly Follow-up / My Work — decisions in progress
+- `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md`; decided so far
+  listed in its Decisions. **Next:** last round, proposed D5, D7, D8, D9b,
+  D10, D14; then "what could be affected" pass and approval.
+- **Open (14 Oct):** pre-fill in all four close forms, or Log Activity only?

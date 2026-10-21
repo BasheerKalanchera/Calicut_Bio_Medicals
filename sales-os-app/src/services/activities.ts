@@ -165,6 +165,9 @@ export async function completeReminder(
     // Plan D3: a hospital-level next action closed by the new Opportunity
     // its visit produced, instead of a follow-up.
     produced_opportunity_id?: string;
+    // Plan D22: the same person's other open next actions on this
+    // Opportunity, closed together with this one.
+    also_close_ids?: string[];
   },
 ): Promise<ReminderResponse> {
   const r = await api.patch(`/reminders/${reminderId}`, { is_completed: true, ...payload });

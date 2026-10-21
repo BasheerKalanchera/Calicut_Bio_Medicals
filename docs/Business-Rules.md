@@ -155,7 +155,7 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Rule:** Moving an opportunity to the "On-Hold" status is a guarded transition.
 * **Mandatory Fields:** `hold_reason_id` (Master Data) and `reactivation_date` (Date).
 * **Validation:** `reactivation_date` must be in the future.
-* **Next action (agreed 2026-10-12, not built):** putting an Opportunity On Hold also needs a next action, its due date filled in with the `reactivation_date`; the rep may move it earlier, not later (Basheer, `docs/Discussion-Next-Action-Driven-Activity-Logging-2026-10.md` question 8; see BR-ACT-05).
+* **Next action (agreed 2026-10-12; built in the next-action rules feature, 2026-10-16, due date filled in from 2026-10-17):** putting an Opportunity On Hold also needs a next action, its due date filled in with the `reactivation_date`; the rep may move it earlier, not later (Basheer, `docs/Discussion-Next-Action-Driven-Activity-Logging-2026-10.md` question 8; see BR-ACT-05).
 * **Logic:** When `current_date >= reactivation_date`, the system must flag the opportunity as "Reactivation Overdue" in all insights views.
 * **Audit Requirement:** Changes to `hold_reason_id` or `reactivation_date` must be recorded in audit history.
 
@@ -317,20 +317,20 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Not the same as BR-OP-06:** that rule is about time spent in one stage; this one is about nobody visiting.
 * **Enforcement:** not built yet — see `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md` (D6, D6a, D6c). The Stagnant Deals report today counts every activity type and includes On Hold Opportunities, until that plan changes it.
 
-### BR-OP-21: A New Opportunity Starts With an Activity (agreed 2026-10-12, not built)
+### BR-OP-21: A New Opportunity Starts With an Activity (agreed 2026-10-12, built 2026-10-16)
 * **Rule:** An Opportunity cannot be saved without its first activity (the conversation that made it an Opportunity), entered in the same step. A call, visit or similar also sets a next action, as BR-ACT-04 already requires, so the Opportunity starts with both. Applies to every way an Opportunity is created, including converting a marketing lead.
 * **Rationale:** Haroon, 2026-10-12, answering question 5 of `docs/Discussion-Next-Action-Driven-Activity-Logging-2026-10.md`. On UAT 33 active Opportunities had never had any activity (data-quality check, 11 Oct), e.g. Om Hiremath's 17 Bangalore Opportunities entered 1–11 Sep.
-* **Enforcement:** not built yet — see `docs/Next-Action-Rules-Implementation-Plan.md`.
+* **Enforcement:** built on Dev, manual E2E passed 2026-10-18; not yet on UAT — see `docs/Next-Action-Rules-Implementation-Plan.md` and `docs/Business-Rule-Implementation-Matrix.md`.
 
-### BR-OP-22: A Stage or Status Change Carries a Note (agreed 2026-10-12, not built)
+### BR-OP-22: A Stage or Status Change Carries a Note (agreed 2026-10-12, built 2026-10-16)
 * **Rule:** Every stage or status change on an Opportunity needs a note saying why.
   - **The person changing it has an open next action of their own on the Opportunity:** they close it in the same step, and what they write as "what happened" is the note. Closing it needs a new next action (BR-ACT-05), unless the change is to Won or Lost. Example: Fahad moves SonoScape E1 Exp to Payment Pending, closes "PO follow up" with "PO received", and sets "Chase payment".
   - **No open next action of their own:** they log a Note activity, which asks for a next action as today (BR-ACT-04) (the next action is optional when the change is to Won or Lost — Basheer, 2026-10-16).
   - **A manager changing it:** a manager with no open next action of their own on it logs a Note; the owner's open next action stays open — a manager doesn't close the rep's follow-up for them. A manager with one of their own closes it, like anyone else (Basheer, 2026-10-16).
-* **Also:** owners can close their own next actions from the Opportunity page's Next Actions tab (today it is read-only); other people's stay read-only there.
+* **Also:** owners can close their own next actions from the Opportunity page's Next Actions tab (read-only before this rule); other people's stay read-only there.
 * **Not yet:** stage and status can still be changed from the Opportunity page as today. Allowing changes *only* by closing a next action is a later tightening — see `docs/Backlog.md` "Stage changes only by closing a next action".
 * **Rationale:** Haroon, 2026-10-12 (note on every change); Basheer, 2026-10-12 (the closed next action is the note; manager case).
-* **Enforcement:** not built yet — see `docs/Next-Action-Rules-Implementation-Plan.md`.
+* **Enforcement:** built on Dev, manual E2E passed 2026-10-18; not yet on UAT — see `docs/Next-Action-Rules-Implementation-Plan.md` and `docs/Business-Rule-Implementation-Matrix.md`.
 
 ---
 
@@ -620,12 +620,22 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
   commitment made now. `next_action_text` and `next_action_due_date` must be
   given together if given at all (validator-enforced); owner defaults to
   whoever closed the reminder, same default BR-ACT-04 uses.
-* **Change agreed 2026-10-12, not built — the follow-up becomes required.**
+* **Change agreed 2026-10-12, built on Dev 2026-10-15 (manual E2E passed 2026-10-18; not yet on UAT) — the follow-up becomes required.**
   Closing one's own next action on an Opportunity needs a new next action
   on that Opportunity. The only exception: the Opportunity is marked Won
   or Lost in the same step (a follow-up may still be added, e.g. chasing
   payment). Another next action still being open does not exempt it
   (Basheer, 2026-10-12 — the discussion note's second exception dropped).
+  **Closing several at once (agreed 2026-10-19; built on Dev 2026-10-20, not on UAT):** a
+  person with more than one open next action of their own on the same
+  Opportunity may close any of them together, with one "what happened"
+  and one follow-up — so the count can come down to one in a single
+  save. Offered in the close form (Next Actions screen, the Opportunity
+  page's Next Actions tab) and in Log Activity's close-it-first warning;
+  the "Why this change?" pop-up still closes one (next-action rules plan
+  D22; Basheer, 2026-10-19, after a UAT check found 12 Active
+  Opportunities where one person had 2–5 open, mostly older ones never
+  closed).
   Haroon via Basheer, 2026-10-12 (discussion note, question 4 and reading
   (i)). The same applies to a hospital-level next action, unless the
   visit produced a new Opportunity (BR-OP-21 gives it its own) — then
@@ -764,7 +774,7 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Reference:** `docs/Referral-Credit-And-Relationship-Support-Implementation-Plan.md`,
   `docs/Discussion-SplitParticipant-SBU-Scope.md` (v6, §3.3).
 
-### BR-ACT-11: An Open Next Action Must Be Closed Before a New Activity (agreed 2026-10-12, not built)
+### BR-ACT-11: An Open Next Action Must Be Closed Before a New Activity (agreed 2026-10-12, built 2026-10-15)
 * **Rule:** While a person has an open next action of their own on an
   Opportunity, they cannot log a fresh activity on it; they close that
   next action instead (BR-ACT-05), in the same Log Activity form, on every
@@ -778,8 +788,9 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
   section 4b; Basheer, 2026-10-12, own next actions only (question 2).
   Known cost: an unplanned visit while a planned call is still open is
   recorded by closing the call.
-* **Enforcement:** not built yet — see
-  `docs/Next-Action-Rules-Implementation-Plan.md`.
+* **Enforcement:** built on Dev, manual E2E passed 2026-10-18; not yet
+  on UAT — see `docs/Next-Action-Rules-Implementation-Plan.md` and
+  `docs/Business-Rule-Implementation-Matrix.md`.
 
 ---
 

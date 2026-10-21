@@ -125,9 +125,10 @@ export default function DemoApp() {
   const isMarketingUser = (userProfile as { role_name?: string } | null)?.role_name === MARKETING_ROLE;
   // Lazy initializer -- AuthGate only mounts DemoApp once auth has resolved,
   // so userProfile is already populated at first render here; reading it
-  // once up front avoids a flash of the (unreachable, for this role)
-  // Pipeline view before a later effect could correct it.
-  const [view, setView] = useState(() => (isMarketingUser ? "marketingLeads" : "opportunities"));
+  // once up front avoids a flash of the wrong starting view before a later
+  // effect could correct it. Everyone else opens on Account Management, not Pipeline (Weekly Follow-up
+  // plan D9a, Haroon via Basheer 2026-10-12).
+  const [view, setView] = useState(() => (isMarketingUser ? "marketingLeads" : "customers"));
   const [isSidebarOpen, setIsSidebarOpen]       = useState(false);
   // Sidebar sections collapse independently -- Sales Execution open by
   // default (daily-use), Reports/Administration start collapsed since most

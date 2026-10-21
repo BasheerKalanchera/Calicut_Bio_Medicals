@@ -5,7 +5,7 @@ import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import dayjs from "dayjs";
 import FormModal from "./FormModal";
 import QuickLeadModal from "./QuickLeadModal";
-import { completeReminder } from "../services/activities";
+import { completeReminder, listOpportunityReminders } from "../services/activities";
 import { listUsers } from "../services/masterData";
 import { getOpportunity } from "../services/opportunities";
 import { useAuth } from "../contexts/AuthContext";
@@ -25,6 +25,11 @@ interface Props {
   // BR-ACT-11: what Log Activity already had filled in when it switched to
   // closing the open next action, so nothing is typed twice.
   initial?: { activity_type?: ActivityType; activity_date?: string; notes?: string };
+  // Plan D22: Log Activity with two or more open next actions on the
+  // Opportunity -- `reminder` is left out and the rep ticks which of these
+  // to close (at least one). Without it, the form offers the same person's
+  // other open ones on the Opportunity as "Also close".
+  closeChoices?: ReminderResponse[];
   // Plan D14/D15: the "Why this change?" pop-up after the Opportunity Edit
   // form's Save. `reminder` is ignored; the changer picks one of their own
   // open next actions to close, or with none writes a Note. Nothing is sent
@@ -103,7 +108,7 @@ function nowPlusDaysLocal(days: number) {
   return d.toISOString().slice(0, 16);
 }
 
-export default function CloseReminderModal({ isOpen, onClose, reminder: reminderProp, onCompleted, loggedForUserId, initial: initialProp, stageChange, firstActivity }: Props) {
+export default function CloseReminderModal({ isOpen, onClose, reminder: reminderProp, onCompleted, loggedForUserId, initial: initialProp, closeChoices, stageChange, firstActivity }: Props) {
   const queryClient = useQueryClient();
   const { userProfile } = useAuth();
   const currentUserId = (userProfile as any)?.id;
@@ -128,16 +133,43 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
   const [producedOpportunityId, setProducedOpportunityId] = useState<string | null>(null);
   // Stage-change mode: which of the changer's own open next actions to close.
   const [pickedReminderId, setPickedReminderId] = useState("");
+  // Plan D22: the ticked next actions (none start ticked), and whether the
+  // rep has typed in the follow-up box -- until then it follows the ticks.
+  const [tickedIds, setTickedIds] = useState<string[]>([]);
+  const [followUpEdited, setFollowUpEdited] = useState(false);
 
   const ownReminders = stageChange?.ownReminders ?? [];
+  const plainClose = !stageChange && !firstActivity;
+  const contextReminder = reminderProp ?? closeChoices?.[0] ?? null;
+  const opportunityId = plainClose ? contextReminder?.activity.opportunity?.id : undefined;
+
+  // Plan D22: with a next action pressed, the same person's other open ones
+  // on this Opportunity (same key as Log Activity's fetch).
+  const { data: openOnOpportunity = [] } = useQuery({
+    queryKey: ["opp-reminders", opportunityId, false],
+    enabled: isOpen && plainClose && !closeChoices && !!reminderProp && !!opportunityId,
+    queryFn: () => listOpportunityReminders(opportunityId!, false),
+  });
+  const tickChoices = closeChoices ?? (reminderProp
+    ? openOnOpportunity.filter((r) => !r.is_completed && r.id !== reminderProp.id
+        && r.assigned_to_user_id === reminderProp.assigned_to_user_id)
+    : []);
+  // Everything being closed: the pressed one, if any, and the ticked ones.
+  const closingFor = (ids: string[]) => [
+    ...(reminderProp && !closeChoices ? [reminderProp] : []),
+    ...tickChoices.filter((r) => ids.includes(r.id)),
+  ].sort((a, b) => a.due_date.localeCompare(b.due_date));
+  const closing = closingFor(tickedIds);
+
   const reminder = firstActivity
     ? null
-    : stageChange ? ownReminders.find((r) => r.id === pickedReminderId) ?? null : reminderProp;
+    : stageChange ? ownReminders.find((r) => r.id === pickedReminderId) ?? null
+    : closeChoices ? closing[0] ?? null : reminderProp;
+  const alsoCloseIds = closing.filter((r) => r.id !== reminder?.id).map((r) => r.id);
   // Stage-change mode with no open next action of one's own: a Note (D14).
   const noteOnly = !!stageChange && ownReminders.length === 0;
-  const opportunityId = reminder?.activity.opportunity?.id;
-  const accountId = reminder?.activity.account?.id;
-  const isHospitalLevel = !stageChange && !!reminder && !opportunityId;
+  const accountId = (plainClose ? contextReminder : reminder)?.activity.account?.id;
+  const isHospitalLevel = plainClose && !!reminder && !opportunityId;
 
   const { data: users = [] } = useQuery({
     queryKey: ["users", "assignable"],
@@ -177,8 +209,14 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
     setActivityDate(initial?.activity_date || nowLocal());
     setNotes(initial?.notes ?? "");
     setNextActionText(followUpExempt ? "" : (stageChange ? onlyOwn : reminderProp)?.reminder_text ?? "");
-    setNextActionDueDate(nowPlusDaysLocal(1));
+    // BR-OP-02: On Hold starts the follow-up on the re-activation date (same time of day).
+    const onHoldDue = stageChange?.newStatus.code === "ON_HOLD" && stageChange.reactivationDate;
+    setNextActionDueDate(onHoldDue
+      ? `${stageChange.reactivationDate}${nowPlusDaysLocal(1).slice(10)}`
+      : nowPlusDaysLocal(1));
     setNextActionOwnerId("");
+    setTickedIds([]);
+    setFollowUpEdited(false);
     setProducedNewOpportunity(false);
     setShowNewOpportunity(false);
     setNotice(null);
@@ -188,12 +226,22 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
 
   // Won/Lost needs no follow-up, so the box isn't pre-filled there (a
   // pre-filled box would be sent as a new next action). In the plain close
-  // form the status arrives after opening, so clear the pre-fill then.
+  // form the status arrives after opening, so clear the pre-fill then --
+  // the pressed one's text or the ticked ones' (D22), not what was typed.
   useEffect(() => {
-    if (!isOpen || !followUpExempt || stageChange) return;
+    if (!isOpen || !followUpExempt || stageChange || followUpEdited) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setNextActionText((t) => (t === (reminderProp?.reminder_text ?? "") ? "" : t));
+    setNextActionText("");
   }, [isOpen, followUpExempt]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Plan D22: the follow-up box starts as the ticked ones' text, one per
+  // line, soonest due first -- until the rep types in it.
+  function toggleTicked(id: string, ticked: boolean) {
+    const next = ticked ? [...tickedIds, id] : tickedIds.filter((t) => t !== id);
+    setTickedIds(next);
+    if (followUpEdited || followUpExempt) return;
+    setNextActionText(closingFor(next).map((r) => r.reminder_text).join("\n"));
+  }
 
   // Won/Lost: a blank follow-up box means none. Otherwise it's required --
   // unless the D3 box is ticked, which replaces it with the new Opportunity.
@@ -206,6 +254,7 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
       activity_date: new Date(activityDate).toISOString(),
       notes: notes.trim(),
       ...(loggedForUserId && { user_id: loggedForUserId }),
+      ...(alsoCloseIds.length > 0 && { also_close_ids: alsoCloseIds }),
       ...(producedId
         ? { produced_opportunity_id: producedId }
         : sendsFollowUp && {
@@ -284,6 +333,7 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
   async function handleSubmit() {
     if (firstActivity) return handleFirstActivitySubmit();
     if (stageChange) return handleStageChangeSubmit();
+    if (closeChoices && !reminder) { setActiveTab("details"); throw new Error("Tick the next actions to close"); }
     if (!reminder) return;
     setNotice(null);
     if (!activityDate) { setActiveTab("details"); throw new Error("Date is required"); }
@@ -373,9 +423,42 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
             You have no open next action on this Opportunity, so this is saved as a Note.
           </Typography>
         )}
-        {reminder && ownReminders.length <= 1 && (
+        {reminder && ownReminders.length <= 1 && !closeChoices && (
           <Box sx={{ px: 1.5, py: 1, borderRadius: "0.75rem", bgcolor: "#f9fafb", fontSize: "0.75rem", color: "#4b5563" }}>
-            {reminder.reminder_text}
+            <Box sx={{ fontWeight: 700, color: "#374151" }}>
+              {/* "your" only in stage-change mode: Close can be for someone else's (loggedForUserId). */}
+              Closing {stageChange ? "your" : "this"} next action (due {dayjs(reminder.due_date).format("D MMM")}):
+            </Box>
+            <Box sx={{ whiteSpace: "pre-line" }}>{reminder.reminder_text}</Box>
+          </Box>
+        )}
+        {/* Plan D22: close several of one person's at once; none start ticked. */}
+        {tickChoices.length > 0 && (
+          <Box sx={{ px: 1.5, py: 1, borderRadius: "0.75rem", bgcolor: "#f9fafb", fontSize: "0.75rem", color: "#4b5563" }}>
+            <Box sx={{ fontWeight: 700, color: "#374151" }}>
+              {closeChoices ? "Next actions to close *" : "Also close:"}
+            </Box>
+            {[...tickChoices]
+              .sort((a, b) => a.due_date.localeCompare(b.due_date))
+              .map((r) => (
+                <FormControlLabel
+                  key={r.id}
+                  sx={{ display: "flex", alignItems: "flex-start", m: 0, mt: 0.5 }}
+                  control={
+                    <Checkbox
+                      size="small"
+                      sx={{ p: 0.25, mr: 1 }}
+                      checked={tickedIds.includes(r.id)}
+                      onChange={(e) => toggleTicked(r.id, e.target.checked)}
+                    />
+                  }
+                  label={
+                    <Typography sx={{ fontSize: "0.75rem", whiteSpace: "pre-line" }}>
+                      {r.reminder_text} — due {dayjs(r.due_date).format("D MMM YYYY")}
+                    </Typography>
+                  }
+                />
+              ))}
           </Box>
         )}
 
@@ -485,7 +568,9 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
                   <TextField
                     label={followUpRequired ? "Follow-up next action *" : "Follow-up next action"}
                     value={nextActionText}
-                    onChange={(e) => setNextActionText(e.target.value)}
+                    onChange={(e) => { setNextActionText(e.target.value); setFollowUpEdited(true); }}
+                    // D22: several ticked fill it one per line.
+                    multiline={tickChoices.length > 0}
                     fullWidth
                     size="small"
                     placeholder="e.g. Send the quote they asked for"
@@ -521,7 +606,11 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
                       ? `Optional — this Opportunity is ${statusName}. Leave the follow-up box empty to ${stageChange ? "save" : "close"} with no follow-up.`
                       : stageChange?.newStatus.code === "ON_HOLD" && stageChange.reactivationDate
                         ? `Required — due on or before the re-activation date (${dayjs(stageChange.reactivationDate).format("D MMM YYYY")}).`
-                        : "Required — every closed next action sets the next one."}
+                        : stageChange
+                          ? (noteOnly
+                            ? "Required — you have no open next action on this Opportunity, so set one now."
+                            : "Required — this change closes your next action above, so set the next step.")
+                          : "Required — every closed next action sets the next one."}
                   </Typography>
                 </>
               )}

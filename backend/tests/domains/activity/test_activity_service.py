@@ -1390,6 +1390,111 @@ class TestPatchReminder:
         repo.create.assert_not_called()
         repo.update.assert_not_called()
 
+    # -- Plan D22: closing several at once ---------------------------------
+
+    def _close_several_svc(self, *others: Reminder) -> tuple[ReminderService, MagicMock, MagicMock, Reminder]:
+        main = _make_reminder(activity=_make_activity(opportunity_id=OPP_ID))
+        svc, repo, activity_repo = self._patch_svc(main)
+        by_id = {main.id: main, **{o.id: o for o in others}}
+        repo.get_by_id.side_effect = by_id.get
+        return svc, repo, activity_repo, main
+
+    def test_also_close_shares_the_closing_activity_and_one_follow_up(self):
+        other = _make_reminder(id=uuid.uuid4(), activity=_make_activity(opportunity_id=OPP_ID))
+        svc, repo, activity_repo, main = self._close_several_svc(other)
+
+        svc.patch_reminder(REMINDER_ID, ReminderUpdate(**_closing_data(also_close_ids=[other.id])), updated_by=ACTOR_ID)
+
+        closing_id = activity_repo.create.return_value.id
+        activity_repo.create.assert_called_once()
+        repo.create.assert_called_once()  # one follow-up for both
+        assert main.is_completed is True and main.closing_activity_id == closing_id
+        assert other.is_completed is True and other.closing_activity_id == closing_id
+        assert other.updated_by == ACTOR_ID
+        repo.update.assert_any_call(other)
+
+    @pytest.mark.parametrize(
+        "overrides",
+        [
+            dict(is_completed=True),
+            dict(assigned_to_user_id=uuid.uuid4()),
+            dict(activity=_make_activity(opportunity_id=uuid.uuid4())),
+            dict(activity=_make_activity(opportunity_id=None)),
+        ],
+        ids=["already-closed", "someone-else", "other-opportunity", "hospital-level"],
+    )
+    def test_also_close_rejects_a_next_action_that_does_not_qualify(self, overrides):
+        other = _make_reminder(
+            id=uuid.uuid4(), **{"activity": _make_activity(opportunity_id=OPP_ID), **overrides}
+        )
+        svc, repo, activity_repo, _ = self._close_several_svc(other)
+
+        with pytest.raises(BusinessRuleViolation, match="same person on the same Opportunity"):
+            svc.patch_reminder(
+                REMINDER_ID, ReminderUpdate(**_closing_data(also_close_ids=[other.id])), updated_by=ACTOR_ID
+            )
+        activity_repo.create.assert_not_called()
+        repo.update.assert_not_called()
+
+    def test_also_close_rejects_an_unknown_next_action(self):
+        svc, _, activity_repo, _ = self._close_several_svc()
+
+        with pytest.raises(BusinessRuleViolation, match="same person on the same Opportunity"):
+            svc.patch_reminder(
+                REMINDER_ID, ReminderUpdate(**_closing_data(also_close_ids=[uuid.uuid4()])), updated_by=ACTOR_ID
+            )
+        activity_repo.create.assert_not_called()
+
+    def test_also_close_rejects_repeats_and_the_one_being_closed(self):
+        other = _make_reminder(id=uuid.uuid4(), activity=_make_activity(opportunity_id=OPP_ID))
+        svc, _, activity_repo, _ = self._close_several_svc(other)
+
+        for ids in ([other.id, other.id], [REMINDER_ID]):
+            with pytest.raises(BusinessRuleViolation, match="only be closed once"):
+                svc.patch_reminder(
+                    REMINDER_ID, ReminderUpdate(**_closing_data(also_close_ids=ids)), updated_by=ACTOR_ID
+                )
+        activity_repo.create.assert_not_called()
+
+    def test_also_close_only_from_a_next_action_on_an_opportunity(self):
+        svc, _, activity_repo = self._patch_svc(_make_reminder(activity=_make_activity(opportunity_id=None)))
+
+        with pytest.raises(BusinessRuleViolation, match="on an Opportunity"):
+            svc.patch_reminder(
+                REMINDER_ID, ReminderUpdate(**_closing_data(also_close_ids=[uuid.uuid4()])), updated_by=ACTOR_ID
+            )
+        activity_repo.create.assert_not_called()
+
+    def test_also_close_only_when_closing(self):
+        with pytest.raises(pydantic.ValidationError, match="only valid when closing"):
+            ReminderUpdate(is_completed=False, also_close_ids=[uuid.uuid4()])
+
+    def test_also_close_without_follow_up_when_opportunity_won(self):
+        other = _make_reminder(id=uuid.uuid4(), activity=_make_activity(opportunity_id=OPP_ID))
+        svc, repo, activity_repo, main = self._close_several_svc(other)
+        repo.get_opportunity_status_code.return_value = "WON"
+
+        svc.patch_reminder(REMINDER_ID, self._no_follow_up(also_close_ids=[other.id]), updated_by=ACTOR_ID)
+
+        activity_repo.create.assert_called_once()
+        repo.create.assert_not_called()  # no follow-up for either
+        assert main.is_completed is True and other.is_completed is True
+
+    def test_manager_closes_several_of_a_reps_next_actions(self):
+        # "Same person" is whose next actions they are, not who closes them.
+        manager_id = uuid.uuid4()
+        other = _make_reminder(id=uuid.uuid4(), activity=_make_activity(opportunity_id=OPP_ID))
+        svc, repo, _, main = self._close_several_svc(other)
+
+        svc.patch_reminder(
+            REMINDER_ID, ReminderUpdate(**_closing_data(also_close_ids=[other.id])), updated_by=manager_id
+        )
+
+        assert main.assigned_to_user_id == other.assigned_to_user_id == USER_ID
+        assert main.is_completed is True and other.is_completed is True
+        assert main.updated_by == other.updated_by == manager_id
+        repo.create.assert_called_once()
+
     def test_completing_opportunity_reminder_without_follow_up_raises(self):
         svc, _, activity_repo = self._patch_svc(_make_reminder(activity=_make_activity(opportunity_id=OPP_ID)))
 

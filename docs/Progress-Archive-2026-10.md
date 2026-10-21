@@ -3043,6 +3043,45 @@ Checked against both tables in `docs/Process-Improvements.md`.
 - Items checked: P1, P3, P15, P16, P45, P66, P69, watch list. Open items
   27 (counted).
 
+## 2026-10-17 — Retro, Build & Test session (next-action rules E2E, part 1)
+
+- E2E part 1: pre-flight 4/4, sections A and C all Pass, 12 of 32 steps
+  (`90b7e20`). No app faults found. Finding, not a fault: the
+  Opportunity page does not refresh when another person saves; a full
+  page reload shows it (seen in A5 and C3).
+- Handover note said "re-check the data, then the E2E" for about 2 hours
+  and 12 passed steps; updated only at the break. The new P16 reminder
+  fires only after a commit, and none came mid-run: P16 10 → 11
+  (repeated after build 2026-10-17).
+- Six steps tagged Complex were one click and one read (A1, A4, A6, A7,
+  C1, C2); Basheer asked "Why are these checks complex?". New watch-list
+  line.
+- A6 said the person box shows "Me (default)"; the screen shows the
+  signed-in person's name. Missed in this morning's wording check
+  against the code: P23 15 → 16.
+- A2 first tried with "+ Log" on the Opportunity's own page, which opens
+  with the Opportunity already picked, so the pickers were never tested;
+  redone from the Pipeline. Second sighting of the 2026-10-10 watch-list
+  line ("check what a test step actually did"): new P85 (Seen 2) —
+  before running a step, check the route chosen exercises what the step
+  checks.
+- Suggested holding this retro until the E2E is finished (CLAUDE.md: one
+  retro at the end of every session). New watch-list line.
+- Asked "Shall I?" before updating the handover note, against today's
+  trial exception (written without asking). New watch-list line.
+- "Hasn't heard from you" prompt during this retro's checks: P15 15 → 16
+  (after the Plan & Chore retro's 15).
+- Spot-checked 3 figures, all pass: "12 of 32 (38%)" — counted from the
+  test plan with awk (A 9, B 5, C 3, D 9 incl. D4a, E 5, G 1; 12 Pass,
+  pre-flight 4/4); "24 messages, about 6:20 to 8:35 am" — counted from
+  the session transcript, timestamps 00:51–03:06 UTC; "`90b7e20`
+  pushed" — `git log` and `git status` (main level with origin).
+- Explanations checked (2), both stand on their own: the C3 note on the
+  page needing a reload, and the A9 instructions.
+- Items checked: P1, P3, P11, P15, P16, P19, P23, P45, P66, P67, and the
+  2026-10-10 watch-list line. Open items 27 → 28 once P85 is added
+  (counted 27 with grep).
+
 ## 2026-10-17 — Parallel Build session (`/build`) set up (Plan & Chore)
 
 - Basheer asked whether Annual Target Planning could be built while the
@@ -3209,6 +3248,18 @@ set per month or quarter under that year. None models a supplier's own
 year; Dynamics allows a goal on a custom period. Open: incentives
 April–March or January–December.
 
+### Next-action rules E2E, 2026-10-17 — D5 bug found and fixed (Build & Test)
+D5's first try found the "Why this change?" pop-up starting an On Hold
+follow-up at tomorrow, not the re-activation date that BR-OP-02 (agreed
+2026-10-12) says it starts at. Cause: `CloseReminderModal.tsx` always set
+the due date to tomorrow; the re-activation date was used only by the
+save check and the hint. Fixed (On Hold starts the due date on the
+re-activation date), not yet committed — its own `fix:` commit. Nothing
+was saved on the failed try. D5 retried and passed. Same session: two
+wording changes in that pop-up from Basheer's D1/D4a findings (a
+"Closing your next action (due …):" caption; stage-change follow-up
+hints), for the end-of-E2E wording batch.
+
 ## 2026-10-17 — Retro, Plan & Chore session part 3 (Annual Target replan, incentive options doc)
 
 - Done: Annual Target Planning plan marked "being replanned — do not
@@ -3284,3 +3335,564 @@ April–March or January–December.
 - Explanations checked (2): the first reply's plain part did not stand on
   its own (P3 above); the step 1 check-in did.
 - Items checked: P1, P3, P15, P86, watch list.
+
+## 2026-10-17 — Next-action rules E2E part 2, paused for the day (Build & Test)
+
+- D6 Pass: "new lead" (aster medicity) saved as Lost (Budget Cancelled).
+  The pop-up listed both of Basheer K's open next actions by due date,
+  none picked; with Lost, the follow-up had no "*" and saved empty. Read
+  back after a reload: Lost, only "Meet Dr Ajmal in person" (24 Oct)
+  still pending, left for D7.
+- Paused at 24 of 32 steps (Basheer, end of day). Left: D7, D8, E1–E5,
+  G1. D7 instructions already given (Next Actions screen, close "Meet Dr
+  Ajmal in person", no follow-up).
+- Checks before the commits: backend 1314 passed; type check clean; lint
+  0 errors (133 warnings, all there before, one in `CloseReminderModal.tsx`
+  line 109).
+- Business-Rules BR-OP-02 "not built" wording updated, with its row in
+  `Business-Rule-Implementation-Matrix.md`.
+
+## 2026-10-17 — Retro, Build & Test session (next-action rules E2E, part 2)
+
+Checked against both tables in `docs/Process-Improvements.md`.
+
+- D5 found a real bug the pre-E2E review missed: the On Hold follow-up
+  started at tomorrow, not the re-activation date BR-OP-02 asks for. The
+  watch list already had "trace each plan decision to its code and test
+  step before E2E" (P6, 2026-10-04). Moved to the open list as P87,
+  Seen 2.
+- Told Basheer twice that the new "Closing … next action" label would
+  show (D5, then D6) before reading when the pop-up shows it; neither
+  step shows it. P23 16 → 18.
+- The On Hold fix's code comment first named rule BR-OP-05; it is
+  BR-OP-02. Caught before save. P1 37 → 38.
+- The folder-change guard blocked two commands (a `cd &&` chain in the
+  E2E, a bare `cd` at this retro's start). P14 30 → 32.
+- "Hasn't heard from you" prompts twice (D6 read-back, end-of-day doc
+  updates). P15 → 19 in all, counting this morning's and Plan & Chore's sightings.
+- Not recorded: the browser tool has no "mouse_move" action (one failed
+  call, narrow).
+- Spot-checked 3, all pass: 32 steps (counted in the test plan: A 9, B 5,
+  C 3, D 9 with 4a, E 5, G 1); "Meet Dr Ajmal in person" due 24 Oct still
+  pending (page text after a reload, Basheer K); D7 will show "Closing
+  this next action" (`CloseReminderModal.tsx` line 380: the box shows
+  when there is no list, which a Close from Next Actions never has).
+- Explanations checked (2): the D6 result and the D7 instructions both
+  stand on their own.
+- Items checked: P1, P14, P15, P19, P23, P24, watch list (P6).
+- Open items counted after this retro: 29 (`| open |` rows), over the
+  cap of 10.
+
+## 2026-10-18 — Next-action rules E2E finished, 32 of 32 Pass (Build & Test)
+
+- Basheer chose to finish the E2E here rather than hand it to `/test`.
+  D7, D8, E1–E5 and G1 all Pass; no bugs found today. Details per step in
+  `docs/Next-Action-Rules-Manual-E2E-Test-Plan.md`.
+- Test Opportunities created on Dev today (all owner Basheer K): "zz NA
+  E2E – fast track Won" (Baby Memorial Hospital, D8, Won); "zz NA E2E –
+  top bar" (Baby Memorial Hospital, E3, Lost by Haroon in E5); "zz NA
+  E2E – Customer 360" (aster medicity); "zz NA E2E – project" (Aster MIMS
+  Calicut); "zz NA E2E – converted lead" (KIMS Hospital Trivandrum, from
+  marketing lead #284D6F, now converted).
+- Slip: during E1's read-back Claude reloaded the shared tab while
+  Basheer still had the New Opportunity form open there, closing it
+  (nothing saved). E2 re-filled it. From then on, checks waited for
+  Basheer's "done".
+- G1: data-quality script on Dev (`--no-log`), exit 0; 7a-ii lists 41,
+  including On Hold ones; "Imaging department refresh" not listed.
+
+## 2026-10-18 — Retro, Build & Test session (next-action rules E2E finished)
+
+Checked against both tables in `docs/Process-Improvements.md`.
+
+- E1 read-back: Claude reloaded the shared tab while Basheer still had
+  the New Opportunity form open there, closing it unsaved; E2 re-filled
+  it. Touches lost work, so straight to the open list: new item P88
+  "before any reload or page change in the shared tab, wait for
+  Basheer's 'done'", Seen 1.
+- Told Basheer the session was "well past 2 hours" without measuring;
+  the session log runs 13:13–14:50 UTC, about 1 h 37 min. P1 38 → 39.
+- The folder-change guard blocked one command (the follow-up check
+  after G1). P14 32 → 33.
+- One "hasn't heard from you" prompt, while preparing the docs commit.
+  P15 19 → 20.
+- Not recorded: a missed side-menu click and the Pipeline search box
+  keeping old text (small browser slips, fixed on the next try).
+- Spot-checked 3, all pass: "41 found" in G1's 7a-ii (script output,
+  Dev, 18 Oct); "New ICU Monitor deal" (Aster DM, Nishad K V) listed
+  On Hold (same output); "zz NA E2E – fast track Won" at Baby Memorial
+  Hospital (test plan step D8).
+- Explanations checked (2): the G1 result and the closing-paperwork
+  recommendation; both stand on their own (the second's time figure is
+  counted under P1 above).
+- Items checked: P1, P3, P14, P15, P23, P85, P87, watch list.
+- Open items: 29 (`| open |` rows, counted), 30 once P88 is added; over
+  the cap of 10.
+
+## 2026-10-19 — Next-action rules: post-commit checklist (Build & Test)
+
+- Paperwork closed: plan Status marked built on Dev, manual E2E passed
+  2026-10-18 (32 of 32), E2E fixes `856d041` and `06b41a0` added to the
+  plan and the test plan's "Built" line; not yet on UAT.
+- Business-Rules: BR-OP-21, BR-OP-22, BR-ACT-11 and the BR-ACT-05
+  change marked built (they still said "not built"); BR-OP-22's "today
+  it is read-only" note corrected. Matrix: BR-OP-22's row still said
+  "server only, pop-up is step 2 part 2" — now names the "Why this
+  change?" pop-up (`4fc8531`); BR-OP-21, BR-ACT-05 and BR-ACT-11 rows
+  record the E2E pass. Discussion note's status line points at the build.
+- No signed-requirement row moves (plan: "Traceability rows: none").
+  Basheer, 2026-10-19: list it under "Commitment beyond contract" as
+  row 19, marked "Being rolled out" since it is on Dev only. Scorecard
+  regenerated: beyond-contract 18 → 19, `--check` passes (34 Done,
+  11 Partial, 5 Not started — unchanged).
+- No Backlog entry of its own to remove; no new deferred ideas from
+  the 18 Oct run (no bugs found that day).
+
+## 2026-10-19 — Harness Engineering review, fourth (Plan & Chore)
+
+- UAT backup first: `cabio_uat_2026-10-19_0703.dump` (682,287 bytes, 472
+  TOC entries); `cabio_uat_2026-10-04_0559.dump` pruned as shown
+  beforehand. Docker needed a forced stop (script's own fallback).
+- Seen counts compared with the tracker at the last review (`dd20a85`):
+  23 repeats on 10 listed items, 4 new items (P85–P88). Open list 27 →
+  31 before today's builds. The 18 Oct retro's "30 once P88 is added"
+  missed P15 (status "open; …"); counted on the Status column, 31.
+- Basheer asked what "accept as is" meant ("this will be recurring
+  issue without a solution?"). Honest split: P14 and P15 are already
+  caught or harmless; P24, P77, P72 can be stopped by a tool; P1, P3,
+  P23, P76 are judgement slips no automatic check catches — only the P84
+  reviewer idea would.
+- Built (Basheer, each approved):
+  - P72: cause found — `python -I` ignores every `PYTHON*` variable, so
+    the settings.json UTF-8 block never reached isolated runs. The shell
+    guard now rewrites `python -I` to add `-X utf8` (PreToolUse
+    `updatedInput`, tested live in Bash and PowerShell); the four
+    "restarted" skill lines carry it too, in case the guard ever steps
+    aside. First real use also rewrote the words `python -I` inside this
+    archive entry's text (two lines, corrected by hand); fixed the same
+    hour — only python actually being run is rewritten now, not text
+    being written, a commit message or a search.
+  - P77: the shell guard refuses inline python that writes a file and
+    `sed -i`/`perl -i` outside the Temp folder; saved script files and
+    `>` redirects are fine. Live refusal checked. First real use
+    refused this archive entry (a `cat` heredoc that only mentioned
+    `sed -i`); fixed the same hour — heredoc bodies and `-m` messages
+    are now ignored for the sed/perl check.
+  - P24: `handover_length_guard.py` warns above 75 lines and refuses a
+    save above 100 unless it shortens the note (Basheer changed the
+    proposed refuse-at-75: a refusal mid-build could stop the note being
+    updated before a restart). CLAUDE.md Session handoff updated.
+    Live checks: warning at 78, refusal at 101.
+  - Tests: 14 of 14 (length guard) and 31 of 31 (shell guard) in
+    scratch scripts.
+  - P16 reminder gap (proposed 17 Oct, Basheer yes today): a quiet
+    `git commit -q` prints no "[main <hash>]" line, so the reminder
+    stayed silent. Now, without that line, it fires if the newest commit
+    is under a minute old; a failed commit leaves no new commit and stays
+    silent. 5 of 5 checks in a throwaway repo.
+- Open list 31 → 29 (counted). Nothing dropped; no watch-list line past
+  14 days. Repeats about 12 a day against 18 before the last review —
+  lower, short window. P88, P87 wait for the next review (21 Oct).
+
+## 2026-10-19 — Landing screen and new-hospital page (Build & Test)
+
+- Commit `508ff42`, pushed. Everyone except Marketing Users now opens on
+  Account Management instead of Pipeline (Weekly Follow-up plan D9a,
+  Haroon via Basheer 2026-10-12). Adding a hospital from Account
+  Management, including "create anyway" after the duplicate warning, opens
+  its Customer 360 page instead of returning to the list (D10, decided by
+  Basheer 2026-10-19). The Quick Lead form's add-hospital path is
+  unchanged. Built ahead of the plan's approval as its step 1; Basheer:
+  not part of My Work itself.
+- Why: the UAT log for 4–10 Oct showed reps searching for a hospital they
+  had just added 89 times (plan section 1).
+- Checks: tsc clean, lint 0 errors. Checked on Dev by Basheer as Haroon
+  (GM): Account Management opens first, a new hospital opens its page.
+  Code read for other roles: the starting screen depends only on the
+  Marketing User test, and "+ Add" has no role limit, so reps get the same.
+  The test hospital Basheer added on Dev is real data (name not recorded).
+- Backlog's 2026-08-12 "landing screen → Pipeline" entry marked reversed.
+
+## 2026-10-19 — Retro, Build & Test session (post-commit paperwork, landing-screen fix)
+
+Only what went wrong. Checked against both tables in
+`docs/Process-Improvements.md`; all four are on the open list, nothing new.
+- P1 39 → 41: twice gave a number before counting it — said the
+  post-commit commit `e800556` had 9 files (it had 11) and that My Work had
+  5 open questions (it had 6). Both corrected in the session.
+- P14 33 → 35: a folder change typed into a command twice (one blocked by
+  the no-cd guard; one inside a command the edit-script guard refused).
+- P15 20 → 22: the "hasn't heard from you" prompt twice — while reading
+  the My Work plan to record D10, and during this retro's checks.
+- P77 6 → 7: a plan edit typed inline into the command line; the new
+  shell guard (built today) refused it, redone with the edit tool. The
+  guard works; the habit remains.
+- Spot-checks (3 figures, all correct): "89 searches for a hospital just
+  added" — My Work plan line 57; commit `508ff42` — git log; lint "0
+  errors, 11 warnings" — lint output.
+- Explanation checks (2, both pass): the "what's built" report and the
+  "same for every rep" answer read on their own.
+- Left open: the name of the test hospital Basheer added on Dev; the
+  scorecard republish awaits his yes.
+
+## 2026-10-19 — Plan & Chore retro (UAT backup, Harness review, commit `806aec1`)
+
+Shown to Basheer first; his yes to write it up. Items checked: P1, P3,
+P4, P68, P77, P80, P86 and the watch list.
+
+- P1 41 → 43 (on top of Build & Test's two today): said the harness
+  commit had 14 files (Git: 15); said the four skill edits "would change
+  nothing" — they are the backup if the guard steps aside; corrected
+  when Basheer asked.
+- P80 2 → 3: offered "accept as is" without saying the slip would keep
+  recurring; Basheer asked ("this will be recurring issue without a
+  solution?").
+- P4 8 → 9: proposed refusing handover saves at 75 lines first; that
+  could block the note mid-build before a restart. Basheer: warn at 75,
+  refuse above 100.
+- P68 3 → 4: staged the whole October archive, including Build & Test's
+  "Landing screen" entry, before checking; caught in the staged diff
+  and left out of `806aec1`.
+- P77 7 → 8: a `sed -i` on the archive — the new guard refused it,
+  redone with the edit tool.
+- New P89, Seen 2 (was the 17 Oct watch-list line): the new shell guard
+  refused an archive save that only mentioned `sed -i`, and rewrote the
+  words `python -I` inside it — tested with commands run before, not
+  with text that only mentions one. Fixed the same hour.
+- Watch list, new line: the length-guard test script left a fake
+  handover note between cases; two false failures.
+- Went well: P72's cause found and verified; the rewrite was tested live
+  before relying on it (P86's lesson); the P16 fix fired on its first
+  real commit (`806aec1`).
+- Spot-checks: UAT backup 682,287 bytes — matches the file in
+  `C:\Backups\CabioUAT\DB_Backups` ✓; open list 29 — counted on the
+  Status column ✓; "14 files" ✗ (15, counted as P1 above).
+- Explanation checks: P16 reminder explanation — plain part stands
+  alone ✓; "one change from what you approved" (guard fixes) — stands
+  alone, "UTF-8 switch" borderline ✓.
+- Open list 29 → 30 (counted). Change for next time: check any count or
+  claim with a tool in the same turn it is written.
+
+## 2026-10-19 — Annual Target Planning: incentive year settled (Plan & Chore)
+
+- Options doc "Target and Incentive Year Options" revised after an
+  outside review Basheer brought in: Option 3 now checks each quarter
+  against the April–March running total, part paid quarterly, rest at
+  year-end (share held back left to HR); all three options need a
+  31 March set-aside; tax row dropped (same for all); a provisional
+  Jan–Mar target was left out (would reverse D28). New 5-page PDF in
+  Downloads.
+- Haroon and Latheef Bhai chose the revised Option 3 (via Basheer).
+  Recorded as D29 in the plan; the "Open:" line is gone. I first told
+  Basheer this added nothing to build; he challenged it, and it was
+  wrong: Option 3 needs a target per rep per quarter (none exists today)
+  and a year-so-far view. Basheer chose: Area Manager sets each rep's
+  quarterly target (D30), Year view shows running totals (D31).
+- The 17 Oct open questions (A1–A3, Q5–Q7) were only in that session's
+  chat; recovered from its transcript and re-asked, plus A4 (do reps see
+  their Area Manager's target, after D30). Answered as recommended:
+  D32–D37. Q6: Basheer chose to start from Oct–Dec 2026 (D38), as that
+  quarter's target setting finishes next week and he wants the build
+  live then. D23–D28 checked against Option 3: still stand (D27's last
+  sentence changed by D35).
+- Then (Basheer): month labels on screens instead of "2026-Q3" (D39);
+  not all brands use January–December, so each brand has a year start
+  month, Jan/Apr/Jul/Oct only (D40–D43); built in two parts, Part 1 the
+  target-entry chain, each going to UAT when finished (D44).
+- Documentation tidy-up stopped part-way by Basheer (logged partial,
+  3 fixes deferred).
+
+## 2026-10-19 — Next-action rules: demo to Haroon, UAT by Wednesday, two-next-actions gap (Build & Test)
+
+- **Demo to Haroon** on Dev, 19 Oct (Basheer): went well. Script kept in
+  the session scratchpad only (made-up "Demo –" records, Baby Memorial
+  Hospital). Haroon wants the rules on UAT by Wednesday 21 Oct; that
+  needs a full move (they depend on the one create form and Duplicate
+  Hospitals Part A, both only on `main`): 245 commits on `main` not on
+  `uat` (`git log origin/uat..origin/main`, 19 Oct), migrations
+  0055–0061. Move plan not yet written.
+- **Gap found while preparing the demo:** a person with two or more open
+  next actions of their own on one Opportunity can never get back to
+  one — closing either needs a follow-up unless the Opportunity is Won
+  or Lost (`_require_follow_up_exemption`,
+  `backend/app/domains/activity/service.py`). The E2E missed it (its one
+  two-next-action case was marked Lost). Proposed fix: follow-up optional
+  when another of that person's next actions stays open there — awaiting
+  Basheer's decision.
+- **UAT read-only check, 19 Oct** (Basheer approved; one read-only
+  transaction as Admin, rolled back): 143 open next actions on
+  Opportunities across 119 person+Opportunity pairs; 15 pairs have 2 or
+  more — 12 on Active Opportunities (Arun Adarsh 3, Fazal 3, Naeem 3,
+  Vivek 2, Haroon Sidheeq 1; most 5, Naeem on "Sonoscape E1" (Malabar
+  Hospital, Manjeri)) and 3 on Won ones (no issue: Won needs no
+  follow-up). Output in the session scratchpad.
+- **UAT listing, 19 Oct** (Basheer approved; read-only, rolled back): the
+  15 pairs hold 39 open next actions (31 on the 12 Active pairs). Nearly
+  all are piles of older ones left open when the rep logged a newer
+  activity — the pattern BR-ACT-11 now stops (e.g. Naeem, "Sonoscape E1"
+  (Malabar Hospital, Manjeri): five, 14 Sep–15 Oct, each superseded by the
+  next). Basheer's alternative: close several at once with one follow-up
+  (keeps BR-ACT-05's follow-up rule whole).
+- **Decided, 19 Oct (Basheer): the "middle way"** — close several at
+  once in the close form and Log Activity's warning; the "Why this
+  change?" pop-up keeps picking one. Written into BR-ACT-05, the plan
+  (D22) and the matrix. My earlier proposal (follow-up optional when
+  another stays open) dropped. Build plan shown in chat (server accepts
+  extra next actions to close with the same closing activity, checked
+  as open, same Opportunity, same person; no database change; about 4
+  new E2E steps; one `fix:` commit), with two small choices still
+  proposed: Log Activity starts with all ticked, the close form with the
+  others unticked; the follow-up pre-fills from the one pressed (Log
+  Activity: the most recently set). Parked to 20 Oct at Basheer's
+  request; not started.
+
+### Retro — Build & Test, second part of 2026-10-19 (demo, UAT checks, gap)
+- **Gap reached the demo unnoticed:** after the 12 Oct decision dropped
+  the "another next action open" exception, neither the plan nor the
+  E2E played through closing one of two own open next actions (the
+  E2E's only two-next-action case was marked Lost). New — one watch-list
+  line (a blocking rule is played through with 2+ records).
+- **First UAT check grouped by Opportunity name, not id:** same-named
+  Opportunities at one hospital would have merged. Counts were right
+  (the second listing, by id, agreed: 15 pairs). Touches UAT — straight
+  to the open list as P90.
+- **"Hasn't heard from you" prompt twice** (reading code for the build
+  plan; the end-of-day write-up): P15 22 → 24.
+- Items checked: P1, P3, P15, P87 (closest to the gap; not a repeat —
+  D15 had a test step, the missing case was the count coming down), P2,
+  P28, watch list.
+- Spot-checks (P1), all correct against the listing file: 31 on Active
+  (9+6+2+10+4) plus 8 on Won = 39; 12 Active groups, 2–5 each; Naeem's
+  five set 14 Sep–15 Oct.
+- Explanation checks (P3), both pass: the listing reply; the build
+  plan's "What changes for the rep".
+- Open list 30 → 31 (counted with a tool).
+
+## 2026-10-19 — Annual Target Planning: plan rewritten as Part 1 / Part 2 (Plan & Chore)
+
+- Sections 1–6 of `docs/Annual-Target-Planning-Implementation-Plan.md`
+  rewritten as Part 1 (entering targets) and Part 2 (Year view, plan
+  notifications, brand billing line), per D44. Status back to Draft,
+  awaiting Basheer's approval (he reviews it 2026-10-20).
+- Five design questions (Q-A to Q-E) answered "as recommended" and
+  recorded as D45–D49: targets set by the person one reports to (Haroon
+  splits SBU → Area Managers while no SBU Manager exists, Backlog:1548);
+  brand quarters saved into the existing quarterly table; no separate SBU
+  yearly figure (withdraws D4, D5, D6, D11, D13, D15, D22a); Oct–Dec 2026
+  hand-typed figures handled as described; Area Managers' Target vs
+  Actuals row against their own target in Part 1.
+- New question D46a (don't overwrite brand quarters before Oct–Dec 2026)
+  — Basheer: as recommended. Whole-plan approval still open.
+
+## 2026-10-19 — Plan & Chore retro (afternoon: options doc, PDF, Annual Target replan)
+
+Shown to Basheer first; his yes to write it up. Items checked: P1, P14,
+P15, P23, P24, P76, P77 and the watch list.
+
+- P76 3 → 4: took "yes. Please update the pdf as well" as a yes to the
+  doc tidy-up too and started it, delaying the PDF ("What is going
+  on?"). Tidy-up stopped.
+- P23 18 → 19: wrote that Option 3 "adds nothing new to build" without
+  checking; the app has no per-rep target or year-so-far view. Basheer
+  asked; corrected.
+- P1 43 → 45: wrote "done by about 26 Oct" into D38 (my date, not his;
+  changed to "next week"); said the saved plan's sections 1–4 matched
+  the draft shown — section 4 had two added lines and step 2's
+  "stops working" note changed.
+- P24 6 → 8: handover note reached 76 lines twice; the new guard warned,
+  trimmed at once.
+- P14 35 → 37 (two blocked `cd`s); P77 8 → 9 (inline Python edit
+  refused).
+- P15 24 → 28: four "hasn't heard from you" prompts in the visible part
+  of the session (plan rewrite twice, retro draft, retro write-up; shown
+  to Basheer as three, the fourth came while writing it up).
+- Went well: Q-A to Q-E answered in one round; "go with D46a" recorded
+  as a decision without treating it as plan approval.
+- Spot-checks: 21 Oct 2026 is a Wednesday ✓ (Python calendar);
+  2026-Q3 = Oct–Dec 2026 ✓ (`scripts/quarter.py`); "sections 1–4 match
+  the draft" ✗ (counted under P1).
+- Explanation checks: Q-A to Q-E questions; D46a question — plain parts
+  stand alone ✓.
+- Open list 31 (counted by status). Change for next time: compare a
+  saved doc against what was shown before saying they match.
+
+## 2026-10-20 — UAT backup (Plan & Chore)
+
+- `cabio_uat_2026-10-20_0654.dump` (684,862 bytes, 472 TOC entries);
+  `cabio_uat_2026-10-05_0832.dump` pruned as shown beforehand (14 kept,
+  counted before the run). No 18 Oct dump exists. Docker needed a forced
+  stop (script's own fallback). Offsite copy to Google Drive: by hand,
+  Basheer.
+
+## 2026-10-20 — Next-action rules D22 built; `api.ts` had drifted (Build & Test)
+
+- D22 (close several at once) built, uncommitted: Basheer chose nothing
+  ticked, follow-up = ticked ones' text one per line, soonest due first,
+  box stops following ticks once typed in (plan D22). Backend 1323 passed.
+- `sales-os-app/src/types/api.ts` was stale: regenerating it changed
+  +556 / −89 lines (`git diff --numstat`). Still lists the stakeholders
+  "replace all" request removed in `9a6d98d` (3 Oct); lacks
+  `targets/target-vs-actuals` added in `cc4eb91` (6 Oct). Last touched
+  by `2c189d7` (6 Oct, +10/−0); its last four changes only added or
+  only removed lines — likely hand edits (a guess, not stated in the
+  commits). 10 router/schema commits since `2c189d7` didn't regenerate.
+  Likely why: nothing asks for it (standards say how, not when); a
+  regenerate copies the running server, so in `ce56c22` (3 Oct) it swept
+  in another session's unfinished change and lost the Audit Log types
+  (`b0ba088` repaired it); Backlog "Regenerate api.ts" (since ~1 Oct)
+  never acted on; hand-typed service payloads hid the drift.
+- Regenerated 20 Oct; `tsc -b` clean with it, so no screen calls a
+  request or field the server no longer has. Commit after the D22
+  `fix:` (it includes `also_close_ids`). Prevention (build from code on
+  disk + commit hook) passed to Plan & Chore with Basheer's yes.
+
+## 2026-10-20 — Annual Target Planning approved; session order (Plan & Chore)
+
+- Plan review ended "Yes. Approved." (Basheer): D50 (an SBU pattern change
+  re-saves brands that follow it), D51 (current and later quarters only),
+  D52 (Part 1 goes with the full UAT move — UAT's newest migration is 0054,
+  `git ls-tree` of `uat`, so 0055–0061 must go too), D53 (SBU target =
+  brands' quarterly total, D36 withdrawn), D54 ("Brands Billing to Cabio",
+  yearly ÷ 4, shown only; per-quarter editing dropped for now), D55 (typed
+  SBU target table removed — 0060 never reached UAT, Basheer), D56
+  withdrawn. `/build` note rewritten with Basheer's yes (was stale: said
+  approved 16 Oct).
+- Overlap check with Build & Test (`git status`, 20 Oct): only shared file
+  `sales-os-app/src/types/api.ts` (regenerate at merge). Order agreed for
+  the three sessions — in Plan & Chore's handover. Open: whether Plan &
+  Chore adds "move plan includes Part 1 / 0062" to Build & Test's note.
+- `api.ts` chore proposed (generator from the code on disk + commit
+  guard, switched on only after Build & Test's D22 `fix:` and `api.ts`
+  commits, else it would refuse the D22 commit); not started.
+- Handover note trimmed 82 → 75 lines (Basheer asked to trim after the
+  planning step).
+
+### Retro (Plan & Chore, 2026-10-20)
+- Checked: P1, P3, P16, P66, P76, P24, and the watch-list line of
+  2026-10-17 "before claiming a session needs something".
+- P1 45 → 46: gave Build & Test's D22 E2E as "about 4 test steps" without
+  naming the source (its handover note says ~4).
+- P3 30 → 31: "each brand's even quarter" — Basheer didn't follow it.
+- P16 11 → 12: my note still said "Next: Basheer answers Q-F, then
+  approves" after he approved.
+- New P91 (from the watch list, Seen 2): said the Dev check for the test
+  plan should wait for the docs commit; it depends on nothing. Basheer
+  asked why.
+- Not counted: P66 (Q-F, G, H shown in one plan-review round Basheer
+  asked for); P76 (D50 kept "proposed" until answered); P24 (trim
+  deferred on Basheer's instruction).
+- Spot-checks: `107bccc` dated 17 Oct (git, correct); `api.ts` +556 / −89
+  (Build & Test's archive entry, correct); "about 4 test steps" (correct
+  per Build & Test's note, but unsourced in the reply — the P1 above).
+- Explanation checks: the `api.ts` chore proposal and the three-session
+  order — both plain parts stand alone. Passed.
+- Open list 32 (counted with a tool after this retro).
+
+## 2026-10-20 — D22 pre-E2E review and Build & Test retro (Build & Test)
+
+- `/code-review medium` on D22 (uncommitted): 9 findings. Five proposed
+  as fixes, not yet answered: line breaks lost where next action text
+  shows; Won/Lost keeps a ticked follow-up if ticked before the status
+  loads; follow-up box multi-line in every mode; two missing tests (Won
+  with no follow-up, manager closing a rep's several); BR-ACT-05 and the
+  matrix still say "not yet built". Four left alone: same-second double
+  close (old pattern), which ticked one is "main" (no effect), the
+  produced-Opportunity path (already refused), the 50-row cap (UAT max 5
+  per person, BR-ACT-05). Close on the Opportunity page is as agreed —
+  BR-ACT-05 names it; my earlier flag withdrawn. Detail: Build & Test
+  handover note.
+- Retro (shown to Basheer first, his OK): P7 2 → 3 (said the running
+  server had another session's unfinished code; it ran `main`); P80
+  3 → 4 (`api.ts` refresh "after the UAT move", gap unstated, withdrawn);
+  new P92, Seen 2 (was watch-list 2026-10-15: flagged a difference from
+  the approval without quoting the rule); P1 46 → 47 (handover said 10
+  new tests; 9 cases, pytest collect); P77 9 → 10 (inline edit refused);
+  P14 37 → 38 (folder change refused); P65 3 → 4 (multi-line box in
+  every mode of a shared form); P15 28 → 29 (two "hasn't heard" prompts).
+- Spot-checks: `api.ts` +556/−89 ✓ (git diff); test plan 503 lines ✓;
+  "10 new tests" ✗ (the P1 above). Explanation checks: code-review
+  findings and "how the `api.ts` drift happened" — plain parts stand
+  alone ✓.
+- Open list 33 (counted with a tool after this retro). Change for next
+  time: quote the approved line before flagging a difference.
+
+## 2026-10-20 — `api.ts` built from code on disk; commit guard switched on (Plan & Chore)
+
+- Basheer: Q1 staged copy, Q2 refuse (recommendations). New
+  `scripts/export_openapi.py` (placeholder settings, never reads `.env`,
+  no DB connection) + `sales-os-app/scripts/generate-types.js`
+  (`npm run generate:types` now runs it; finds Python and
+  openapi-typescript in the main folder too, for the `/build` worktree).
+- Check: built from disk = Build & Test's server-built `api.ts`, byte for
+  byte (`diff -q`, 20 Oct); about 7 s per build (timed 6.8 s).
+- `.githooks/check-api-types.sh`: a staged `backend/app/*.py` change
+  rebuilds `api.ts` from the staged tree (`git checkout-index` into a temp
+  folder) and refuses if the staged `api.ts` differs; `--write` stages the
+  matching one. Tests 7/7 in a throwaway clone (own index, junction to
+  `node_modules`); first run 3/7 passed for the wrong reason (junction
+  failed, refusals were build errors) — tests now check the refusal text.
+- Switched on in `5ca17aa` (pushed 20 Oct), after Build & Test's
+  `60410cd` and `c9d8d2b`. Build & Test was right that the `/build`
+  worktree runs the main folder's `.githooks` (I had said it had its
+  own — wrong; `git rev-parse --git-path hooks` showed the main path), so
+  the guard now uses the generator next to it. Tests 11/11 (adds the
+  pre-commit and worktree cases). Rebuilt from `c9d8d2b`'s backend =
+  committed `api.ts`, so no `--write` change. Commit message went via a
+  file: the shell guard refused a heredoc commit message (P89 pattern).
+  ADR-033 note, `/build` skill line, `/build` note line (Basheer's yes);
+  Backlog "Regenerate api.ts" closed.
+
+### Retro (Plan & Chore, 2026-10-20 evening)
+
+- Said the `/build` worktree had its own commit hooks, as fact, untested;
+  Build & Test was right (main folder's `.githooks`). P86 1 → 2.
+- First guard test run: 3/7 "passed" on refusals from a broken set-up
+  (junction failed), not the guard; tests now check the refusal text.
+  P85 2 → 3.
+- Shell guard refused a heredoc commit message as a scripted edit;
+  redone with `-F`. P89 2 → 3. A `cd sales-os-app && …` refused: P14
+  39 → 40. Handover reached 76 lines, guard warned, trimmed: P24 8 → 9.
+  "Hasn't heard from you" prompt during this retro's checks: P15 29 → 30.
+- New watch-list lines: started a check mid-discussion without
+  announcing it (Basheer stopped it); `cmd //c mklink /J` failed under
+  Git Bash ("Invalid switch").
+- Spot-checks (P1), all correct: `5ca17aa` 9 files (`git show`);
+  Build & Test's `60410cd`, `c9d8d2b` (`git log`); 7/7 then 11/11 tests
+  (this session's test-script runs).
+- Plain-language check (P3): shell-guard note passes; the after-push
+  reply fails (file names and a hash in its plain part). P3 31 → 32.
+- Checked: P1, P3, P14, P15, P24, P85, P86, P89 and the watch list.
+- Change for next time: before saying how a tool behaves, run the
+  one-line test first.
+
+## 2026-10-20 — D22 committed and pushed; Build & Test evening retro (Build & Test)
+
+- `60410cd` fix: close several next actions at once (D22, pre-E2E review
+  fixes 1–5, BR-ACT-05 and matrix status, E2E plan section H) and
+  `c9d8d2b` api.ts regenerated — pushed 20 Oct (006f4cb..c9d8d2b).
+  Backend 1325 passed, ruff and tsc clean, eslint old warnings only.
+  Checkpoint only: manual E2E H0–H4 on 21 Oct (Basheer's choice), then
+  the post-commit checklist.
+- Dev check for test data (read-only, 20 Oct): only "New USG msg" (Aster
+  MIMS Calicut) had one person with two or more open next actions, and
+  it belongs to a test user — so H0 makes its own: Haroon assigns two
+  next actions to Basheer K.
+- Commit order agreed with Basheer: these two first, then Plan & Chore's
+  guard (`5ca17aa`, above).
+- UAT (Basheer): no 21 Oct move; one full move after the User Manual and
+  Annual Target Part 1. Haroon still to be told the new date.
+
+### Retro (Build & Test, 2026-10-20 evening)
+- Checked against the tracker: P14 +1 (39, a `cd` refused during the
+  build); P77 +1 (11, an inline Python write refused); P68 +1 (5,
+  `92cab23` lost lines when two sessions staged at once, repaired in
+  `006f4cb`); watch-list "retro put off" seen again (I offered "now, or
+  first thing tomorrow?") → P93, Seen 2.
+- Spot-check of 3 figures: "1325 passed" = `60410cd`'s message ✓;
+  "both pushed" = git shows main level with origin/main ✓; "New USG msg
+  (Aster MIMS Calicut)" = Dev query output, 20 Oct ✓.
+- Plain-language check of 2 replies: the "Next, for Plan & Chore"
+  message stands alone, though "the guard's write command" leans on
+  earlier words ✓ (borderline); "Not done tonight" ✓.
+- Change for next time: do the retro at the end of a session without
+  offering to defer it. Open list 34 (counted with grep after this retro).

@@ -419,6 +419,7 @@ class ReminderService:
         # must not save the visit and its follow-up a second time.
         if data.is_completed and reminder.is_completed:
             raise BusinessRuleViolation("This next action is already closed.")
+        also_close = self._others_to_close(reminder, data.also_close_ids)
 
         reminder.is_completed = data.is_completed
         reminder.updated_by = updated_by
@@ -463,6 +464,13 @@ class ReminderService:
             )
             closing_activity = self.activity_repository.create(closing_activity)
             reminder.closing_activity_id = closing_activity.id
+            # Plan D22: the others ticked in the close form share this
+            # closing Activity and the one follow-up below.
+            for other in also_close:
+                other.is_completed = True
+                other.updated_by = updated_by
+                other.closing_activity_id = closing_activity.id
+                self.repository.update(other)
 
             # The follow-up (BR-ACT-05 change: required unless exempt, see
             # _require_follow_up_exemption) -- same BR-ACT-04 mechanism as
@@ -506,6 +514,32 @@ class ReminderService:
                 "The next action to close must be an open one of your own on this Opportunity."
             )
         return self.patch_reminder(reminder_id, data, updated_by=closed_by)
+
+    def _others_to_close(self, reminder: Reminder, also_close_ids: list[uuid.UUID]) -> list[Reminder]:
+        # Plan D22 / BR-ACT-05: closing several at once is only for the same
+        # person's open next actions on the same Opportunity -- checked
+        # before anything is saved.
+        if not also_close_ids:
+            return []
+        opportunity_id = reminder.activity.opportunity_id
+        if opportunity_id is None:
+            raise BusinessRuleViolation("Only next actions on an Opportunity can be closed together.")
+        if len(set(also_close_ids)) != len(also_close_ids) or reminder.id in also_close_ids:
+            raise BusinessRuleViolation("Each next action can only be closed once.")
+        others = []
+        for other_id in also_close_ids:
+            other = self.repository.get_by_id(other_id)
+            if (
+                not other
+                or other.is_completed
+                or other.assigned_to_user_id != reminder.assigned_to_user_id
+                or other.activity.opportunity_id != opportunity_id
+            ):
+                raise BusinessRuleViolation(
+                    "Next actions closed together must be open ones of the same person on the same Opportunity."
+                )
+            others.append(other)
+        return others
 
     def _require_follow_up_exemption(
         self,

@@ -9,7 +9,7 @@
     "lint": "eslint . && node scripts/check-no-tailwind.js",
     "lint:tailwind-guard": "node scripts/check-no-tailwind.js",
     "preview": "vite preview",
-    "generate:types": "openapi-typescript http://localhost:8000/api/v1/openapi.json -o src/types/api.ts"
+    "generate:types": "node scripts/generate-types.js"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

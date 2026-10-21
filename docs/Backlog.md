@@ -718,10 +718,6 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   2026-08-31, 2026-09-26, 2026-09-30). For Basheer's talk with Haroon,
   with the UAT re-filing (Plan vs Actuals Tracking plan, step 5).
 
-- **Regenerate `sales-os-app/src/types/api.ts`** — not done after
-  Hospital-wise Target Planning (Dev backend was down; the screen uses its own
-  types). Do it with the Plan vs Actuals Tracking build.
-
 - **CLAUDE.md line "Backlog holds only work outside the Traceability
   matrix" (proposed, not decided).**
 
@@ -2238,7 +2234,9 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   **DONE, 2026-08-12.** `DemoApp.tsx:47`, `useState("customers")` →
   `useState("opportunities")`. Back-navigation return-view state
   (`accountReturnView`, `opportunityReturnView`, etc.) and `accountSubTab`
-  are independent `useState`s, confirmed unaffected.
+  are independent `useState`s, confirmed unaffected. **Reversed
+  2026-10-19** (`508ff42`): everyone except Marketing Users lands on
+  Account Management again (Weekly Follow-up plan D9a).
 - ~~**User Directory's Edit form always resends a user's existing
   `manager_id`, even when untouched.**~~ — **DONE, 2026-08-17.** Fixed
   exactly as discussed when this was surfaced (2026-08-12): the SBU

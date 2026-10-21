@@ -58,8 +58,11 @@ of the build**, after Build & Test's E2E is done and Basheer says go
   2026-10-17). No second running copy of
   the app for now; revisit when the build reaches its first screen
   (Basheer, 2026-10-17).
-- `npm run generate:types`: it reads the main folder's running server,
-  which doesn't have this branch's routes. Edit the types by hand.
+- `npm run generate:types`: run it in the worktree; it builds from this
+  copy's code, no server needed. The `api.ts` commit guard (on since
+  2026-10-20) runs here too; fix a refusal with
+  `sh C:/Users/Basheer/GitHub/Calicut_Bio_Medicals/.githooks/check-api-types.sh --write`.
+  At merge, rebuild `api.ts` rather than merging it.
 - Due today items: skip them, don't list them (as Build & Test; overrides
   CLAUDE.md "Surfacing hook reminders" for this session only).
 - Plan decisions: if building shows a plan's shape must change, stop and
@@ -90,7 +93,7 @@ of the build**, after Build & Test's E2E is done and Basheer says go
   `sales-os-app/`.
 
 ## Recovery
-Run `backend/.venv/Scripts/python.exe -I .claude/tools/last_session.py parallel <scratchpad>/last_session.txt`
+Run `backend/.venv/Scripts/python.exe -I -X utf8 .claude/tools/last_session.py parallel <scratchpad>/last_session.txt`
 (main folder; full scratchpad path), read the file, and tell Basheer in
 plain words when that session stopped and what was in progress or agreed
 last. Check that against the branch's `git log`, `git status` in the

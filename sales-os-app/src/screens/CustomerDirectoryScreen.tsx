@@ -84,20 +84,19 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
 
   const closeCreateModal = () => setShowCreateModal(false);
 
-  // Restored from the pre-migration version (property-diff, 2026-08-11):
-  // resets the list view to a known position after the create modal closes,
-  // rather than leaving the user stranded wherever they'd scrolled to.
-  // AddHospitalModal.tsx already invalidates the ["accounts"] query prefix
-  // on a successful create -- this is purely the scroll-position side
-  // effect, which is specific to this screen's own list.
-  const handleAccountCreated = () => {
+  // A new hospital opens its own page, ready for an Opportunity or a visit,
+  // instead of dropping the rep back on the list to search for it (Weekly
+  // Follow-up plan D10, Basheer 2026-10-19). The list is scrolled to the top
+  // so Back lands on a known position. AddHospitalModal.tsx already
+  // invalidates the ["accounts"] query prefix on a successful create.
+  const handleAccountCreated = (account: { id: string; name: string }) => {
     closeCreateModal();
-    listContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    listContainerRef.current?.scrollTo({ top: 0 });
+    onSelectAccount(account);
   };
 
-  // Original behavior, preserved exactly: picking an *existing* duplicate
-  // match navigates straight to it (unlike a fresh create, which just
-  // closes and refreshes the list in place -- see handleAccountCreated).
+  // Picking an *existing* duplicate match navigates straight to it, the
+  // same as a fresh create (handleAccountCreated).
   const handleExistingSelected = (account: { id: string; name: string }) => {
     closeCreateModal();
     onSelectAccount(account);

@@ -37,7 +37,7 @@ of the code; added 2026-10-17) and Test (`/test`, testing only, alongside
    Recommend which to take first.
 
 ## Recovery
-Run `backend/.venv/Scripts/python.exe -I .claude/tools/last_session.py plan <scratchpad>/last_session.txt`
+Run `backend/.venv/Scripts/python.exe -I -X utf8 .claude/tools/last_session.py plan <scratchpad>/last_session.txt`
 (full scratchpad path), read the file, and tell Basheer in plain words
 which session it was, when it stopped, and what was in progress or agreed
 last. Check that against `git status` and `git log` — the transcript is a

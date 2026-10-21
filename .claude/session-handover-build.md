@@ -5,34 +5,43 @@ items go to Progress-Archive; unstarted work goes to Backlog. Plan & Chore
 keeps its own note: `.claude/session-handover-plan.md`. Only the Build & Test
 session edits this note._
 
-## Next-action rules — plan approved 2026-10-14, building
-- `docs/Next-Action-Rules-Implementation-Plan.md`; E2E test plan
-  `docs/Next-Action-Rules-Manual-E2E-Test-Plan.md`. Step 1 built
-  2026-10-15 (`3d38e75`). Step 1's quick browser check skipped
-  (Basheer, 2026-10-16: the E2E after step 5 covers it).
-- Steps 2 and 3 built and pushed 2026-10-16 (step 3 `c4e1ca3`: every
-  new Opportunity starts with a "First activity" pop-up; D16–D20).
-  Details in the plan's Status line and Progress-Archive.
-- Step 4 dropped 2026-10-16, BR-ACC-05 withdrawn (plan D21).
-- Step 5 started 2026-10-16 (Basheer's go-ahead): data-quality script
-  counts On Hold in "no open next action" (`f93397f`); E2E test plan
-  sections D and E checked against D12–D19 and corrected (new steps
-  D4a, E5).
-- Pre-E2E code review done 2026-10-16; fixes pushed `4bec886`, script
-  `f93397f` (Progress-Archive entry).
-- Manual E2E started 2026-10-17 (re-check done, lead for E4 "New usg
-  m/c needed."; A–C and G wording checked against the code; third G
-  check dropped). Pre-flight 4/4, sections A and C all Pass — 12 of 32
-  steps; results in the test plan (not yet committed). Basheer K in
-  Claude's tab, Haroon/Vivek in Basheer's private window; a full page
-  reload is needed to see another user's save.
-- **Next:** B1 (Simple, as Basheer K), then B2–B5, D, E, G; progress
-  line with % after each step (Basheer, 2026-10-17).
-- Not yet scheduled (was Win Probability's next item): the other 6 rule
-  gaps, Backlog "Business rules vs code — 6 gaps awaiting decision".
+## Next-action rules — close several at once (plan D22): E2E section H
+- Built and committed as a checkpoint: `60410cd` (fix: D22, with pre-E2E
+  review fixes 1–5, BR-ACT-05 + matrix status, E2E plan section H) and
+  `c9d8d2b` (api.ts regenerated) — both pushed 20 Oct. Backend 1325
+  passed, ruff, tsc clean, eslint old warnings only.
+- Review findings left as they are (Basheer's yes 20 Oct): same-second
+  double close (old pattern, Backlog if he wants), "main" pick (no
+  effect), produced-Opportunity path (already refused, `service.py:556`),
+  50-row cap (UAT max 5).
+- **Next (21 Oct, Basheer's choice):** Basheer restarts Dev backend and
+  frontend (P1); run H0–H4 in `docs/Next-Action-Rules-Manual-E2E-Test-Plan.md`
+  (H0 = Haroon's four setup saves, Basheer clicks, Claude watches; check
+  in before opening any screen). Fixes found go in one `fix:` commit
+  (with a guard-built api.ts if backend changes). Then the post-commit
+  checklist for D22 (deferred: E2E pending). Archive entry written 20 Oct.
+- api.ts guard is on (`5ca17aa`): a backend fix commit must carry the
+  matching api.ts (`sh .githooks/check-api-types.sh --write` stages it).
 
-## Annual Target Planning — being built by the `/build` session
+## UAT move
+- Basheer 20 Oct: "move everything together" — no Wednesday 21 Oct
+  move; the one full move waits for the User Manual and Annual Target
+  Part 1 (D52). Haroon needs telling the new date (not drafted).
+- Then the UAT move plan `docs/UAT-Promotion-2026-10-Plan.md` (model:
+  `docs/UAT-Promotion-2026-09-Plan.md`): include D22, Part 1, migration
+  0062; fresh-install check the day before, RLS smoke test on Dev, UAT
+  backup (ask first); WhatsApp message for Haroon (not drafted); after
+  the move delete `.claude/dq-check-paused` and run the UAT data-quality
+  check (ask first).
 
-- Moved 2026-10-17 (Basheer): built in parallel in its own copy of the
-  code; see `.claude/session-handover-build-parallel.md`. This session
-  runs its E2E after the Next-Action E2E, once the build is merged.
+## Waiting on Basheer
+- Republish of both scorecard pages (exact diff shown 19 Oct, not yet
+  answered): https://claude.ai/artifact/7qRxCt4BTooYDSzvvg1xPB and
+  https://claude.ai/artifact/VcwUvDNArFv22x2Aghvx3Z — could go out with
+  the UAT move.
+
+## Not yet scheduled
+- The other 6 rule gaps: Backlog "Business rules vs code — 6 gaps
+  awaiting decision".
+- Annual Target Planning Part 1: `/build` builds it; this session (or
+  `/test`) runs its E2E on Dev after the merge, never alongside another.

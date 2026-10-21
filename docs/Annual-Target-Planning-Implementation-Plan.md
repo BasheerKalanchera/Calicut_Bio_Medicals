@@ -1,12 +1,14 @@
 # Annual Target Planning — Implementation Plan
 
-**Status:** Being replanned, 2026-10-17 — do not build (calendar-year
-brand targets, Haroon and Latheef Bhai via Basheer; D23 onwards). Was
-approved 2026-10-16; build sections below are not yet rewritten. E2E test plan:
-`docs/Annual-Target-Planning-Manual-E2E-Test-Plan.md` (on hold too).
-Build order: on hold until this replan is finished and approved (was
-"next, once the Next-Action Rules build and its E2E are done", Basheer,
-2026-10-16).
+**Status:** Approved — Basheer, 2026-10-20 (D1–D56). Replanned
+2026-10-17 to 2026-10-20 (calendar-year brand targets, Haroon and
+Latheef Bhai via Basheer; D23 onwards; incentive year settled
+2026-10-19, D29; Part 1 / Part 2, D44–D49; review 2026-10-20, D50–D56).
+First approved 2026-10-16. E2E test plan:
+`docs/Annual-Target-Planning-Manual-E2E-Test-Plan.md` (on hold; rewritten
+for Part 1 after this plan is approved). Build: Part 1 aimed at next week,
+so the Oct–Dec 2026 targets can be entered (D38, D44); it reaches the
+team with the full UAT move (D52).
 **Traceability rows:** signed 3.1 ("Target splitting by product category,
 quarterly/annual tracking") — this plan finishes its "annual" part (D10).
 **Design / discussion:** `docs/Discussion-Annual-Target-Planning-2026-10.md`
@@ -20,15 +22,16 @@ quarterly/annual tracking") — this plan finishes its "annual" part (D10).
   withdrawn 2026-10-16: brand targets are yearly only (D12).
 - D3. ~~Warning while a brand's quarters don't add up to its year~~ —
   withdrawn 2026-10-16: brands have no quarters (D12).
-- D4. The SBU's yearly target is the total of its brands by default. The
+- D4. ~~The SBU's yearly target is the total of its brands by default. The
   GM may set a different figure, higher or lower; the brand total is
-  always shown next to it (discussion Q2) — Basheer, 2026-10-16.
-- D5. Until the GM sets a figure, the SBU's yearly target follows the brand
+  always shown next to it (discussion Q2) — Basheer, 2026-10-16~~ —
+  withdrawn 2026-10-19 (D47; the quarter-level version is D36).
+- D5. ~~Until the GM sets a figure, the SBU's yearly target follows the brand
   total whenever a brand target changes; once set, it stays as set
-  (discussion S2) — Basheer, 2026-10-16.
-- D6. The GM spreads the SBU's year across the four quarters by hand; the
+  (discussion S2) — Basheer, 2026-10-16~~ — withdrawn 2026-10-19 (D47).
+- D6. ~~The GM spreads the SBU's year across the four quarters by hand; the
   screen warns while the quarters don't add up to the year (discussion
-  Q3) — Basheer, 2026-10-15.
+  Q3) — Basheer, 2026-10-15~~ — withdrawn 2026-10-19 (D47).
 - D7. Reps are expected to plan only the quarter in progress, but may plan
   any later quarter in detail; nothing is locked (discussion S3, Q4) —
   Basheer, 2026-10-16.
@@ -37,12 +40,14 @@ quarterly/annual tracking") — this plan finishes its "annual" part (D10).
 - D9. The rest of FY 2026-27 (2026-Q3, 2026-Q4) stays quarter by quarter
   for the SBU target; the yearly layer is first used for FY 2027-28
   (discussion Q6) — Basheer, 2026-10-16. For brands, see D12a; for the
-  FY 2026-27 yearly SBU figure, D22a.
+  FY 2026-27 yearly SBU figure, D22a. Changed by D38 (new targets from
+  Oct–Dec 2026).
 - D10. This finishes the "annual" part of signed row 3.1 (Phase 1), not
   new work (discussion Q7) — Basheer, 2026-10-16.
-- D11. No automatic split anywhere: the GM types each quarter's portion of
+- D11. ~~No automatic split anywhere: the GM types each quarter's portion of
   the SBU's yearly target by hand (D6). Applies to the SBU target only —
-  Basheer, 2026-10-16.
+  Basheer, 2026-10-16~~ — withdrawn 2026-10-19 (D47; the seasonal
+  pattern now splits, D25).
 - D12. ~~Brand targets are **yearly only**, because vendors give annual
   figures: Brand Target Tracking shows and takes one yearly figure per
   brand, with no quarters. The yearly figures (brand and SBU) go in two new
@@ -52,18 +57,21 @@ quarterly/annual tracking") — this plan finishes its "annual" part (D10).
   quarterly figures added up into one yearly figure. From FY 2027-28
   (April 2027) Haroon types the yearly figure directly — Basheer,
   2026-10-16~~ — withdrawn 2026-10-17 (D23–D25).
-- D13. The GM can clear the SBU's own yearly figure, which makes it follow
-  the brand total again — Basheer, 2026-10-16.
+- D13. ~~The GM can clear the SBU's own yearly figure, which makes it follow
+  the brand total again — Basheer, 2026-10-16~~ — withdrawn 2026-10-19
+  (D47; the quarter-level version is D36).
 - D14. ~~Where reps see the SBU targets (D8): a read-only line above "My
   Plan" on Target & Coverage Planning, e.g. "Imaging target FY 2027-28:
   ₹1,300 L · this quarter: ₹325 L" — Basheer, 2026-10-16~~ — withdrawn
   2026-10-17 (D26, D27).
-- D15. The app does not stop a GM entering a yearly figure for FY 2026-27;
-  D9 is followed by simply not entering one — Basheer, 2026-10-16.
+- D15. ~~The app does not stop a GM entering a yearly figure for FY 2026-27;
+  D9 is followed by simply not entering one — Basheer, 2026-10-16~~ —
+  withdrawn 2026-10-19 (D47: no SBU yearly figure is entered).
 - D16. Target vs Actuals on the Insights Dashboard gets a **yearly view**
   beside the quarterly one — Basheer, 2026-10-16. How it reads: D22.
 - D17. Built, tested and moved to UAT **with the next full UAT move** —
-  it must land before that move — Basheer, 2026-10-16.
+  it must land before that move — Basheer, 2026-10-16. Changed by D44,
+  then D52.
 - D18. When a rep submits or revises a plan, the person who approves it
   (their own manager) gets a bell notification; a revision's message
   carries the rep's change note. Not the GM or Admin as well. A rep with
@@ -82,13 +90,16 @@ quarterly/annual tracking") — this plan finishes its "annual" part (D10).
   approved; a rejected plan falls back to its last approved figure), so
   the two views always agree; brands show their yearly target against
   Won — Basheer, 2026-10-16 (wants to see how it looks: a mock-up is
-  shown before build step 5).
-- D22a. FY 2026-27 only: the SBU's yearly target is its quarterly SBU
+  shown before build step 5). Changed by D31 (running total at each
+  quarter) and D47 (the SBU's year is its four quarters added up).
+- D22a. ~~FY 2026-27 only: the SBU's yearly target is its quarterly SBU
   targets added up, on Target & Coverage Planning and in the Year view —
   that year was planned quarter by quarter (D9), and its brand total is
   incomplete (on Dev, 2026-10-16: Critical Care brand total ₹120 L
   against ₹270 L of quarterly targets; Imaging no brand target against
-  ₹260 L). From FY 2027-28, D4/D5 apply — Basheer, 2026-10-16.
+  ₹260 L). From FY 2027-28, D4/D5 apply — Basheer, 2026-10-16~~ —
+  withdrawn 2026-10-19 (D38, D47: every year's SBU figure is now its
+  quarters added up).
 
 **Replan, 2026-10-17** (Haroon and Latheef Bhai, via Basheer). Brands set
 targets January–December and bill Cabio a quarter of it each quarter;
@@ -111,19 +122,167 @@ this replan: D8, D12, D12a, D14.
   (withdraws D8, D14) — Basheer, 2026-10-17.
 - D27. The stretched SBU target is broken up into Area Manager targets.
   Reps see only their own Area Manager's target — Basheer, 2026-10-17.
-  How it is broken up: open (who splits, per quarter or per year).
+  How it is broken up: answered by D32, D33 and D45; the last sentence
+  is changed by D35.
 - D28. The GM enters a calendar year's brand figures when the brands send
   them (January). Until then, next Jan–Mar has no target; its detailed
   planning waits, as planning is quarter by quarter anyway — Basheer,
-  2026-10-17.
-- Open: whether team incentives stay April–March or move to
-  January–December (raised by Basheer 2026-10-17; industry check in the
-  archive entry of that date). Three options (yearly April–March,
-  yearly January–December, quarterly targets and incentives) compared
-  side by side for Basheer to discuss with Haroon and Latheef Bhai:
-  private doc "Target and Incentive Year Options",
-  https://claude.ai/code/artifact/c6122999-2af4-4fbc-b113-049959648e25,
-  and a PDF of it. Not decided.
+  2026-10-17. "January" changed by D42 (each brand when it sends).
+- D29. Team targets and incentives follow Option 3 of "Target and
+  Incentive Year Options": each rep has a target for each quarter; each
+  quarter's result is checked against the running total for the
+  April–March year so far, so a shortfall can be made up later; part of
+  the incentive is paid each quarter and the rest settled at year-end.
+  Managers see April–March totals. How much is held back is HR's
+  decision, beside today's half at order, half at full payment. The app
+  does not calculate incentive amounts (PRD: outside Phase 1; Finance's
+  incentive file parked for Phase 2), but Option 3 needs two things it
+  lacks today: a target per rep per quarter (D30) and a year-so-far
+  view (D31) — Haroon and Latheef Bhai, via
+  Basheer, 2026-10-19. The options doc (revised 2026-10-19 after an
+  outside review; PDF of it made the same day):
+  https://claude.ai/code/artifact/c6122999-2af4-4fbc-b113-049959648e25.
+  Rejected: yearly April–March (full-year target known only in January)
+  and yearly January–December (bridging period, managers would see
+  January–December). A provisional Jan–Mar target set in April was left
+  out, as it would reverse D28.
+- D30. Each rep gets a target for each quarter, set by their Area Manager
+  by dividing up the Area Manager's own target (D27). The rep sees it;
+  their plan is how they mean to reach it. Not the approved plan used as
+  the target, because a rep would then set the target their own
+  incentive is paid on. Today the app holds only brand and SBU targets
+  (`docs/Physical-Schema.sql`). Answered together with the Area Manager
+  split (D27, A1–A3) — Basheer, 2026-10-19.
+- D31. Target vs Actuals' Year view shows the running total at each
+  quarter: won from April up to that quarter against the targets added
+  up from April (e.g. by September, Apr–Sep won against the Apr–Jun and
+  Jul–Sep targets), so each quarterly payout and the year-end settlement
+  can be read from it. Changes D22, which showed the whole year only —
+  Basheer, 2026-10-19.
+- D32. The SBU Manager divides the SBU's stretched target among its Area
+  Managers; the GM can see and change it (D27's "who splits") —
+  Basheer, 2026-10-19.
+- D33. One total per Area Manager per quarter, not per brand, typed by
+  hand, with a warning while they don't add up to the SBU's quarter. The
+  same for reps under D30: one total per rep per quarter, with a warning
+  while they don't add up to the Area Manager's target — Basheer,
+  2026-10-19.
+- D34. Area Managers no longer see the SBU target, only their own (D26);
+  they have seen it since 16 Oct (migration 0061) — Basheer, 2026-10-19.
+- D35. Reps see their own quarterly target (D30) only, not their Area
+  Manager's; changes D27's last sentence — Basheer, 2026-10-19.
+- D36. ~~The GM may set an SBU quarter different from its brands' total;
+  the brand total is the default, always shown beside it, and clearing
+  the GM's figure returns to it (as D4, D13 for the year) — Basheer,
+  2026-10-19~~ — withdrawn 2026-10-20 (D53).
+- D37. Brand Target Tracking shows each brand's quarterly billing beside
+  Cabio's seasonal split, Admin and GM only; the app does not record
+  purchases from brands, so nothing checks it — Basheer, 2026-10-19.
+  Changed by D54 (name, and the GM may change each quarter).
+- D38. The new targets start from Oct–Dec 2026 (2026-Q3): Haroon enters
+  the brands' 2026 figures, stretched and spread, and the Oct–Dec share
+  is divided down to Area Managers and reps. Target setting for that
+  quarter is in progress outside the app, done by next week; the team
+  enters those figures once this build is live. Reps see them after the
+  quarter has begun; FY 2026-27's running total (D31) starts at Oct–Dec.
+  Changes D9 and D22a, which kept the rest of FY 2026-27 quarterly as
+  entered — Basheer, 2026-10-19 ("as soon this build goes live next
+  week").
+- D39. Screens show quarters as months and year (e.g. "Oct–Dec 2026"),
+  not codes like "2026-Q3", which reads as July–September in calendar
+  terms; the stored period stays `YYYY-Qn`. Year labels like "FY 2026-27"
+  stay. Done in Part 1, as it rebuilds the same screens — Basheer
+  (raised it), 2026-10-19.
+- D40. Not every brand's year runs January–December. Each brand has a
+  "year starts in" setting: January, April, July or October only, so
+  each brand quarter is still exactly one Cabio quarter. Changes D23's
+  "January–December figure" to the brand's own year — Basheer,
+  2026-10-19.
+- D41. The seasonal pattern (D25) is tied to the months (Jan–Mar lean,
+  Jul–Sep and Oct–Dec strong), not to a brand's first quarter; an
+  April–March brand uses the same pattern starting from Apr–Jun —
+  Basheer, 2026-10-19.
+- D42. The GM enters a brand's yearly figure whenever that brand sends
+  it, ahead of the brand's year; until then that brand's coming quarters
+  have no target. Changes D28's "January" — Basheer, 2026-10-19.
+- D43. Brand Target Tracking moves by calendar year (e.g. "2027"); each
+  brand shows its year that starts in it, with its months beside its
+  name (e.g. "SonoScape · Jan–Dec 2027", "Brand X · Apr 2027–Mar 2028",
+  made-up), and its four quarters by month (D39) — Basheer, 2026-10-19.
+- D44. Built in two parts. Part 1: entering targets — brand yearly
+  figures, stretch and seasonal split, SBU Manager's split to Area
+  Managers, Area Managers' split to reps, each person seeing only their
+  own target, and the month labels (D39). Part 2: the rest (Year view
+  running totals, plan notifications, brand billing line, etc.). Changes
+  D17: each part goes to UAT when it is finished; if Part 2 is finished
+  by Wednesday 21 Oct 2026, both go with the full UAT move and the other
+  items set for it — Basheer, 2026-10-19. When each part reaches UAT:
+  changed by D52.
+- D45. Each person's target is set by the person they report to in the
+  app (the same reporting line plan approvals use); Admin and GM may set
+  or change any. No one holds the SBU Manager role today (Backlog, "SBU
+  Manager" called a currently-empty tier), and Area Managers report
+  straight to Haroon (`docs/Zone-Hierarchy-Territory-Data-2026-08.md`), so
+  for now Haroon divides each SBU's target among the Area Managers; once
+  an SBU Manager is appointed it passes to them, as D32 says. A rep with
+  no Area Manager above them gets their target from whoever they report
+  to. Refines D30 and D32 — Basheer, 2026-10-19 (Q-A).
+- D46. Brand quarters are saved, not worked out each time: when the GM
+  saves a brand's yearly figure, stretch or seasonal split, the app works
+  out its four quarters and saves them into the brand quarterly targets
+  it already keeps, so Brand Target Tracking's "committed / gap" and the
+  SBU quarter's brand total keep working unchanged — Basheer, 2026-10-19
+  (Q-B).
+- D46a. When a brand's year began before Oct–Dec 2026 (e.g. a
+  January–December 2026 brand), only its quarters from Oct–Dec 2026 on
+  are saved; earlier quarters keep the figures already entered, so past
+  quarters' targets don't change (follows D38) — Basheer, 2026-10-19.
+- D47. No separate SBU yearly figure: the SBU's quarter is its brands'
+  quarterly total, ~~or the GM's own figure (D36)~~ (D53), and its year
+  is simply its four quarters added up. Withdraws D4, D5, D6, D11, D13,
+  D15 and D22a — Basheer, 2026-10-19 (Q-C).
+- D48. Oct–Dec 2026 figures already typed in by hand: a brand's is
+  replaced when the GM enters that brand's yearly figure; ~~an SBU's
+  counts as the GM's own figure (D36) until he clears it, and the SBU box
+  shows it beside the brand total~~ (an SBU's is removed: D53, D55). A read-only
+  Dev count of these figures is shown before the build (UAT not checked;
+  asked separately) — Basheer, 2026-10-19 (Q-D).
+- D49. In Part 1, Target vs Actuals measures an Area Manager's "Your
+  team" row against the Area Manager's own target (not the SBU target,
+  which they no longer see, D34), and shows each rep's target beside
+  their plan — Basheer, 2026-10-19 (Q-E).
+- D50. When the GM changes an SBU's seasonal pattern, every brand that
+  follows it has its quarters worked out and saved again; a brand with
+  its own pattern (D25) is left alone. Quarters already ended don't
+  change (D51) — Basheer, 2026-10-20 (Q-F).
+- D51. When a brand's yearly figure, stretch or pattern changes, only the
+  quarter in progress and later ones are saved again; quarters already
+  ended keep their figures, so past Target vs Actuals results stay as
+  reported (same reasoning as D46a) — Basheer, 2026-10-20 (Q-G).
+- D52. Part 1 goes to UAT with the full UAT move; Part 2 follows in a
+  later move. Part 1 can't go alone: UAT's code lacks migrations
+  0055–0061, which come before Part 1's 0062. If the move can't happen
+  next week, the team keeps its Oct–Dec 2026 targets outside the app
+  until it does. Changes D44's "Wednesday 21 Oct" condition — Basheer,
+  2026-10-20 (Q-H).
+- D53. The SBU's quarterly target is its brands' quarterly total only;
+  the GM cannot type his own SBU figure. Added later if a need appears.
+  Withdraws D36 — Basheer, 2026-10-20.
+- D54. The brand billing line is called **"Brands Billing to Cabio"**:
+  the brand's own yearly figure split evenly across its four quarters,
+  shown only, not editable. The GM changing a quarter when a brand
+  changes its billing is left for later, if needed. Changes D37 —
+  Basheer, 2026-10-20 (per-quarter editing considered, then dropped the
+  same day).
+- D55. The SBU target is the brands' total for every quarter, no
+  exception for earlier quarters. The table holding the GM's typed SBU
+  figures (migration 0060) is removed, with its Dev test figures, and so
+  is the box's way to type them. Safe because 0060 never reached UAT, so
+  no real results depend on it; on Dev, earlier quarters then show the
+  brand total (often blank) — Basheer, 2026-10-20 (Q-I).
+- D56. ~~"Brands Billing to Cabio": quarters need not add up; hand-changed
+  quarters kept on a re-split (Q-J)~~ — withdrawn 2026-10-20: no
+  per-quarter editing (D54).
 
 ## Figures and sources
 
@@ -146,94 +305,134 @@ this replan: D8, D12, D12a, D14.
   `docs/Zone-Hierarchy-Territory-Data-2026-08.md`.
 - Existing quarterly brand and SBU targets on Dev: not counted (a
   read-only Dev check, shown first, at build step 1).
+- 2025-Q4 = Jan–Mar 2026, 2026-Q1 = Apr–Jun 2026, 2026-Q2 = Jul–Sep 2026,
+  2026-Q3 = Oct–Dec 2026, 2026-Q4 = Jan–Mar 2027 — `scripts/quarter.py`,
+  2026-10-19.
+- "SBU Manager" is a currently-empty role tier — `docs/Backlog.md:1548`,
+  read 2026-10-19 (D45); a September note, so re-checked on Dev in build
+  step 1's read-only count.
+- UAT's code lacks migrations 0055–0061 — `docs/Progress-Archive-2026-10.md:2206`;
+  the `uat` branch's newest migration is `0054_fix_target_plan_brand_split_read_rls.py`
+  (`git ls-tree uat`, 2026-10-20) (D52).
+- Only Brand Target Tracking reads brand targets in the app —
+  `services/targetPlanning.ts` callers and `planning/repository.py`
+  searched 2026-10-19.
+- An Area Manager's "Your team" row in Target vs Actuals is measured
+  against the SBU target today — `TargetVsActualsSection.tsx:179-195`,
+  `:230`, read 2026-10-19 (D49).
+- SonoScape ₹400 L, 100 % stretch, 15/20/30/35 split, Oct–Dec ₹280 L —
+  made-up example.
 
 ## 1. In plain terms
 
-**What changes for the GM.**
-- **Brand Target Tracking** becomes a yearly screen. The GM types each
-  brand's yearly target as the vendor gives it; there are no quarters for
-  brands. The screen moves year by year, and shows each brand's target,
-  what the team has committed across the year's four quarters, and the
-  gap. It also shows the **SBU's yearly total**, the sum of its brands.
-  For this year (FY 2026-27) it shows the quarterly figures already
-  entered, added up per brand.
-- **Target & Coverage Planning**, Annual view, shows the SBU's yearly
-  target. It starts as the brand total. The GM may type a different
-  company figure, higher or lower; the brand total stays next to it. The
-  GM types each quarter's share by hand, with a warning while the four
-  don't add up to the year.
-- The Quarterly view's SBU target box works as today; it also shows the
-  year it belongs to.
+Built in two parts (D44). Part 1 lets the team enter the Oct–Dec 2026
+targets as soon as it is live (D38); Part 2 adds the rest.
 
-**What changes for managers and reps.** Managers see the yearly and
-quarterly SBU targets as they see the quarterly one today. Reps now see
-them too, read-only, above their own plan. Planning itself is unchanged:
-a rep plans the current quarter hospital by hospital, and may plan a later
-quarter if they already know about it.
+**Part 1 — entering targets.**
+- **Brand Target Tracking** (Admin and GM only, D23) moves by calendar
+  year (D43). Each brand has a "year starts in" month: January, April,
+  July or October (D40). The GM types the brand's own yearly figure when
+  the brand sends it (D42) and a stretch percentage; the screen shows the
+  stretched figure beside it (D24). The stretched figure is spread over
+  the brand's four quarters by its SBU's seasonal pattern, which the GM
+  sets once per SBU per year and may change for one brand (D25, D41). The
+  four quarters are saved as that brand's quarterly targets (D46); a
+  later change re-saves only the quarter in progress and later ones
+  (D51); changing the SBU's pattern re-saves the brands that follow it
+  (D50). Quarters are shown
+  by month, e.g. "Oct–Dec 2026" (D39), each with the team's committed
+  figure and the gap, as today.
+- **Target & Coverage Planning:**
+  - The SBU target box shows the quarter's brand total, which is the SBU
+    target, for every quarter; it can no longer be typed (D53, D55).
+    Only Admin, GM and an SBU Manager see it
+    (D26, D34).
+  - A new **Team targets** panel lets each manager divide their own
+    quarterly target among the people who report to them: one figure per
+    person, with a warning while they don't add up (D33). Today that
+    means Haroon divides each SBU's target among the Area Managers, and
+    each Area Manager divides theirs among their reps (D45).
+  - Everyone with a target sees **"Your target for Oct–Dec 2026"**: their
+    own figure only (D35).
+- **Target vs Actuals** (Insights Dashboard): an Area Manager's "Your
+  team" row is measured against their own target, and each rep's target
+  shows beside their plan (D49).
+- **Month labels** replace codes like "2026-Q3" on these three screens
+  (D39).
+- **Stops being visible:** Area Managers no longer see the SBU target
+  (D34); only Admin and GM see brand figures (D23).
 
-**Notifications on plans (asked at the 15 Oct demo).** When a rep submits
-or revises a plan, their manager gets a notification on the bell, e.g.
-"Adydev submitted his plan for Oct–Dec 2026 — waiting for your approval".
-When the manager approves or rejects it, the rep gets one, with the
-manager's note. Clicking it opens that plan.
+**Part 2 — the rest.**
+- Target vs Actuals gets a **Year view**: at each quarter, what was won
+  from April up to that quarter against the targets added up from April
+  (D16, D31).
+- **Plan notifications** on the bell: submitted or revised → the
+  approver; approved or rejected → the rep; clicking opens the plan
+  (D18–D21).
+- Brand Target Tracking shows each brand's **even quarterly billing**
+  beside Cabio's seasonal split, as **"Brands Billing to Cabio"**: the
+  brand's year split evenly, shown only (D37, D54).
 
-**Target vs Actuals.** The Insights Dashboard tab gets a Year view beside
-the Quarter view: the year's target against what was won in the year, for
-the SBU, each rep and each brand.
+**What doesn't change.** Plans, their approval, and the quarterly Target
+vs Actuals for Admin, GM and reps' own plans work as today. The stored
+quarter stays in the same form; only its label changes (D39).
 
-**What doesn't change.** Quarterly SBU targets, plans, approvals and the
-quarterly Target vs Actuals work as today. The SBU target stays quarter by
-quarter for the rest of this year; its yearly figure is first used from
-April 2027.
-
-**Why two new tables (D12).** Today's brand and SBU target tables hold one
-figure per quarter. A yearly figure is a different thing, and keeping it
-in its own table means the quarterly screens keep working untouched.
-
-**Where it lands.** Built and tested on Dev, then to UAT with the next
-full UAT move (D17).
+**Where it lands.** Each part is built and tested on Dev. Part 1 goes to
+UAT with the full UAT move; Part 2 follows in a later move (D52).
 
 ## 2. Build order
 
-1. **Database** (migration 0062). Two new tables for yearly brand and SBU
-   targets; who may read and change them; reps can read their own SBU's
-   targets (yearly and quarterly). Before writing it: a read-only Dev
-   count of existing brand and SBU targets, shown first. Apply to Dev,
-   regenerate `docs/Physical-Schema.sql`. Checkpoint commit.
-   *Stops working on Dev until the next step:* nothing.
-2. **Server.** Read and save the yearly figures; the SBU yearly target
-   comes back with the brand total, whether it is the GM's own figure and
-   the four quarters' total; the brand yearly figure for FY 2026-27 is the
-   sum of its quarters (D12a), and the SBU yearly target for FY 2026-27
-   is its quarters' total (D22a); plan notifications (D18–D19). Tests.
-   Checkpoint commit. *Stops working:* nothing.
-3. **Brand Target Tracking: yearly screen** (D12, D12a; SBU total, D4).
-   Checkpoint commit. *Stops working:* nothing.
-4. **Target & Coverage Planning** — Annual view SBU yearly target and its
-   quarters (D4–D6, D11, D13, D22a); Quarterly view box shows its year; reps'
-   read-only line (D8, D14); the bell opens a plan (D21). Checkpoint
-   commit. *Stops working:* nothing.
-5. **Target vs Actuals: Year view** (D16, D22, D22a). Checkpoint commit.
-   *Stops working:* nothing.
-6. **Docs and test.** Business rules, rule matrix, ADR-019 addendum,
-   Traceability 3.1 note, user manual and in-app help; pre-E2E review;
-   manual E2E on Dev (test plan written after approval).
+**Part 1**
+1. **Database** (migration 0062). Brand "year starts in" month; brand
+   yearly figure and stretch; SBU seasonal pattern with a per-brand
+   change; a quarterly target per person; brand figures readable by
+   Admin and GM only; the typed SBU target table removed (D55).
+   Before writing it: a read-only Dev count of the existing brand and
+   SBU quarterly targets, and of who holds the SBU Manager role (D45),
+   shown first (D48). Apply to Dev, regenerate
+   `docs/Physical-Schema.sql`, checkpoint commit.
+   *Stops working on Dev until steps 2–3:* Area Managers see "Target not
+   set" in the SBU box and in Target vs Actuals' team row.
+2. **Server.** Save a brand's year and work out its quarters (D46,
+   D46a, D51), and re-save brands when their SBU's pattern changes
+   (D50); the SBU quarter's brand total as its target (D47, D53, D55); per-person targets — set by the person's manager, Admin or GM,
+   seen by the person, those above them, Admin and GM (D45); the Area
+   Manager's team row against their own target (D49). Tests, checkpoint
+   commit. *Stops working:* the Area Manager gap from step 1 remains until
+   step 3.
+3. **Screens.** Brand Target Tracking by calendar year; Target & Coverage
+   Planning's SBU box, Team targets panel and "Your target" line; Target
+   vs Actuals' team and rep rows; month labels. Type check, lint,
+   checkpoint commit. *Stops working:* nothing.
+4. **Docs and test for Part 1.** Business rules and the rule matrix,
+   ADR-019 addendum, user manual and in-app help; pre-E2E review; manual
+   E2E on Dev (test plan rewritten for Part 1 after this plan's approval).
+
+**Part 2**
+5. **Target vs Actuals: Year view** with running totals (D31); a mock-up
+   is shown before building. Checkpoint commit.
+6. **Plan notifications** (D18–D21) and **Brands Billing to Cabio**
+   (D37, D54).
+   Checkpoint commit.
+7. **Docs and test for Part 2**, as step 4.
 
 ## 3. What could be affected
 
-Found by a code search on 2026-10-16 for the two quarterly target tables,
-their screens and the notification bell:
+Found by a code search on 2026-10-16 and 2026-10-19 for the brand and SBU
+target tables, their screens and the notification bell:
 - (a) **Screens that request it directly:** Brand Target Tracking (brand
-  targets and the brand "committed" totals — now summed over the year);
-  Target & Coverage Planning (SBU target box, Quarterly view; the Annual
-  view's rollup; approve and reject).
-- (b) **Reports or links that open those screens:** none found; both are
-  menu screens. New: the bell opens Target & Coverage Planning (D21).
-- (c) **Other screens that reuse its data:** Insights Dashboard → Target vs
-  Actuals reads the quarterly SBU target (`TargetVsActualsSection.tsx`,
-  server `TargetVsActualRepository`); its Quarter view must not change.
-  The notification bell's existing destinations (Opportunity, lead,
-  activity) must still open as today.
+  targets, committed totals, edit dialog); Target & Coverage Planning
+  (SBU target box, plans, approve and reject).
+- (b) **Reports or links that open those screens:** none; both are menu
+  screens. Part 2 adds the bell opening Target & Coverage Planning (D21).
+- (c) **Other screens that reuse its data:** Insights Dashboard → Target
+  vs Actuals reads the SBU target; its SBU and Company rows for Admin and
+  GM take the brand total for every quarter (D53, D55), and its team row
+  changes on purpose (D49); the rest of those rows (Won, plans) must not
+  change. The plan
+  form's brand split doesn't read brand targets (only Brand Target
+  Tracking does). Part 2: the bell's existing destinations (Opportunity,
+  lead, activity) must still open as today.
 - Not affected: the old SBU-target figures in `App.jsx` (the legacy
   dashboard) are kept in the browser only, never in these tables.
 
@@ -241,73 +440,132 @@ Each gets a check before and after, in the E2E test plan.
 
 ## 4. Not in this plan (with reasons)
 
-- **A planning lock on future quarters** (D7): Basheer chose to keep
-  detailed planning of later quarters open.
+- **Incentive amounts:** outside Phase 1 (PRD; D29).
+- **Brand years starting in other months** than January, April, July or
+  October (D40).
+- **A planning lock on future quarters** (D7).
+- **Recording purchases from brands:** Brands Billing to Cabio (D37,
+  D54) is shown, not checked against purchases.
+- **Changing a quarter of Brands Billing to Cabio** (D54): added later
+  if needed.
+- **The GM's own SBU figure** (D53): added later if a need appears.
 - **A quarter-review screen:** Target vs Actuals with "Previous quarter"
   already covers it (discussion section 5e).
-- **Calendar-year vendor targets** (D1): the app's year is April to March.
 - **Email or WhatsApp notifications** (D20): the app has neither today.
 
 ## 5. Business rules and records to update
 
-- Business-Rules: new BR-PL-09 (a brand target is yearly only; FY 2026-27
-  shows the summed quarters) and BR-PL-10 (the SBU yearly target: brand
-  total by default, GM's own figure, follows until set; quarters typed by
-  hand with a warning; who sees it); new BR-PL-11 (plan notifications,
-  D18–D21). Matrix rows in the same commit.
-- ADR-019 (Planning Calendar Model): addendum — a yearly figure per
-  fiscal year beside the quarterly periods.
-- Traceability row 3.1: note that the annual part is built by this plan.
-- `docs/UAT-User-Manual.md` and in-app help for both screens and the
-  Target vs Actuals tab.
+- Business-Rules (Part 1): new BR-PL-10 (brand yearly target: year start
+  month, own figure, stretch, seasonal split, saved quarters; Admin and
+  GM only), BR-PL-11 (SBU quarterly target: the brands' total, not typed;
+  who sees it), BR-PL-12 (per-person quarterly targets: who sets,
+  who sees, the warning). Part 2: BR-PL-13 (plan notifications) and the
+  Year view's running total. Matrix rows in the same commits.
+- ADR-019 (Planning Calendar Model): addendum — brand years start in any
+  calendar quarter; screens label quarters by month; storage unchanged.
+- Traceability row 3.1: note that the annual part is built by this plan
+  (D10).
+- `docs/UAT-User-Manual.md` and in-app help for the three screens;
+  its "Set the quarter's SBU target" section goes (D55).
+- Where the typed SBU target is described as current (D55):
+  `docs/Target-Coverage-Roster-Implementation-Plan.md` and
+  `docs/Plan-vs-Actuals-Tracking-Implementation-Plan.md` (a "replaced by"
+  note), `docs/Frontend-Implementation-Standards.md:307` ("the GM's SBU
+  target" wording) — searched 2026-10-20.
 - `docs/Discussion-Annual-Target-Planning-2026-10.md`: Status → answered,
-  pointing here (Q1's quarterly brand split superseded by D12).
+  pointing here.
 
 ## 6. Technical addendum
 
-- **Tables (migration 0062):**
-  - `brand_annual_target` (`brand_id` FK, `fiscal_year` int = FY start
-    year, e.g. 2027 = FY 2027-28, `target_amount_lakhs` NUMERIC(15,2) ≥ 0,
-    audit columns); unique (`brand_id`, `fiscal_year`).
-  - `sbu_annual_target` (`sbu_id` FK, `fiscal_year`, `target_amount_lakhs`
-    ≥ 0, audit columns); unique (`sbu_id`, `fiscal_year`). A row exists
-    only when the GM set a figure (D5); no row = brand total, except
-    FY 2026-27, where no row = the sum of that year's `sbu_target` rows
-    (D22a).
-  - RLS: insert/update Admin and GM on both (as `brand_vendor_target`,
-    `sbu_target`); read `brand_annual_target` everyone (as
-    `brand_vendor_target_read`); read `sbu_annual_target` and widen
-    `sbu_target_read` to every role for their own SBU (D8).
-  - `brand_vendor_target` (quarterly) is kept: it holds FY 2026-27's
-    figures, read as a sum per brand (D12a); no new rows from FY 2027-28.
-- **Server** (`backend/app/domains/planning/`): new routes under
-  `/planning/brand-vendor-targets/annual` and `/planning/sbu-targets/annual`
-  (GET by `fiscal_year`, PUT one figure, DELETE for D13). Brand GET returns
-  `brand_annual_target`, else the sum of that year's `brand_vendor_target`
-  rows, with `team_committed_lakhs` summed over the year's four quarters.
-  SBU response: `target_amount_lakhs`, `brand_total_lakhs`,
-  `is_own_figure`, `quarters_total_lakhs`. Service checks Admin/GM
-  (`_require_admin_or_gm`). Target vs Actuals: `get_target_vs_actual`
-  gains a fiscal-year mode (D22, D22a); a rep's yearly figure reuses the
-  Quarter view's per-quarter "Team plans" logic, summed.
-- **Notifications (D18–D21):** new `NotificationService.notify_plan_submitted`
-  (recipient `get_approver_id(owner)`; skipped when None) and
-  `notify_plan_decided` (recipient `target_plan.user_id`), with
-  `entity_type="target_plan"`. Called from `create_target_plan` /
-  `update_target_plan` when the plan becomes `PENDING_APPROVAL`
-  (`service.py:294`, `:344`) and from `approve_or_reject_target_plan`
-  (`:362`). No migration: `notification.type` and `entity_type` are free
-  varchar(50). `NotificationBell.tsx` (routes at `:61–75`) gains a
-  `target_plan` route to `TargetPlanningScreen` with period and rep.
+**Part 1**
+- **Migration 0062:**
+  - `brand.year_start_month` smallint NOT NULL DEFAULT 1, CHECK in
+    (1, 4, 7, 10) (D40).
+  - `brand_annual_target` (`brand_id` FK, `start_year` int = calendar year
+    the brand's year starts in, `vendor_amount_lakhs` NUMERIC(15,2) ≥ 0,
+    `stretch_pct` NUMERIC(5,2) ≥ 0, four nullable per-brand pattern
+    columns `pct_jan_mar` / `pct_apr_jun` / `pct_jul_sep` / `pct_oct_dec`
+    (all set or all null, adding to 100), audit columns); unique
+    (`brand_id`, `start_year`).
+  - `sbu_seasonal_pattern` (`sbu_id` FK, `year` int, the same four `pct_*`
+    columns NOT NULL, CHECK sum = 100, audit columns); unique (`sbu_id`,
+    `year`). A brand uses the pattern of the year its own year starts in
+    (D41).
+  - `person_quarter_target` (`user_id` FK `user_profile`, `sbu_id` FK,
+    `planning_period` 'YYYY-Qn', `target_amount_lakhs` NUMERIC(15,2) ≥ 0,
+    `set_by`, audit columns); unique (`user_id`, `sbu_id`,
+    `planning_period`). Holds both Area Manager and rep targets (D30,
+    D32, D45).
+  - RLS: `brand_vendor_target_read` narrowed from `USING (true)` to Admin
+    and GM (D23); same for the two new brand/pattern tables, with
+    insert/update Admin and GM. `DROP TABLE sbu_target` (with its audit
+    trigger and the `sbu_target_read` policy from 0060/0061; D55), so
+    D34 holds by itself. `person_quarter_target` read: own row,
+    rows of anyone below the caller on the `manager_id` line, Admin, GM;
+    write: the row owner's direct manager, Admin, GM — via a new helper
+    `cabio_app_is_above(p_user_id)` (recursive on
+    `user_profile.manager_id`).
+- **Server** (`backend/app/domains/planning/`):
+  - `PUT /planning/brands/{id}/year-start`;
+    `GET/PUT /planning/brand-annual-targets?calendar_year=`;
+    `GET/PUT /planning/seasonal-patterns?year=`. Saving a brand's year
+    computes `vendor × (1 + stretch/100) × pct` per quarter, rounded to
+    2 decimals with the last quarter taking the remainder, and upserts
+    `brand_vendor_target` for each period from 2026-Q3 on whose end date
+    has not passed (D46, D46a, D51). Saving an SBU pattern repeats this
+    for every brand of that SBU and year with null per-brand `pct_*`
+    columns (D50).
+    Admin/GM via `_require_admin_or_gm` (`service.py:71`).
+  - SBU target = sum of `brand_vendor_target` for the SBU and period,
+    every period (D53, D55); `SbuTarget` model, `SbuTargetRepository`
+    and the SBU-target PUT route removed. Same in
+    `TargetVsActualRepository.active_sbu_targets` (`repository.py:689`,
+    read 2026-10-20), so Target vs Actuals' SBU and Company rows follow.
+    Brand rows are Admin/GM-only under RLS (D23), so the sum is returned
+    by a `SECURITY DEFINER` function that gives only the total, and only
+    to callers allowed the SBU target (Admin, GM, that SBU's SBU
+    Manager; D26).
+  - `GET/PUT /planning/person-targets?period=`: the caller's own target,
+    plus their direct reports' targets and their total against the
+    caller's target (D33). Setter check: `get_approver_id(user_id)`
+    (`service.py:81-93`) equals the caller, or Admin/GM (D45).
+  - `TargetVsActualRepository`: the team row's target becomes the Area
+    Manager's `person_quarter_target`; rep rows gain `target_lakhs` (D49).
 - **Frontend:** `BrandTargetTrackingScreen.tsx` (quarter arrows at
-  `:94–98` become year arrows); `TargetPlanningScreen.tsx` (Annual view
-  box replacing the `!isAnnual` guard at `:604`; reps' line, D14);
-  `SbuTargetBox.tsx`; `TargetVsActualsSection.tsx` (Quarter / Year
-  switch beside the arrows at `:267–271`); `services/targetPlanning.ts`;
-  `types/targetPlanning.ts`. Fiscal year helpers: `getFiscalYearOfPeriod`,
-  `getPlanningYearQuarters`, `fiscalYearLabel` (already used by the
-  Annual view).
-- **Tests:** repository and service tests for both tables, the FY 2026-27
-  sum, D5 follow-until-set, D13 clear, RLS read for a rep, the yearly
-  Target vs Actuals figures, and each notification (who gets it, none for
-  a rep with no manager); frontend type check and lint.
+  `:94-98` become calendar-year arrows; per-brand year start, own figure,
+  stretch, stretched, four quarters; SBU pattern box; edit dialog at
+  `:170`); `SbuTargetBox.tsx` (brand total, read-only from 2026-Q3; hidden for
+  Area Managers and reps); new `TeamTargetsPanel.tsx` and "Your target"
+  line on `TargetPlanningScreen.tsx`; `TargetVsActualsSection.tsx` team
+  and rep rows (`:179-195`, `:230`); `services/targetPlanning.ts`,
+  `types/targetPlanning.ts`. Month labels: new `formatPlanningPeriod`
+  in `utils/formatter.ts` ("2026-Q3" → "Oct–Dec 2026"), used at
+  `SbuTargetBox.tsx:49`, `TargetPlanDialog.tsx:206`,
+  `TargetVsActualsSection.tsx:270`, `BrandTargetTrackingScreen.tsx:97`,
+  `:170`, and `TargetPlanningScreen.tsx:228`, `:396`, `:552`, `:765` and
+  its messages near `:454`, `:683`, `:731` (line numbers read
+  2026-10-19).
+- **Tests:** quarter computation and rounding; D46a (no write before
+  2026-Q3); D51 (no write to an ended quarter); D50 (pattern change
+  re-saves following brands, skips own-pattern brands); pattern sum; RLS reads — brand figures refused for non
+  Admin/GM, SBU target refused for an Area Manager, person targets seen
+  by self and those above only; setter check (direct manager only, plus
+  Admin/GM); team row against the Area Manager's target; frontend type
+  check and lint.
+
+**Part 2**
+- **Year view (D31):** `get_target_vs_actual` gains a fiscal-year mode
+  returning, per quarter, Won from April to that quarter's end and
+  targets summed from April; reuses the Quarter view's per-quarter logic.
+- **Notifications (D18–D21):** `NotificationService.notify_plan_submitted`
+  (recipient `get_approver_id(owner)`; skipped when None) and
+  `notify_plan_decided` (recipient `target_plan.user_id`),
+  `entity_type="target_plan"`; called where a plan becomes
+  `PENDING_APPROVAL` in `create_target_plan` / `update_target_plan` and
+  from `approve_or_reject_target_plan` (line numbers re-read at build).
+  No migration: `notification.type` and `entity_type` are free
+  varchar(50). `NotificationBell.tsx` gains a `target_plan` route to
+  `TargetPlanningScreen` with period and rep.
+- **Brands Billing to Cabio (D37, D54):** `vendor_amount_lakhs / 4` per
+  quarter (last quarter takes the rounding remainder), shown beside the
+  saved seasonal quarters; nothing stored, no migration.
