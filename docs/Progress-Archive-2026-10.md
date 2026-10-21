@@ -4011,3 +4011,21 @@ moved to after the restart (Basheer).
 - Basheer: Mindray is a competitor of SonoScape; made-up examples use
   SonoScape. Third repeat, so made a CLAUDE.md rule (Product). Vendor
   report script wording "deal" → "Opportunity" (Basheer).
+
+## 2026-10-21 — Build & Test retro (later session)
+
+- P30 2 → 3 (repeated after merge): step 2 (server) started under D58
+  without saying so plainly; Basheer thought only 0062 was being written.
+- P80 4 → 5: after the D22 push, the checklist was left out of the docs
+  batch without saying so.
+- P93 3 → 4: offered the retro "now, or next session?".
+- Watch list → open list: P94 (`!` command with backslash paths failed),
+  P95 (fix commit title quoted the old word; check refused it), P96
+  (Mindray used as a made-up example; built as the CLAUDE.md "Product"
+  rule, `c6708f9`).
+- Spot-checks, all pass: 1346 tests (saved pytest output); 11 places
+  (vendor script edits); 133 warnings, 0 errors (lint at `f2f5edd`).
+  Plain-part checks pass: the failed `!` command explanation and the
+  Physical-Schema summary.
+- Open list 34 → 36 (counted; P96 is built, not open). The figure 37
+  shown to Basheer in the retro was not counted; corrected here.

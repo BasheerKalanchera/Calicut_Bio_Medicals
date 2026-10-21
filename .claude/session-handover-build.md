@@ -5,9 +5,8 @@ items go to Progress-Archive; unstarted work goes to Backlog. Plan & Chore
 keeps its own note: `.claude/session-handover-plan.md`. Only the Build & Test
 session edits this note._
 
-## For this session's end retro (21 Oct)
-- After the D22 push, the checklist was left out of the docs batch
-  without saying so; Basheer asked why. P80 4 → 5 (not yet written).
+## Reminders
+- Retro for 21 Oct done (Progress-Archive). Next session: step 3.
 - api.ts guard is on (`5ca17aa`): a backend fix commit must carry the
   matching api.ts (`sh .githooks/check-api-types.sh --write` stages it).
 
@@ -23,7 +22,7 @@ session edits this note._
   save; yearly target screens don't exist yet.
 - Next: check in with Basheer, then step 3 (screens).
 - Committed and pushed 21 Oct: vendor script wording `187fe06`; docs
-  batch (D58–D63, SonoScape examples rule) right after it.
+  batch `c6708f9` (D58–D63, SonoScape examples rule).
 
 ## UAT move
 - Basheer 20 Oct: "move everything together" — no Wednesday 21 Oct
