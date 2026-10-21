@@ -14,12 +14,13 @@ session edits this note._
   double close (old pattern, Backlog if he wants), "main" pick (no
   effect), produced-Opportunity path (already refused, `service.py:556`),
   50-row cap (UAT max 5).
-- **Next (21 Oct, Basheer's choice):** Basheer restarts Dev backend and
-  frontend (P1); run H0–H4 in `docs/Next-Action-Rules-Manual-E2E-Test-Plan.md`
-  (H0 = Haroon's four setup saves, Basheer clicks, Claude watches; check
-  in before opening any screen). Fixes found go in one `fix:` commit
-  (with a guard-built api.ts if backend changes). Then the post-commit
-  checklist for D22 (deferred: E2E pending). Archive entry written 20 Oct.
+- **E2E section H done 21 Oct:** H0–H4 all Pass, recorded in
+  `docs/Next-Action-Rules-Manual-E2E-Test-Plan.md`; no fixes, so no
+  `fix:` commit. Findings in Progress-Archive-2026-10 (H2 first try lost
+  to a page reload; the error message that stays on screen is how every
+  form works, not a bug).
+- **Next:** post-commit checklist for D22 (`cabio-post-commit`), then
+  the UAT move plan below. Check in first.
 - api.ts guard is on (`5ca17aa`): a backend fix commit must carry the
   matching api.ts (`sh .githooks/check-api-types.sh --write` stages it).
 

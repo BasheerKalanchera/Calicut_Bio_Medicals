@@ -3852,3 +3852,22 @@ P15, P23, P24, P76, P77 and the watch list.
   earlier words ✓ (borderline); "Not done tonight" ✓.
 - Change for next time: do the retro at the end of a session without
   offering to defer it. Open list 34 (counted with grep after this retro).
+
+## 2026-10-21 — D22 E2E section H, findings so far (Build & Test)
+
+- Pre-check (read-only Dev query as an Admin/GM user, all three RLS
+  settings verified, rolled back): records as section H expects. H0, H1,
+  H2 Pass.
+- H2 first attempt saved nothing: Basheer couldn't press "Complete", and
+  the tab was later found on Account Management with no closing Call.
+  Cause not found. The browser console showed an unexplained Vite
+  reconnect/reload at 09:03:43, and no frontend file had changed in the
+  previous 40 minutes. This is a guess, not proven: the reload closed the
+  form. The second attempt, with logs recording, saved normally.
+- Seen in H2: after the empty-save refusal, the red "Tick the next
+  actions to close" message stayed on screen after boxes were ticked.
+  Checked in the code: every form in the app is built this way. The
+  shared form frame (`FormModal.tsx:55-67`) clears its message only when
+  the form opens or on the next save press. Not a D22 bug, so no fix.
+- H3, H4 Pass. Section H done: H0–H4 all Pass, no fixes found, so no
+  `fix:` commit for D22.

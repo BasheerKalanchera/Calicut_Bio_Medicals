@@ -540,14 +540,19 @@ it, and it would add more permanent records.
    E2E – top bar" (Baby Memorial Hospital), log a Call with next action
    "zz E2E H chase payment", assigned to Basheer K. **Expected:** all
    four save (until the last, Haroon has no open next action of his own
-   on the Opportunity, so nothing holds him).
+   on the Opportunity, so nothing holds him). — Pass (2026-10-21,
+   Basheer clicked as Haroon, Claude read back each save on the
+   Opportunity's Next Actions tab: brochure 21 Oct and demo date 22 Oct
+   owner Basheer K, Haroon's own 23 Oct owner Haroon; chase payment
+   22 Oct owner Basheer K on the Lost one. Pre-check by read-only Dev
+   query the same morning: records as listed above.)
 1. [Simple] As Basheer K, Opportunity page "zz NA E2E – Customer 360"
    (aster medicity) → Log Activity. **Expected:** warning "You have open
    next actions on this Opportunity. Close them, saying what happened,
    instead of logging a new activity.", listing his three ("zz E2E E3
    Customer 360 follow-up", "zz E2E H send brochure", "zz E2E H confirm
    demo date"), no Close button on any row, not Haroon's; button "Close
-   next action".
+   next action". — Pass (2026-10-21, Basheer ran it as Basheer K)
 2. [Complex: save, then read back] Press "Close next action".
    **Expected:** the "Close Next Action" form, with "Next actions to
    close *" listing three tick boxes, none ticked, soonest due first, not
@@ -559,7 +564,13 @@ it, and it would add more permanent records.
    Next Actions tab — both under Completed, closed by the same Call; one
    new follow-up under Pending, its text on two lines; "zz E2E E3
    Customer 360 follow-up" and Haroon's still pending. Activity tab — one
-   closing Call.
+   closing Call. — Pass (2026-10-21, second attempt; Claude filled the
+   form, Basheer pressed Complete. Read back: brochure and demo date
+   Completed, both "Closed via Call on 21 Oct 2026, 09:05 AM" with the
+   same text; new follow-up Pending on two lines, due 22 Oct, owner
+   Basheer K; E3 follow-up and Haroon's still pending; Activity count
+   4 → 5, newest Call by Basheer K. First attempt saved nothing — see
+   Progress-Archive-2026-10.)
 3. [Complex: visual check, then save] Next Actions screen → "Mark to
    complete" on "zz E2E E3 Customer 360 follow-up" ("zz NA E2E – Customer
    360" (aster medicity)). **Expected:** "Also close:" lists the H2
@@ -568,10 +579,22 @@ it, and it would add more permanent records.
    **Expected:** the typed text stays. Press "Complete"; Basheer clicks.
    **Expected:** both closed, one follow-up added; Log Activity on the
    Opportunity now shows the one-item warning ("You have an open next
-   action on this Opportunity…").
+   action on this Opportunity…"). — Pass (2026-10-21; Claude filled the
+   form, Basheer pressed Complete. Ticking first pre-filled all three
+   texts; Claude replaced them with the typed text, which stayed through
+   untick/re-tick. Read back: E3 follow-up and the two-line H2 follow-up
+   both Completed, "Closed via Call on 21 Oct 2026, 09:12 AM", "zz E2E
+   H3 - closed both"; "zz E2E H final follow-up" Pending, due 22 Oct,
+   owner Basheer K; Log Activity warning lists only that one.)
 4. [Complex: Lost] Next Actions screen → "Mark to complete" on "zz E2E
    E3 top bar follow-up" ("zz NA E2E – top bar" (Baby Memorial
    Hospital), Lost). **Expected:** the "Follow-up next action" box is
    empty, no `*`, one line; "Also close:" lists "zz E2E H chase payment";
    ticking it leaves the box empty. Press "Complete" with the box empty;
-   Basheer clicks. **Expected:** both closed, no follow-up added.
+   Basheer clicks. **Expected:** both closed, no follow-up added. — Pass
+   (2026-10-21; Claude filled "What was done?", Basheer pressed Complete.
+   Follow-up tab had no `*` and the note "Optional — this Opportunity is
+   Lost…"; box stayed empty after ticking. Read back: "zz E2E E3 top bar
+   follow-up" and "zz E2E H chase payment" both Completed, "Closed via
+   Call on 21 Oct 2026, 09:19 AM", "zz E2E H4 - closed both"; nothing
+   pending left on "zz NA E2E – top bar".)
