@@ -1,8 +1,10 @@
 # Weekly Follow-up (Daily Hub) — Implementation Plan
 
-**Status:** Draft, 2026-10-11. Step 1 (D9a, D10) built ahead of the
-plan's approval, 2026-10-19 (Basheer: not part of My Work itself); commit
-and Dev check in Progress-Archive.
+**Status:** Approved 2026-10-21 (Basheer; every line in Decisions
+answered). Step 1 (D9a, D10) built ahead of the approval, 2026-10-19
+(`508ff42`; Basheer: not part of My Work itself); commit and Dev check in
+Progress-Archive. Steps 2–5 not started: they begin after the Annual
+Target Planning Part 1 E2E (D14).
 **Traceability rows:** 11.1 Weekly Follow-up Report (Not started). Also
 touches 6.1 Beat Planning (Not started) once hospital-wise planning is on
 UAT.
@@ -24,22 +26,26 @@ in `— proposed`; once Basheer answers, change the ending to
 - D2. Formal screen name "Weekly Follow-up", matching signed requirement 11.1, so the scorecard row maps to it directly. Menu label "My Work" (chosen from the shortlist My Work / My Dashboard / My Hub / My Follow-up); "Insights Dashboard" keeps its name — Basheer, 2026-10-11
 - D3. Four sections: (1) "High priority or 70 %+": Opportunities that are high priority (BR-OP-15) or at 70 % chance or more, with a "70 %+ only" tick box that covers PRD §5.8's separate "probability ≥70%" list; (2) closing date passed (BR-OP-16); (3) "Not visited in N+ days" (BR-OP-20, D6); (4) overdue next actions. The PRD's two lists are merged because they almost fully overlap: every stage past Demo is high priority, and the starting chance is 70 % from Negotiation on (Seed-Data.sql); only early-stage Opportunities raised to 70 %+ by hand, and Clinical Evaluation at 55 %, fall outside the overlap. An Opportunity appears in every section it qualifies for; each card shows its own count and ₹ total, never a grand total across cards (it would count the same rupees twice). Each row shows Opportunity, hospital, owner, stage, chance, value, and days overdue or idle — Basheer, 2026-10-14
 - D3a. Plain names on screen: never "Stagnant" or "Stalled" in what reps see; each list says what it is ("High priority or 70 %+", "Closing date passed", "Not visited in 30+ days" with the number following what the user types, "Overdue next actions"). The existing Stagnant Deals report keeps its name for now; renaming it is a separate later decision — Basheer, 2026-10-14
-- D4. Desk additions beyond the contract: "Next actions due this week" (not only overdue), and, once hospital-wise planning is on UAT, "My hospitals this quarter" (each hospital in the rep's approved quarterly plan) with last visit and next action due for each, built as the last step (step 5) — Basheer, 2026-10-14
-- D5. "Automated generation" in 11.1 is met by the screen always being up to date when opened; no weekly email or WhatsApp in Phase 1 — proposed
+- D4. Desk additions beyond the contract: "Next actions due this week" (not only overdue), and "My hospitals this quarter" (each hospital in the rep's approved quarterly plan) with last visit and next action due for each, built as the last step (step 5) — Basheer, 2026-10-14; timing reworded in D14 — Basheer, 2026-10-21
+- D5. "Automated generation" in 11.1 is met by the screen always being up to date when opened; no weekly email or WhatsApp in Phase 1 — Basheer, 2026-10-21
 - D6. "Not visited" counts days since the last visit, call, meeting or email on the Opportunity (D6d), or since it was created if none, and lists Active Opportunities only — not On Hold (Basheer, 2026-10-14). The user types any number of days (e.g. 30 or 60 — Basheer, 2026-10-11); the screen opens at a default of 30 days and returns to it each time it is opened. — Basheer, 2026-10-11, 2026-10-14
 - D6a. New rule BR-OP-20 "Not visited", wording in `docs/Business-Rules.md`: an Active Opportunity with no visit, call, meeting or email for more than N days (N chosen by the user) appears on the list; nothing about the Opportunity changes; logging one of those takes it off. Separate from BR-OP-06 because the trigger and the fix differ — Basheer, 2026-10-14
 - D6b. BR-OP-06 reworded to mean time in stage ("Stuck in Stage"), wording in `docs/Business-Rules.md`: an Active Opportunity that stays in one stage longer than that stage's limit becomes Stalled, counted from when it first entered the stage; it clears when the Opportunity moves to a stage it hasn't been in before, or is marked Won or Lost. Logging an activity does not clear it. Switched off until Basheer decides reps log regularly; the per-stage table is unchanged (Payment Pending still undecided). See section 4 for what must be built before it is switched on — Basheer, 2026-10-14
 - D6c. The existing Stagnant Deals report changes to the same measure as this desk: only visits, calls, meetings and emails count, and only Active Opportunities are listed (today it counts every activity type, Notes included, and also lists On Hold). It also gets the same type-any-number box, and its code comment claiming "BR-OP-06 says 180 days" is corrected, so a manager never sees two different answers — Basheer, 2026-10-14
 - D6d. "Not visited" counts only calls, visits, meetings and emails, not Notes, so a Note written for a stage change (BR-OP-22) or a new hospital doesn't reset the clock — Basheer, 2026-10-12
-- D7. "This week" means Monday to Sunday, India time — proposed
-- D8. Act from the desk: each next-action row has "Done" (the existing close form) and each Opportunity or hospital row has "Log Activity"; no new forms — proposed
+- D7. "This week" means Monday to Sunday, India time (on Wednesday 21 Oct, 19–25 Oct); overdue ones have their own section — Basheer, 2026-10-21
+- D8. Act from the desk: each next-action row has "Done" (the existing close form, with its pre-fill) and each Opportunity or hospital row has "Log Activity"; no new forms. "Close several at once" (Next-Action Rules D22) stays on the Next Actions screen only — Basheer, 2026-10-21
 - D9a. Landing screen now: everyone except Marketing Users lands on Account Management instead of Pipeline (step 1) — Haroon via Basheer, 2026-10-12
-- D9b. Landing screen later: once this screen is built, everyone except Marketing Users lands here instead (step 5) — proposed
+- D9b. Landing screen later: once this screen is built, everyone except Marketing Users lands here instead (step 5), not earlier: without the rep's hospitals the desk would not replace the hospital search reps start their day with — Basheer, 2026-10-21
 - D10. After adding a hospital from Account Management, the app opens that hospital's page instead of returning to the list (step 1) — Basheer, 2026-10-19
 - D11. Next-action pre-fill (the new next-action box starts with the old one's text) moved to `docs/Next-Action-Rules-Implementation-Plan.md` D10, built there — Basheer, 2026-10-14
 - D12. Which open next action the Log Activity form offers is whatever the Next-Action Rules plan builds; this plan adds no choice of its own (don't build it twice) — Basheer, 2026-10-14
 - D13. Step 3 keeps its place with reduced scope. The Next-Action Rules plan is built before this one, so showing and closing the rep's open next action in the Log Activity form (its step 1, Version C, BR-ACT-11) and the pre-fill (its D10) already exist when My Work is built; step 3 uses them and builds nothing of its own. My Work lists next actions (overdue, due this week) and its "Done" and "Log Activity" buttons open those forms. This plan's E2E tests step 3 from My Work itself (closing and logging through My Work's buttons, the lists updating afterwards); the forms' own rules are tested in the Next-Action Rules E2E plan — Basheer, 2026-10-14
-- D14. Sequencing: step 1 first (independent, small); steps 2–4 after the Target vs Actuals E2E and the Opportunity chance + create-form plan; step 5 after hospital-wise planning reaches UAT — proposed
+- D14. Sequencing: step 1 first (independent, small; built and checked on Dev 2026-10-19, `508ff42`); steps 2–4 after the Annual Target Planning Part 1 E2E (Target vs Actuals and the Opportunity chance + create-form plan, named here before, have both passed theirs); step 5 built on Dev straight after step 4, using Dev's hospital-wise planning; it goes to UAT (with the landing switch, D9b) only in a move where hospital-wise planning is already on UAT or goes in the same move, so the list is never empty for lack of plans — Basheer, 2026-10-21
+- D15. When a manager views a rep's My Work (or "My team"), the "Done" and "Log Activity" buttons show only on the manager's own rows; the rep's rows are view-only, because closing a next action records a visit or call as if it happened — Basheer, 2026-10-21
+- D16. "Closing date passed" lists only the Opportunities the person owns, since only the owner can change the date or close it; shared Opportunities are not repeated for each participant (unlike Target vs Actuals, which counts shares) — Basheer, 2026-10-21
+- D17. "Overdue" means due by the end of today (India time), the same cut as the Insights "Overdue Actions" count; "Due this week" then shows only those due after today — Basheer, 2026-10-21
+- D14a. Step 1 goes to UAT with the next full UAT move, not on its own (screen-only, no database change) — Basheer, 2026-10-21
 
 ## 1. In plain terms
 
@@ -75,19 +81,20 @@ This plan makes the rep's day start from one desk instead of a search box:
   pile up. The Next-Action Rules plan builds this; My Work relies on it
   and doesn't build it again (D13). The new next-action box starts with
   the old one's text, so the rep edits one line (built there too, D11).
-- **Their hospitals (step 5):** once hospital-wise planning is on UAT, the
+- **Their hospitals (step 5):** built straight after the desk, the
   desk lists the rep's planned hospitals for the quarter, and the app
   opens on this desk instead of Account Management.
 
 Where it lands: each step is built and tested on Dev, then moves to UAT
-with the next full promotion. Step 5 needs hospital-wise planning
-(migrations 0055 and 0056) to be on UAT first.
+with the next full promotion. Step 5 is built on Dev without waiting,
+but reaches UAT only with or after hospital-wise planning (migrations 0055
+and 0056), since it lists each rep's approved hospital plan (D14).
 
 ## 2. Build order
 
 1. **Landing screen and new-hospital flow** (frontend only). Opens on
    Account Management; a newly added hospital opens its page. Nothing
-   stops working. Own commit; can go to UAT ahead of the rest.
+   stops working. Own commit; goes to UAT with the next full move (D14a).
 2. **Weekly Follow-up data** (backend). One new read-only report request
    returning the four lists plus next actions due this week, scoped by
    role. Checkpoint commit. Nothing visible changes on Dev.
@@ -100,12 +107,12 @@ with the next full promotion. Step 5 needs hospital-wise planning
    are tested in the Next-Action Rules E2E plan.
 4. **Weekly Follow-up screen** in the menu under Reports, with "Done" and
    "Log Activity" on its rows. Checkpoint commit, then E2E.
-5. **My hospitals + landing on the desk**, after hospital-wise planning is
-   on UAT. Adds the planned-hospital list and switches the landing screen.
+5. **My hospitals + landing on the desk**, built on Dev straight after
+   step 4; to UAT only with or after hospital-wise planning (D14). Adds the planned-hospital list and switches the landing screen.
 
 ## 3. What could be affected
 
-First pass from a code search, 2026-10-11. To be completed before approval.
+First pass from a code search, 2026-10-11; completed 2026-10-21 (below).
 
 - **Step 1, landing screen:** the starting screen choice in `DemoApp.tsx`;
   the post-login reminders banner, which switches to Next Actions (check
@@ -127,6 +134,33 @@ First pass from a code search, 2026-10-11. To be completed before approval.
     Opportunity's idle count).
 - **Steps 2 and 4:** a new read-only request and a new screen; no existing
   screen reads them. None beyond the menu.
+
+Completed from the code, 2026-10-21:
+
+- **Next actions of other people:** no existing request lists them. The
+  Next Actions screen's list returns only the signed-in user's own; the
+  Insights "Overdue Actions" card gets a count per person, no list. Step
+  2 builds the team list itself (already a new request, so no extra step).
+- **Overdue means due by the end of today:** the Insights "Overdue
+  Actions" count includes next actions due today. My Work uses the same
+  cut, so the two never disagree (D17).
+- **Closing date passed:** Target vs Actuals already works it out (built,
+  E2E passed), per SBU and split-aware. My Work reuses the rule, not that
+  list as is: owner only (D16).
+- **Closing other people's next actions:** the database lets anyone who
+  can see a next action close it, and the close request does not check
+  who it belongs to, so a manager *could* close a rep's from My Work
+  (D15).
+- **Stagnant Deals change (D6c):** the server query feeds only the
+  Stagnant Deals screen; no Insights tile uses it. The old prototype
+  screen (`/prototype`, mock data) has its own "stagnant" count and is
+  unaffected.
+- **Team:** the reports' existing team scoping already matches D1; My
+  Work reuses it.
+- **Menu (step 4):** Annual Target Planning's screens (`642f04c`) did not
+  change the menu; no clash today. Check again before step 4.
+- **Step 5:** `target_plan_account` is unchanged by Annual Target
+  Planning (migration 0062).
 
 ## 4. Not in this plan (with reasons)
 

@@ -18,15 +18,6 @@ session edits this note._
   `7dceac8` with the retro. Part 1 is now built by Build & Test, not
   `/build` (Basheer, 21 Oct).
 
-## From Build & Test — for the docs batch due now (Basheer's yes, 21 Oct)
-
-- Include Build & Test's uncommitted Part 1 step 4 docs: Business-Rules
-  BR-PL-10/11/12 + Matrix, ADR-019 addendum, UAT-User-Manual, Frontend
-  Standards 6.10, Plan vs Actuals note, Annual Target plan D65.
-- This session's two edits made 21 Oct: Help Catch-up plan "target"
-  wording widened; Backlog "Area targets under the SBU target" removed
-  (Plan vs Actuals pointer reworded). Next: Basheer approves the batch.
-
 ## Next full UAT move — what goes, and what must land first
 
 - **Must land first:** User Manual and Help Catch-up plan. Draft PDF
@@ -39,15 +30,16 @@ session edits this note._
 - **Goes with it, E2E-passed on Dev:** Target vs Actuals + roster; Audit
   Trail Redesign (0059; plan step 5 cautions); Win Probability + one
   create form; Rep plan wording; Duplicate hospitals Part A (then step 19
-  on UAT). Each plan's Status line has its commits.
+  on UAT); My Work step 1, landing screen + new-hospital page (`508ff42`,
+  My Work plan D14a, Basheer 21 Oct). Each plan's Status line has its commits.
 
 ## Harness Engineering
 
 - 21 Oct: exercise cut down (Basheer) — weekly review, retro = count of
   his corrections; 31 judgement items accepted, open 9 (Reviews line in
   the tracker; archive 21 Oct entry). Committed with the doc tidy-up in
-  `1f5b425`, pushed. Next review 2026-10-28. 21 Oct retro (archive,
-  2 corrections) and this line uncommitted — next docs batch (Basheer).
+  `1f5b425`, pushed. Next review 2026-10-28. 21 Oct retros (archive):
+  2 corrections, then 3 in the second session.
   The paperwork and right-pack checks are dropped with it.
 
 ## Chores
@@ -55,9 +47,3 @@ session edits this note._
 - Delete Dev test data from Duplicate hospitals Part A (five "zz Test
   duplicate guard…" hospitals, "zz Test contact"); read-only check first.
   Open: deactivate the test Marketing User login (2026-10-10)?
-
-## Weekly Follow-up / My Work — decisions in progress
-- `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md`; decided so far
-  listed in its Decisions. **Next:** last round, proposed D5, D7, D8, D9b,
-  D10, D14; then "what could be affected" pass and approval.
-- **Open (14 Oct):** pre-fill in all four close forms, or Log Activity only?

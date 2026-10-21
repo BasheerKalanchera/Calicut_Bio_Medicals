@@ -330,10 +330,10 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 ### BR-OP-16: Closing Date Passed (2026-09-29)
 * **Rule:** An Active opportunity whose Expected Closure Date is before today (India time) is flagged "Closing date passed".
 * **Effect:** Flag only — it never blocks saving, stage moves or closing. The owner either closes the Opportunity (Won/Lost) or enters a realistic new date; managers use the flag to raise it with the owner.
-* **Where shown:** the Plan vs Actuals Tracking section of the Insights Dashboard; later, a section of the Weekly Follow-up Report.
+* **Where shown:** the Plan vs Actuals Tracking section of the Insights Dashboard; later, a section of the Weekly Follow-up Report ("My Work"), which lists it only for the Opportunity's owner, since only the owner can change the date or close it (Basheer, 2026-10-21; `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md` D16).
 * **Forecast effect:** in Plan vs Actuals Tracking, a flagged Opportunity counts in the current quarter's Expected, not in the past quarter its date points to.
 * **Rationale:** Basheer, 2026-09-29, after comparing Salesforce, Dynamics and Zoho: none blocks on a past closing date; common practice is to flag it and have the manager follow up. Salesforce's default of quietly dropping such Opportunities from forward-looking reports is what this avoids.
-* **Enforcement:** not built yet — `docs/Plan-vs-Actuals-Tracking-Implementation-Plan.md`.
+* **Enforcement:** built for Plan vs Actuals Tracking (`cc4eb91`, split-aware `2e2e4c0`); manual E2E passed 2026-10-13 — `docs/Plan-vs-Actuals-Tracking-Implementation-Plan.md`. Not yet on UAT.
 
 ### BR-OP-17: Payment Confirmation Before Won (2026-10-03)
 * **Rule:** "Won cannot be set if full payment is not collected." An Opportunity can be marked Won only (a) once it has already been **saved** at the last stage, **Payment Pending** (name confirmed by Haroon and Latheef Bhai — Basheer, 2026-10-16; `opportunity_stage.display_order` 80, after Delivery & Installation) — reaching Payment Pending and marking Won are always two separate saves (Basheer, 2026-10-03) — and (b) with "full payment received" confirmed in the save that marks it Won. Full payment only — a partial or advance payment does not qualify.

@@ -4110,3 +4110,31 @@ moved to after the restart (Basheer).
   in its own technical form, equally weighted, instead of sorted by what
   users would notice. Counted from the session's messages (transcript).
 - No guard-fixable or live-data/UAT/lost-work slip; tracker unchanged.
+
+## 2026-10-21 — My Work (Weekly Follow-up) plan approved (Plan & Chore)
+
+- Basheer approved `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md`
+  after the last round: D5 (screen always current = "automated", no
+  weekly email), D7 (week = Monday–Sunday), D8 (Done / Log Activity use
+  the existing forms), D9b (land on My Work only at step 5), D14 (order),
+  D14a (step 1 to UAT with the next full move), and three new ones from
+  the "what could be affected" pass: D15 (a manager sees a rep's rows
+  view-only), D16 (closing date passed: owner only), D17 (overdue = due by
+  end of today, as Insights).
+- Basheer questioned step 5 waiting for UAT: building it needs only Dev,
+  where hospital-wise planning already is; only its move to UAT waits.
+  D4/D14 reworded.
+- Found on the way: BR-OP-16 status lines (Business-Rules "not built
+  yet", Matrix "E2E pending") out of date — corrected to built, E2E passed
+  2026-10-13.
+### Retro (Plan & Chore, 2026-10-21, second session)
+
+- **Corrections from Basheer this session: 3.** (1) Listed the due docs
+  batch as item 1 of the waiting work instead of in "Due today";
+  Basheer: "re-read your handover note. there is full docs batch commit
+  is due now." (2) Said My Work "step 1 is done" without saying it was on
+  Dev only, not UAT; Basheer: "When you say step 1 is done, what do you
+  mean?" (3) Kept step 5 waiting for hospital-wise planning on UAT,
+  when building it needs only Dev; Basheer: "For step 5 have that in dev
+  is good enough right?" Counted from the session's messages.
+- No guard-fixable or live-data/UAT/lost-work slip; tracker unchanged.
