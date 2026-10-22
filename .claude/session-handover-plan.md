@@ -22,7 +22,9 @@ session edits this note._
   Billing to Cabio). Build & Test builds Part 2 after Part 1's E2E.
   22 Oct: D66–D73 + D62 amendment written; Part 2 test sections
   (P6–P8, I–K) saved in the test plan; Backlog "Reporting line when
-  Haroon moves to CEO". All uncommitted. Next: docs batch commit.
+  Haroon moves to CEO". Committed and pushed in `d654427` with the
+  retro (8 corrections). Next: nothing here until Build & Test runs Part
+  1's E2E; then Part 2 is built against these sections.
 
 ## Next full UAT move — what goes, and what must land first
 
@@ -38,6 +40,18 @@ session edits this note._
   create form; Rep plan wording; Duplicate hospitals Part A (then step 19
   on UAT); My Work step 1, landing screen + new-hospital page (`508ff42`,
   My Work plan D14a, Basheer 21 Oct). Each plan's Status line has its commits.
+
+## In-app help (help plan step 3a) — in progress 2026-10-22
+
+- Basheer, 22 Oct: help moves to a table with an Admin/GM editor (plan
+  D1 changed, D9–D13; uncommitted). Step 3b (table + editor) is Build &
+  Test's — tell Basheer, don't edit their note.
+- 22 Oct: Basheer asked for a proper plan + test plan for Build & Test:
+  `docs/In-App-Help-Editor-Implementation-Plan.md` (Approved 22 Oct,
+  D1–D11; Basheer tells Build & Test) and
+  `docs/In-App-Help-Editor-Manual-E2E-Test-Plan.md` (uncommitted).
+- **Then:** help wording screen by screen into the help plan's section
+  7, each beside its manual section. First screen: Account Management.
 
 ## Harness Engineering
 

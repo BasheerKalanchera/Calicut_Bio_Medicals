@@ -5,7 +5,11 @@ manual waiting for Basheer's PDF review. Step 3 (in-app help) follows that
 review and also covers the Annual Target Planning Part 1 screens; it ships
 with the single full UAT move (Annual Target plan D52) — Basheer,
 2026-10-21. (Plan vs Actuals Tracking's screens, which step 3 waited for,
-passed E2E 2026-10-13.)
+passed E2E 2026-10-13.) **Reshaped 2026-10-22 (Basheer):** help text
+moves from the app's code into a database table with an Admin/GM editor
+(D1 changed, D7a replaced, D9–D13). Help wording is written screen by
+screen in Plan & Chore, alongside the manual review (step 3a); Build &
+Test builds the table and editor in parallel (step 3b).
 **Traceability rows:** none (supports the UAT rollout; Backlog "Bring the
 user manual and in-app `?` help up to date").
 **Design / discussion:** this plan. Original manual and help: Progress-Archive
@@ -13,10 +17,13 @@ user manual and in-app `?` help up to date").
 
 ## Decisions
 
-- D1. Approach: **Lighter** — rewrite the manual and the help text by hand,
-  as today, and add a guard that stops them drifting again (D7). The
-  heavier option (one shared source shown both in the app and as the
-  manual) is described in section 3 — Basheer, 2026-10-01
+- D1. Approach: rewrite the manual and the help text by hand, and add a
+  guard that stops them drifting again (D7) — Basheer, 2026-10-01.
+  **Changed 2026-10-22:** the help text no longer lives in the app's
+  code; it lives in a database table that Admin and General Manager can
+  edit from a screen (D9–D13), so a wording fix needs no developer and
+  no release. The manual stays a separate document. The "one shared
+  source" option in section 3 is still not chosen — Basheer, 2026-10-22
 - D2. The manual and help describe what UAT will have **after the
   hospital-wise Part 1+2 move** (including Target & Coverage Planning,
   Rate Hospitals and plan-versus-actual). Written now from Dev, published
@@ -34,9 +41,21 @@ user manual and in-app `?` help up to date").
 - D7. Keeping it current: (a) a frontend test that fails when a menu screen
   has no help page; (b) CLAUDE.md "Post-commit checklist" gains a line:
   a feature that changes a screen updates that screen's help text and
-  manual section in the same feature commit — Basheer, 2026-10-01
+  manual section in the same feature commit — Basheer, 2026-10-01.
+  **(a) replaced 2026-10-22:** a test can't check a database, so the
+  help editor screen lists every menu screen and marks the ones with no
+  help yet (help editor plan D5). (b) stands; "updates the help text" now means updating
+  the help table's starting content (step 3b) — Basheer, 2026-10-22
 - D8. Basheer reviews the manual text before the PDF goes out; Haroon
   receives it with the UAT move — Basheer, 2026-10-01
+- D9–D12. The help editor's decisions (who edits, formatting, Audit Log,
+  manager box) — Basheer, 2026-10-22; recorded as D1–D4 in
+  `docs/In-App-Help-Editor-Implementation-Plan.md`
+- D13. **Order of work:** the 22 help texts are written in Plan & Chore
+  now, screen by screen with the manual review (step 3a), while Build &
+  Test builds the table and editor (step 3b); the agreed text is then
+  loaded into the table as starting content, so neither waits for the
+  other — Basheer, 2026-10-22
 
 ## 1. In plain terms
 
@@ -68,15 +87,26 @@ After this work:
 2. **Manual rewrite (about 1 day).** `docs/UAT-User-Manual.md`: role
    guides plus the screen reference. Basheer reviews (D8).
    *Checkpoint commit (docs only).*
-3. **In-app help (about 1 day).** `helpContent.tsx`: refresh 8, add 14;
-   the help-coverage test (D7a). tsc, lint, frontend tests.
-   *Checkpoint commit.*
+3. **In-app help, two strands in parallel (D13).**
+   - **3a. Help wording (Plan & Chore, about 1 day).** Screen by screen:
+     read the screen's code, draft its help (refresh 8, write 14), review
+     it beside that screen's manual section and fix both. Agreed text is
+     kept in section 7 of this plan until 3b can load it.
+     *Docs-batch commits.*
+   - **3b. Help table and editor (Build & Test, about 1.5–2 days,
+     estimate).** Its own plan and test plan:
+     `docs/In-App-Help-Editor-Implementation-Plan.md`; it loads section
+     7's text once all 22 are agreed (its step 4).
 4. **Review and test (half a day).** `/code-review` (medium); short manual
-   E2E: open `?` on every screen as each role (Simple steps, Basheer).
-5. **Ship with the Part 1+2 UAT move.** PDF to the team (D5); CLAUDE.md
-   line (D7b); post-commit checklist.
+   E2E: open `?` on every screen as each role; edit a help page as Admin
+   and as General Manager, check the Audit Log entry, and check another
+   role can't edit (Simple steps, Basheer).
+5. **Ship with the UAT move.** Help content loaded into UAT as part of
+   the move — after that, UAT's copy is the one that matters, and it is
+   copied to Production at go-live. PDF to the team (D5); CLAUDE.md line
+   (D7b); post-commit checklist.
 
-Total about 3 days. Steps 1–2 can start any time; step 3 touches the same
+Total about 4.5–5 days (estimate; was 3 before the 2026-10-22 change). Steps 1–2 can start any time; step 3 touches the same
 frontend as the Plan vs Actuals Tracking build, so it waits until its screens are
 settled.
 
@@ -86,9 +116,10 @@ settled.
   would live in one file that the app shows directly in the `?` drawer and
   that is also printed as the PDF, so the two can never disagree. Adds a
   Markdown display library to the app and about 1 more day. Not chosen
-  (D1) because the guard in D7 catches the main risk (a screen with no
-  help) at lower cost, and help text (short, per screen) and the manual
-  (task guides per role) are written for different moments.
+  (D1) because help text (short, per screen) and the manual (task guides
+  per role) are written for different moments. The 2026-10-22 change
+  (help in a table) is not this option: the manual is still written
+  separately.
 - **Videos or walkthrough tours:** rejected on 2026-08-01 for a pilot of
   this size; nothing has changed that.
 - **Translations:** not requested.
@@ -113,9 +144,10 @@ settled.
   `opportunitiesOnHold`, `productPerformance`, `pipelineReport`,
   `salesReport`, `territories`, `auditLog`, `rateHospitals`,
   `brandTargetTracking`.
-- **Coverage test (D7a):** a Vitest test that collects every `id` from the
-  nav item lists in `DemoApp.tsx` (moved to an exported constant if
-  needed) and asserts `HELP_CONTENT` has a key for each.
+- **Coverage test (D7a) — replaced 2026-10-22** by the editor's "no help
+  yet" list on the help editor screen
+  (`docs/In-App-Help-Editor-Implementation-Plan.md`, which holds the
+  table, endpoints and screen design).
 - **Wording source:** button labels, tab names and messages taken from the
   screen code, not from design docs (CLAUDE.md, 2026-09-30).
 - **PDF:** HTML built from the manual, printed with Chrome headless. Draft
@@ -177,3 +209,14 @@ rule.
 **Step 2 coverage:** Win Probability passed its E2E on 2026-10-15 and is
 in the manual. Next-action rules is left out while it is being built
 (Basheer, 2026-10-15); add it before the manual is final (D2).
+
+## 7. Agreed help wording (step 3a)
+
+Filled screen by screen as Basheer agrees each one; loaded into the help
+table at step 3b. Order (2026-10-22): Sales Rep daily screens first
+(Account Management, Customer 360, Pipeline, Opportunity page, Project
+page, Next Actions), then the reports, then the Admin screens; Target &
+Coverage Planning last (still changing while Annual Target Part 1 is
+tested).
+
+_None agreed yet._

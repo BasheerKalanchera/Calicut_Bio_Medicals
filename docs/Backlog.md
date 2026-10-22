@@ -202,7 +202,8 @@ part of Query Load fix 3.
   tiles; Sales Report ("Deals Won", "Avg Deal Size", empty text);
   "Stagnant Deals" menu item, title and empty text; "Fast-Track this
   Deal" tick-box (4 screens); "this deal is past Demo stage"; help
-  panels (`helpContent.tsx`, ~12 sentences); one server message
+  panels (today `helpContent.tsx`, ~12 sentences; moving to the help
+  table — help plan D1, 2026-10-22); one server message
   (`document/service.py`); `docs/UAT-User-Manual.md` (10 places).
 - Docs (doc tidy-up 2026-10-12): `Signed-Requirements-to-PRD-Traceability.md`,
   24 changes drafted (15 client-visible: Client Note column and Commitment

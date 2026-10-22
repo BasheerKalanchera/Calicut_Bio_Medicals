@@ -4212,3 +4212,29 @@ moved to after the restart (Basheer).
   8. "What is this 'with no way to remove the mark'?" Unclear wording.
 - No guard-fixable slip, nothing touched live data or UAT, no lost work;
   tracker unchanged.
+
+## 2026-10-22 — In-app help moves to a table with an Admin editor (Plan & Chore, second session)
+
+- Basheer started step 3 (in-app help) of the User Manual and Help plan,
+  reviewing manual sections screen by screen as each help page is written.
+- He asked why help lives in a code file and proposed a table plus an
+  Admin screen to edit it. Agreed (D1 changed, D7a replaced by the
+  editor's "no help yet" list, D9–D13): Admin and GM edit; headings, bold
+  and bullets only; saves go to the Audit Log; "If you're a Manager" box
+  kept as an optional second box; wording written here (step 3a) while
+  Build & Test builds the table and editor (step 3b). Estimate grows from
+  about 3 to about 4.5–5 days (estimate, not counted). Plan section 7
+  holds the agreed wording. Backlog "deal" wording item's pointer to
+  `helpContent.tsx` updated.
+- Same day, at Basheer's request: the editor got its own plan and test
+  plan for Build & Test (`docs/In-App-Help-Editor-Implementation-Plan.md`,
+  `docs/In-App-Help-Editor-Manual-E2E-Test-Plan.md`). Help plan D9–D12
+  moved there as D1–D4; D5–D11 added (editor layout, how bold/bullets
+  are typed, first save logged as "Added", no delete, two-stage starting
+  text by migration, edits seen on reload, last save wins). Read-only Dev
+  check for the test plan's users: as Admin, all three settings verified;
+  Dev at `0062`, no help table yet.
+- Basheer answered D5–D11: all as recommended, with D5 amended — picking
+  a "No help yet" screen opens its section editor, ready for its first
+  help (test plan step 13 updated to match). He then approved the plan
+  as a whole, 2026-10-22.
