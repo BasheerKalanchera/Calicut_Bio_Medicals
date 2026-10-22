@@ -3446,6 +3446,8 @@ export interface components {
             sbu_id: string;
             /** Year Start Month */
             year_start_month: number;
+            /** Has Any Annual */
+            has_any_annual: boolean;
             /** Start Year */
             start_year: number;
             /** Vendor Amount Lakhs */

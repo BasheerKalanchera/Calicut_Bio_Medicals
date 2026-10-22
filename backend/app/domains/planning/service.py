@@ -685,8 +685,17 @@ class AnnualTargetService:
         saved = self.repository.vendor_targets(
             [b.id for b in brands], sorted({p for qs in quarters_by_brand.values() for _, p in qs})
         )
+        with_annual = self.repository.brands_with_annual([b.id for b in brands])
         return [
-            self._row(b, calendar_year, annual_by_brand.get(b.id), sbu_pattern, quarters_by_brand[b.id], saved)
+            self._row(
+                b,
+                calendar_year,
+                annual_by_brand.get(b.id),
+                sbu_pattern,
+                quarters_by_brand[b.id],
+                saved,
+                has_any_annual=b.id in with_annual,
+            )
             for b in brands
         ]
 
@@ -716,7 +725,7 @@ class AnnualTargetService:
         quarters = brand_year_quarters(brand.year_start_month, data.start_year)
         self._save_quarters(annual, quarters, data.pattern or sbu_pattern, current_user)
         saved = self.repository.vendor_targets([brand.id], [p for _, p in quarters])
-        return self._row(brand, data.start_year, annual, sbu_pattern, quarters, saved)
+        return self._row(brand, data.start_year, annual, sbu_pattern, quarters, saved, has_any_annual=True)
 
     def get_pattern(self, sbu_id: uuid.UUID, year: int, *, current_user: UserProfile) -> SbuSeasonalPattern | None:
         _require_admin_or_gm(current_user)
@@ -781,6 +790,8 @@ class AnnualTargetService:
         sbu_pattern: SeasonalPattern | None,
         quarters: list[tuple[int, str]],
         saved: dict[tuple[uuid.UUID, str], Decimal],
+        *,
+        has_any_annual: bool,
     ) -> BrandAnnualTargetRow:
         own = _own_pattern(annual)
         return BrandAnnualTargetRow(
@@ -788,6 +799,7 @@ class AnnualTargetService:
             brand_name=brand.name,
             sbu_id=brand.sbu_id,
             year_start_month=brand.year_start_month,
+            has_any_annual=has_any_annual,
             start_year=start_year,
             vendor_amount_lakhs=annual.vendor_amount_lakhs if annual else None,
             stretch_pct=annual.stretch_pct if annual else None,

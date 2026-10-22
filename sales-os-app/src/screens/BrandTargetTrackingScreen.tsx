@@ -265,18 +265,22 @@ export default function BrandTargetTrackingScreen() {
     }
     // The year start first: the yearly figure is saved against the brand's
     // year, and the start can't change once a figure exists (D59).
-    if (yearStartInput !== editing.year_start_month) {
-      await setBrandYearStart(editing.brand_id, yearStartInput);
-      await queryClient.invalidateQueries({ queryKey: ["brands"] });
+    // Refreshed either way: a refused figure can follow a saved year start.
+    try {
+      if (yearStartInput !== editing.year_start_month) {
+        await setBrandYearStart(editing.brand_id, yearStartInput);
+        await queryClient.invalidateQueries({ queryKey: ["brands"] });
+      }
+      await setBrandAnnualTarget({
+        brand_id: editing.brand_id,
+        start_year: year,
+        vendor_amount_lakhs: amount,
+        stretch_pct: stretch,
+        pattern,
+      });
+    } finally {
+      await invalidateTargets();
     }
-    await setBrandAnnualTarget({
-      brand_id: editing.brand_id,
-      start_year: year,
-      vendor_amount_lakhs: amount,
-      stretch_pct: stretch,
-      pattern,
-    });
-    await invalidateTargets();
   };
 
   if (!isAdmin) return null;
@@ -319,7 +323,9 @@ export default function BrandTargetTrackingScreen() {
       <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0, px: 3, pb: 3 }}>
         {activeSbuId && patternQuery.isSuccess && (
           <SeasonalPatternBox
-            key={`${activeSbuId}-${year}-${patternQuery.dataUpdatedAt}`}
+            // Keyed on the saved values, not the fetch time: a window-focus
+            // refetch with the same pattern must keep the unsaved typing.
+            key={`${activeSbuId}-${year}-${PATTERN_FIELDS.map(({ key }) => patternQuery.data?.[key] ?? "none").join("-")}`}
             sbuId={activeSbuId}
             year={year}
             saved={patternQuery.data}
@@ -447,10 +453,10 @@ export default function BrandTargetTrackingScreen() {
               size="small"
               value={yearStartInput}
               onChange={(e) => setYearStartInput(Number(e.target.value))}
-              disabled={editing.vendor_amount_lakhs !== null}
+              disabled={editing.has_any_annual}
               helperText={
-                editing.vendor_amount_lakhs !== null
-                  ? "Can't be changed once the brand has a yearly figure."
+                editing.has_any_annual
+                  ? "Can't be changed once the brand has a yearly figure in any year."
                   : `This brand's year: ${brandYearLabel(yearStartInput, year)}`
               }
               fullWidth

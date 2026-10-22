@@ -192,6 +192,18 @@ def test_year_start_cannot_change_once_a_figure_exists():
     assert brand.year_start_month == 1
 
 
+def test_list_marks_a_brand_with_a_figure_in_another_year():
+    # Viewing 2027 with a figure saved only for 2026: no 2027 figure, but
+    # the year start is already locked (D59), so the screen must know.
+    brand, other = _brand(), _brand()
+    repo = _annual_repo(brand)
+    repo.list_active_brands.return_value = [brand, other]
+    repo.list_annual.return_value = []
+    repo.brands_with_annual.return_value = {brand.id}
+    rows = AnnualTargetService(repo).list_annual(SBU_ID, 2027, current_user=_user("General Manager", None))
+    assert [(r.vendor_amount_lakhs, r.has_any_annual) for r in rows] == [(None, True), (None, False)]
+
+
 def test_pattern_change_resaves_brands_following_it(monkeypatch):
     monkeypatch.setattr(service_module, "today_ist", lambda: date(2026, 11, 1))
     brand = _brand(start_month=1)
@@ -259,6 +271,14 @@ def test_gm_corrects_an_existing_target():
     PersonTargetService(repo, MagicMock()).set_target(_body(am.id), current_user=gm)
     assert (existing.target_amount_lakhs, existing.set_by) == (Decimal("50"), gm.id)
     repo.create.assert_not_called()
+
+
+def test_sbu_top_people_lists_only_sales_roles():
+    # A Marketing User with an SBU and no manager must not get a target box.
+    db = MagicMock()
+    PersonQuarterTargetRepository(db).sbu_top_people(SBU_ID)
+    sql = str(db.scalars.call_args.args[0].compile(compile_kwargs={"literal_binds": True}))
+    assert "IN ('SBU Manager', 'Area Manager', 'Sales Staff')" in sql
 
 
 def test_team_targets_for_gm_compare_to_the_sbu_target():

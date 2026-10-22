@@ -34,6 +34,10 @@ from app.domains.reference.models import (
 # rejected revision's last approved total -- BR-PL-05).
 SUBMITTED_PLAN_STATUSES = ("PENDING_APPROVAL", "APPROVED")
 
+# The roles that carry a quarterly sales target (Admin/GM's Team targets
+# panel). "Sales Staff" is the rep role's name (migration 0008).
+TARGET_CARRYING_ROLES = ("SBU Manager", "Area Manager", "Sales Staff")
+
 # Net line value (BR-FIN-03: BUYBACK lines net against PRODUCT lines). Same
 # expression as reporting/repository.py's _NET_VALUE.
 _NET_VALUE = case(
@@ -358,6 +362,13 @@ class AnnualTargetRepository(BaseRepository[BrandAnnualTarget]):
         stmt = select(func.count()).where(BrandAnnualTarget.brand_id == brand_id)
         return (self.db.scalar(stmt) or 0) > 0
 
+    def brands_with_annual(self, brand_ids: list[uuid.UUID]) -> set[uuid.UUID]:
+        """Of brand_ids, those with a yearly figure in any year (D59)."""
+        if not brand_ids:
+            return set()
+        stmt = select(BrandAnnualTarget.brand_id).where(BrandAnnualTarget.brand_id.in_(brand_ids)).distinct()
+        return set(self.db.scalars(stmt).all())
+
     def list_annual(self, sbu_id: uuid.UUID, start_year: int) -> list[BrandAnnualTarget]:
         stmt = (
             select(BrandAnnualTarget)
@@ -442,7 +453,9 @@ class PersonQuarterTargetRepository(BaseRepository[PersonQuarterTarget]):
     def sbu_top_people(self, sbu_id: uuid.UUID) -> list[UserProfile]:
         """The SBU's people who report to no one, or straight to an Admin or
         GM -- the first level below the SBU target (D45: today the Area
-        Managers, who report to Haroon). Admin/GM themselves excluded."""
+        Managers, who report to Haroon). Sales roles only, so e.g. a
+        Marketing User with an SBU and no manager isn't given a target
+        (Basheer, 2026-10-22)."""
         manager = aliased(UserProfile)
         manager_role = aliased(Role)
         own_role = aliased(Role)
@@ -454,7 +467,7 @@ class PersonQuarterTargetRepository(BaseRepository[PersonQuarterTarget]):
             .where(
                 UserProfile.sbu_id == sbu_id,
                 UserProfile.is_active.is_not(False),
-                own_role.role_name.not_in(UNRESTRICTED_ROLES),
+                own_role.role_name.in_(TARGET_CARRYING_ROLES),
                 or_(UserProfile.manager_id.is_(None), manager_role.role_name.in_(UNRESTRICTED_ROLES)),
             )
             .order_by(UserProfile.display_name)

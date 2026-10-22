@@ -448,6 +448,9 @@ class BrandAnnualTargetRow(BaseModel):
     brand_name: str
     sbu_id: uuid.UUID
     year_start_month: int
+    # A yearly figure in any year, not just start_year: the year start is
+    # locked once one exists (D59).
+    has_any_annual: bool
     start_year: int
     # None until the GM enters the brand's figure (D42).
     vendor_amount_lakhs: Decimal | None

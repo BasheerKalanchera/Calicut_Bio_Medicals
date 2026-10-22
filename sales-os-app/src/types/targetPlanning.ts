@@ -324,6 +324,9 @@ export interface BrandAnnualTargetRow {
   brand_name: string;
   sbu_id: string;
   year_start_month: number;
+  // A yearly figure in any year, not just start_year: the year start is
+  // locked once one exists (D59).
+  has_any_annual: boolean;
   start_year: number;
   // null until the GM enters the brand's figure (D42).
   vendor_amount_lakhs: string | null;
