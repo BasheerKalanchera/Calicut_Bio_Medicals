@@ -219,4 +219,132 @@ page, Next Actions), then the reports, then the Admin screens; Target &
 Coverage Planning last (still changing while Annual Target Part 1 is
 tested).
 
-_None agreed yet._
+Format: help editor plan D2 (headings, **bold**, bullets) and D4
+(optional manager box). Every screen's help opens with a short **What
+this page is for** paragraph — why the screen exists — before the
+sections on its buttons (Basheer, 2026-10-22). Each entry gives its help
+key, the date Basheer agreed it, and the manual section checked beside
+it.
+
+### Account Management (`customers`) — agreed 2026-10-22 (Basheer)
+
+Manual checked: A2 "Add a new hospital" (fixed the same day) and Part B
+"Account Management". Manager box: none.
+
+**Title:** Account Management — Help
+
+**What this page is for**
+Your list of the hospitals and projects you work with. Start here to
+find a hospital and open its page, to add a hospital Cabio hasn't dealt
+with before, or to see the tenders and building projects under way.
+(Added 2026-10-22 under the opening-paragraph rule; shown to Basheer the
+same day.)
+
+**Customers tab**
+- Lists every hospital you can see. Click a hospital to open its page.
+- Type in **Search customers...** to find a hospital by name. The list
+  updates as you type.
+- Pick a zone from **All Zones** to see only that zone's hospitals.
+- The tags under each name show its zone, parent hospital, payer
+  behaviour and customer type.
+
+**Add a hospital**
+- Click **+ Add**. Fill in **Name** and **Zone**; your own zone is filled
+  in for you. Parent Customer, Payer Behavior and Customer Type are
+  optional. Click **Create**.
+- When it's saved, the new hospital's page opens straight away, so you
+  can add an Opportunity or log a visit.
+- If a hospital with a similar name already exists, the form asks "Did
+  you mean …?". Click **Use this one instead** to open the existing
+  hospital. Use **Create Anyway** only if it really is a different
+  hospital.
+- If you have no territory yet, the form won't open. Ask your manager to
+  set one up for you.
+
+**Projects tab**
+- Tenders and building projects at hospitals. Each one shows its
+  hospital, status and owner.
+- Search by project name or hospital name in **Search by project or
+  hospital...**.
+- **+ Add** creates a project: Account, Name, Status and Owner, plus an
+  optional Bid Submission Date. Click a project to see its Opportunities
+  and add one.
+
+Sources (2026-10-22): `DemoApp.tsx:641–700`,
+`CustomerDirectoryScreen.tsx:92–152`, `AddHospitalModal.tsx:102–128,
+215–313`, `ProjectDirectoryScreen.tsx:316–330, 430, 546–584`.
+
+### Customer 360 (`customer360`) — agreed 2026-10-22 (Basheer)
+
+Manual checked: Part B "A hospital's page (Customer 360)" (fixed the
+same day: Change Anyway, ↻ Refresh, Different WhatsApp number?,
+Reactivation Overdue). Manager box: none (Admin/GM-only Business
+Potential notes covered under Overview).
+
+**Title:** Customer 360 — Help
+
+**What this page is for**
+This is everything Cabio knows about one hospital, in one place. It
+shows who you deal with there and what they think of us, what you've
+done at the hospital, the tenders and projects it has, every
+Opportunity with it, and the equipment already installed, both ours and
+competitors'. Check it before a visit or call to catch up quickly, and
+update it afterwards so the next person sees the full picture.
+
+**Top of the page**
+- The hospital's name, zone, payment behaviour and Business Potential,
+  then counts of Stakeholders, Projects and Opportunities. Use the back
+  arrow to return to where you came from.
+
+**Overview**
+- The hospital's details: zone, Payer Behavior, Business Potential,
+  Customer Type and Parent Customer. If it has branches, they're listed
+  under **Child Accounts**. Click a parent or branch name to open its
+  page.
+- **Edit** changes the name, zone, parent, payer behaviour and customer
+  type. If the new name looks like a hospital already in the directory,
+  you'll see "Did you mean …?". Click **Use this one instead** to open
+  that hospital. Use **Change Anyway** only if it really is a different
+  hospital.
+- Admin and GM set Business Potential on Rate Hospitals. You can't
+  change it here.
+
+**Activity**
+- Everything logged at this hospital, newest first. **+ Log** adds an
+  entry, and **↻ Refresh** reloads the list.
+- Under each entry, open **Comments** to read the discussion, or **Add
+  comment** to reply.
+
+**Stakeholders**
+- The hospital's contacts, each with designation, phone, email,
+  sentiment (Promoter, Neutral, Detractor) and NPS score (-100 to 100).
+- **+ Add** adds a contact. Tick **Different WhatsApp number?** only if
+  their WhatsApp number isn't their phone number. **Edit** changes a
+  contact.
+- The **N Opportunities** button lists the Opportunities this contact is
+  linked to. Click one to open it.
+
+**Projects**
+- The hospital's tenders and building projects, each with status, owner
+  and bid date. **+ Add** creates one, **Edit** changes one, and clicking
+  a project opens it.
+
+**Opportunities**
+- Shows Active Opportunities first. **Show All** adds On Hold, Won and
+  Lost; **Show Active Only** goes back.
+- Each one shows stage, status, owner, chance of winning (Win %) and
+  value. A red **Reactivation Overdue** tag means an On Hold Opportunity
+  has passed its date to restart.
+- **+ Add** opens the New Opportunity form with this hospital already
+  filled in. Click an Opportunity, or its **Edit**, to open its page;
+  changes are made there.
+
+**Installed Base**
+- Equipment already at the hospital. **+ Add** records one: pick our
+  product, or tick **Competitor Equipment** and type its name.
+  Department and Installation Date are optional. Competitor equipment is
+  marked **COMPETITOR**. Useful for spotting upgrade and service leads.
+
+Sources (2026-10-22): `Customer360Screen.tsx:83–88, 162–262, 264–417,
+475–556, 559–612, 924–978, 996–1000, 1106–1143, 1347–1354`;
+`ActivityTimeline.tsx:240–262`; `ActivityCommentThread.tsx:123–176`.

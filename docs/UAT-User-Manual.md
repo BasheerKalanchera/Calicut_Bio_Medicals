@@ -65,12 +65,16 @@ and the six reports.
 ### Add a new hospital
 1. Account Management → **Customers** → **+ Add** (or **+ Add Hospital**
    inside the New Opportunity form).
-2. Fill **Name** and **Zone**. Parent Customer, Payer Behavior and Customer
-   Type are optional.
-3. **Create**.
+2. Fill **Name** and **Zone** (your own zone is filled in for you).
+   Parent Customer, Payer Behavior and Customer Type are optional.
+3. **Create**. Added from Account Management, the new hospital's page
+   opens straight away, ready for an Opportunity or a visit.
 - If a hospital with a similar name already exists, the form shows "Did
   you mean … ? It's already in the directory." Click **Use this one
-  instead** rather than creating a second copy.
+  instead** rather than creating a second copy. Use **Create Anyway**
+  only if it really is a different hospital.
+- If you have no territory yet, the form doesn't open; ask your manager
+  to set one up.
 
 ### Create an Opportunity
 Every way of creating an Opportunity opens the same **New Opportunity**
@@ -332,16 +336,22 @@ Opportunities.
 **Tabs:**
 - **Overview**: the hospital's details, its parent group and branches.
   **Edit** changes name, zone, parent, payment behaviour and customer
-  type. (Business Potential is set by Admin or GM on Rate Hospitals.)
+  type. If the new name looks like a hospital already in the directory,
+  click **Use this one instead**, or **Change Anyway** if it really is a
+  different hospital. (Business Potential is set by Admin or GM on Rate
+  Hospitals.)
 - **Activity**: everything logged at this hospital. **+ Log** adds an
-  entry; you can comment on any entry.
+  entry, **↻ Refresh** reloads the list; you can comment on any entry.
 - **Stakeholders**: the hospital's contacts, with designation, phone,
   email, NPS score (-100 to 100) and sentiment (Promoter, Neutral,
-  Detractor). **+ Add** adds a contact; **N Opportunities** shows which
-  Opportunities the contact is linked to.
+  Detractor). **+ Add** adds a contact (tick **Different WhatsApp
+  number?** only if it isn't their phone number); **N Opportunities**
+  shows which Opportunities the contact is linked to.
 - **Projects**: the hospital's projects. **+ Add** creates one.
 - **Opportunities**: Active Opportunities by default; **Show All** also
-  shows On Hold, Won and Lost. **+ Add** creates one for this hospital.
+  shows On Hold, Won and Lost. A red **Reactivation Overdue** tag means an
+  On Hold Opportunity has passed its date to restart. **+ Add** creates
+  one for this hospital.
 - **Installed Base**: equipment already at the hospital, ours or a
   competitor's (tick **Competitor Equipment** and type its name). Useful
   for upgrade and service leads.

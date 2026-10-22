@@ -4314,3 +4314,29 @@ moved to after the restart (Basheer).
       test with Dev ahead of the saved code.
 - 9 and 10: P94 +2 (seen 4), built — exact tested command in the
   `cabio-db-and-scripting` skill. Nothing else touched live data or UAT.
+
+## 2026-10-22 — In-app help wording, first two screens (Plan & Chore, third session)
+
+- Help plan step 3a started. Account Management (`customers`) and
+  Customer 360 (`customer360`) help agreed by Basheer, written from the
+  screens' code and kept in the help plan's section 7 for the help table
+  (step 3b) to load.
+- New rule for every help page (Basheer): it opens with a short "What
+  this page is for" paragraph before the button sections; written into
+  section 7's format note. Account Management's paragraph added after
+  its agreement and shown to him the same turn.
+- User Manual fixed beside each screen: A2 "Add a new hospital" (own
+  zone filled in, the page opens after Create from Account Management,
+  Create Anyway, no-territory message); Part B Customer 360 (Change
+  Anyway, ↻ Refresh, Different WhatsApp number?, Reactivation Overdue).
+- Open: what "+ Add Hospital" inside the New Opportunity form does after
+  Create (not read yet) — checked with the Pipeline help. Next screen:
+  Pipeline.
+
+### 2026-10-22 — Retro (Plan & Chore, third session)
+- Corrections from Basheer this session: 1 (from the session's messages)
+  1. "Write a short paragraph about what this screen is all about?" The
+     Customer 360 draft explained every button but not what the page is
+     for; now a rule for every help page.
+- No guard-fixable slip, nothing touched live data or UAT, no lost work;
+  tracker unchanged.

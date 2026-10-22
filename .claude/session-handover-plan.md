@@ -49,8 +49,12 @@ session edits this note._
   D1–D11) + its E2E test plan — committed and pushed in `4aadacc`.
   Basheer tells Build & Test; don't edit their note. Retro (3
   corrections) in the archive.
-- **Then:** help wording screen by screen into the help plan's section
-  7, each beside its manual section. First screen: Account Management.
+- Help wording screen by screen into the help plan's section 7, each
+  beside its manual section; each opens with "What this page is for"
+  (Basheer). 22 Oct: Account Management and Customer 360 agreed, manual
+  fixed beside each — uncommitted, docs batch. **Next:** Pipeline
+  (`opportunities`); also check what "+ Add Hospital" inside the New
+  Opportunity form does after Create.
 
 ## Harness Engineering
 
