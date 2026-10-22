@@ -123,10 +123,17 @@ export async function getTeamTargets(sbuId: string, planningPeriod: string): Pro
   return response.data.data;
 }
 
-// The person's manager, Admin or GM; upsert, no delete (D45, D61).
+// The person's manager, Admin or GM; upsert (D45, D61).
 export async function setPersonTarget(data: PersonQuarterTargetSet): Promise<PersonQuarterTarget> {
   const response = await api.put("/planning/person-targets", data);
   return response.data.data;
+}
+
+// Back to "Not set" -- the same people who may set it (D74).
+export async function removePersonTarget(userId: string, planningPeriod: string): Promise<void> {
+  await api.delete("/planning/person-targets", {
+    params: { user_id: userId, planning_period: planningPeriod },
+  });
 }
 
 // Target Planning's quarter roster: everyone in the caller's scope with their

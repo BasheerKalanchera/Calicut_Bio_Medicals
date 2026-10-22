@@ -857,10 +857,8 @@ class PersonTargetService:
             compare_to_lakhs=compare_to,
         )
 
-    def set_target(self, data: PersonQuarterTargetSet, *, current_user: UserProfile) -> PersonQuarterTarget:
-        """Upsert -- a wrong figure is corrected, not removed. The SBU is the
-        person's own."""
-        person = self.repository.get_user(data.user_id)
+    def _settable_person(self, user_id: uuid.UUID, current_user: UserProfile) -> UserProfile:
+        person = self.repository.get_user(user_id)
         if person is None:
             raise NotFoundError("Person not found.")
         if person.id == current_user.id:
@@ -870,6 +868,11 @@ class PersonTargetService:
             raise AuthorizationError("Only the person's manager, Admin or GM may set their target.")
         if person.sbu_id is None:
             raise ValidationError("This person has no SBU, so they can't be given a target.")
+        return person
+
+    def set_target(self, data: PersonQuarterTargetSet, *, current_user: UserProfile) -> PersonQuarterTarget:
+        """Upsert. The SBU is the person's own."""
+        person = self._settable_person(data.user_id, current_user)
         existing = self.repository.get_target(person.id, person.sbu_id, data.planning_period)
         if existing:
             existing.target_amount_lakhs = data.target_amount_lakhs
@@ -887,6 +890,15 @@ class PersonTargetService:
                 updated_by=current_user.id,
             )
         )
+
+    def remove_target(self, user_id: uuid.UUID, planning_period: str, *, current_user: UserProfile) -> None:
+        """Back to "Not set" (D74): the same people who may set it. The audit
+        trigger keeps the removed figure."""
+        person = self._settable_person(user_id, current_user)
+        existing = self.repository.get_target(person.id, person.sbu_id, planning_period)
+        if existing is None:
+            raise NotFoundError("This person has no target for that quarter.")
+        self.repository.delete(existing)
 
 
 class TargetVsActualService:

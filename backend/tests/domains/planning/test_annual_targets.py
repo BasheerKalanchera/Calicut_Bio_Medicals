@@ -12,7 +12,7 @@ from unittest.mock import MagicMock
 import pytest
 from pydantic import ValidationError as PydanticValidationError
 
-from app.core.exceptions import AuthorizationError, ConflictError, ValidationError
+from app.core.exceptions import AuthorizationError, ConflictError, NotFoundError, ValidationError
 from app.domains.organization.models import UserProfile
 from app.domains.planning import service as service_module
 from app.domains.planning.models import BrandAnnualTarget, BrandVendorTarget, PersonQuarterTarget
@@ -271,6 +271,45 @@ def test_gm_corrects_an_existing_target():
     PersonTargetService(repo, MagicMock()).set_target(_body(am.id), current_user=gm)
     assert (existing.target_amount_lakhs, existing.set_by) == (Decimal("50"), gm.id)
     repo.create.assert_not_called()
+
+
+def test_manager_removes_a_direct_reports_target():
+    am = _user("Area Manager")
+    rep = SimpleNamespace(id=uuid.uuid4(), manager_id=am.id, sbu_id=SBU_ID)
+    repo = _person_repo(rep)
+    existing = MagicMock()
+    repo.get_target.return_value = existing
+    PersonTargetService(repo, MagicMock()).remove_target(rep.id, "2026-Q3", current_user=am)
+    repo.get_target.assert_called_once_with(rep.id, SBU_ID, "2026-Q3")
+    repo.delete.assert_called_once_with(existing)
+
+
+def test_someone_elses_report_cant_be_removed():
+    rep = SimpleNamespace(id=uuid.uuid4(), manager_id=uuid.uuid4(), sbu_id=SBU_ID)
+    repo = _person_repo(rep)
+    repo.get_target.return_value = MagicMock()
+    with pytest.raises(AuthorizationError):
+        PersonTargetService(repo, MagicMock()).remove_target(rep.id, "2026-Q3", current_user=_user("Area Manager"))
+    repo.delete.assert_not_called()
+
+
+def test_gm_removes_any_target():
+    gm = _user("General Manager", None)
+    am = SimpleNamespace(id=uuid.uuid4(), manager_id=uuid.uuid4(), sbu_id=SBU_ID)
+    repo = _person_repo(am)
+    existing = MagicMock()
+    repo.get_target.return_value = existing
+    PersonTargetService(repo, MagicMock()).remove_target(am.id, "2026-Q3", current_user=gm)
+    repo.delete.assert_called_once_with(existing)
+
+
+def test_removing_a_target_that_isnt_set_is_not_found():
+    gm = _user("General Manager", None)
+    am = SimpleNamespace(id=uuid.uuid4(), manager_id=uuid.uuid4(), sbu_id=SBU_ID)
+    repo = _person_repo(am)
+    with pytest.raises(NotFoundError):
+        PersonTargetService(repo, MagicMock()).remove_target(am.id, "2026-Q3", current_user=gm)
+    repo.delete.assert_not_called()
 
 
 def test_sbu_top_people_lists_only_sales_roles():

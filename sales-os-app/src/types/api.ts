@@ -1723,11 +1723,15 @@ export interface paths {
         get: operations["get_team_targets_api_v1_planning_person_targets_get"];
         /**
          * Set Person Target
-         * @description The person's manager, Admin or GM; upsert, no delete (D45).
+         * @description The person's manager, Admin or GM; upsert (D45).
          */
         put: operations["set_person_target_api_v1_planning_person_targets_put"];
         post?: never;
-        delete?: never;
+        /**
+         * Remove Person Target
+         * @description Back to "Not set" -- the same people who may set it (D74).
+         */
+        delete: operations["remove_person_target_api_v1_planning_person_targets_delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -10729,6 +10733,38 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["APIResponse_PersonQuarterTargetResponse_"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_person_target_api_v1_planning_person_targets_delete: {
+        parameters: {
+            query: {
+                user_id: string;
+                planning_period: string;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

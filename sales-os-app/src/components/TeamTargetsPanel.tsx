@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, Box, Button, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography } from "@mui/material";
-import { getTeamTargets, setPersonTarget } from "../services/targetPlanning";
+import { getTeamTargets, removePersonTarget, setPersonTarget } from "../services/targetPlanning";
 import { formatLakhs, formatPlanningPeriod } from "../utils/formatter";
 
 // Annual Target Planning D30, D33, D45, D57, D62. One query feeds both the
@@ -52,6 +52,11 @@ export default function TeamTargetsPanel({ sbuId, period, isCompanyWide }: { sbu
   const invalid = !empty && (!Number.isFinite(amount) || amount < 0);
   const canSave = !empty && !invalid;
 
+  const refresh = () => {
+    queryClient.invalidateQueries({ queryKey: ["planning", "team-targets"] });
+    queryClient.invalidateQueries({ queryKey: ["planning", "target-vs-actuals"] });
+  };
+
   const handleSave = async () => {
     if (!editing || !canSave) return;
     setSaving(true);
@@ -59,10 +64,23 @@ export default function TeamTargetsPanel({ sbuId, period, isCompanyWide }: { sbu
     try {
       await setPersonTarget({ user_id: editing.userId, planning_period: period, target_amount_lakhs: amount });
       setEditing(null);
-      queryClient.invalidateQueries({ queryKey: ["planning", "team-targets"] });
-      queryClient.invalidateQueries({ queryKey: ["planning", "target-vs-actuals"] });
+      refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't save the target.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // No confirmation: the audit trail keeps the removed figure (D74).
+  const handleRemove = async (userId: string) => {
+    setSaving(true);
+    setError(null);
+    try {
+      await removePersonTarget(userId, period);
+      refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't remove the target.");
     } finally {
       setSaving(false);
     }
@@ -72,10 +90,17 @@ export default function TeamTargetsPanel({ sbuId, period, isCompanyWide }: { sbu
   const compareTo = data.compare_to_lakhs === null ? null : Number(data.compare_to_lakhs);
   const compareLabel = isCompanyWide ? "the SBU target" : "your own target";
   const anySet = data.reports.some((r) => r.target_lakhs !== null);
+  // Before anyone has a target, say the target hasn't been handed down yet
+  // rather than warning that it's short (Basheer, 2026-10-22).
+  const notPassedOn = compareTo !== null && !anySet
+    ? (isCompanyWide
+      ? `The SBU target of ${formatLakhs(compareTo)} hasn't been passed on to the team yet.`
+      : `Your target of ${formatLakhs(compareTo)} hasn't been passed on to your team yet.`)
+    : null;
   let warning: string | null = null;
   if (compareTo === null) {
     if (anySet) warning = `${isCompanyWide ? "The SBU target" : "Your own target"} isn't set yet, so these can't be checked against it.`;
-  } else if (Math.round(total * 100) !== Math.round(compareTo * 100)) {
+  } else if (anySet && Math.round(total * 100) !== Math.round(compareTo * 100)) {
     const diff = Math.abs(total - compareTo);
     warning = `These add up to ${formatLakhs(total)}, ${formatLakhs(diff)} ${total < compareTo ? "short of" : "over"} ${compareLabel} (${formatLakhs(compareTo)}).`;
   }
@@ -138,13 +163,20 @@ export default function TeamTargetsPanel({ sbuId, period, isCompanyWide }: { sbu
                       </Button>
                     </>
                   ) : (
-                    <Button
-                      size="small"
-                      onClick={() => { setError(null); setEditing({ userId: r.user_id, draft: r.target_lakhs !== null ? String(Number(r.target_lakhs)) : "" }); }}
-                      disabled={editing !== null}
-                    >
-                      {r.target_lakhs !== null ? "Change" : "Set target"}
-                    </Button>
+                    <>
+                      <Button
+                        size="small"
+                        onClick={() => { setError(null); setEditing({ userId: r.user_id, draft: r.target_lakhs !== null ? String(Number(r.target_lakhs)) : "" }); }}
+                        disabled={editing !== null || saving}
+                      >
+                        {r.target_lakhs !== null ? "Change" : "Set target"}
+                      </Button>
+                      {r.target_lakhs !== null && (
+                        <Button size="small" color="error" onClick={() => handleRemove(r.user_id)} disabled={editing !== null || saving}>
+                          Remove
+                        </Button>
+                      )}
+                    </>
                   )}
                 </TableCell>
               </TableRow>
@@ -159,6 +191,7 @@ export default function TeamTargetsPanel({ sbuId, period, isCompanyWide }: { sbu
           </TableRow>
         </TableBody>
       </Table>
+      {notPassedOn && <Alert severity="info" sx={{ mt: 1.5 }}>{notPassedOn}</Alert>}
       {warning && <Alert severity="warning" sx={{ mt: 1.5 }}>{warning}</Alert>}
       {error && <Alert severity="error" sx={{ mt: 1.5 }}>{error}</Alert>}
     </Box>

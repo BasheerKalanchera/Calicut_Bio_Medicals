@@ -11,8 +11,8 @@
 -- it is not consumed by Alembic or the application at runtime, and cannot be
 -- used as an `alembic stamp <rev>` checkpoint.
 --
--- Regenerated 2026-10-21 from the Dev database, catching up migration
--- 0062: Annual Target Planning Part 1: brand years, seasonal patterns, person targets
+-- Regenerated 2026-10-22 from the Dev database, catching up migration
+-- 0063: person_quarter_target: the people who may set a target may also remove it
 -- See docs/Backend-Implementation-Standards.md's migration workflow.
 --
 -- Regenerate with: .\scripts\regen_physical_schema.ps1
@@ -22,7 +22,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict j6zZEWx7N6S6eEaG8llEWS5s7S7SrkmIINkDGbdPPeByteHH5gI0S5OIhsgHcVl
+\restrict 5rLOJnTij5kcCa1Ou34S9Ququy4ipFiblKbUsj9syayXh46HqHavPytnaLpWzKM
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.11 (Debian 17.11-1.pgdg13+2)
@@ -3655,6 +3655,15 @@ CREATE POLICY opportunity_tier_visibility ON public.opportunity USING (((public.
 ALTER TABLE public.person_quarter_target ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: person_quarter_target person_quarter_target_delete; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY person_quarter_target_delete ON public.person_quarter_target FOR DELETE USING (((user_id IN ( SELECT user_profile.id
+   FROM public.user_profile
+  WHERE (user_profile.manager_id = public.cabio_app_uid()))) OR (public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text]))));
+
+
+--
 -- Name: person_quarter_target person_quarter_target_insert; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -3952,5 +3961,5 @@ CREATE POLICY target_plan_write ON public.target_plan FOR INSERT WITH CHECK ((us
 -- PostgreSQL database dump complete
 --
 
-\unrestrict j6zZEWx7N6S6eEaG8llEWS5s7S7SrkmIINkDGbdPPeByteHH5gI0S5OIhsgHcVl
+\unrestrict 5rLOJnTij5kcCa1Ou34S9Ququy4ipFiblKbUsj9syayXh46HqHavPytnaLpWzKM
 

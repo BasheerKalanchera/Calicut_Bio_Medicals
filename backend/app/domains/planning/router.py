@@ -386,6 +386,17 @@ def set_person_target(
     current_user: UserProfile = Depends(get_current_user),
     service: PersonTargetService = Depends(_get_person_target_service),
 ) -> APIResponse[PersonQuarterTargetResponse]:
-    """The person's manager, Admin or GM; upsert, no delete (D45)."""
+    """The person's manager, Admin or GM; upsert (D45)."""
     target = service.set_target(body, current_user=current_user)
     return APIResponse(data=PersonQuarterTargetResponse.model_validate(target))
+
+
+@annual_target_router.delete("/person-targets", status_code=204)
+def remove_person_target(
+    user_id: uuid.UUID = Query(...),
+    planning_period: str = Query(..., pattern=r"^\d{4}-Q[1-4]$"),
+    current_user: UserProfile = Depends(get_current_user),
+    service: PersonTargetService = Depends(_get_person_target_service),
+) -> None:
+    """Back to "Not set" -- the same people who may set it (D74)."""
+    service.remove_target(user_id, planning_period, current_user=current_user)
