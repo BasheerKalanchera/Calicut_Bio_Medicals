@@ -4237,4 +4237,16 @@ moved to after the restart (Basheer).
 - Basheer answered D5–D11: all as recommended, with D5 amended — picking
   a "No help yet" screen opens its section editor, ready for its first
   help (test plan step 13 updated to match). He then approved the plan
-  as a whole, 2026-10-22.
+  as a whole, 2026-10-22. Committed and pushed in `4aadacc`.
+
+### 2026-10-22 — Retro (Plan & Chore, second session)
+- Corrections from Basheer this session: 3 (from the session's messages)
+  1. "What do you mean help text lives in an app code file? Is it a
+     file?" Unclear wording.
+  2. "What does this mean — the 'If you're a Manager' box stays, as an
+     optional second box?" Unclear wording.
+  3. "Why don't you write up a proper implementation plan and e2e
+     testing plan for Build & Test?" The work had grown to feature size
+     without its own plan (CLAUDE.md "Feature planning").
+- No guard-fixable slip, nothing touched live data or UAT, no lost work;
+  tracker unchanged.

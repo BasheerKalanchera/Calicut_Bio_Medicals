@@ -43,13 +43,12 @@ session edits this note._
 
 ## In-app help (help plan step 3a) — in progress 2026-10-22
 
-- Basheer, 22 Oct: help moves to a table with an Admin/GM editor (plan
-  D1 changed, D9–D13; uncommitted). Step 3b (table + editor) is Build &
-  Test's — tell Basheer, don't edit their note.
-- 22 Oct: Basheer asked for a proper plan + test plan for Build & Test:
+- 22 Oct: help moves to a table with an Admin/GM editor (help plan D1
+  changed, D9–D13). Step 3b is Build & Test's own plan,
   `docs/In-App-Help-Editor-Implementation-Plan.md` (Approved 22 Oct,
-  D1–D11; Basheer tells Build & Test) and
-  `docs/In-App-Help-Editor-Manual-E2E-Test-Plan.md` (uncommitted).
+  D1–D11) + its E2E test plan — committed and pushed in `4aadacc`.
+  Basheer tells Build & Test; don't edit their note. Retro (3
+  corrections) in the archive.
 - **Then:** help wording screen by screen into the help plan's section
   7, each beside its manual section. First screen: Account Management.
 
