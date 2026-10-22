@@ -102,6 +102,7 @@ function brandYearLabel(yearStartMonth: number, startYear: number): string {
 }
 
 function PatternFields({ draft, onChange }: { draft: PatternDraft; onChange: (d: PatternDraft) => void }) {
+  const sum = patternSum(draft);
   return (
     <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", alignItems: "center" }}>
       {PATTERN_FIELDS.map(({ key, label }) => (
@@ -116,8 +117,8 @@ function PatternFields({ draft, onChange }: { draft: PatternDraft; onChange: (d:
           sx={{ width: "7.5rem" }}
         />
       ))}
-      <Typography variant="body2" color={patternSum(draft) === 100 ? "text.secondary" : "warning.main"}>
-        Total {patternSum(draft)}%
+      <Typography variant="body2" color={sum === 100 ? "text.secondary" : "warning.main"}>
+        {sum === 100 ? "Total 100%" : `Total ${sum}% — must add up to 100%`}
       </Typography>
     </Box>
   );
@@ -130,6 +131,10 @@ function SeasonalPatternBox({ sbuId, year, saved, onSaved }: { sbuId: string; ye
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const unchanged = PATTERN_FIELDS.every(({ key }) => draft[key] === toDraft(saved)[key]);
+  // Greyed out until the shares add up to 100, so a save that would be
+  // refused can't be pressed (mostly used on a phone; Basheer, 2026-10-22).
+  // parsePattern still checks on save.
+  const adds = patternSum(draft) === 100;
 
   const handleSave = async () => {
     const parsed = parsePattern(draft);
@@ -159,7 +164,7 @@ function SeasonalPatternBox({ sbuId, year, saved, onSaved }: { sbuId: string; ye
       </Typography>
       <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", alignItems: "center" }}>
         <PatternFields draft={draft} onChange={setDraft} />
-        <Button variant="contained" size="small" onClick={handleSave} disabled={saving || unchanged}>
+        <Button variant="contained" size="small" onClick={handleSave} disabled={saving || unchanged || !adds}>
           {saving ? "Saving…" : "Save pattern"}
         </Button>
       </Box>
