@@ -4138,3 +4138,36 @@ moved to after the restart (Basheer).
   when building it needs only Dev; Basheer: "For step 5 have that in dev
   is good enough right?" Counted from the session's messages.
 - No guard-fixable or live-data/UAT/lost-work slip; tracker unchanged.
+## 2026-10-22 — Annual Target Part 1 pre-E2E review fixes (Build & Test)
+
+- Committed and pushed `ed669e7` (fix): seasonal pattern box keeps unsaved
+  typing through a window-focus refetch (was keyed on fetch time);
+  year-start month locked once a brand has a yearly figure in any year
+  (screen only checked the viewed year; new `has_any_annual`); Brand
+  Target Tracking list refreshed after a refused save; Team targets panel
+  lists only SBU Manager / Area Manager / Sales Staff (Basheer, D62
+  amendment — a Marketing User with an SBU and no manager would have got
+  a target box). pytest 1348, ruff/tsc clean, lint 0 errors.
+- Basheer: rounding finding (a brand quarter a paisa below zero for
+  yearly figures under about ₹10,000) left as is — "Keep it simple".
+  Old route POST brand-vendor-targets kept. Area Managers' heading
+  "Team Plans" made, uncommitted, with the ₹-spacing fix in the
+  small-fixes batch at E2E end.
+### Retro (Build & Test, 2026-10-22)
+
+- **Corrections from Basheer this session: 6.** (1) "What do you mean by
+  this - The note went one line over its 75-line limit…?" — shorthand.
+  (2) "I am not clear on this" — first fix 2 (year-start lock)
+  explanation. (3) "I Didn't understand the option 2 question" — the
+  brand year-start change question. (4) "Reference Data Management does
+  not do Target or billing value setting… right?" — I had put the
+  hand-typed left-over quarters on that screen. (5) "Keep it simple. lets
+  not over engineer this." — proposed a new rounding method for a paisa
+  case. (6) "I am not clear on Q2. Can you show the whole details
+  again?" — first Q2 explanation too short. Counted from the session's
+  messages; the repeated "park for Part 2" message was a network error,
+  not a correction.
+- 4 of 6 were explanations not landing first time — give the full
+  example up front. No guard-fixable or live-data/UAT/lost-work slip;
+  tracker unchanged.
+

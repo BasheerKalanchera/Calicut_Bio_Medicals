@@ -98,6 +98,17 @@ trigger function** (already proven, already generic — no new mechanism, just s
    a frequency list (Weekly through As-needed reads
    naturally top-to-bottom) in a way it doesn't for e.g. Loss Reasons. A per-table
    optional field, not a shape every list must have.
+4. **Brands — DECIDED (Basheer, 2026-10-22): brands join this screen.**
+   Adding a brand and changing any of its details, including its "year
+   starts in" month (Annual Target Planning D40), is done here — an
+   addition to the Scope decision above, which didn't list brands. Still
+   open: (a) does Product Catalog's inline "+ Add new brand" go once this
+   screen exists; (b) how the year-start month is changed once the brand
+   has a yearly figure, which Annual Target Planning D59 locks today.
+   **Decided (Basheer, 2026-10-22):** the quarters the change leaves
+   outside any brand year get their target typed in by hand by the GM,
+   once, on Brand Target Tracking — not on this screen, which sets no
+   target or billing figure.
 
 ## Backend
 

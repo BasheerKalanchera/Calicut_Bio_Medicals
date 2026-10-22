@@ -6,12 +6,18 @@ keeps its own note: `.claude/session-handover-plan.md`. Only the Build & Test
 session edits this note._
 
 ## Reminders
-- Retros for both 21 Oct sessions done (Progress-Archive). Next
-  session: the parked review fixes below.
+- 22 Oct retro done (Progress-Archive, 6 corrections). Next session:
+  Part 1 E2E on Dev (below).
 - api.ts guard is on (`5ca17aa`): a backend fix commit must carry the
   matching api.ts (`sh .githooks/check-api-types.sh --write` stages it).
 
 ## Next: Annual Target Planning Part 1, built here
+- After Part 1's E2E: build Part 2 here (plan steps 5–7; Basheer 22
+  Oct). Plan & Chore writes Part 2's E2E sections meanwhile. Part 2 also
+  builds D70/D71 (GM hand-types one brand quarter's target, flag column
+  on brand_vendor_target — small migration); Q-C still open with Basheer.
+- 22 Oct: review fixes committed and pushed `ed669e7` (archive 22 Oct).
+  **Next: Part 1 E2E on Dev** — load `cabio-e2e-testing` first.
 - Built in the main folder (Basheer 21 Oct); `/build` is idle, its
   worktree and branch removed (merged `d8e1d03`).
 - Steps 1+2 in one checkpoint (D58, Basheer 21 Oct: no one uses the old
@@ -29,28 +35,13 @@ session edits this note._
   went out in Plan & Chore's docs batch `20eea0a`, pushed.
 - Pre-E2E review 21 Oct: Dev at 0062 (head), Physical-Schema current;
   pytest 1346 passed, ruff/tsc clean, lint 0 errors (133 warnings).
-  `/code-review high` found 10, all checked against the code. Parked by
-  Basheer 21 Oct evening — resume tomorrow morning. Nothing edited yet.
-- Fixes as re-sorted for him (fix, then E2E):
-  1. Brand Target Tracking pattern box loses unsaved typing on window
-     switch (`key` has `dataUpdatedAt`, BrandTargetTrackingScreen:322).
-  2. "Year starts in" box open when the brand has a figure in another
-     year, then errors (:450; add a has-any-figure field to the row).
-  3. Missing space before ₹, approve/reject dialog
-     (TargetPlanningScreen:775) — small-fixes batch at E2E end.
-  Quiet fixes: negative quarter from rounding (`split_brand_year`,
-  service:632 — largest share takes remainder); refresh list after a
-  refused save (:268); remove old hand-typed brand quarter route
-  (router:283–302, follows D54 — Basheer asked, answered: no hand
-  editing). Dropped: N+1 lookups, duplicate repository helpers.
-- **Open, for Basheer:** Q2 — Team targets panel lists only SBU
-  Manager / Area Manager / Sales Rep (`sbu_top_people`, repository:442)?
-  Q3 — heading "Team Plans" for Area Managers instead of "SBU Target &
-  Plans" (TargetPlanningScreen:594)? Recommended yes to both.
+  `/code-review high` found 10, all checked against the code.
+- Small-fixes batch at E2E end: missing space before ₹, approve/reject
+  dialog (TargetPlanningScreen:775) — not made yet.
+- Also in that batch (uncommitted): Area Managers' heading "Team Plans"
+  (TargetPlanningScreen:594, Basheer yes 22 Oct).
 - Lesson (21 Oct): he found the raw review list hard to follow — bring
   it sorted by what users would notice, screen first, from the start.
-- Committed and pushed 21 Oct: vendor script wording `187fe06`; docs
-  batch `c6708f9` (D58–D63, SonoScape examples rule).
 
 ## UAT move
 - Basheer 20 Oct: "move everything together" — no Wednesday 21 Oct
