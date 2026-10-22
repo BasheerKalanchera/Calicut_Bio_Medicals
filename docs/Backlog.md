@@ -117,6 +117,22 @@ lapse). Fix: a `.gitattributes` line `.githooks/* text eol=lf`, then
 confirm the hook still refuses a rules-only commit. Small; next docs
 batch.
 
+### Reporting line when Haroon moves to CEO — waits on the org change (2026-10-22)
+
+Today Haroon is rep, GM – Sales and CEO at once, and has no manager in
+User Directory (Annual Target plan D69). When a GM – Sales is hired and
+Haroon moves to CEO only, the reporting line becomes GM → CEO → Admin,
+and these need deciding then:
+- Gate-override approver list (New Opportunity form, Opportunity edit):
+  it offers the owner's manager plus every GM, but the server accepts the
+  manager only if they are an Area Manager — a GM reporting to the CEO
+  would see the CEO offered and the save fail (`QuickLeadModal.tsx:263`,
+  `OpportunityDetailScreen.tsx:1713`, `opportunity/service.py:925`).
+- A GM can name themselves as gate-override approver on their own
+  Opportunity (no owner ≠ approver check, `opportunity/service.py:932`).
+- Plan approvals and notifications then follow the reporting line with no
+  code change (D18, D69).
+
 ### Target vs Actuals: Area Manager misses a member's share outside the team — accepted, not planned (2026-10-07)
 
 When someone in an Area Manager's team holds a split share on an

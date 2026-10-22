@@ -4171,3 +4171,44 @@ moved to after the restart (Basheer).
   example up front. No guard-fixable or live-data/UAT/lost-work slip;
   tracker unchanged.
 
+## 2026-10-22 — Annual Target Part 2 decisions and E2E sections (Plan & Chore)
+
+- UAT backup `cabio_uat_2026-10-22_0627.dump` (695,153 bytes, 472 items
+  listed); the 7 Oct dump pruned. Basheer copies it to Google Drive.
+- Read-only Dev check, as each of the 10 testers with RLS verified:
+  Haroon and Abdul Latheef P have no manager; no plan notifications yet;
+  no person targets or brand yearly figures (Part 1's E2E not run).
+- Decisions (Basheer) written into the plan: D66 FY 2026-27 Year view
+  counts from Oct–Dec 2026; D67 person rows show target and plan as
+  running totals; D68 billing shows all four quarters; D69 no special
+  handling for Haroon being rep, GM and CEO — setting Admin as his
+  manager was dropped because the gate-override approver list would
+  offer Admin and the save would fail (Backlog "Reporting line when
+  Haroon moves to CEO"); D70 GM types a single brand quarter's target
+  (not billing), quarter in progress on; D71 such a quarter is marked
+  "changed by hand" and survives a yearly re-spread; D72 nothing extra on
+  the brand's line; D73 no way to remove the mark. D62 amended (Build &
+  Test's role check).
+- Part 2 E2E sections written: pre-flight P6–P8, I (Year view), J (plan
+  notifications), K (billing and hand-typed quarters).
+
+### Retro — Plan & Chore, 2026-10-22
+
+- **Corrections from Basheer this session: 8** (counted from the
+  session's messages):
+  1. "What does this mean — It also checks that the Year view always
+     agrees with the Quarter view?" My plan summary was unclear.
+  2. "Haroon and Abdul Latheef have no manager… His plan should be
+     approved by Admin for now." I had assumed the wrong reporting line.
+  3. "No extra code is needed — we have to do a thorough code review…"
+     I claimed no code would change without checking.
+  4. "Lets keep it simple… not build it for this exception." I proposed
+     workarounds for Haroon's three roles.
+  5. "Q-C — this is again complicating our design right?" Too many
+     options.
+  6. "Why are you complicating this?" The same again.
+  7. "Why are you disturbing Build & Test session midflight?" I messaged
+     that session unasked.
+  8. "What is this 'with no way to remove the mark'?" Unclear wording.
+- No guard-fixable slip, nothing touched live data or UAT, no lost work;
+  tracker unchanged.

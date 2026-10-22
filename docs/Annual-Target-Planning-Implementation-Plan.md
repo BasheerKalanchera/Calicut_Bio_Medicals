@@ -1,7 +1,7 @@
 # Annual Target Planning — Implementation Plan
 
 **Status:** Approved — Basheer, 2026-10-20 (D1–D56; D57 added
-2026-10-21). Replanned
+2026-10-21; D66–D73 for Part 2, 2026-10-22). Replanned
 2026-10-17 to 2026-10-20 (calendar-year brand targets, Haroon and
 Latheef Bhai via Basheer; D23 onwards; incentive year settled
 2026-10-19, D29; Part 1 / Part 2, D44–D49; review 2026-10-20, D50–D56).
@@ -274,7 +274,7 @@ this replan: D8, D12, D12a, D14.
   shown only, not editable. The GM changing a quarter when a brand
   changes its billing is left for later, if needed. Changes D37 —
   Basheer, 2026-10-20 (per-quarter editing considered, then dropped the
-  same day).
+  same day). Target quarters (not billing) become editable: D70.
 - D55. The SBU target is the brands' total for every quarter, no
   exception for earlier quarters. The table holding the GM's typed SBU
   figures (migration 0060) is removed, with its Dev test figures, and so
@@ -306,6 +306,9 @@ this replan: D8, D12, D12a, D14.
 - D62. Admin/GM's Team targets panel lists the SBU's people who report
   to no one or straight to Admin/GM (today the Area Managers), and
   compares their total with the SBU target — Basheer, 2026-10-21.
+  Amended 2026-10-22 (Basheer, via Build & Test's review): only SBU
+  Managers, Area Managers and Sales Staff are listed; anyone else given
+  an SBU with no manager (e.g. a Marketing User) is not.
 - D63. A brand made inactive still counts in its SBU's target for any
   quarter it has a saved figure, so a quarter's total doesn't drop when
   a brand is switched off — Basheer, 2026-10-21.
@@ -320,6 +323,44 @@ this replan: D8, D12, D12a, D14.
   already covers them; Traceability row 3.1's note is added once, after
   Part 2, since the Year view finishes the "annual" part — Basheer,
   2026-10-21.
+- D66. FY 2026-27's Year view counts Won from Oct–Dec 2026, not April,
+  since that year's targets start there (D38); April–September wins had
+  no target to beat. Every later year counts from April (D31) —
+  Basheer, 2026-10-22.
+- D67. In the Year view, each person's row shows both their target and
+  their plan as running totals, as the Quarter view shows both — Basheer,
+  2026-10-22.
+- D68. "Brands Billing to Cabio" shows all four of the brand's quarters,
+  including those before Oct–Dec 2026 that have no saved Cabio target
+  (D46a): it is the brand's own figure split evenly, nothing saved —
+  Basheer, 2026-10-22.
+- D69. No special handling for Haroon being rep, GM and CEO at once:
+  he keeps no manager in User Directory, Admin approves his plan from the
+  approval list as today, and per D18 his submit notifies no one. Setting
+  Admin as his manager was considered and dropped (it would show Admin on
+  his Opportunities' gate-override approver list, where saving fails).
+  The reporting line is set when a GM – Sales is hired and Haroon moves
+  to CEO only (GM → CEO → Admin); see Backlog "Reporting line when
+  Haroon moves to CEO" — Basheer, 2026-10-22.
+- D70. On Brand Target Tracking the GM may type a new target for a
+  single brand quarter, from the quarter in progress on (ended quarters
+  stay locked, D51) — for a brand changing one quarter, and for the
+  left-over quarters when a brand's year-start month changes (Reference
+  Data plan decision 4). "Brands Billing to Cabio" stays the even split,
+  shown only (D54, D68). Built in Part 2. Changes D54 — Basheer,
+  2026-10-22 (Option A of three; target-and-billing and no change
+  dropped).
+- D71. A quarter typed by hand is marked "changed by hand" and keeps its
+  figure when the brand's yearly figure, stretch or pattern later
+  changes; only the other quarters are worked out again — Basheer,
+  2026-10-22.
+- D72. Nothing extra on the brand's line when its quarters no longer add
+  up to its yearly figure; the "changed by hand" mark (D71) is enough —
+  Basheer, 2026-10-22.
+- D73. No way to remove the "changed by hand" mark: to change that
+  quarter, the GM types a new figure, and the mark stays. A "go back to
+  the worked-out figure" button is added later only if needed — Basheer,
+  2026-10-22.
 
 ## Figures and sources
 
@@ -404,13 +445,15 @@ targets as soon as it is live (D38); Part 2 adds the rest.
 **Part 2 — the rest.**
 - Target vs Actuals gets a **Year view**: at each quarter, what was won
   from April up to that quarter against the targets added up from April
-  (D16, D31).
+  (D16, D31; FY 2026-27 counts from Oct–Dec 2026, D66). Each person's
+  row shows target and plan, both as running totals (D67).
 - **Plan notifications** on the bell: submitted or revised → the
   approver; approved or rejected → the rep; clicking opens the plan
   (D18–D21).
 - Brand Target Tracking shows each brand's **even quarterly billing**
   beside Cabio's seasonal split, as **"Brands Billing to Cabio"**: the
-  brand's year split evenly, shown only (D37, D54).
+  brand's year split evenly, shown only, all four quarters (D37, D54,
+  D68).
 
 **What doesn't change.** Plans, their approval, and the quarterly Target
 vs Actuals for Admin, GM and reps' own plans work as today. The stored
@@ -597,7 +640,9 @@ Each gets a check before and after, in the E2E test plan.
 **Part 2**
 - **Year view (D31):** `get_target_vs_actual` gains a fiscal-year mode
   returning, per quarter, Won from April to that quarter's end and
-  targets summed from April; reuses the Quarter view's per-quarter logic.
+  targets summed from April (from 2026-Q3 for FY 2026-27, D66), and per
+  person both target and plan running totals (D67); reuses the Quarter
+  view's per-quarter logic.
 - **Notifications (D18–D21):** `NotificationService.notify_plan_submitted`
   (recipient `get_approver_id(owner)`; skipped when None) and
   `notify_plan_decided` (recipient `target_plan.user_id`),
@@ -609,4 +654,5 @@ Each gets a check before and after, in the E2E test plan.
   `TargetPlanningScreen` with period and rep.
 - **Brands Billing to Cabio (D37, D54):** `vendor_amount_lakhs / 4` per
   quarter (last quarter takes the rounding remainder), shown beside the
-  saved seasonal quarters; nothing stored, no migration.
+  saved seasonal quarters for all four quarters, including those before
+  2026-Q3 with no saved target (D68); nothing stored, no migration.
