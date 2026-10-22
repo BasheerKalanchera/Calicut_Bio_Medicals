@@ -51,6 +51,16 @@ on Dev, before any other work:
   himself, and give him the full-path `! …` command — the auto-mode
   classifier blocks Claude's own run of it on the shared Dev DB.
   *(2026-09-27, 2026-10-09: blocked again for a policy-only migration)*
+  Copy this command exactly; never compose one from memory:
+  `! cmd //c "cd /d C:\Users\Basheer\GitHub\Calicut_Bio_Medicals\backend && .venv\Scripts\alembic.exe upgrade head"`
+  (`current` in place of `upgrade head` to check). Alembic must run from
+  `backend/`: `alembic.ini` names its scripts folder relatively and
+  `app/core/config.py` reads `.env` from the current folder, so a
+  full-path `alembic.exe -c …` from elsewhere fails. `cmd //c` changes
+  folder only inside that one command; the `!` prompt is Git Bash, which
+  turns a single `/c` into a path and leaves cmd idle. Test any changed
+  command with the same text Basheer will paste. *(2026-10-22: a
+  hand-written command failed three times in one day)*
 
 ## Migrations that delete, retire or bulk-update rows *(2026-09-21)*
 - Query `pg_constraint` for every table with a foreign key into the one being

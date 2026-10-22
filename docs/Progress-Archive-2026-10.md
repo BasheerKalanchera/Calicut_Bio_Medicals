@@ -4250,3 +4250,67 @@ moved to after the restart (Basheer).
      without its own plan (CLAUDE.md "Feature planning").
 - No guard-fixable slip, nothing touched live data or UAT, no lost work;
   tracker unchanged.
+
+## 2026-10-22 — Annual Target Part 1: seasonal pattern save fix before E2E (Build & Test)
+
+- While matching the E2E plan's wording to the built screens, step A3
+  showed the seasonal pattern box let "Save pattern" be pressed with
+  shares adding to 90, then showed an error; with no Cancel, the only way
+  back was a reload. Basheer: not acceptable — the app is mostly used on
+  a phone. Agreed fix (an "Undo changes" button considered and dropped
+  as unneeded): the button stays greyed out until the shares add to 100,
+  and the total reads "Total 90% — must add up to 100%". Committed and
+  pushed `be27712`; tsc clean, lint 0 errors (133 warnings, unchanged).
+- E2E plan Part 1 (sections A–H) labels and warnings taken from the code;
+  "Built" line filled in. Part 2 wording still descriptive.
+
+### 2026-10-22 — Annual Target Part 1 E2E: phone layout of Brand targets (Build & Test)
+- During A4 Basheer found "Set target" pushed off the screen on a phone
+  (six-column brand table). Agreed fix: on a phone, hide "Brand's own
+  figure" and "Stretch" (both still in the Set target box); Brand,
+  Stretched target and the button stay. A card layout per brand was
+  offered and left for later. Made uncommitted, for the end-of-E2E
+  small-fixes batch; tsc clean, eslint on the file 0 errors (1 existing
+  warning). Checked at about 500 px wide: button on screen.
+- E2E so far: P1–P5, A1–A3 Pass (figures in the test plan).
+
+### 2026-10-22 — Annual Target Part 1 E2E: Team targets warning before any target (Build & Test)
+- At C1 the Team targets panel already said "These add up to ₹0.0L,
+  ₹280.0L short of the SBU target" before anyone had a target. Basheer
+  agreed: show it only once at least one person has a target (same rule
+  for an Area Manager's "short of your own target"). One-line change in
+  TeamTargetsPanel, uncommitted, for the small-fixes batch; tsc and
+  eslint clean. Checked on Critical Care's empty panel: no warning.
+- E2E so far: P1–P5, A1–A10, B1–B9, C1–C2 Pass (figures in the test plan).
+
+## 2026-10-22 — Remove a person's target (D74), `6016e6a` (Build & Test)
+- At C4 Basheer could only set Arun Adarsh's target to ₹0, not take it
+  off. Agreed fix: a Remove button beside Change, same people as Set, no
+  confirmation (audit keeps the figure). 0062 had no delete rule on
+  person_quarter_target, so migration 0063 adds one (same expression as
+  update). Applied to Dev, `alembic current` = 0063 (head); schema
+  regenerated; full pytest 1352 passed. The commit also carries the C1
+  panel change: the "short of" warning waits until someone has a target,
+  and a blue note says the target hasn't been passed on yet.
+- The migration command given to Basheer failed twice (wrong folder,
+  then `cmd /c` rewritten by Git Bash) before `cmd //c …` worked; the
+  tested command is now in the `cabio-db-and-scripting` skill.
+- Next: C3a (Remove on Shruthi, then back to ₹120 L) on Dev.
+
+### 2026-10-22 — Retro (Build & Test)
+- Corrections from Basheer this session: 11 (from the session's messages)
+  1. "I didn't understand this" — A3 save-button note unclear.
+  2. "Asking a user to reload is not good" — a test step relied on reload.
+  3. "Why do we need this" — proposed "Undo changes" button not needed.
+  4. "There is no need for restarting" — backend runs with hot reload.
+  5. "What about P3?" — a pre-flight step skipped.
+  6. "How did you arrive at these figures?" — 100 + 85 = 185 unclear.
+  7. "How can there be no warning before 185 is distributed?" — hiding
+     the warning left no message; led to the blue note.
+  8. "Already done. Please recheck." — read a stale screen.
+  9. Migration command failed (wrong folder) — "second time today".
+  10. Migration command failed again (`/c` instead of tested `//c`).
+  11. "Shouldn't we commit the fixes before we proceed?" — planned to
+      test with Dev ahead of the saved code.
+- 9 and 10: P94 +2 (seen 4), built — exact tested command in the
+  `cabio-db-and-scripting` skill. Nothing else touched live data or UAT.

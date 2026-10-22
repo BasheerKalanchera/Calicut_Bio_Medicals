@@ -6,8 +6,8 @@ keeps its own note: `.claude/session-handover-plan.md`. Only the Build & Test
 session edits this note._
 
 ## Reminders
-- 22 Oct retro done (Progress-Archive, 6 corrections). Next session:
-  Part 1 E2E on Dev (below).
+- 22 Oct retro done (Progress-Archive, 11 corrections). Next session:
+  carry on Part 1 E2E on Dev (below).
 - api.ts guard is on (`5ca17aa`): a backend fix commit must carry the
   matching api.ts (`sh .githooks/check-api-types.sh --write` stages it).
 
@@ -16,30 +16,24 @@ session edits this note._
   Oct). Plan & Chore writes Part 2's E2E sections meanwhile. Part 2 also
   builds D70/D71 (GM hand-types one brand quarter's target, flag column
   on brand_vendor_target — small migration); Q-C still open with Basheer.
-- 22 Oct: review fixes committed and pushed `ed669e7` (archive 22 Oct).
-  **Next: Part 1 E2E on Dev** — load `cabio-e2e-testing` first.
-- Built in the main folder (Basheer 21 Oct); `/build` is idle, its
-  worktree and branch removed (merged `d8e1d03`).
-- Steps 1+2 in one checkpoint (D58, Basheer 21 Oct: no one uses the old
-  screens meanwhile). Committed and pushed as checkpoint `f2f5edd`
-  (migration 0062, server, tests, Physical-Schema, api.ts). Applied to
-  Dev 21 Oct, `alembic current` = 0062 (head). pytest 1346, ruff/tsc
-  clean, lint 0 errors. D59–D63 in the plan (uncommitted, docs batch).
-- Step 3 (screens) committed and pushed 21 Oct as `642f04c` (with
-  D64): Brand Target Tracking
-  rewritten (calendar year, seasonal pattern box, one line per brand with
-  quarters underneath, D64), SBU box read-only, new TeamTargetsPanel +
-  "Your target" line, Target vs Actuals Target column and wording, month
-  labels. tsc clean, lint 0 errors. Not yet tried in the browser.
-- Step 4 docs (BR-PL-10/11/12, ADR-019 addendum, User Manual, etc.)
-  went out in Plan & Chore's docs batch `20eea0a`, pushed.
-- Pre-E2E review 21 Oct: Dev at 0062 (head), Physical-Schema current;
-  pytest 1346 passed, ruff/tsc clean, lint 0 errors (133 warnings).
-  `/code-review high` found 10, all checked against the code.
+- Part 1 built and pushed: `f2f5edd`, `642f04c`, `ed669e7`, and
+  `be27712` (22 Oct: seasonal pattern "Save pattern" greyed out until
+  100 %, Basheer — phone use, no reload). Dev at 0062 (21 Oct).
+- **In progress: Part 1 E2E on Dev.** Test plan Part 1 wording checked
+  against the code 22 Oct (uncommitted, in the plan file). Next: P1 —
+  Basheer restarts the Dev backend; then P2 (`alembic current`), P4
+  read-only query (show first; load `cabio-db-and-scripting`).
 - Small-fixes batch at E2E end: missing space before ₹, approve/reject
   dialog (TargetPlanningScreen:775) — not made yet.
 - Also in that batch (uncommitted): Area Managers' heading "Team Plans"
-  (TargetPlanningScreen:594, Basheer yes 22 Oct).
+  (TargetPlanningScreen:594, Basheer yes 22 Oct); Brand Target Tracking
+  phone layout — own-figure and stretch columns hidden on a phone so
+  "Set target" stays on screen (Basheer yes 22 Oct; tsc clean).
+- E2E progress 22 Oct: P1–P5, A1–A9 Pass (A8 hint wording awaiting
+  Basheer); A10, B1–B9, C1–C2, C4 Pass; C3 result not yet confirmed;
+  next C3a (Remove), C5, D–H.
+- Remove (D74) + Team targets note/warning: committed and pushed
+  `6016e6a`; Dev at 0063. Next: C3a on Dev.
 - Lesson (21 Oct): he found the raw review list hard to follow — bring
   it sorted by what users would notice, screen first, from the start.
 

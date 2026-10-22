@@ -4,7 +4,9 @@
 **Covers:** `docs/Annual-Target-Planning-Implementation-Plan.md`, Part 1
 (build steps 1–4: sections A–H) and Part 2 (build steps 5–7: Pre-flight
 P6–P8, sections I–K).
-**Built:** not yet (filled in after the fact).
+**Built:** Part 1 — `f2f5edd` (migration 0062, server), `642f04c`
+(screens), `ed669e7` (review fixes), `be27712` (seasonal pattern save
+greyed out until 100 %), 21–22 Oct 2026. Part 2 not yet.
 **Where:** Dev, after `/build` merges into `main` and migration 0062 is
 applied. Replaces the 17 Oct on-hold version, which tested the withdrawn
 yearly SBU figure (D4–D15, D22a). Part 2 runs after Part 1's E2E has
@@ -63,9 +65,10 @@ three RLS settings verified. Re-run at P7.
   figures yet (Part 1's E2E not run).
 
 Button labels, messages and the order of checks are taken from the code,
-not the design doc. Nothing is built yet, so every label and message below
-is a description; each is replaced with the built code's wording before
-the run.
+not the design doc. Part 1 (sections A–H) checked against the built code,
+2026-10-22. Part 2 isn't built yet, so its labels and messages are
+descriptions; each is replaced with the built code's wording before its
+run. Amounts on screen read like "₹280.0L"; this plan writes "₹280 L".
 
 ## Figures and sources
 
@@ -124,21 +127,29 @@ remove the mark, D73).
 
 ## Pre-flight
 
-- P1. [Simple] Dev backend restarted since the feature's last backend change. —
+- P1. [Simple] Dev backend restarted since the feature's last backend change. — Pass, 2026-10-22 (Basheer restarted it; runs with hot reload)
 - P2. [Simple] Dev's `alembic current` = 0062 (head), and
-  `docs/Physical-Schema.sql` regenerated since. —
+  `docs/Physical-Schema.sql` regenerated since. — Pass, 2026-10-22 (`alembic current` = 0062 (head); schema regenerated in `f2f5edd`, same commit as 0062)
 - P3. [Simple] Testers can sign in: Abdul Latheef P, Haroon Sidheeq,
   Basheer K, Fazal, Shruthi, Arun Adarsh, Nishad K V, Fahad, Rudrappa,
-  Vivek. —
+  Vivek. — Pass, 2026-10-22: accounts confirmed active at P4; sign-in checked at each tester's first step (Basheer)
 - P4. [Complex: read-only Dev query, shown first] Re-run the 21 Oct check
   (managers, roles, brand quarterly targets, plans; person targets
-  expected none); update "Checked against live data" if anything moved. —
+  expected none); update "Checked against live data" if anything moved. — Pass, 2026-10-22: Dev query as Haroon (user and role set and verified; SBU setting empty, as Haroon has no SBU). All ten testers active; roles, SBUs and managers as listed; brands as listed, every year starting January; brand quarterly targets only EDAN Oct–Dec 2026 ₹120 L; no brand yearly figures, seasonal patterns or person targets; 13 plans, every amount, status and last approved figure as listed. Nothing moved.
 - P5. [Complex: before-record across two screens] As Haroon, before any
   save, note every figure on Target vs Actuals, Oct–Dec 2026 and Jul–Sep
   2026, Imaging and Critical Care; and on Brand Target Tracking,
   SonoScape's and EDAN's Oct–Dec 2026 committed and gap. **Expected:**
   Imaging Oct–Dec 2026 target not set; Critical Care Oct–Dec 2026 ₹120 L
-  (EDAN only — the typed ₹150 L is gone, D55). —
+  (EDAN only — the typed ₹150 L is gone, D55). — Pass, 2026-10-22 (Claude, as Haroon, read only). Target vs Actuals:
+  - Imaging Oct–Dec 2026: SBU target not set; team plans ₹65.0L; PO ₹16.0L; Won ₹34.0L (52%); Expected ₹75.8L; Likely finish ₹109.8L; Company row "Waits for every SBU's target", plans ₹181.0L. People: Basheer K Pending ₹55.0L (was ₹20.0L), Won ₹23.0L; Fahad —, Won ₹11.0L; Fazal —; Haroon —; Rudrappa Approved ₹10.0L; Shruthi —. Brand SonoScape planned ₹65.0L, Won ₹34.0L.
+  - Critical Care Oct–Dec 2026: SBU target ₹120.0L; team plans ₹116.0L (97%); PO, Won, Expected all ₹0.0L. People: Arun Adarsh Approved ₹50.0L; Haroon —; Nishad K V —; Vivek Pending ₹66.0L (was ₹60.0L). Brands planned: Aeonmed ₹10.0L, EDAN ₹45.0L, ELECTROSCIENCE ₹31.0L, Magnamed ₹25.0L, Maquet ₹5.0L.
+  - Imaging Jul–Sep 2026: target not set; team plans ₹120.0L (Haroon Approved); Won ₹0.0L; Company plans ₹265.0L.
+  - Critical Care Jul–Sep 2026: target not set; team plans ₹145.0L (Haroon ₹80.0L, Vivek ₹65.0L, both Approved); Won ₹0.0L.
+
+  Brand Target Tracking, 2026 (no seasonal pattern, no yearly figures):
+  - SonoScape Oct–Dec: target "Not set", committed ₹65.0L, gap —. Jul–Sep committed ₹120.0L.
+  - EDAN Oct–Dec: target ₹120.0L, committed ₹45.0L, gap ₹75.0L. Jul–Sep committed ₹85.0L.
 
 **Part 2 pre-flight** (before section I):
 
@@ -157,56 +168,62 @@ remove the mark, D73).
 
 1. [Simple] As Haroon, open Brand Target Tracking. **Expected:** moves by
    calendar year ("2026", year arrows, no quarter arrows); quarters read
-   "Oct–Dec 2026", never "2026-Q3". —
-2. [Complex: save, then read back after a reload] Imaging, 2026: pattern
-   Jan–Mar 15, Apr–Jun 20, Jul–Sep 30, Oct–Dec 35; save. **Expected:**
-   after a reload, the same four figures. —
-3. [Simple] Change Oct–Dec to 25 (adds to 90) and try to save.
-   **Expected:** refused, saying it must add to 100; cancel; saved pattern
-   unchanged. —
+   "Oct–Dec 2026", never "2026-Q3". — Pass, 2026-10-22 (observed by Claude during P5)
+2. [Complex: save, then read back after a reload] "SBU" picker → Imaging,
+   2026, "Seasonal pattern for 2026": Jan–Mar % 15, Apr–Jun % 20, Jul–Sep %
+   30, Oct–Dec % 35; "Save pattern". **Expected:** after a reload, the
+   same four figures. — Pass, 2026-10-22: Basheer saved; Claude reloaded and read back 15 / 20 / 30 / 35, "Total 100%"
+3. [Simple] Change Oct–Dec to 25 (adds to 90). **Expected:** "Save
+   pattern" greyed out; the total reads "Total 90% — must add up to
+   100%". Type 35 back. **Expected:** "Total 100%"; nothing was saved. — Pass, 2026-10-22 (Basheer)
 4. [Complex: save, then read back] SonoScape ("SonoScape · Jan–Dec 2026"):
-   own figure ₹400 L, stretch 100 %; save. **Expected:** stretched ₹800 L
-   beside the own figure; Oct–Dec 2026 ₹280 L; Jan–Mar, Apr–Jun and
-   Jul–Sep 2026 show no target (before Oct–Dec 2026, not saved, D46a). —
+   "Set target" → box "SonoScape · year starting 2026": "Brand's own
+   yearly figure (₹ Lakhs)" 400, "Stretch (%)" 100; "Save". **Expected:**
+   "Stretched target" ₹800 L beside the own figure. Open the line with its
+   arrow: Oct–Dec 2026 ₹280 L; Jan–Mar, Apr–Jun and Jul–Sep 2026 "Not set"
+   (before Oct–Dec 2026, not saved, D46a). — Pass, 2026-10-22: Basheer saved; Claude reloaded (phone width, so the own-figure column is hidden by the phone layout fix) and read Stretched target ₹800.0L, "Revise"; Oct–Dec 2026 ₹280.0L; Jan–Mar, Apr–Jun, Jul–Sep "Not set"; caption "Spread by the SBU's seasonal pattern for 2026."
 5. [Simple] SonoScape's Oct–Dec 2026 committed and gap. **Expected:**
-   committed as at P5; gap = ₹280 L minus it. —
+   committed as at P5; gap = ₹280 L minus it. — Pass, 2026-10-22 (observed by Claude at A4): committed ₹65.0L (as at P5), gap ₹215.0L
 6. [Complex: save, then read back] Critical Care, 2026: pattern 20 / 20 /
    30 / 30; save. Then EDAN: own ₹200 L, stretch 50 %; save.
    **Expected:** stretched ₹300 L; Oct–Dec 2026 ₹90 L, replacing the
-   ₹120 L typed earlier (D48). —
-7. [Complex: a brand's own pattern] Maquet: own ₹100 L, stretch 0 %, own
-   pattern 25 / 25 / 25 / 25; save. **Expected:** Oct–Dec 2026 ₹25 L;
-   Maquet shown as using its own pattern. —
-8. [Complex: year-start change, then save] Medion: "year starts in" →
-   April; then own ₹100 L, stretch 0 %; save. **Expected:** shown under
+   ₹120 L typed earlier (D48). — Pass, 2026-10-22: Basheer saved both; Claude reloaded and read pattern 20 / 20 / 30 / 30, EDAN Stretched target ₹300.0L, Oct–Dec 2026 ₹90.0L (committed ₹45.0L, gap ₹45.0L); earlier quarters "Not set"
+7. [Complex: a brand's own pattern] Maquet: own ₹100 L, stretch 0 %, tick
+   "This brand has its own seasonal pattern", 25 / 25 / 25 / 25; save.
+   **Expected:** Oct–Dec 2026 ₹25 L; the open line reads "Spread by this
+   brand's own seasonal pattern." — Pass, 2026-10-22: Basheer saved; Claude reloaded and read Maquet Stretched target ₹100.0L, Oct–Dec 2026 ₹25.0L (committed ₹5.0L, gap ₹20.0L), caption "Spread by this brand's own seasonal pattern."
+8. [Complex: year-start change, then save] Medion: "Year starts in" →
+   April (hint "This brand's year: Apr 2026–Mar 2027"); then own ₹100 L,
+   stretch 0 %; save. **Expected:** shown under
    2026 as "Medion · Apr 2026–Mar 2027"; Oct–Dec 2026 ₹30 L, Jan–Mar 2027
    ₹20 L (pattern follows the months, D41); Apr–Jun and Jul–Sep 2026 not
-   saved. —
+   saved. — Pass, 2026-10-22 (hint wording: awaiting Basheer's confirmation): Claude reloaded and read "Medion · Apr 2026–Mar 2027" under 2026, ₹100.0L; Apr–Jun and Jul–Sep 2026 "Not set", Oct–Dec 2026 ₹30.0L, Jan–Mar 2027 ₹20.0L
 9. [Complex: one save re-works several brands] Change Critical Care's 2026
    pattern to 10 / 20 / 30 / 40; save. **Expected:** EDAN Oct–Dec 2026 →
    ₹120 L; Medion Oct–Dec 2026 → ₹40 L, Jan–Mar 2027 → ₹10 L; Maquet stays
-   ₹25 L (own pattern, D50). —
+   ₹25 L (own pattern, D50). — Pass, 2026-10-22: Basheer saved; Claude reloaded and read EDAN Oct–Dec 2026 ₹120.0L (gap ₹75.0L); Medion Oct–Dec 2026 ₹40.0L, Jan–Mar 2027 ₹10.0L; Maquet Oct–Dec 2026 ₹25.0L
 10. [Simple] Move to 2027. **Expected:** no brand has a figure (none sent
-    yet, D42); Medion listed as "Apr 2027–Mar 2028". —
+    yet, D42); Medion listed as "Apr 2027–Mar 2028". — Pass, 2026-10-22 (Basheer)
 
 ## B — SBU target box: the brands' total, read-only (D26, D34, D47, D53, D55)
 
 1. [Simple] As Haroon, Target & Coverage Planning, Imaging, Oct–Dec 2026.
-   **Expected:** SBU target ₹280 L; no way to type or edit it. —
+   **Expected:** SBU target ₹280 L; no way to type or edit it. — Pass, 2026-10-22 (Basheer)
 2. [Simple] Critical Care, Oct–Dec 2026. **Expected:** ₹185 L (EDAN 120 +
-   Maquet 25 + Medion 40). —
+   Maquet 25 + Medion 40). — Pass, 2026-10-22 (Basheer)
 3. [Simple] Critical Care, Jan–Mar 2027. **Expected:** ₹10 L (Medion only;
-   the typed ₹120 L is gone, D55). —
-4. [Simple] Imaging, Jan–Mar 2027. **Expected:** target not set (D42). —
-5. [Simple] Imaging, Jul–Sep 2026. **Expected:** as at P5. —
+   the typed ₹120 L is gone, D55). — Pass, 2026-10-22 (Basheer)
+4. [Simple] Imaging, Jan–Mar 2027. **Expected:** target not set (D42). — Pass, 2026-10-22 (Basheer)
+5. [Simple] Imaging, Jul–Sep 2026. **Expected:** as at P5. — Pass, 2026-10-22 (Basheer)
 6. [Simple] As Basheer K (SBU Manager), Imaging, Oct–Dec 2026.
-   **Expected:** SBU target ₹280 L, read-only (D26). —
+   **Expected:** SBU target ₹280 L, read-only (D26). — Pass, 2026-10-22 (Basheer)
 7. [Simple] Hide-check: as Basheer K, Critical Care. **Expected:** no
-   Critical Care SBU target (Basheer K's SBU is Imaging). —
+   Critical Care SBU target (Basheer K's SBU is Imaging). — Pass, 2026-10-22 (Basheer)
 8. [Simple] Hide-check: as Fazal (Area Manager), Imaging, Oct–Dec 2026.
-   **Expected:** no SBU target box; ₹280 L nowhere on the screen (D34). —
+   **Expected:** the section heading reads "Team Plans", not "SBU Target
+   & Plans"; no SBU target box; ₹280 L nowhere on the screen (D34). — Pass, 2026-10-22 (Basheer)
 9. [Simple] Hide-check: as Fahad (rep), Oct–Dec 2026. **Expected:** no SBU
-   target box (D26). —
+   target box (D26). — Pass, 2026-10-22 (Basheer)
 
 ## C — Haroon divides the SBU target among the Area Managers (D33, D45)
 
@@ -214,13 +231,19 @@ remove the mark, D73).
    targets panel. **Expected:** rows for Fazal, Shruthi and Basheer K, all
    blank, totalled against ₹280 L. Basheer K's row stays blank until
    section G: no one reports to Basheer K yet, and a figure there would
-   count Shruthi's share twice (D57). —
-2. [Complex: save with a warning] Fazal ₹160 L, Shruthi ₹100 L; save.
-   **Expected:** saved; warning: ₹20 L short of ₹280 L. —
+   count Shruthi's share twice (D57). — Pass, 2026-10-22 (Claude): rows Basheer K (SBU Manager), Fazal, Shruthi, all "Not set"; Total ₹0.0L against SBU target ₹280.0L. Finding: the short-by warning already shows with nothing set ("₹280.0L short") — Basheer: hide it until someone has a target; fixed (uncommitted, small-fixes batch) and checked on Critical Care's empty panel: no warning
+2. [Complex: save with a warning] "Set target" on each row, then "Save":
+   Fazal ₹160 L, Shruthi ₹100 L. **Expected:** saved; warning "These add
+   up to ₹260.0L, ₹20.0L short of the SBU target (₹280.0L)." — Pass, 2026-10-22: Basheer saved; Claude reloaded and read Fazal ₹160.0L, Shruthi ₹100.0L, Basheer K Not set, total ₹260.0L and that exact warning
 3. [Simple] Shruthi → ₹120 L; save. **Expected:** the warning goes. —
+3a. [Complex: remove, then read back] (D74) "Remove" on Shruthi's row.
+   **Expected:** no confirmation box; Shruthi shows "Not set", total
+   ₹160.0L, warning "These add up to ₹160.0L, ₹120.0L short of the SBU
+   target (₹280.0L)." Then "Set target" on Shruthi, ₹120 L, save:
+   **Expected:** ₹120.0L, total ₹280.0L, no warning. —
 4. [Complex: save, then read back] Critical Care, Oct–Dec 2026: Arun Adarsh
    ₹100 L, Nishad K V ₹85 L; save. **Expected:** no warning (₹185 L); no
-   Imaging people listed. —
+   Imaging people listed. — Pass, 2026-10-22 (Basheer); Claude saw only Arun Adarsh and Nishad K V listed. Afterwards Basheer tried to take Arun's target off to see the empty panel: there is no way to, so he set ₹0 — finding raised with Basheer. Basheer then put both back; Claude reloaded and read Arun Adarsh ₹100.0L, Nishad K V ₹85.0L, total ₹185.0L, no warning
 5. [Simple] As Abdul Latheef P (Admin), Imaging, Oct–Dec 2026, Team
    targets. **Expected:** Fazal ₹160 L, Shruthi ₹120 L shown and editable
    (D45). No save. —
@@ -230,8 +253,8 @@ remove the mark, D73).
 1. [Simple] As Fazal, Imaging, Oct–Dec 2026. **Expected:** "Your target
    for Oct–Dec 2026: ₹160 L". —
 2. [Complex: save with a warning, then read back] Fazal's Team targets:
-   Fahad only; ₹140 L; save. **Expected:** saved; warning ₹20 L short of
-   ₹160 L (left as is). —
+   Fahad only; ₹140 L; save. **Expected:** saved; warning "These add up
+   to ₹140.0L, ₹20.0L short of your own target (₹160.0L)." (left as is). —
 3. [Complex: save, then read back] As Shruthi: "Your target" ₹120 L; Team
    targets: Rudrappa ₹100 L; save. **Expected:** saved; warning ₹20 L
    short. —
@@ -291,7 +314,8 @@ Basheer K (D57). Shruthi goes back to Haroon in G7.
 3. [Complex: save, then read back as another user] As Basheer K, Team
    targets. **Expected:** "Your target for Oct–Dec 2026: ₹120 L" (D57);
    Shruthi listed with ₹120 L (set by Haroon in C); Fazal not listed.
-   Change Shruthi → ₹130 L; save. **Expected:** warning ₹10 L over ₹120 L;
+   Change Shruthi → ₹130 L; save. **Expected:** warning "These add up to
+   ₹130.0L, ₹10.0L over your own target (₹120.0L).";
    as Shruthi, "Your target" ₹130 L. —
 4. [Complex: cross-role] As Haroon. **Expected:** can still see Shruthi's
    ₹130 L and change it (D32), where the code puts that. No save. —

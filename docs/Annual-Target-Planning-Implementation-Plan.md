@@ -1,7 +1,7 @@
 # Annual Target Planning — Implementation Plan
 
 **Status:** Approved — Basheer, 2026-10-20 (D1–D56; D57 added
-2026-10-21; D66–D73 for Part 2, 2026-10-22). Replanned
+2026-10-21; D66–D73 for Part 2, 2026-10-22; D74, 2026-10-22). Replanned
 2026-10-17 to 2026-10-20 (calendar-year brand targets, Haroon and
 Latheef Bhai via Basheer; D23 onwards; incentive year settled
 2026-10-19, D29; Part 1 / Part 2, D44–D49; review 2026-10-20, D50–D56).
@@ -361,6 +361,15 @@ this replan: D8, D12, D12a, D14.
   quarter, the GM types a new figure, and the mark stays. A "go back to
   the worked-out figure" button is added later only if needed — Basheer,
   2026-10-22.
+- D74. A person's quarterly target can be removed, putting them back to
+  "Not set": a Remove button beside Change on the Team targets panel, for
+  both Haroon's split of the SBU target and an Area Manager's split of
+  their own. The same people who may set it may remove it (the person's
+  manager, Admin, GM; D45). No confirmation box — the audit trail keeps
+  the removed figure. Removing an Area Manager's target leaves their
+  reps' targets as they are. Built as a fix during Part 1's E2E
+  (migration 0063 adds the delete rule); found at C4, when ₹0 was the
+  only way to take a figure back — Basheer, 2026-10-22.
 
 ## Figures and sources
 
