@@ -20,8 +20,8 @@ import {
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import FormModal from "../components/FormModal";
-import SbuTargetBox from "../components/SbuTargetBox";
-import TeamTargetsPanel, { YourTargetLine } from "../components/TeamTargetsPanel";
+import SbuTargetBox, { AnnualSbuTargetCard } from "../components/SbuTargetBox";
+import TeamTargetsPanel, { AnnualTeamTargetsCard, YourTargetLine } from "../components/TeamTargetsPanel";
 import TargetPlanDetails from "../components/TargetPlanDetails";
 import TargetPlanDialog from "../components/TargetPlanDialog";
 import { useAuth } from "../contexts/AuthContext";
@@ -588,34 +588,51 @@ export default function TargetPlanningScreen() {
           </Box>
         )}
 
+        {/* Admin/GM's SBU choice, for both Team Targets and Team Plans below (D75). */}
+        {showRollup && needsSbuChoice && (
+          <TextField
+            select
+            size="small"
+            label="SBU"
+            value={rollupSbuId ?? ""}
+            onChange={(e) => setSelectedSbuId(e.target.value)}
+            sx={{ minWidth: "12rem", alignSelf: "flex-start", bgcolor: "background.paper" }}
+          >
+            {sbus.map((s) => (
+              <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>
+            ))}
+          </TextField>
+        )}
+
+        {/* Its own card, above Team Targets (D75). */}
+        {showRollup && rollupSbuId && roleName && SBU_TARGET_VIEW_ROLES.has(roleName) && (isAnnual ? (
+          <AnnualSbuTargetCard key={`sbu-target-${rollupSbuId}-${fyStartYear}`} sbuId={rollupSbuId} quarters={yearQuarters} yearLabel={periodLabel} />
+        ) : (
+          <SbuTargetBox sbuId={rollupSbuId} period={period} />
+        ))}
+
+        {/* Its own card, above Team Plans (D75); hidden when no one reports to the viewer. */}
+        {showRollup && rollupSbuId && (isAnnual ? (
+          <AnnualTeamTargetsCard
+            key={`team-targets-${rollupSbuId}-${fyStartYear}`}
+            sbuId={rollupSbuId}
+            quarters={yearQuarters}
+            yearLabel={periodLabel}
+            isCompanyWide={isCompanyWide}
+          />
+        ) : (
+          <TeamTargetsPanel key={`team-targets-${rollupSbuId}-${period}`} sbuId={rollupSbuId} period={period} isCompanyWide={isCompanyWide} />
+        ))}
+
         {showRollup && (
           <Box sx={{ bgcolor: "background.paper", borderRadius: 2, p: 2.5 }}>
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1, mb: 1.5 }}>
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>SBU Target &amp; Plans</Typography>
-              {needsSbuChoice && (
-                <TextField
-                  select
-                  size="small"
-                  label="SBU"
-                  value={rollupSbuId ?? ""}
-                  onChange={(e) => setSelectedSbuId(e.target.value)}
-                  sx={{ minWidth: "12rem" }}
-                >
-                  {sbus.map((s) => (
-                    <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>
-                  ))}
-                </TextField>
-              )}
+              {/* The SBU target and team targets have their own cards above (D75). */}
+              <Typography variant="h6" sx={{ fontWeight: 700 }}>Team Plans</Typography>
             </Box>
 
             {!isAnnual ? (
               <>
-                {rollupSbuId && roleName && SBU_TARGET_VIEW_ROLES.has(roleName) && (
-                  <SbuTargetBox sbuId={rollupSbuId} period={period} />
-                )}
-                {rollupSbuId && (
-                  <TeamTargetsPanel key={`${rollupSbuId}-${period}`} sbuId={rollupSbuId} period={period} isCompanyWide={isCompanyWide} />
-                )}
                 {roster && (
                   <Typography sx={{ mb: 1.5 }}>
                     Total: <strong>{formatLakhs(Number(roster.total_lakhs))}</strong>

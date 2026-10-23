@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Fragment, useState } from "react";
+import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, Box, Button, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography } from "@mui/material";
 import { getTeamTargets, removePersonTarget, setPersonTarget } from "../services/targetPlanning";
 import { formatLakhs, formatPlanningPeriod } from "../utils/formatter";
@@ -34,6 +34,7 @@ export function YourTargetLine({ sbuId, period }: { sbuId: string; period: strin
 // report to them, one figure per person, with a warning while the figures
 // don't add up (D33). Admin/GM divide the SBU target among the people at the
 // top of the SBU (D62). Hidden for anyone with no one reporting to them.
+// Its own card on the screen (D75).
 export default function TeamTargetsPanel({ sbuId, period, isCompanyWide }: { sbuId: string; period: string; isCompanyWide: boolean }) {
   const queryClient = useQueryClient();
   const { data, isError } = useTeamTargets(sbuId, period);
@@ -106,8 +107,8 @@ export default function TeamTargetsPanel({ sbuId, period, isCompanyWide }: { sbu
   }
 
   return (
-    <Box sx={{ mb: 2, p: 1.5, border: 1, borderColor: "divider", borderRadius: 1 }}>
-      <Typography sx={{ fontWeight: 700, mb: 0.5 }}>Team targets</Typography>
+    <Box sx={{ bgcolor: "background.paper", borderRadius: 2, p: 2.5 }}>
+      <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>Team Targets</Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
         {isCompanyWide
           ? `Divide the SBU target for ${formatPlanningPeriod(period)} among the people at the top of this SBU.`
@@ -186,7 +187,8 @@ export default function TeamTargetsPanel({ sbuId, period, isCompanyWide }: { sbu
             <TableCell sx={{ fontWeight: 700 }}>Total</TableCell>
             <TableCell sx={{ fontWeight: 700 }}>{formatLakhs(total)}</TableCell>
             <TableCell align="right" sx={{ color: "text.secondary" }}>
-              {compareTo !== null && `${isCompanyWide ? "SBU target" : "Your target"}: ${formatLakhs(compareTo)}`}
+              {/* Admin/GM: the SBU Target card above already shows it (D75). */}
+              {!isCompanyWide && compareTo !== null && `Your target: ${formatLakhs(compareTo)}`}
             </TableCell>
           </TableRow>
         </TableBody>
@@ -194,6 +196,107 @@ export default function TeamTargetsPanel({ sbuId, period, isCompanyWide }: { sbu
       {notPassedOn && <Alert severity="info" sx={{ mt: 1.5 }}>{notPassedOn}</Alert>}
       {warning && <Alert severity="warning" sx={{ mt: 1.5 }}>{warning}</Alert>}
       {error && <Alert severity="error" sx={{ mt: 1.5 }}>{error}</Alert>}
+    </Box>
+  );
+}
+
+// Annual view of the same card (D75): each person's four quarterly targets
+// and their year, view-only -- targets are set a quarter at a time, and the
+// "short of" warnings stay quarterly (D33). The team's year is shown beside
+// the viewer's own year, without a warning; Admin/GM's is the SBU's, already
+// on the SBU Target card above, so not repeated.
+export function AnnualTeamTargetsCard({ sbuId, quarters, yearLabel, isCompanyWide }: {
+  sbuId: string;
+  quarters: string[];
+  yearLabel: string;
+  isCompanyWide: boolean;
+}) {
+  const results = useQueries({
+    queries: quarters.map((q) => ({
+      queryKey: ["planning", "team-targets", sbuId, q],
+      queryFn: () => getTeamTargets(sbuId, q),
+    })),
+  });
+
+  if (results.some((r) => r.isError)) {
+    return <Alert severity="error">Couldn't load team targets. Refresh to try again.</Alert>;
+  }
+  if (results.some((r) => !r.data)) return null;
+
+  // One block per person who reported to the viewer in any quarter, in the
+  // server's order; a quarter they weren't in shows "Not set".
+  const people = new Map<string, { name: string; role: string | null; byQuarter: Record<string, number | null> }>();
+  results.forEach((r, i) => {
+    for (const p of r.data!.reports) {
+      if (!people.has(p.user_id)) people.set(p.user_id, { name: p.display_name, role: p.role_name, byQuarter: {} });
+      people.get(p.user_id)!.byQuarter[quarters[i]] = p.target_lakhs === null ? null : Number(p.target_lakhs);
+    }
+  });
+  if (people.size === 0) return null;
+
+  const yearOf = (byQuarter: Record<string, number | null>) => {
+    const set = quarters.map((q) => byQuarter[q]).filter((v): v is number => v != null);
+    return set.length > 0 ? set.reduce((a, b) => a + b, 0) : null;
+  };
+  const teamYear = Array.from(people.values()).reduce((sum, p) => sum + (yearOf(p.byQuarter) ?? 0), 0);
+  const compareSet = results.map((r) => r.data!.compare_to_lakhs).filter((v): v is string => v !== null);
+  const compareYear = compareSet.length > 0 ? compareSet.reduce((a, b) => a + Number(b), 0) : null;
+  const notSet = <Typography component="span" variant="body2" color="text.secondary">Not set</Typography>;
+
+  return (
+    <Box sx={{ bgcolor: "background.paper", borderRadius: 2, p: 2.5 }}>
+      <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>Team Targets</Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+        Each person's quarterly targets for {yearLabel}. Switch to Quarterly to change a target.
+      </Typography>
+      <Table size="small">
+        <TableHead>
+          <TableRow>
+            <TableCell>Person / Quarter</TableCell>
+            <TableCell>Target</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {Array.from(people.entries()).map(([userId, p]) => {
+            const year = yearOf(p.byQuarter);
+            return (
+              <Fragment key={userId}>
+                <TableRow sx={{ "& td": { fontWeight: 700, borderTop: "2px solid", borderColor: "divider" } }}>
+                  <TableCell>
+                    {p.name} — Annual Total
+                    {p.role && (
+                      <Typography variant="caption" color="text.secondary" sx={{ display: "block", fontWeight: 400 }}>{p.role}</Typography>
+                    )}
+                  </TableCell>
+                  <TableCell>{year !== null ? formatLakhs(year) : notSet}</TableCell>
+                </TableRow>
+                {quarters.map((q) => {
+                  const v = p.byQuarter[q];
+                  return (
+                    <TableRow key={`${userId}-${q}`}>
+                      <TableCell sx={{ pl: 3, color: "text.secondary" }}>{formatPlanningPeriod(q)}</TableCell>
+                      <TableCell>{v != null ? formatLakhs(v) : notSet}</TableCell>
+                    </TableRow>
+                  );
+                })}
+              </Fragment>
+            );
+          })}
+          <TableRow sx={{ "& td": { fontWeight: 700, borderTop: "2px solid", borderColor: "divider" } }}>
+            <TableCell>Team total for {yearLabel}</TableCell>
+            <TableCell>
+              {formatLakhs(teamYear)}
+              {/* Admin/GM: the SBU Target card above already shows the year (D75). */}
+              {!isCompanyWide && (
+                <Typography component="span" variant="body2" color="text.secondary" sx={{ fontWeight: 400 }}>
+                  {" · "}Your target for the year:{" "}
+                  {compareYear !== null ? formatLakhs(compareYear) : "not set yet"}
+                </Typography>
+              )}
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
     </Box>
   );
 }
