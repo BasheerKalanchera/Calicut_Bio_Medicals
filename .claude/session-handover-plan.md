@@ -7,24 +7,11 @@ session edits this note._
 
 - Forecast plan (untracked, other session): not in commits; at review, line 110 → BR-FIN-09.
 
-## Annual Target Planning — approved 2026-10-20 (D1–D56)
+## Annual Target Planning — approved 2026-10-20
 
-- Plan approved by Basheer 2026-10-20 (archive 20 Oct entry); `/build`
-  note updated with his yes (Part 1, steps 1–4). In `92cab23` + repair
-  `006f4cb`, both pushed 2026-10-20 — `/build` can take in `main` now.
-- 21 Oct: Part 1 E2E plan written (sections A–H, uncommitted) and D57
-  added to the plan (SBU Manager gets one figure from Haroon, divides it
-  among their Area Managers) — Basheer's yes. Committed and pushed in
-  `7dceac8` with the retro. Part 1 is now built by Build & Test, not
-  `/build` (Basheer, 21 Oct).
-- **Next (Basheer, 22 Oct, via Build & Test):** write the Part 2 E2E test
-  sections (plan steps 5–7: Year view, plan notifications, Brands
-  Billing to Cabio). Build & Test builds Part 2 after Part 1's E2E.
-  22 Oct: D66–D73 + D62 amendment written; Part 2 test sections
-  (P6–P8, I–K) saved in the test plan; Backlog "Reporting line when
-  Haroon moves to CEO". Committed and pushed in `d654427` with the
-  retro (8 corrections). Next: nothing here until Build & Test runs Part
-  1's E2E; then Part 2 is built against these sections.
+- Part 1 and Part 2 test sections done (`7dceac8`, `d654427`; archive).
+  Nothing here until Build & Test runs Part 1's E2E; then Part 2 is
+  built against those sections.
 
 ## Next full UAT move — what goes, and what must land first
 
@@ -52,22 +39,26 @@ session edits this note._
 - Help wording screen by screen into the help plan's section 7, each
   beside its manual section; each opens with "What this page is for"
   (Basheer). 22 Oct: Account Management and Customer 360 agreed, manual
-  fixed beside each — uncommitted, docs batch. **Next:** Pipeline
-  (`opportunities`); also check what "+ Add Hospital" inside the New
-  Opportunity form does after Create.
+  fixed beside each — committed and pushed in `d5e7c97` with the retro
+  (1 correction). 23 Oct: Pipeline agreed (manager box kept), manual
+  Part B "Pipeline" fixed — uncommitted, docs batch. 23 Oct: help plan
+  D14 (six pop-up forms get help, 22 → 28; Basheer) written into the
+  help plan, help editor plan (D5, D9b, figures, addendum) and its test
+  plan (steps 24–25) — uncommitted. Basheer to tell Build & Test.
+  "+ Add Hospital" checked; wording drafted (not yet agreed) for New
+  Opportunity help + manual "Create an Opportunity". Open: rename
+  the "New Customer" pop-up title to "New Hospital"? **Next:** Log
+  Activity pop-up help.
 
 ## Harness Engineering
 
-- 21 Oct: exercise cut down (Basheer) — weekly review, retro = count of
-  his corrections; 31 judgement items accepted, open 9 (Reviews line in
-  the tracker; archive 21 Oct entry). Committed with the doc tidy-up in
-  `1f5b425`, pushed. Next review 2026-10-28. 21 Oct retros (archive):
-  2 corrections, then 3 in the second session (`f469db6`, pushed, with
-  the My Work plan approval).
-  The paperwork and right-pack checks are dropped with it.
+- Next weekly review 2026-10-28 (21 Oct changes in archive, `1f5b425`).
 
 ## Chores
 
+- From Build & Test (archive 23 Oct, D75): UAT User Manual still says
+  "SBU Target & Plans" (their lines 206, 213, 264, 446); now "Team
+  Plans". Fix once their Annual Target work is committed.
 - Delete Dev test data from Duplicate hospitals Part A (five "zz Test
   duplicate guard…" hospitals, "zz Test contact"); read-only check first.
   Open: deactivate the test Marketing User login (2026-10-10)?

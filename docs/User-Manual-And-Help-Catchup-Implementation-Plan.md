@@ -55,7 +55,18 @@ user manual and in-app `?` help up to date").
   now, screen by screen with the manual review (step 3a), while Build &
   Test builds the table and editor (step 3b); the agreed text is then
   loaded into the table as starting content, so neither waits for the
-  other — Basheer, 2026-10-22
+  other — Basheer, 2026-10-22. **Count widened to 28 by D14.**
+- D14. **Help for the six most-used pop-up forms**, each with its own `?`:
+  Log Activity, Close Next Action, Edit Opportunity, New Stakeholder,
+  New Customer (the add-hospital form) and New Opportunity. Chosen from
+  the UAT usage analysis of 4–10 Oct (Progress-Archive-2026-10, 11 Oct
+  entry: hospital search → hospital page → log a visit, finish a next
+  action, open and edit an Opportunity, add a contact, add a hospital).
+  New Opportunity added although not in that analysis's findings: it is
+  opened from four places (**+ Lead**, a hospital's and a project's
+  Opportunities tab, **Convert** on a marketing lead). Help pages go
+  from 22 to 28; the help editor lists the six as a "Pop-up forms" group
+  (help editor plan D5, D9b) — Basheer, 2026-10-23
 
 ## 1. In plain terms
 
@@ -89,14 +100,15 @@ After this work:
    *Checkpoint commit (docs only).*
 3. **In-app help, two strands in parallel (D13).**
    - **3a. Help wording (Plan & Chore, about 1 day).** Screen by screen:
-     read the screen's code, draft its help (refresh 8, write 14), review
-     it beside that screen's manual section and fix both. Agreed text is
-     kept in section 7 of this plan until 3b can load it.
+     read the screen's code, draft its help (refresh 8, write 14, plus
+     the 6 pop-up forms of D14), review it beside that screen's manual
+     section and fix both. Agreed text is kept in section 7 of this plan
+     until 3b can load it.
      *Docs-batch commits.*
    - **3b. Help table and editor (Build & Test, about 1.5–2 days,
      estimate).** Its own plan and test plan:
      `docs/In-App-Help-Editor-Implementation-Plan.md`; it loads section
-     7's text once all 22 are agreed (its step 4).
+     7's text once all 28 are agreed (its step 4; 22 before D14).
 4. **Review and test (half a day).** `/code-review` (medium); short manual
    E2E: open `?` on every screen as each role; edit a help page as Admin
    and as General Manager, check the Audit Log entry, and check another
@@ -160,7 +172,8 @@ Read from the code and git on 2026-10-15. **19 menu screens**
 (`DemoApp.tsx` nav lists; Projects is a tab inside Account Management, not
 a menu screen). 5 have help; **14 have none**; 3 more help pages cover
 pages opened from a record (Customer 360, Opportunity page, Project page),
-so **8 to refresh + 14 to write = 22 help pages**. Since the manual was
+so **8 to refresh + 14 to write = 22 help pages** (28 with D14's six
+pop-up forms, 2026-10-23). Since the manual was
 written (`3cfa132`, 2026-08-01): 169 feature/fix commits, 117 of them
 changing screens.
 
@@ -217,7 +230,9 @@ table at step 3b. Order (2026-10-22): Sales Rep daily screens first
 (Account Management, Customer 360, Pipeline, Opportunity page, Project
 page, Next Actions), then the reports, then the Admin screens; Target &
 Coverage Planning last (still changing while Annual Target Part 1 is
-tested).
+tested). D14's six pop-up forms (2026-10-23) join the Sales Rep daily
+group, most used first: Log Activity, Close Next Action, New
+Opportunity, Edit Opportunity, New Stakeholder, New Customer.
 
 Format: help editor plan D2 (headings, **bold**, bullets) and D4
 (optional manager box). Every screen's help opens with a short **What
@@ -348,3 +363,69 @@ update it afterwards so the next person sees the full picture.
 Sources (2026-10-22): `Customer360Screen.tsx:83–88, 162–262, 264–417,
 475–556, 559–612, 924–978, 996–1000, 1106–1143, 1347–1354`;
 `ActivityTimeline.tsx:240–262`; `ActivityCommentThread.tsx:123–176`.
+
+### Pipeline (`opportunities`) — agreed 2026-10-23 (Basheer)
+
+Manual checked: Part B "Pipeline" (fixed the same day: Kanban/List
+switch, Won/Lost/On Hold shown too, listing order, back arrow). Replaces
+the old help, which wrongly said cards can be dragged between columns,
+listed 7 stages (Payment Pending missing) and named stage and closing-date
+filters that don't exist.
+
+**Title:** Pipeline — Help
+
+**What this page is for**
+This page lists all your Opportunities and shows which stage each one
+has reached. Use it to see which Opportunities are moving forward and
+which are stuck.
+
+You see:
+- your own Opportunities
+- Opportunities where you share the sale with a colleague
+- your team's Opportunities, if you are a manager
+
+To change an Opportunity, click it to open its page.
+
+**Kanban and List**
+- **Kanban** (the usual view): one column per stage, in order: Lead,
+  Qualified, Demo, Clinical Evaluation, Negotiation, Order, Delivery &
+  Installation, Payment Pending. The number beside each stage is how
+  many Opportunities are in it.
+- The stage buttons along the top jump to that column — handy on a
+  phone.
+- **List**: every Opportunity as one row, with its stage as a tag.
+  Easier for scanning a long list.
+- In both, High Priority Opportunities come first, then the ones with
+  the highest chance of winning.
+
+**What each card shows**
+- The Opportunity name, hospital, status (Active, On Hold, Won or Lost),
+  value in Lakhs and owner.
+- **High Priority**: every Opportunity past the Demo stage, or one
+  marked High Priority by hand.
+- **Reactivation Overdue**: an On Hold Opportunity has passed its date
+  to restart.
+- Click a card to open the Opportunity's page.
+
+**Search and filters**
+- Type in **Search by opportunity or hospital...** to narrow the list as
+  you type. **×** clears it.
+- **All Owners**: pick a person to see only their Opportunities. People
+  who have left are under **Inactive Owners**, so their Opportunities
+  can still be found.
+- **All Zones**: pick a zone to see only that zone, including the areas
+  within it.
+
+**Arriving from a report**
+- Clicking a bar or figure on a report opens Pipeline showing only those
+  Opportunities. A **Showing: …** line says what is shown and how many.
+- **Clear filter** shows everything again; the back arrow returns to the
+  report.
+
+**Manager box:** Leave the owner on **All Owners** to see your whole
+team's Opportunities, or pick one person to review theirs before a
+one-to-one.
+
+Sources (2026-10-23): `OpportunityPipelineScreen.tsx:81–155, 193–264,
+399–480, 491–580`; `DemoApp.tsx:726–750`; `opportunity/repository.py:164–279`
+(no status filter; High Priority then win probability, BR-OP-15).

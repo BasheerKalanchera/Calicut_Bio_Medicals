@@ -358,14 +358,20 @@ Opportunities.
 
 ## Pipeline
 
-All Opportunities you can see, one column per stage. The stage names along
-the top jump to that column (useful on a phone).
+All Opportunities you can see, one column per stage. Won, Lost and On
+Hold Opportunities show here too, not only Active ones. The stage names
+along the top jump to that column (useful on a phone).
+- **Kanban** (columns by stage) or **List** (one row each): switch at
+  the top right.
+- High Priority Opportunities come first, then the ones with the highest
+  chance of winning.
 - Search by Opportunity or hospital; filter by owner (former staff are
   under **Inactive Owners**) and zone.
 - Each card shows the hospital, status, value, owner, and the **High
   Priority** and **Reactivation Overdue** badges.
 - When you arrive from a report, a **Showing: …** line says what is
-  filtered. **Clear filter** shows everything; **Back to report** returns.
+  filtered. **Clear filter** shows everything; the back arrow returns to
+  the report.
 
 ## Opportunity page
 

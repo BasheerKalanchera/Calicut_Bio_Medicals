@@ -4340,3 +4340,42 @@ moved to after the restart (Basheer).
      for; now a rule for every help page.
 - No guard-fixable slip, nothing touched live data or UAT, no lost work;
   tracker unchanged.
+
+## 2026-10-23 — UAT backup; Pipeline help; help for six pop-up forms (D14); Plan & Chore retro
+- **UAT backup:** `cabio_uat_2026-10-23_0706.dump` (703,819 bytes, 472
+  TOC entries); pruned `cabio_uat_2026-10-08_0645.dump`. Docker again
+  needed a forced close (handled by the script).
+- **Pipeline help agreed** (help plan section 7; opening paragraph
+  reworded simpler at Basheer's request). The old help was wrong in three
+  places: cards can't be dragged between columns, there are 8 stages not
+  7 (Payment Pending), and the stage and closing-date filters it named
+  don't exist. Manual Part B "Pipeline" fixed beside it (Kanban/List,
+  Won/Lost/On Hold shown, listing order, back arrow).
+- **"+ Add Hospital" inside New Opportunity:** after **Create**, the
+  form comes back with the new hospital chosen and everything already
+  typed kept, apart from Project, which is cleared
+  (`QuickLeadModal.tsx:300–310, 710–715`). Help and manual wording
+  drafted, not yet agreed; it goes into the New Opportunity help and the
+  manual's "Create an Opportunity".
+- **D14 (Basheer):** six pop-up forms get their own `?` help: Log
+  Activity, Close Next Action, New Opportunity, Edit Opportunity, New
+  Stakeholder, New Customer — 22 help pages become 28. Chosen from the
+  11 Oct UAT usage analysis (this archive); New Opportunity added because
+  it opens from four places (Basheer). Written into the help plan, the
+  help editor plan (D5, D9b, section 3 a2, figures, addendum) and its
+  test plan (steps 24–25, all six pop-ups tested from where they are
+  used). Basheer to tell Build & Test. Open: rename the "New Customer"
+  pop-up title to "New Hospital"?
+- Documentation tidy-up due today, moved to tomorrow (Basheer).
+- **Retro — corrections from Basheer this session: 6.** (1) Pipeline
+  help's opening paragraph hard to understand, reword. (2) My report on
+  "+ Add Hospital" read as technical help wording ("What the heck is
+  this…"). (3) "In which screen's help will this wording be shown?" — I
+  had suggested the Opportunity page, which doesn't create
+  Opportunities. (4) "Don't we need in-screen help for the + Lead
+  pop-up?" — I had recommended the manual only. (5) "We had done an
+  exercise… check that document" — I offered a fresh Dev count before
+  searching the existing usage analysis. (6) "Did we add it to the plan
+  and E2E plan as well?" — checking found the test plan covered only 2
+  of the 6 pop-ups. No guard-fixable slip, nothing touched live data or
+  UAT, no lost work; tracker unchanged.
