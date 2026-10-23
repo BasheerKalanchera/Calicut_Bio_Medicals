@@ -51,6 +51,11 @@ const YEAR_START_MONTHS = [
 ];
 const MONTH_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
+// On a phone the brand table drops its own-figure and stretch columns so the
+// "Set target" button stays on screen; both still show in the Set target box
+// (Basheer, 2026-10-22).
+const HIDE_ON_PHONE = { display: { xs: "none", sm: "table-cell" } };
+
 // The pattern is tied to calendar months, whatever month a brand's year
 // starts in (D41).
 const PATTERN_FIELDS: { key: keyof SeasonalPattern; label: string }[] = [
@@ -359,8 +364,8 @@ export default function BrandTargetTrackingScreen() {
               <TableRow>
                 <TableCell sx={{ width: 40 }} />
                 <TableCell>Brand</TableCell>
-                <TableCell>Brand's own figure</TableCell>
-                <TableCell>Stretch</TableCell>
+                <TableCell sx={HIDE_ON_PHONE}>Brand's own figure</TableCell>
+                <TableCell sx={HIDE_ON_PHONE}>Stretch</TableCell>
                 <TableCell>Stretched target</TableCell>
                 <TableCell align="right">Actions</TableCell>
               </TableRow>
@@ -381,11 +386,11 @@ export default function BrandTargetTrackingScreen() {
                         {row.brand_name}
                         <Typography component="span" color="text.secondary"> · {brandYearLabel(row.year_start_month, row.start_year)}</Typography>
                       </TableCell>
-                      <TableCell>{isSet ? formatLakhs(Number(row.vendor_amount_lakhs)) : <Typography component="span" color="text.secondary">Not set</Typography>}</TableCell>
-                      <TableCell>{row.stretch_pct !== null ? `${Number(row.stretch_pct)}%` : "—"}</TableCell>
+                      <TableCell sx={HIDE_ON_PHONE}>{isSet ? formatLakhs(Number(row.vendor_amount_lakhs)) : <Typography component="span" color="text.secondary">Not set</Typography>}</TableCell>
+                      <TableCell sx={HIDE_ON_PHONE}>{row.stretch_pct !== null ? `${Number(row.stretch_pct)}%` : "—"}</TableCell>
                       <TableCell sx={{ fontWeight: 700 }}>{row.stretched_lakhs !== null ? formatLakhs(Number(row.stretched_lakhs)) : "—"}</TableCell>
                       <TableCell align="right">
-                        <Button size="small" onClick={() => openEdit(row)}>{isSet ? "Revise" : "Set target"}</Button>
+                        <Button size="small" sx={{ whiteSpace: "nowrap" }} onClick={() => openEdit(row)}>{isSet ? "Revise" : "Set target"}</Button>
                       </TableCell>
                     </TableRow>
                     {open && (
