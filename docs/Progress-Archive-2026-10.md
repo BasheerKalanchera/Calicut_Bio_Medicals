@@ -4341,6 +4341,52 @@ moved to after the restart (Basheer).
 - No guard-fixable slip, nothing touched live data or UAT, no lost work;
   tracker unchanged.
 
+## 2026-10-23 — Annual Target Part 1 E2E: Team Targets in the Annual view (D75) (Build & Test)
+- C3, C3a, C5, D1–D7, E1–E3 Pass. At E3 Basheer noticed the Annual view
+  of Target & Coverage Planning showed no team targets: the panel and the
+  "Your target" line were built for the Quarterly view only, and the plan
+  never decided the Annual view. D75: Team Targets becomes its own card
+  above Team Plans; in the Annual view, each person's four quarters and
+  their year, view-only, team total beside one's own yearly target, no
+  warning. Built uncommitted (TeamTargetsPanel, TargetPlanningScreen),
+  screen-only; tsc and eslint clean. Basheer then moved Admin/GM's SBU
+  picker out of the Team Plans card to just above Team Targets, setting
+  the SBU for both cards (replacing a first try that named the SBU in
+  the card heading). Then the SBU target became its own card above Team
+  Targets (Admin, GM, SBU Managers only), and "SBU Target & Plans" is
+  "Team Plans" for everyone. Frontend Standards' wording rule updated;
+  the UAT User Manual still says "SBU Target & Plans" (lines 206, 213,
+  264, 446) — for Plan & Chore. Last, the Annual view got an SBU Target
+  card (year = four quarters added up, D47, and each quarter). New test
+  steps C6, D8. Bug Basheer caught: the Annual SBU Target card showed
+  8 times — it and the Annual Team Targets card shared one React key,
+  so each Quarterly/Annual switch left a stale copy. Keys made distinct;
+  checked in the browser as Haroon (one card after 5 switches, no
+  duplicate-key errors). Then, Basheer: Admin/GM's Team Targets card no
+  longer repeats the SBU target beside its total (the SBU Target card
+  has it); SBU and Area Managers keep "Your target" (their own figure,
+  D57). New test steps B10, C7, G3a for every role; C6, D8 updated.
+- Committed: D75 `dd9cdb9`; Brand Target Tracking phone layout
+  `c2f025d` (Basheer yes 22 Oct). Full checks before commit: tsc clean,
+  lint 0 errors (133 warnings, none on changed lines), pytest 1352
+  passed. E2E: 40 of 64 steps Pass; next C6. User Manual's "SBU Target
+  & Plans" passed to Plan & Chore's note (Basheer yes).
+- **Retro, Build & Test 2026-10-23 — corrections from Basheer: 8**
+  1. Told an Area Manager to "select Imaging"; they have no SBU picker.
+  2. Progress status too long ("one line is enough").
+  3. Added the SBU name to the Team Targets heading without approval.
+  4. Left the SBU Target card out of the Annual view without raising it.
+  5. Annual SBU Target card showed 8 times (two cards shared one
+     internal label).
+  6. Asked Basheer for a screenshot instead of checking in the browser.
+  7. Kept "SBU target for the year" in Team Targets after the SBU
+     Target card already showed it; Basheer spotted the repeat.
+  8. Hedged on SBU Managers ("unless you know it does") instead of
+     checking the code; Basheer had to ask.
+  Not counted: E3's missing Annual team targets (a plan gap). Nothing
+  touched UAT, no lost work; Dev writes were Basheer's own test saves.
+  Tracker unchanged: none could be stopped by a tool check.
+
 ## 2026-10-23 — UAT backup; Pipeline help; help for six pop-up forms (D14); Plan & Chore retro
 - **UAT backup:** `cabio_uat_2026-10-23_0706.dump` (703,819 bytes, 472
   TOC entries); pruned `cabio_uat_2026-10-08_0645.dump`. Docker again

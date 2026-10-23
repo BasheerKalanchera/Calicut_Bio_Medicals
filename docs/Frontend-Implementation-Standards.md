@@ -307,12 +307,14 @@ the common filter"). Server half: Backend standards, "Filtering Standards".
 **Target** means only a figure set from the top: a brand's target (Brand
 Target Tracking), the SBU target (its brands' total), or a person's
 quarterly target set by the person they report to ("Your target", "Team
-targets"; Annual Target Planning, 2026-10-21). **Plan** means a rep's own
-bottom-up figure, built from their hospitals ("My Plan", "Plan total",
-"Last approved plan", "Approve Vivek's plan?"). Any new label, message or
-help text follows this, including server refusal messages. Names that hold
-both keep "Target": the menu "Target & Coverage Planning" and the heading
-"SBU Target & Plans". Code identifiers (`target_plan`,
+Targets"; Annual Target Planning, 2026-10-21). **Plan** means a rep's own
+bottom-up figure, built from their hospitals ("My Plan", "Team Plans",
+"Plan total", "Last approved plan", "Approve Vivek's plan?"). Any new
+label, message or help text follows this, including server refusal
+messages. Names that hold both keep "Target": the menu "Target & Coverage
+Planning". (The heading "SBU Target & Plans" was split into the "SBU
+Target", "Team Targets" and "Team Plans" cards, Annual Target Planning
+D75, 2026-10-23.) Code identifiers (`target_plan`,
 `target_amount_lakhs`) are not renamed. Origin:
 `docs/Rep-Plan-Wording-Implementation-Plan.md`.
 

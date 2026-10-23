@@ -6,7 +6,7 @@ keeps its own note: `.claude/session-handover-plan.md`. Only the Build & Test
 session edits this note._
 
 ## Reminders
-- 22 Oct retro done (Progress-Archive, 11 corrections). Next session:
+- 23 Oct retro done (Progress-Archive, 8 corrections). Next session:
   carry on Part 1 E2E on Dev (below).
 - api.ts guard is on (`5ca17aa`): a backend fix commit must carry the
   matching api.ts (`sh .githooks/check-api-types.sh --write` stages it).
@@ -19,21 +19,18 @@ session edits this note._
 - Part 1 built and pushed: `f2f5edd`, `642f04c`, `ed669e7`, and
   `be27712` (22 Oct: seasonal pattern "Save pattern" greyed out until
   100 %, Basheer — phone use, no reload). Dev at 0062 (21 Oct).
-- **In progress: Part 1 E2E on Dev.** Test plan Part 1 wording checked
-  against the code 22 Oct (uncommitted, in the plan file). Next: P1 —
-  Basheer restarts the Dev backend; then P2 (`alembic current`), P4
-  read-only query (show first; load `cabio-db-and-scripting`).
+- **In progress: Part 1 E2E on Dev** — 40 of 64 steps Pass (P1–P5,
+  A1–A10, B1–B9, C1–C5 incl. C3a, D1–D7, E1–E3; A8 hint wording awaiting
+  Basheer). **Next:** C6 (as Haroon, already signed in on the test
+  tab), C7, B10, D8, then E4–E6, F, G (incl. new G3a), H.
+- D75 (SBU Target + Team Targets own cards, Annual views, "Team Plans"
+  for all, no repeated SBU target for Admin/GM) committed `dd9cdb9`;
+  Brand Target Tracking phone layout `c2f025d`. Pushed with the 23 Oct
+  docs batch. Post-commit checklist for D75 once its steps pass.
 - Small-fixes batch at E2E end: missing space before ₹, approve/reject
-  dialog (TargetPlanningScreen:775) — not made yet.
-- Also in that batch (uncommitted): Area Managers' heading "Team Plans"
-  (TargetPlanningScreen:594, Basheer yes 22 Oct); Brand Target Tracking
-  phone layout — own-figure and stretch columns hidden on a phone so
-  "Set target" stays on screen (Basheer yes 22 Oct; tsc clean).
-- E2E progress 22 Oct: P1–P5, A1–A9 Pass (A8 hint wording awaiting
-  Basheer); A10, B1–B9, C1–C2, C4 Pass; C3 result not yet confirmed;
-  next C3a (Remove), C5, D–H.
-- Remove (D74) + Team targets note/warning: committed and pushed
-  `6016e6a`; Dev at 0063. Next: C3a on Dev.
+  dialog (TargetPlanningScreen ~775) — not made yet.
+- User Manual "SBU Target & Plans" → passed to Plan & Chore's note
+  (Basheer yes 23 Oct).
 - Lesson (21 Oct): he found the raw review list hard to follow — bring
   it sorted by what users would notice, screen first, from the start.
 

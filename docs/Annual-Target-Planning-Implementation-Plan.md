@@ -370,6 +370,27 @@ this replan: D8, D12, D12a, D14.
   reps' targets as they are. Built as a fix during Part 1's E2E
   (migration 0063 adds the delete rule); found at C4, when ₹0 was the
   only way to take a figure back — Basheer, 2026-10-22.
+- D75. Team targets becomes its own card on Target & Coverage Planning,
+  no longer inside the Team Plans / SBU Target & Plans card. In the
+  Annual view it shows, like My Plan and Team Plans, each person's four
+  quarterly targets and their annual total. Found at E3, when the Annual
+  view showed no targets at all — Basheer, 2026-10-23. Details, Basheer
+  the same day: the card sits directly above Team Plans; the Annual view
+  is view-only ("Switch to Quarterly to change a target"); it shows the
+  team's yearly total against one's own yearly target (the SBU's, for
+  Admin/GM/Haroon) with no warning — warnings stay quarterly (D33); built
+  now, as a fix during Part 1's E2E, screen-only (no backend change).
+  Admin/GM's SBU picker moves out of the Team Plans card to just above
+  the Team Targets card, and sets the SBU for both cards — Basheer, the
+  same day. Then: the SBU target becomes its own card, above Team
+  Targets, for Admin, GM and SBU Managers only (D26, D34); the old "SBU
+  Target & Plans" card is "Team Plans" for everyone — Basheer, the same
+  day. The Annual view gets an SBU Target card too: the year (its four
+  quarters added up, D47) and each quarter, view-only, same viewers —
+  Basheer, the same day. For Admin and GM, the Team Targets card no
+  longer repeats the SBU target beside its total (both views); everyone
+  else keeps "Your target", their own figure (D57) — Basheer, the same
+  day.
 
 ## Figures and sources
 

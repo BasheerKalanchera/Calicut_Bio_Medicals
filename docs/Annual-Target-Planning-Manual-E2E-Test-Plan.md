@@ -224,6 +224,12 @@ remove the mark, D73).
    & Plans"; no SBU target box; ₹280 L nowhere on the screen (D34). — Pass, 2026-10-22 (Basheer)
 9. [Simple] Hide-check: as Fahad (rep), Oct–Dec 2026. **Expected:** no SBU
    target box (D26). — Pass, 2026-10-22 (Basheer)
+10. [Simple] (D75) As Basheer K (SBU Manager), Imaging, before section G
+   (no one reports to Basheer K yet). **Expected:** Quarterly, Oct–Dec
+   2026: "SBU Target" card ₹280.0L, no "Team Targets" card, then "Team
+   Plans". Annual, FY 2026-27: "SBU Target" card with "FY 2026-27 —
+   Annual Total ₹280.0L" and the four quarters; no "Team Targets"
+   card. Hide-check: no SBU picker. —
 
 ## C — Haroon divides the SBU target among the Area Managers (D33, D45)
 
@@ -235,46 +241,75 @@ remove the mark, D73).
 2. [Complex: save with a warning] "Set target" on each row, then "Save":
    Fazal ₹160 L, Shruthi ₹100 L. **Expected:** saved; warning "These add
    up to ₹260.0L, ₹20.0L short of the SBU target (₹280.0L)." — Pass, 2026-10-22: Basheer saved; Claude reloaded and read Fazal ₹160.0L, Shruthi ₹100.0L, Basheer K Not set, total ₹260.0L and that exact warning
-3. [Simple] Shruthi → ₹120 L; save. **Expected:** the warning goes. —
+3. [Simple] Shruthi → ₹120 L; save. **Expected:** the warning goes. — Pass, 2026-10-23 (Basheer)
 3a. [Complex: remove, then read back] (D74) "Remove" on Shruthi's row.
    **Expected:** no confirmation box; Shruthi shows "Not set", total
    ₹160.0L, warning "These add up to ₹160.0L, ₹120.0L short of the SBU
    target (₹280.0L)." Then "Set target" on Shruthi, ₹120 L, save:
-   **Expected:** ₹120.0L, total ₹280.0L, no warning. —
+   **Expected:** ₹120.0L, total ₹280.0L, no warning. — Pass, 2026-10-23 (Basheer)
 4. [Complex: save, then read back] Critical Care, Oct–Dec 2026: Arun Adarsh
    ₹100 L, Nishad K V ₹85 L; save. **Expected:** no warning (₹185 L); no
    Imaging people listed. — Pass, 2026-10-22 (Basheer); Claude saw only Arun Adarsh and Nishad K V listed. Afterwards Basheer tried to take Arun's target off to see the empty panel: there is no way to, so he set ₹0 — finding raised with Basheer. Basheer then put both back; Claude reloaded and read Arun Adarsh ₹100.0L, Nishad K V ₹85.0L, total ₹185.0L, no warning
 5. [Simple] As Abdul Latheef P (Admin), Imaging, Oct–Dec 2026, Team
    targets. **Expected:** Fazal ₹160 L, Shruthi ₹120 L shown and editable
-   (D45). No save. —
+   (D45). No save. — Pass, 2026-10-23 (Basheer)
+6. [Simple] (D75) As Haroon, Oct–Dec 2026, Quarterly. **Expected:** top
+   to bottom: SBU picker, "SBU Target" card (₹280.0L), "Team Targets"
+   card, "Team Plans" card (no longer "SBU Target & Plans"). The Team
+   Targets "Total" row shows ₹280.0L with no "SBU target: …" beside it
+   (the SBU Target card above has it). Switching
+   the picker to Critical Care changes all three cards (Team Targets:
+   Arun Adarsh ₹100.0L, Nishad K V ₹85.0L), then back to Imaging. Then
+   "Annual", FY 2026-27: an "SBU Target" card with "FY 2026-27 — Annual
+   Total" and the four quarters (Oct–Dec 2026 ₹280.0L; the total is the
+   quarters added up); below it a "Team Targets" card above "Team
+   Plans", view-only (no Set/Change/Remove),
+   "Switch to Quarterly to change a target"; Fazal ₹160.0L and Shruthi
+   ₹120.0L under Oct–Dec 2026, "Not set" in any quarter without a
+   target; Basheer K "Not set"; "Team total for FY 2026-27 ₹280.0L" with
+   nothing beside it (no "SBU target for the year"), no warning. Switch
+   Quarterly ↔ Annual three times: still one of each card. —
+7. [Simple] (D75) As Abdul Latheef P (Admin), Imaging. **Expected:** the
+   same as C6 — Quarterly: SBU picker, "SBU Target" card ₹280.0L, "Team
+   Targets" (Total ₹280.0L, no "SBU target: …" beside it), "Team Plans".
+   Annual, FY 2026-27: "SBU Target" card (Annual Total ₹280.0L); "Team
+   total for FY 2026-27 ₹280.0L" with nothing beside it. No save. —
 
 ## D — Area Managers divide among their reps; "Your target" (D30, D33, D35)
 
 1. [Simple] As Fazal, Imaging, Oct–Dec 2026. **Expected:** "Your target
-   for Oct–Dec 2026: ₹160 L". —
+   for Oct–Dec 2026: ₹160 L". — Pass, 2026-10-23 (Basheer)
 2. [Complex: save with a warning, then read back] Fazal's Team targets:
    Fahad only; ₹140 L; save. **Expected:** saved; warning "These add up
-   to ₹140.0L, ₹20.0L short of your own target (₹160.0L)." (left as is). —
+   to ₹140.0L, ₹20.0L short of your own target (₹160.0L)." (left as is). — Pass, 2026-10-23 (Basheer)
 3. [Complex: save, then read back] As Shruthi: "Your target" ₹120 L; Team
    targets: Rudrappa ₹100 L; save. **Expected:** saved; warning ₹20 L
-   short. —
+   short. — Pass, 2026-10-23 (Basheer)
 4. [Complex: save, then read back] As Arun Adarsh: "Your target" ₹100 L;
    Team targets: Vivek ₹90 L; save. **Expected:** saved; warning ₹10 L
-   short. —
+   short. — Pass, 2026-10-23 (Basheer)
 5. [Simple] As Nishad K V: "Your target" ₹85 L. **Expected:** Team targets
-   shows no one (no reps report to Nishad K V). —
+   shows no one (no reps report to Nishad K V). — Pass, 2026-10-23 (Basheer): panel not shown at all
 6. [Simple] As Fahad. **Expected:** "Your target for Oct–Dec 2026:
-   ₹140 L"; no Team targets panel. —
-7. [Simple] As Rudrappa: ₹100 L. As Vivek: ₹90 L. —
+   ₹140 L"; no Team targets panel. — Pass, 2026-10-23 (Basheer)
+7. [Simple] As Rudrappa: ₹100 L. As Vivek: ₹90 L. — Pass, 2026-10-23 (Basheer)
+8. [Simple] (D75) As Fazal, Quarterly, Oct–Dec 2026. **Expected:** no
+   SBU Target card (D34); Team Targets "Total" row ₹140.0L with "Your
+   target: ₹160.0L" beside it (kept: his own target, not the SBU's).
+   Then "Annual", FY 2026-27. **Expected:** no SBU Target card; "Team
+   Targets" card above "Team Plans", view-only; Fahad ₹140.0L under
+   Oct–Dec 2026; "Team total for FY 2026-27" ₹140.0L with "Your target
+   for the year" beside it (₹160.0L if Oct–Dec is Fazal's only quarter
+   with a target); no warning. As Fahad, "Annual": no Team Targets card. —
 
 ## E — Who must not see what (D23, D26, D34, D35)
 
 1. [Simple] As Fahad: ₹160 L (Fazal's) and ₹280 L (Imaging) appear
-   nowhere; no Brand Target Tracking in the menu. —
+   nowhere; no Brand Target Tracking in the menu. — Pass, 2026-10-23 (Basheer)
 2. [Simple] As Fazal: Shruthi's ₹120 L and Rudrappa's ₹100 L appear
-   nowhere; no Brand Target Tracking in the menu. —
+   nowhere; no Brand Target Tracking in the menu. — Pass, 2026-10-23 (Basheer)
 3. [Simple] As Shruthi: Fazal's ₹160 L and Fahad's ₹140 L appear
-   nowhere. —
+   nowhere. — Pass, 2026-10-23 (Basheer). Basheer noticed Team targets isn't in the Annual view — question raised with him
 4. [Simple] As Arun Adarsh: nothing from Imaging; Critical Care's ₹185 L
    appears nowhere (D34). —
 5. [Complex: look for an edit the screen shouldn't offer] As Fazal: no way
@@ -317,6 +352,14 @@ Basheer K (D57). Shruthi goes back to Haroon in G7.
    Change Shruthi → ₹130 L; save. **Expected:** warning "These add up to
    ₹130.0L, ₹10.0L over your own target (₹120.0L).";
    as Shruthi, "Your target" ₹130 L. —
+3a. [Simple] (D75, D57) As Basheer K, Quarterly, Oct–Dec 2026.
+   **Expected:** "SBU Target" card ₹280.0L, then "Team Targets": Total
+   ₹130.0L with "Your target: ₹120.0L" beside it — his own figure from
+   Haroon, not the SBU's ₹280.0L. Annual, FY 2026-27: "SBU Target" card
+   Annual Total ₹280.0L; "Team Targets" card with Shruthi ₹130.0L under
+   Oct–Dec 2026; "Team total for FY 2026-27 ₹130.0L · Your target for
+   the year: ₹120.0L" (if Oct–Dec is his only quarter with a target);
+   no warning. —
 4. [Complex: cross-role] As Haroon. **Expected:** can still see Shruthi's
    ₹130 L and change it (D32), where the code puts that. No save. —
 5. [Simple] Hide-check: as Fazal, Shruthi's ₹130 L and Basheer K's ₹120 L
