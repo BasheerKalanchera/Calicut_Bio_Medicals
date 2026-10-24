@@ -91,6 +91,7 @@ skill. Status: open · built (<commit>) · merged (<where>, <date>) · dropped (
 | P95 | A commit message describing a rename names only the new wording (was watch-list 2026-10-14: `a76b02d`; 2026-10-21: the vendor script fix's proposed title quoted the old word; the check refused it, reworded) | 2026-10-14 | 2 | open |
 | P96 | A made-up example for Cabio uses a brand Cabio sells, never a competitor (was watch-list 2026-10-17: incentive options doc; 2026-10-21: Annual Target plan, discussion doc and a test used Mindray) | 2026-10-17 | 2 | built (CLAUDE.md "Product", `c6708f9`) |
 | P97 | During a manual E2E, every reply's status line gives steps passed of the total and the % complete (2026-10-24: "Again you forgot to show me %complete in the summary line", Annual Target E2E after C7; rule written into the `cabio-e2e-testing` skill the same day). A tool could check each E2E reply's status line has a "%" | 2026-10-24 | 1 | open (rule in skill; guard for the weekly review) |
+| P98 | The 2-hour / ~25-message checkpoint after a push is called on the session's real length and message count, not a guess (2026-10-24: Claude called it at ~1 hour and 19 messages, saying "several hours"; Basheer: "We just restarted. How long has the session run?"). A tool could print the session's length and message count from its transcript after each push | 2026-10-24 | 1 | open (guard for the weekly review) |
 
 ## Watch list
 

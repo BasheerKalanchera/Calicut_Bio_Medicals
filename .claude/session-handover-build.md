@@ -18,7 +18,7 @@ session edits this note._
   `be27712` (22 Oct: seasonal pattern "Save pattern" greyed out until
   100 %, Basheer — phone use, no reload). Dev at 0063 (22 Oct, `6016e6a`).
 - Part 1 done 24 Oct: E2E 65 of 65, last fix `48e737b` pushed,
-  post-commit checklist done (docs uncommitted — next docs batch). A8
+  post-commit checklist done (docs `802510f`, pushed). A8
   hint wording still awaiting Basheer.
 - **Next:** UAT move is early Sun 25 Oct; Plan & Chore is doing the
   pre-move steps (Basheer 24 Oct) — this session doesn't touch it unless

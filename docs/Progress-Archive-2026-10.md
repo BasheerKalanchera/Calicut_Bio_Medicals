@@ -4530,3 +4530,19 @@ moved to after the restart (Basheer).
   `generate_scorecard.py --check` OK (34 Done, 11 Partial, 5 Not
   started). Next: UAT move early Sun 25 Oct (Plan & Chore doing the
   pre-move steps); then Part 2 build here.
+
+### 2026-10-24 (later) — Build & Test retro
+
+- **Corrections from Basheer this session: 6** — (1) "For area managers
+  there is no SBU picker remember?"; (2) "I didn't understand the fix" —
+  small-fix explanation unclear; (3) "I am not seeing this issue. Can you
+  open the screen" — described the problem without showing it; (4) "dot
+  is not the proper convention" / "That is an oversight" — defended the
+  dot from the app's habit before checking the accounting convention; (5)
+  "We just restarted. How long has the session run?" — called the 2-hour
+  checkpoint at ~1 hour and 19 messages on a guess ("several hours");
+  (6) "the UAT move is actually happening only tomorrow morning" —
+  trusted the handover's stale "as soon as Part 1's E2E finishes"
+  without checking the move plan (early Sun 25 Oct).
+- (5) a tool could stop: new tracker item P98. Nothing touched UAT or
+  live data; no lost work (approve box opened twice, cancelled both).
