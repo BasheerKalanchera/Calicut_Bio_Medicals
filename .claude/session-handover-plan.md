@@ -13,20 +13,28 @@ session edits this note._
   Nothing here until Build & Test runs Part 1's E2E; then Part 2 is
   built against those sections.
 
-## Next full UAT move — what goes, and what must land first
+## UAT move — approved 2026-10-24, move early Sun 25 Oct
 
-- **Must land first:** User Manual and Help Catch-up plan. Draft PDF
+- `docs/UAT-Promotion-2026-10-Plan.md` Approved (D1–D11; uncommitted);
+  it lists what goes. Before-the-day step 1 done 24 Oct: Pipeline
+  comparison 92/92 identical, fix 3 closed (Basheer); merge `2547a0f`
+  pushed; `uat-fix3` removed; tool change `0854766` pushed. **Next:**
+  docs batch (retro first); then before-the-day steps 3–6
+  (fresh-install check, Dev role smoke test, D6 UAT check — ask first,
+  after-move script + team message).
+- 24 Oct: UAT backup done (`cabio_uat_2026-10-24_1039.dump`); doc
+  tidy-up done (Annual Target plan Status, log line; uncommitted).
+  Passed to Basheer for Build & Test: Dev is at 0063, not 0062.
+- After the move: Duplicate hospitals step 19 on UAT; Audit Trail plan
+  step 5 cautions.
+
+## User Manual and help catch-up
+
+- Moves a day or two after the app (User Manual plan D15). Draft PDF
   `Desktop\cabio\Cabio-Sales-OS-User-Manual.pdf`. **Next:** Basheer
   reviews it, then step 3 (in-app help); check in first. Open
   (unanswered): Backlog items for deletes with no "Are you sure?" and the
-  Lead Source picker showing "REPEAT_ORDER"-style codes? Annual Target
-  Part 1 lands first too (D52). The move plan (Build & Test) starts with
-  Query Load plan section 9, steps 2–9 — Basheer, 2026-10-14.
-- **Goes with it, E2E-passed on Dev:** Target vs Actuals + roster; Audit
-  Trail Redesign (0059; plan step 5 cautions); Win Probability + one
-  create form; Rep plan wording; Duplicate hospitals Part A (then step 19
-  on UAT); My Work step 1, landing screen + new-hospital page (`508ff42`,
-  My Work plan D14a, Basheer 21 Oct). Each plan's Status line has its commits.
+  Lead Source picker showing "REPEAT_ORDER"-style codes?
 
 ## In-app help (help plan step 3a) — in progress 2026-10-22
 
@@ -41,10 +49,11 @@ session edits this note._
   (Basheer). 22 Oct: Account Management and Customer 360 agreed, manual
   fixed beside each — committed and pushed in `d5e7c97` with the retro
   (1 correction). 23 Oct: Pipeline agreed (manager box kept), manual
-  Part B "Pipeline" fixed — uncommitted, docs batch. 23 Oct: help plan
-  D14 (six pop-up forms get help, 22 → 28; Basheer) written into the
-  help plan, help editor plan (D5, D9b, figures, addendum) and its test
-  plan (steps 24–25) — uncommitted. Basheer to tell Build & Test.
+  Part B "Pipeline" fixed. 23 Oct: help plan D14 (six pop-up forms get
+  help, 22 → 28; Basheer) written into the help plan, help editor plan
+  (D5, D9b, section 3 a2, addendum) and its test plan (steps 24–25) —
+  both committed and pushed in `0d37e1c` with the retro (6
+  corrections). Basheer to tell Build & Test. Doc tidy-up: tomorrow.
   "+ Add Hospital" checked; wording drafted (not yet agreed) for New
   Opportunity help + manual "Create an Opportunity". Open: rename
   the "New Customer" pop-up title to "New Hospital"? **Next:** Log
@@ -56,9 +65,11 @@ session edits this note._
 
 ## Chores
 
-- From Build & Test (archive 23 Oct, D75): UAT User Manual still says
-  "SBU Target & Plans" (their lines 206, 213, 264, 446); now "Team
-  Plans". Fix once their Annual Target work is committed.
+- From Build & Test (archive 23 Oct, Annual Target plan D75; Basheer
+  yes): UAT User Manual still says "SBU Target & Plans" (lines 206, 213,
+  264, 446). That card is now three: "SBU Target" (Admin, GM, SBU
+  Managers), "Team Targets", "Team Plans" (everyone), each in the
+  Quarterly and Annual views. Fix once D75 is committed.
 - Delete Dev test data from Duplicate hospitals Part A (five "zz Test
   duplicate guard…" hospitals, "zz Test contact"); read-only check first.
   Open: deactivate the test Marketing User login (2026-10-10)?

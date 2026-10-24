@@ -138,6 +138,13 @@ Rules: `harness-engineering` skill.
 | 2026-10-21 | 2026-10-20 | — | Write into the copy of a handover note the hooks show: 20 Oct Plan & Chore put Basheer's approval of Annual Target Part 1 into the frozen main-folder `/build` note (`92cab23`, `006f4cb`), while `/build` reads the worktree copy; found and fixed 21 Oct before `/build` started |
 | 2026-10-21 | 2026-10-21 | — | A plan that uses a role nobody holds yet says what that role's own figure or step is: Annual Target (approved 20 Oct) never said what an SBU Manager's own target is; found only while writing the E2E plan (D57) |
 
+## For the next review
+
+- 2026-10-28 review: thorough analysis of corrections since 21 Oct — why
+  the count alone hasn't reduced them; repeated pattern "purpose not
+  stated before asking for approval" (3 of 5 on 24 Oct) — Basheer,
+  2026-10-24.
+
 ## Reviews
 - 2026-10-06 — first fill, from the retros of 2026-09-26 to 2026-10-06.
 - 2026-10-14 — second review. Open list 22 → 18 (counted). Built P72, P1, P3, P14 — one over the limit of 3, Basheer's choice. Nothing dropped; no watch-list line was older than 7 days.

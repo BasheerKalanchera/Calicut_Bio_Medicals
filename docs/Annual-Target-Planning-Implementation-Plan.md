@@ -7,9 +7,11 @@ Latheef Bhai via Basheer; D23 onwards; incentive year settled
 2026-10-19, D29; Part 1 / Part 2, D44–D49; review 2026-10-20, D50–D56).
 First approved 2026-10-16. E2E test plan:
 `docs/Annual-Target-Planning-Manual-E2E-Test-Plan.md` (Part 1, written
-2026-10-21). Build: Part 1 aimed at next week,
-so the Oct–Dec 2026 targets can be entered (D38, D44); it reaches the
-team with the full UAT move (D52).
+2026-10-21). Part 1 built on Dev (`f2f5edd`, `642f04c`; fixes
+`ed669e7`, `be27712`, `6016e6a`, `dd9cdb9`, `c2f025d`); manual E2E in
+progress — 40 of 64 Pass as of 2026-10-23 (`38c0c58`). Part 2 not
+started. Part 1 reaches the team with the full UAT move (D52); it was
+built so the Oct–Dec 2026 targets can be entered (D38, D44).
 **Traceability rows:** signed 3.1 ("Target splitting by product category,
 quarterly/annual tracking") — this plan finishes its "annual" part (D10).
 **Design / discussion:** `docs/Discussion-Annual-Target-Planning-2026-10.md`

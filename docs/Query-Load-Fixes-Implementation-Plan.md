@@ -350,22 +350,42 @@ them match.
 
 Checklist:
 - [x] 1. List approved (Basheer, 2026-10-08).
-- [ ] 2. Add views 6–15 and the Area Manager to the tool (permanent; show
+- [x] 2. Add views 6–15 and the Area Manager to the tool (permanent; show
   the change first); find each view's record read-only on Dev (busy owner,
   brand, account; Won status; a date range with closed Opportunities).
-- [ ] 3. Separate copy at `3a754f5` under `.claude/worktrees/`; copy in
-  `backend/.env` and the updated tool for the run.
-- [ ] 4. Old code: run the tool from the copy, `--save-responses`.
-- [ ] 5. Fixed code: run from the main folder straight after,
+  Done 2026-10-24. Sales Staff user changed from Vivek to Fahad: Vivek
+  owns no Opportunities on Dev any more (Basheer, 2026-10-24).
+- [x] 3. Separate copy at `3a754f5` under `.claude/worktrees/`; copy in
+  `backend/.env` and the updated tool for the run. Changed 2026-10-24
+  (Basheer): a second copy at `f7d25b1` for the fixed code, because
+  `main` now holds two weeks of other changes that would differ in
+  every view.
+- [x] 4. Old code: run the tool from the copy, `--save-responses`.
+- [x] 5. Fixed code: run from the `f7d25b1` copy straight after,
   `--compare-responses`; re-run any differing view once (a Dev save
-  between runs gives a false difference).
-- [ ] 6. Delete the copy, the `.env` copy and temporary files.
-- [ ] 7. Plain-language report: matched / differed and why / any view
+  between runs gives a false difference). None differed.
+- [x] 6. Delete the copies, the `.env` copies and temporary files.
+- [x] 7. Plain-language report: matched / differed and why / any view
   slower. Results go in this section.
-- [ ] 8. Basheer decides UAT: all match → fix 3 closed; real difference →
+- [x] 8. Basheer decides UAT: all match → fix 3 closed; real difference →
   rollback or correction in the next early-morning window (sooner if
-  users would notice).
+  users would notice). **Fix 3 closed — Basheer, 2026-10-24.**
 - [ ] 9. Paperwork, each with its own approval: merge `uat` back into
   `main` (resolve to `main`: 11 joins and its filters; pytest; push;
   then remove `.claude/worktrees/uat-fix3` and the local `uat` branch);
-  the tool change as its own commit; results in the docs batch.
+  the tool change as its own commit; results in the docs batch. Merge
+  done 2026-10-24: `2547a0f` (main's files kept, `-s ours`; tests skipped
+  as the code was unchanged — Basheer), pushed; `uat-fix3` copy and local
+  `uat` branch removed.
+
+Results (2026-10-24, Dev, read-only; the Annual Target E2E was running on
+Dev at the time and was not touched): all 15 views plus the Opportunity
+page and its tabs, as Abdul Latheef P, Basheer K, Fahad and Fazal — **92
+answers, all identical** before and after the fix. Every view did less
+database work after: 4 to 10 statements → 4; largest statement 36–37
+joins → 11–12; planning time 21–611 ms → 6–64 ms. Lists had real rows
+(Admin's plain Pipeline 66, Fazal's 17); the views empty for Fahad (one
+stage, Basheer K's Opportunities, no products) are covered by the other
+three users. UAT's copy (`569209f`) has the same fix-3 changes as
+`f7d25b1`; it only lacks `main`'s newer filters and the payment-confirmer
+name, which reach UAT with the October move.

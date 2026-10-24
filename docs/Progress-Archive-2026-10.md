@@ -4425,3 +4425,35 @@ moved to after the restart (Basheer).
   and E2E plan as well?" — checking found the test plan covered only 2
   of the 6 pop-ups. No guard-fixable slip, nothing touched live data or
   UAT, no lost work; tracker unchanged.
+### 2026-10-24 — Plan & Chore: UAT backup, doc tidy-up, October UAT move plan, Pipeline fix 3 check
+
+- UAT backup `cabio_uat_2026-10-24_1039.dump`. Doc tidy-up: Annual Target
+  plan Status fixed; Build & Test note's "Dev at 0062" (is 0063) passed to
+  Basheer.
+- `docs/UAT-Promotion-2026-10-Plan.md` written and approved (D1–D11):
+  everything on `main` moves early Sunday 25 Oct, after the Annual Target
+  Part 1 E2E; Next Action Rules is the reason (Haroon). Correction from
+  Basheer: six fixes went straight to UAT since 27 Sep, not one; git
+  showed five already in `main`, only `569209f` (fix 3) was not.
+- Query Load section 9 (before-the-day step 1): `3a754f5` vs `f7d25b1`
+  on Dev, 15 Pipeline views + Opportunity page, 4 users — 92 answers
+  identical; every view less database work (10 → 4 statements, 36 → 11
+  joins). Vivek owns no Opportunities on Dev now, so Fahad replaced him;
+  the fixed side ran from its own copy, not today's `main` (Basheer).
+  Fix 3 closed (Basheer). Merge `2547a0f` (`-s ours`, no file changes,
+  tests skipped — Basheer) pushed; `uat-fix3` copy and local `uat`
+  branch removed. Tool change `0854766` pushed.
+- Retro — **corrections from Basheer this session: 5**: (1) "We had not 1
+  emergency fix moved UAT … more than 1" (said one; git showed six);
+  (2) "I didn't understand this — 7 Oct row"; (3) "Please explain these:
+  1 … 3 …" (plan's before-the-day steps 1 and 3 unclear); (4) "I am not
+  understanding what you are trying to do … What are we trying to prove?"
+  (approval questions before the check's purpose); (5) "There is a
+  uat-fix3 … still sitting … check whether that is also written in the
+  plan" (report didn't mention removing it). 2–4 are one pattern: purpose
+  not stated first. No slip touched UAT or lost work; no tracker change.
+  Basheer: "Why is all the slips being accepted like this?" — thorough
+  analysis at the next Harness Engineering review (line added under "For
+  the next review" in `docs/Process-Improvements.md`).
+
+---
