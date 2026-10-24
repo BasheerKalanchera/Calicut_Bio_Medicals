@@ -813,7 +813,7 @@ export default function TargetPlanningScreen() {
         submitLabel={decision?.status === "APPROVED" ? "Approve" : "Reject"}
       >
         <Typography color="text.secondary">
-          {decision && `${formatPlanningPeriod(decision.targetPlan.planning_period)} ·${formatLakhs(Number(decision.targetPlan.target_amount_lakhs))}`}
+          {decision && `Target for ${formatPlanningPeriod(decision.targetPlan.planning_period)}: ${formatLakhs(Number(decision.targetPlan.target_amount_lakhs))}`}
         </Typography>
         <TextField
           label="Note (optional)"
