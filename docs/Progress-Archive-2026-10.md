@@ -4484,7 +4484,12 @@ moved to after the restart (Basheer).
   a phone, summary rows Company → SBU → Your team (G5); D76 reporting
   tree on Target vs Actuals and the Team Plans card (quarter view), the
   server sending who each person reports to. Full backend tests 1,355
-  passed, ruff, tsc, lint clean. Not pushed.
+  passed, ruff, tsc, lint clean. Pushed with docs `1f62d21`.
+- Frontend Standards 6.6: C7 gave #9 (label room on a picker), F6 gave
+  #10 (stacked blocks on a phone). Basheer checked the F6 fix on his
+  phone: good. Team Plans tree checked on Dev as Haroon by page text
+  only (screenshot showed a stale screen); Basheer's phone look on both
+  trees still to come.
 - Backlog: G4 "GM can't change a target set below them"; User Directory
   org tree view (Basheer).
 - Retro — **corrections from Basheer this session: 4**: (1) "Again you
@@ -4495,3 +4500,33 @@ moved to after the restart (Basheer).
   done while an opened row's details still didn't fit. (1) is a repeat a
   tool could catch: new tracker item P97. Nothing touched UAT or live
   data; no lost work.
+
+### 2026-10-24 (later) — Build & Test: Annual Target Part 1 E2E finished, 65 of 65
+
+- Basheer looked at both reporting trees (Target vs Actuals, Team Plans)
+  on his phone: fine.
+- G5–G9 Pass (Basheer). G9 note: Basheer K's Team Plans card still lists
+  Shruthi, with Fazal, Fahad and Rudrappa — expected, an SBU Manager's
+  Team Plans shows the whole SBU (same rule as Target vs Actuals); the
+  Team Targets card is gone, as no one reports to Basheer K now. Dev back
+  as before section G: Shruthi reports to Haroon; Imaging Team targets
+  Fazal ₹160 L, Shruthi ₹120 L, Basheer K not set.
+- H1 Pass (Claude, read only, as Haroon): no "2026-Q3"-style code on
+  Brand Target Tracking, Target & Coverage Planning (both views, plan box
+  opened and cancelled) or Target vs Actuals.
+
+### 2026-10-24 (later) — Build & Test: approve/reject box wording; Part 1 post-commit checklist
+
+- Approve/reject box on Target & Coverage Planning → Needs Your
+  Approval read "Oct–Dec 2026 ·₹55.0L". Basheer asked for the accounting
+  convention: a period's amount is a label and a value, and a hyphen
+  before an amount reads as a minus. Now "Target for Oct–Dec 2026:
+  ₹55.0L" — this box only; the dot elsewhere stays (Basheer). `48e737b`,
+  pushed; backend 1,355 passed, ruff, tsc, lint clean; checked on Dev as
+  Haroon (box opened and cancelled).
+- Post-commit checklist for Part 1 / D75 / D76: plan Status and test
+  plan "Built" list the shipped commits; no Backlog entry of its own to
+  remove; Traceability 3.1 already Done, no row change;
+  `generate_scorecard.py --check` OK (34 Done, 11 Partial, 5 Not
+  started). Next: UAT move early Sun 25 Oct (Plan & Chore doing the
+  pre-move steps); then Part 2 build here.

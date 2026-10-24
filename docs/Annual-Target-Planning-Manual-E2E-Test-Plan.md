@@ -6,7 +6,9 @@
 P6–P8, sections I–K).
 **Built:** Part 1 — `f2f5edd` (migration 0062, server), `642f04c`
 (screens), `ed669e7` (review fixes), `be27712` (seasonal pattern save
-greyed out until 100 %), 21–22 Oct 2026. Part 2 not yet.
+greyed out until 100 %), 21–22 Oct 2026; fixes during the E2E
+`6016e6a`, `dd9cdb9`, `c2f025d`, `8d232c1`, `48e737b`, 22–24 Oct.
+Part 1 E2E passed 65 of 65, 2026-10-24. Part 2 not yet.
 **Where:** Dev, after `/build` merges into `main` and migration 0062 is
 applied. Replaces the 17 Oct on-hold version, which tested the withdrawn
 yearly SBU figure (D4–D15, D22a). Part 2 runs after Part 1's E2E has
@@ -368,18 +370,18 @@ Basheer K (D57). Shruthi goes back to Haroon in G7.
 4. [Complex: cross-role] As Haroon. **Expected:** can still see Shruthi's
    ₹130 L and change it (D32), where the code puts that. No save. — Pass on "see", 2026-10-24 (Claude, read only, as Haroon): Insights Dashboard, Target vs Actuals, Imaging Oct–Dec 2026 shows Shruthi target ₹130.0L (and Basheer K ₹120.0L). "Change": no screen — Haroon's Team Targets card lists only the people at the top of the SBU, so Shruthi (now under Basheer K) isn't there; the server would allow it. Basheer: leave it for now — Backlog "Target Planning: GM can't change a target set below them on screen", plan D45 note.
 5. [Simple] Hide-check: as Fazal, Shruthi's ₹130 L and Basheer K's ₹120 L
-   nowhere; no way to change either. —
+   nowhere; no way to change either. — Pass, 2026-10-24 (Basheer: Target & Coverage Planning, Quarterly and Annual, and Target vs Actuals)
 6. [Simple] Hide-check: as Shruthi, Basheer K's ₹120 L and the SBU's
-   ₹280 L nowhere. —
+   ₹280 L nowhere. — Pass, 2026-10-24 (Basheer: Target & Coverage Planning, Quarterly and Annual, and Target vs Actuals)
 7. [Complex: save on another screen, then read back] As Abdul Latheef P,
    Shruthi's "Manager" back to Haroon Sidheeq; save. **Expected:** after a
-   reload, Haroon Sidheeq. —
+   reload, Haroon Sidheeq. — Pass, 2026-10-24 (Basheer saved and read back)
 8. [Complex: two saves, then read back] As Haroon, Imaging Team targets.
    **Expected:** Fazal ₹160 L, Shruthi ₹130 L, Basheer K ₹120 L — ₹130 L
    over ₹280 L. Clear Basheer K's figure (or ₹0 if the screen can't clear)
-   and set Shruthi → ₹120 L; save. **Expected:** the warning goes. —
+   and set Shruthi → ₹120 L; save. **Expected:** the warning goes. — Pass, 2026-10-24 (Basheer removed Basheer K's figure, set Shruthi ₹120 L, saved and read back: Fazal ₹160 L, Shruthi ₹120 L, Basheer K Not set, total ₹280 L, no warning)
 9. [Simple] As Basheer K, Team targets. **Expected:** Shruthi no longer
-   listed. —
+   listed. — Pass, 2026-10-24 (Basheer): no Team Targets card at all (no one reports to Basheer K). Team Plans still lists Shruthi with Fazal, Fahad and Rudrappa — expected: an SBU Manager's Team Plans shows the whole SBU, as Target vs Actuals does
 
 ## H — Month labels (D39)
 
@@ -387,7 +389,7 @@ Basheer K (D57). Shruthi goes back to Haroon in G7.
    Tracking, Target & Coverage Planning (SBU box, Team targets, "Your
    target", plan dialog, messages), Target vs Actuals. **Expected:**
    quarters read like "Oct–Dec 2026"; no "2026-Q3"-style code anywhere;
-   "FY 2026-27" year labels unchanged. —
+   "FY 2026-27" year labels unchanged. — Pass, 2026-10-24 (Claude, read only, as Haroon, phone width; page text searched for "2026-Q3"-style and "Q1"–"Q4" codes on every view — none). Brand Target Tracking, 2026: Imaging and Critical Care with every brand opened — "Jan–Mar 2026" … "Oct–Dec 2026", "Jan–Mar 2027", "SonoScape · Jan–Dec 2026", "Medion · Apr 2026–Mar 2027". Target & Coverage Planning, Quarterly Oct–Dec 2026: SBU Target card "SBU target for Oct–Dec 2026", Team Targets "Divide the SBU target for Oct–Dec 2026 …", My Plan, Needs Your Approval ("Oct–Dec 2026", "Jan–Mar 2027", "Apr–Jun 2027"), plan box "Plan & Coverage — Oct–Dec 2026" (closed with Cancel, nothing saved); Annual "FY 2026-27" with "Apr–Jun 2026" … "Jan–Mar 2027". Target vs Actuals: Imaging and Critical Care Oct–Dec 2026, Critical Care Jan–Mar 2027. "Your target" not shown to Haroon (no target of his own); its label was read as Fazal at D1 ("Your target for Oct–Dec 2026")
 
 ## I — Target vs Actuals: Year view (D16, D22, D31, D66, D67)
 

@@ -17,22 +17,12 @@ session edits this note._
 - Part 1 built and pushed: `f2f5edd`, `642f04c`, `ed669e7`, and
   `be27712` (22 Oct: seasonal pattern "Save pattern" greyed out until
   100 %, Basheer — phone use, no reload). Dev at 0063 (22 Oct, `6016e6a`).
-- **In progress: Part 1 E2E on Dev** — 59 of 65 steps Pass (P1–P5,
-  A1–A11, B1–B10, C1–C7 incl. C3a, D1–D8, E1–E6, F1–F6, G1–G4 (G4 "see"
-  only; "change" gap → Backlog, plan D45 note, Basheer 24 Oct) (Basheer K
-  given ₹120 L Oct–Dec; Shruthi now ₹130 L) — Shruthi's
-  manager is Basheer K on Dev until G7 puts it back; A8 hint wording awaiting
-  Basheer). Fixes found C7, F6, G5 (phone layout, Frontend Standards 6.6
-  #9–#10) and D76 reporting tree on Target vs Actuals and Team Plans —
-  one fix `8d232c1` (Basheer 24 Oct; not pushed; detail in
-  Progress-Archive). Claude read both trees on Dev as Haroon; Basheer's
-  phone look still to come. **Next:** G5 (as Fazal, hide-check), G6–G9, H.
-- D75 (SBU Target + Team Targets own cards, Annual views, "Team Plans"
-  for all, no repeated SBU target for Admin/GM) committed `dd9cdb9`;
-  Brand Target Tracking phone layout `c2f025d`. Pushed with the 23 Oct
-  docs batch. Post-commit checklist for D75 once its steps pass.
-- Small-fixes batch at E2E end: missing space before ₹, approve/reject
-  dialog (TargetPlanningScreen ~775) — not made yet.
+- Part 1 done 24 Oct: E2E 65 of 65, last fix `48e737b` pushed,
+  post-commit checklist done (docs uncommitted — next docs batch). A8
+  hint wording still awaiting Basheer.
+- **Next:** UAT move is early Sun 25 Oct; Plan & Chore is doing the
+  pre-move steps (Basheer 24 Oct) — this session doesn't touch it unless
+  asked. After the move: Part 2 build here (ask first).
 - Lesson (21 Oct): he found the raw review list hard to follow — bring
   it sorted by what users would notice, screen first, from the start.
 
