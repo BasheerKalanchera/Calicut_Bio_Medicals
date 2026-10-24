@@ -229,7 +229,12 @@ this replan: D8, D12, D12a, D14.
   for now Haroon divides each SBU's target among the Area Managers; once
   an SBU Manager is appointed it passes to them, as D32 says. A rep with
   no Area Manager above them gets their target from whoever they report
-  to. Refines D30 and D32 — Basheer, 2026-10-19 (Q-A).
+  to. Refines D30 and D32 — Basheer, 2026-10-19 (Q-A). "Admin and GM
+  may change any" is allowed by the server, but their Team Targets card
+  shows only the people at the top of the SBU, so a target set lower
+  down has no screen for them yet; they see it on Target vs Actuals.
+  Left for now (E2E G4; Backlog "Target Planning: GM can't change a
+  target set below them on screen") — Basheer, 2026-10-24.
 - D46. Brand quarters are saved, not worked out each time: when the GM
   saves a brand's yearly figure, stretch or seasonal split, the app works
   out its four quarters and saves them into the brand quarterly targets
@@ -393,6 +398,17 @@ this replan: D8, D12, D12a, D14.
   longer repeats the SBU target beside its total (both views); everyone
   else keeps "Your target", their own figure (D57) — Basheer, the same
   day.
+- D76. Target vs Actuals lists people as a tree: each manager's team sits
+  under them, indented, with "reports to …", because a person's target is
+  a share of their manager's (D30) and a flat list invites adding the
+  targets up twice. The summary rows run widest first — Company, SBU,
+  then "Your team" — so the narrowest sits just above the people. On a
+  phone the summary and person rows are stacked blocks. Found at G5;
+  built now as a fix during Part 1's E2E (the server sends who each
+  person reports to) — Basheer, 2026-10-24. Target & Coverage Planning's
+  Team Plans card (quarter view) gets the same tree, people no longer on
+  the team still listed last; Team Targets stays one level (it lists only
+  the people whose targets you set) — Basheer, 2026-10-24.
 
 ## Figures and sources
 

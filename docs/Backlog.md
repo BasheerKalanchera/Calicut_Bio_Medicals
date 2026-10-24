@@ -133,6 +133,31 @@ and these need deciding then:
 - Plan approvals and notifications then follow the reporting line with no
   code change (D18, D69).
 
+### Target Planning: GM can't change a target set below them on screen — parked until an SBU Manager is appointed (2026-10-24)
+
+Annual Target plan D32/D45 say Admin and GM may change anyone's target.
+The server allows it (`planning/service.py` `_settable_person`), but the
+GM's Team Targets card lists only the people at the top of the SBU
+(`repository.py` `sbu_top_people`), so a target set by an SBU Manager or
+an Area Manager (e.g. Fahad's, set by Fazal) has no Change button for the
+GM. The GM sees every target on the Insights Dashboard's Target vs
+Actuals and asks that manager to change it. Found in Annual Target E2E
+G4 (Shruthi under Basheer K, Dev). Cabio has no SBU Manager today, so
+the GM's card already lists every Area Manager he sets. Possible fix when
+needed: each row on the GM's card opens to the people under that person,
+each with Change. Basheer, 2026-10-24: leave it for now.
+
+### User Directory: org tree view — not started (2026-10-24)
+
+User Directory lists everyone flat, each row saying "reports to X"
+(`UserDirectoryScreen.tsx`), so checking or fixing reporting lines means
+reading names one by one. An org-chart view — each manager's people
+indented under them — would make a wrong reporting line easy to spot. The
+same tree is already built for Target vs Actuals and Team Plans (Annual
+Target plan D76, shared `utils/reportingTree.ts`); Team Activity and
+Overdue Actions on the Insights Dashboard could use it too, optionally.
+Raised during Annual Target E2E G5. Basheer, 2026-10-24: Backlog for now.
+
 ### Target vs Actuals: Area Manager misses a member's share outside the team — accepted, not planned (2026-10-07)
 
 When someone in an Area Manager's team holds a split share on an

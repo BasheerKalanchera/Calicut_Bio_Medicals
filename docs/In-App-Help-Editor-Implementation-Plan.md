@@ -1,6 +1,8 @@
 # In-App Help Editor — Implementation Plan
 
 **Status:** Approved 2026-10-22 (Basheer). Not yet built — Build & Test.
+Reaches UAT a day or two after the full UAT move, not with it (parent
+plan D15, Basheer, 2026-10-24).
 **Traceability rows:** none (supports the UAT rollout; step 3b of
 `docs/User-Manual-And-Help-Catchup-Implementation-Plan.md`).
 **Design / discussion:** that plan's D1 change, 2026-10-22 (help moves out

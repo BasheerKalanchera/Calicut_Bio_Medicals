@@ -90,6 +90,7 @@ skill. Status: open · built (<commit>) · merged (<where>, <date>) · dropped (
 | P94 | A `!` command given to Basheer uses forward-slash paths (`/c/Users/…`); Git Bash strips Windows backslashes (was watch-list 2026-10-10; 2026-10-21: the `alembic upgrade head` command for 0062 failed with "command not found"; 2026-10-22: the 0063 command failed twice — wrong folder, then `cmd /c` rewritten by Git Bash) | 2026-10-10 | 4 | built (exact tested command in `cabio-db-and-scripting` skill, 2026-10-22) |
 | P95 | A commit message describing a rename names only the new wording (was watch-list 2026-10-14: `a76b02d`; 2026-10-21: the vendor script fix's proposed title quoted the old word; the check refused it, reworded) | 2026-10-14 | 2 | open |
 | P96 | A made-up example for Cabio uses a brand Cabio sells, never a competitor (was watch-list 2026-10-17: incentive options doc; 2026-10-21: Annual Target plan, discussion doc and a test used Mindray) | 2026-10-17 | 2 | built (CLAUDE.md "Product", `c6708f9`) |
+| P97 | During a manual E2E, every reply's status line gives steps passed of the total and the % complete (2026-10-24: "Again you forgot to show me %complete in the summary line", Annual Target E2E after C7; rule written into the `cabio-e2e-testing` skill the same day). A tool could check each E2E reply's status line has a "%" | 2026-10-24 | 1 | open (rule in skill; guard for the weekly review) |
 
 ## Watch list
 

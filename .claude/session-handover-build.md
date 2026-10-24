@@ -6,8 +6,6 @@ keeps its own note: `.claude/session-handover-plan.md`. Only the Build & Test
 session edits this note._
 
 ## Reminders
-- 23 Oct retro done (Progress-Archive, 8 corrections). Next session:
-  carry on Part 1 E2E on Dev (below).
 - api.ts guard is on (`5ca17aa`): a backend fix commit must carry the
   matching api.ts (`sh .githooks/check-api-types.sh --write` stages it).
 
@@ -18,29 +16,37 @@ session edits this note._
   on brand_vendor_target — small migration); Q-C still open with Basheer.
 - Part 1 built and pushed: `f2f5edd`, `642f04c`, `ed669e7`, and
   `be27712` (22 Oct: seasonal pattern "Save pattern" greyed out until
-  100 %, Basheer — phone use, no reload). Dev at 0062 (21 Oct).
-- **In progress: Part 1 E2E on Dev** — 40 of 64 steps Pass (P1–P5,
-  A1–A10, B1–B9, C1–C5 incl. C3a, D1–D7, E1–E3; A8 hint wording awaiting
-  Basheer). **Next:** C6 (as Haroon, already signed in on the test
-  tab), C7, B10, D8, then E4–E6, F, G (incl. new G3a), H.
+  100 %, Basheer — phone use, no reload). Dev at 0063 (22 Oct, `6016e6a`).
+- **In progress: Part 1 E2E on Dev** — 59 of 65 steps Pass (P1–P5,
+  A1–A11, B1–B10, C1–C7 incl. C3a, D1–D8, E1–E6, F1–F6, G1–G4 (G4 "see"
+  only; "change" gap → Backlog, plan D45 note, Basheer 24 Oct) (Basheer K
+  given ₹120 L Oct–Dec; Shruthi now ₹130 L) — Shruthi's
+  manager is Basheer K on Dev until G7 puts it back; A8 hint wording awaiting
+  Basheer). Fixes found C7, F6, G5 (phone layout, Frontend Standards 6.6
+  #9–#10) and D76 reporting tree on Target vs Actuals and Team Plans —
+  one fix `8d232c1` (Basheer 24 Oct; not pushed; detail in
+  Progress-Archive). Claude read both trees on Dev as Haroon; Basheer's
+  phone look still to come. **Next:** G5 (as Fazal, hide-check), G6–G9, H.
 - D75 (SBU Target + Team Targets own cards, Annual views, "Team Plans"
   for all, no repeated SBU target for Admin/GM) committed `dd9cdb9`;
   Brand Target Tracking phone layout `c2f025d`. Pushed with the 23 Oct
   docs batch. Post-commit checklist for D75 once its steps pass.
 - Small-fixes batch at E2E end: missing space before ₹, approve/reject
   dialog (TargetPlanningScreen ~775) — not made yet.
-- User Manual "SBU Target & Plans" → passed to Plan & Chore's note
-  (Basheer yes 23 Oct).
 - Lesson (21 Oct): he found the raw review list hard to follow — bring
   it sorted by what users would notice, screen first, from the start.
 
 ## UAT move
 - Basheer 20 Oct: "move everything together" — no Wednesday 21 Oct
-  move; the one full move waits for the User Manual and Annual Target
-  Part 1 (D52). Haroon needs telling the new date (not drafted).
-- Then the UAT move plan `docs/UAT-Promotion-2026-10-Plan.md` (model:
-  `docs/UAT-Promotion-2026-09-Plan.md`): include D22, Part 1, migration
-  0062; fresh-install check the day before, RLS smoke test on Dev, UAT
+  move. 24 Oct: the full move goes as soon as Part 1's E2E finishes;
+  manual + help follow a day or two later (User Manual plan D15). Do
+  the move before any Part 2 / My Work code lands on main. Haroon
+  needs telling the new date (not drafted).
+- Plan & Chore writes the UAT move plan while this session finishes
+  the E2E (Basheer 24 Oct; he relays D15 to it himself).
+  `docs/UAT-Promotion-2026-10-Plan.md` (model:
+  `docs/UAT-Promotion-2026-09-Plan.md`): everything on main incl. D22,
+  Part 1, migrations 0055–0063; fresh-install check the day before, RLS smoke test on Dev, UAT
   backup (ask first); WhatsApp message for Haroon (not drafted); after
   the move delete `.claude/dq-check-paused` and run the UAT data-quality
   check (ask first).

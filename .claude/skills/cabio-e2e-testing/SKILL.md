@@ -45,6 +45,9 @@ Moved here word for word from CLAUDE.md on 2026-10-08
   screenshot coordinates for clicks, especially after a layout shift.
 - Record Pass/Fail in the test plan doc the moment each step completes.
   *(2026-09-22)*
+- During a manual E2E run, every reply's closing status line gives the
+  steps passed out of the total and the percentage complete, counted from
+  the test plan — e.g. "Test run: 42 of 65 (65 %)". *(2026-10-24)*
 - Flag the hot-reload risk before editing frontend files while a test browser
   session is open — it can silently reset the logged-in user. *(2026-09-22)*
 - Before the first step of any manual E2E run, have the Dev backend restarted

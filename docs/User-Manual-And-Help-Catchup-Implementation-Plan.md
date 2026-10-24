@@ -2,9 +2,9 @@
 
 **Status:** Approved 2026-10-01 (Basheer). Steps 1–2 done 2026-10-15;
 manual waiting for Basheer's PDF review. Step 3 (in-app help) follows that
-review and also covers the Annual Target Planning Part 1 screens; it ships
-with the single full UAT move (Annual Target plan D52) — Basheer,
-2026-10-21. (Plan vs Actuals Tracking's screens, which step 3 waited for,
+review and also covers the Annual Target Planning Part 1 screens. It
+reaches UAT a day or two after the full UAT move, not with it (D15,
+Basheer, 2026-10-24; was "with the single full UAT move", 2026-10-21). (Plan vs Actuals Tracking's screens, which step 3 waited for,
 passed E2E 2026-10-13.) **Reshaped 2026-10-22 (Basheer):** help text
 moves from the app's code into a database table with an Admin/GM editor
 (D1 changed, D7a replaced, D9–D13). Help wording is written screen by
@@ -67,6 +67,12 @@ user manual and in-app `?` help up to date").
   Opportunities tab, **Convert** on a marketing lead). Help pages go
   from 22 to 28; the help editor lists the six as a "Pop-up forms" group
   (help editor plan D5, D9b) — Basheer, 2026-10-23
+- D15. **The UAT move no longer waits for the manual or help.** The full
+  move goes as soon as the Annual Target Planning Part 1 E2E finishes;
+  the manual PDF and the in-app help follow a day or two later, in their
+  own move once the help editor is built ("no one is looking at the help
+  at the moment"). Changes the 2026-10-21 line in Status and step 5 —
+  Basheer, 2026-10-24
 
 ## 1. In plain terms
 
@@ -113,8 +119,8 @@ After this work:
    E2E: open `?` on every screen as each role; edit a help page as Admin
    and as General Manager, check the Audit Log entry, and check another
    role can't edit (Simple steps, Basheer).
-5. **Ship with the UAT move.** Help content loaded into UAT as part of
-   the move — after that, UAT's copy is the one that matters, and it is
+5. **Ship to UAT a day or two after the full move (D15).** Help content
+   loaded into UAT in its own move — after that, UAT's copy is the one that matters, and it is
    copied to Production at go-live. PDF to the team (D5); CLAUDE.md line
    (D7b); post-commit checklist.
 

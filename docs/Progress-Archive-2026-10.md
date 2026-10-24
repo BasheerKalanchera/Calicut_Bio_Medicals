@@ -4425,6 +4425,23 @@ moved to after the restart (Basheer).
   and E2E plan as well?" — checking found the test plan covered only 2
   of the 6 pop-ups. No guard-fixable slip, nothing touched live data or
   UAT, no lost work; tracker unchanged.
+
+### 2026-10-24 — Build & Test: Annual Target E2E G4–G5 findings (Insights Dashboard, Target vs Actuals)
+
+- G4: Haroon sees Shruthi's ₹130 L on Target vs Actuals, but no screen
+  lets him change a target set below the top of the SBU (server allows
+  it). Basheer: leave it — Backlog entry, plan D45 note.
+- G5 viewing, Basheer: on a phone the person rows and the "Against
+  target" rows scrolled sideways — now stacked blocks on a phone
+  (Frontend Standards 6.6 #10, third occurrence); summary rows reordered
+  Company → SBU → Your team.
+- Basheer: the flat person list hides that a person's target is a share
+  of their manager's (Haroon's Imaging Oct–Dec targets add to ₹650 L
+  against an SBU ₹280 L). D76: the list is a tree by reporting line; the
+  server now sends `manager_id`. Checked on Dev as Haroon at phone width:
+  Haroon › Basheer K › Shruthi › Rudrappa, Haroon › Fazal › Fahad.
+  Uncommitted; its own `fix:` commit.
+
 ### 2026-10-24 — Plan & Chore: UAT backup, doc tidy-up, October UAT move plan, Pipeline fix 3 check
 
 - UAT backup `cabio_uat_2026-10-24_1039.dump`. Doc tidy-up: Annual Target
@@ -4457,3 +4474,24 @@ moved to after the restart (Basheer).
   the next review" in `docs/Process-Improvements.md`).
 
 ---
+
+### 2026-10-24 — Build & Test: Annual Target Part 1 E2E C6–G4; phone layout and reporting-tree fix `8d232c1`; retro
+
+- E2E from 40 of 64 Pass (23 Oct) to 59 of 65; left G5–G9 and H1.
+- Fix `8d232c1` (one commit, Basheer — the phone fixes and D76 share
+  files): "SBU" picker label (C7); Needs Your Approval and Team Plans fit
+  a phone, opened row details stacked (F6); Target vs Actuals stacked on
+  a phone, summary rows Company → SBU → Your team (G5); D76 reporting
+  tree on Target vs Actuals and the Team Plans card (quarter view), the
+  server sending who each person reports to. Full backend tests 1,355
+  passed, ruff, tsc, lint clean. Not pushed.
+- Backlog: G4 "GM can't change a target set below them"; User Directory
+  org tree view (Basheer).
+- Retro — **corrections from Basheer this session: 4**: (1) "Again you
+  forgot to show me %complete in the summary line" — rule added to the
+  E2E skill; (2) handover said "Dev at 0062", was 0063 (via Plan &
+  Chore); (3) "give me the steps instead" — E5, a look-only check, tagged
+  Complex for Claude; (4) "Not done with the fix" — phone fix reported
+  done while an opened row's details still didn't fit. (1) is a repeat a
+  tool could catch: new tracker item P97. Nothing touched UAT or live
+  data; no lost work.
