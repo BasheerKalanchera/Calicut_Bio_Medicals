@@ -27,8 +27,8 @@ Usage:
                  [--id key=value ...] [--save-responses DIR | --compare-responses DIR]
 
   --only   keep routes whose path contains TEXT (e.g. "/opportunities/{opportunity_id}")
-  --as     display names of users to run as (default: Admin, SBU Manager and
-           Sales Staff test users below)
+  --as     display names of users to run as (default: Admin, SBU Manager,
+           Sales Staff and Area Manager test users below)
   --id     override a path id (e.g. --id opportunity_id=<uuid>)
 
 Run with backend/.venv/Scripts/python.exe. Write --out and the response
@@ -65,7 +65,8 @@ from app.domains.organization.models import UserProfile  # noqa: E402
 from app.main import app  # noqa: E402
 
 P = "/api/v1"
-DEFAULT_USERS = ["Abdul Latheef P", "Basheer K", "Vivek"]  # Admin, SBU Manager, Sales Staff
+# Admin, SBU Manager, Sales Staff, Area Manager
+DEFAULT_USERS = ["Abdul Latheef P", "Basheer K", "Fahad", "Fazal"]
 SKIP = {P + "/health", P + "/version", P + "/documents/{document_id}/download-url"}
 
 # Dev test data the audit of 2026-10-06 used (override with --id).
@@ -76,11 +77,13 @@ FIXED_IDS = {
     # "usg m/c" (Imaging): 1 product line, 2 splits, 1 stakeholder.
     "opportunity_id": "c6c45c4a-05c7-4b60-8f72-8cd10217f8ba",
 }
-# Sales Staff can't see "usg m/c"; Vivek's own "New USG m/c" (Critical Care,
-# 1 product line, 2 splits, no stakeholder or documents) is the richest Sales
-# Staff Opportunity on Dev (2026-10-06). --id overrides these too.
+# Sales Staff and Area Managers can't all see "usg m/c", so each gets their
+# own richest Opportunity on Dev (2026-10-24; Vivek owns none since then):
+# Fahad "USG M/c - Test Aug 18", Fazal "Usg upgrade", 2 product lines each.
+# --id overrides these too.
 PER_USER_IDS = {
-    "Vivek": {"opportunity_id": "5bb6f4f8-f39d-4685-a79a-66176b5661da"},
+    "Fahad": {"opportunity_id": "1954e928-37ef-4ce5-8e0b-867004a19986"},
+    "Fazal": {"opportunity_id": "13feb65b-ff24-4fb5-91d1-451d158ce558"},
 }
 ID_QUERIES = {
     "account_id": "SELECT id FROM account WHERE name='Aster MIMS Calicut' LIMIT 1",
@@ -94,6 +97,12 @@ ID_QUERIES = {
     # Not a path id: the Pipeline's stage filter (VARIANTS below).
     "stage_id": "SELECT stage_id FROM opportunity GROUP BY 1 ORDER BY count(*) DESC, 1 LIMIT 1",
     "user_id": "SELECT id FROM user_profile WHERE display_name='Basheer K' LIMIT 1",
+    # Not path ids: Pipeline filters for VARIANTS below (busiest owner and
+    # brand on Dev, the Won status).
+    "busy_owner_id": "SELECT owner_id FROM opportunity GROUP BY 1 ORDER BY count(*) DESC, 1 LIMIT 1",
+    "busy_brand_id": "SELECT p.brand_id FROM opportunity_item i JOIN product p ON p.id=i.product_id "
+    "GROUP BY 1 ORDER BY count(DISTINCT i.opportunity_id) DESC, 1 LIMIT 1",
+    "won_status_id": "SELECT id FROM opportunity_status WHERE status_code='WON'",
     # Not a path id: the Daily Activity Report's day (busiest on Dev, so the
     # before/after comparison has rows to compare); fills QUERY_PARAMS below.
     "report_date": "SELECT (activity_date AT TIME ZONE 'Asia/Kolkata')::date FROM activity "
@@ -118,14 +127,26 @@ QUERY_PARAMS = {
     P + "/planning/brand-vendor-targets": {"planning_period": "2026-Q3"},
 }
 # Extra runs of a route with filters that take a different path through the
-# database (Query Load Fixes fix 3). "{key}" values are filled from the ids
-# above. Results and saved responses are keyed "<user> GET <path> [<label>]".
+# database (Query Load Fixes fix 3; plan section 9 views 1–14). "{key}" values
+# are filled from the ids above. Results and saved responses are keyed
+# "<user> GET <path> [<label>]". View 15, the Opportunity page, is the route
+# itself: --only /opportunities/pipeline "/opportunities/{opportunity_id}".
 VARIANTS = {
     P + "/opportunities/pipeline": {
         "zone": {"zone_id": "{zone_id}"},
         "stage": {"stage_id": "{stage_id}"},
         "team only": {"owner_team_only": "true"},  # every report drill-down
         "product": {"product_id": "{product_id}"},
+        "owner": {"owner_id": "{busy_owner_id}"},
+        "brand": {"brand_id": "{busy_brand_id}"},
+        "won": {"status_id": "{won_status_id}"},
+        "sbu": {"sbu_id": IMG},
+        "account": {"account_id": "{account_id}"},  # Aster MIMS Calicut, the busiest
+        "exact zone": {"zone_id": "{zone_id}", "zone_exact": "true"},
+        "trade-in": {"has_trade_in": "true"},
+        "no products": {"has_no_items": "true"},
+        "closed in Oct": {"closed_from": "2026-10-01", "closed_to": "2026-10-31"},  # all 7 closed on Dev
+        "team only + product": {"owner_team_only": "true", "product_id": "{product_id}"},
     },
 }
 
