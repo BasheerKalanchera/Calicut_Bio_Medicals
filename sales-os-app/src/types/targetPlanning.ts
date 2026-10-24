@@ -158,6 +158,8 @@ export type RosterStatus = "NOT_STARTED" | "DRAFT" | "PENDING_APPROVAL" | "APPRO
 export interface TargetRosterPerson {
   user_id: string;
   display_name: string;
+  // Who they report to; Team Plans lists a manager's team under them (D76).
+  manager_id: string | null;
   // false: no longer on the team (moved SBU, deactivated); listed last, their
   // plan still counts in the total, not part of "N of M".
   on_team: boolean;
@@ -211,6 +213,8 @@ export interface TargetVsActualBrand {
 export interface TargetVsActualPerson {
   user_id: string;
   display_name: string;
+  // Who they report to; the screen lists a manager's team under them (D76).
+  manager_id: string | null;
   // Draft and Rejected plans come with no figures (planned 0, no hospitals/brands).
   plan_status: RosterStatus;
   // BR-PL-05: set while a revision of an approved plan is in flight ("was ₹X approved").

@@ -17,6 +17,7 @@ import type {
   TargetVsActualSummaryRow,
 } from "../types/targetPlanning";
 import { formatLakhs, formatPlanningPeriod, getCurrentPlanningPeriod, shiftPlanningPeriod } from "../utils/formatter";
+import { asTree } from "../utils/reportingTree";
 
 // Local stopgap type -- listSbus returns Promise<unknown> today (see
 // docs/Backlog.md "Type the shared frontend service functions properly").
@@ -180,13 +181,42 @@ function plansVsTarget(row: TargetVsActualSummaryRow): string | null {
 // Manager and above: against the SBU target, its brands' total) and company
 // row (Admin/GM: against every SBU's target) -- Annual Target Planning D49.
 function SummaryRows({ teamRow, sbuRow, companyRow }: { teamRow: TargetVsActualSummaryRow | null; sbuRow: TargetVsActualSummaryRow | null; companyRow: TargetVsActualSummaryRow | null }) {
+  // Widest first, so the narrowest row sits just above the person rows it
+  // sums (Basheer, 2026-10-24).
   const rows: { key: string; label: string; row: TargetVsActualSummaryRow; notSet: string }[] = [];
-  if (teamRow) rows.push({ key: "team", label: "Your team", row: teamRow, notSet: "Target not set" });
-  if (sbuRow) rows.push({ key: "sbu", label: "SBU", row: sbuRow, notSet: "Target not set" });
   if (companyRow) rows.push({ key: "company", label: "Company", row: companyRow, notSet: "Waits for every SBU's target" });
+  if (sbuRow) rows.push({ key: "sbu", label: "SBU", row: sbuRow, notSet: "Target not set" });
+  if (teamRow) rows.push({ key: "team", label: "Your team", row: teamRow, notSet: "Target not set" });
   if (rows.length === 0) return null;
   return (
-    <Box sx={{ overflowX: "auto" }}>
+    <>
+    {/* On a phone each row is a stacked block, like the person rows below. */}
+    <Box sx={{ display: { xs: "block", sm: "none" } }}>
+      {rows.map(({ key, label, row, notSet }) => {
+        const figures: [string, string][] = [
+          ["Target", row.target_lakhs === null ? notSet : lakhs(row.target_lakhs)],
+          ["Team plans", lakhs(row.planned_lakhs)],
+          ["Plans vs target", percent(plansVsTarget(row))],
+          ["PO received", lakhs(row.po_received_lakhs)],
+          ["Won (paid)", lakhs(row.won_lakhs)],
+          ["Won % of target", percent(row.percent_of_target)],
+        ];
+        return (
+          <Box key={key} sx={{ py: 1, borderBottom: 1, borderColor: "divider" }}>
+            <Box sx={{ fontWeight: 700, mb: 0.5 }}>{label}</Box>
+            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", columnGap: 2, rowGap: 0.25 }}>
+              {figures.map(([figLabel, value]) => (
+                <Box key={figLabel} sx={{ display: "flex", justifyContent: "space-between", gap: 1, fontSize: "0.8125rem" }}>
+                  <Box component="span" sx={{ color: "text.secondary" }}>{figLabel}</Box>
+                  <Box component="span" sx={{ fontVariantNumeric: "tabular-nums", textAlign: "right" }}>{value}</Box>
+                </Box>
+              ))}
+            </Box>
+          </Box>
+        );
+      })}
+    </Box>
+    <Box sx={{ overflowX: "auto", display: { xs: "none", sm: "block" } }}>
       <Table size="small">
         <TableHead>
           <TableRow>
@@ -216,6 +246,7 @@ function SummaryRows({ teamRow, sbuRow, companyRow }: { teamRow: TargetVsActualS
         </TableBody>
       </Table>
     </Box>
+    </>
   );
 }
 
@@ -247,6 +278,7 @@ export default function TargetVsActualsSection() {
     enabled: !!sbuId,
   });
   const data = query.data;
+  const tree = data ? asTree(data.people) : [];
 
   const toggle = (id: string) =>
     setExpanded((prev) => {
@@ -313,7 +345,67 @@ export default function TargetVsActualsSection() {
 
           <SummaryRows teamRow={data.team_row} sbuRow={data.sbu_row} companyRow={data.company_row} />
 
-          <Box sx={{ overflowX: "auto" }}>
+          {/* On a phone each person is a stacked block, with their details
+              opening under it, so nothing needs a sideways scroll (Basheer,
+              2026-10-24). */}
+          <Box sx={{ display: { xs: "block", sm: "none" } }}>
+            {tree.map(({ person: p, depth, managerName }) => {
+              const open = expanded.has(p.user_id);
+              const submitted = SUBMITTED.has(p.plan_status);
+              const lastApproved = countsAtLastApproved(p);
+              const figures: [string, string][] = [
+                ["Target", lakhs(p.target_lakhs)],
+                ["Rep Plan", submitted || lastApproved ? lakhs(p.planned_lakhs) : DASH],
+                ["PO received", lakhs(p.po_received_lakhs)],
+                ["Won (paid)", lakhs(p.won_lakhs)],
+                ["Expected", lakhs(p.expected_lakhs)],
+                ["Likely finish", lakhs(p.likely_finish_lakhs)],
+                ["% of plan", percent(p.percent_of_target)],
+              ];
+              return (
+                <Box key={p.user_id} sx={{ py: 1, borderBottom: 1, borderColor: "divider", ml: depth * 2, ...(depth > 0 && { pl: 1, borderLeft: 2, borderLeftColor: "divider" }) }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <IconButton size="small" onClick={() => toggle(p.user_id)} aria-expanded={open} aria-label={open ? "Hide details" : "Show details"}>
+                      {open ? <KeyboardArrowDownIcon fontSize="small" /> : <KeyboardArrowRightIcon fontSize="small" />}
+                    </IconButton>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Box sx={{ fontWeight: 700 }}>{p.display_name}</Box>
+                      {managerName && <Box sx={noteSx}>reports to {managerName}</Box>}
+                      <Box sx={{ display: "flex", flexWrap: "wrap", columnGap: 1 }}>
+                        <Box component="span" sx={{ fontSize: "0.75rem", fontWeight: 700, color: STATUS_COLOR[p.plan_status] }}>
+                          {STATUS_LABEL[p.plan_status]}
+                        </Box>
+                        {p.late_opportunities.length > 0 && (
+                          <Box component="span" sx={{ fontSize: "0.6875rem", fontWeight: 700, color: "#d03b3b" }}>
+                            {p.late_opportunities.length} past closing date
+                          </Box>
+                        )}
+                      </Box>
+                    </Box>
+                  </Box>
+                  <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", columnGap: 2, rowGap: 0.25, pl: 5, pt: 0.5 }}>
+                    {figures.map(([label, value]) => (
+                      <Box key={label} sx={{ display: "flex", justifyContent: "space-between", gap: 1, fontSize: "0.8125rem" }}>
+                        <Box component="span" sx={{ color: "text.secondary" }}>{label}</Box>
+                        <Box component="span" sx={{ fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>{value}</Box>
+                      </Box>
+                    ))}
+                  </Box>
+                  {submitted && p.previous_approved_total_lakhs !== null && (
+                    <Box sx={{ ...noteSx, pl: 5 }}>Rep Plan was {lakhs(p.previous_approved_total_lakhs)} approved</Box>
+                  )}
+                  {lastApproved && <Box sx={{ ...noteSx, pl: 5 }}>Rep Plan approved, still counts</Box>}
+                  {open && (
+                    <Box sx={{ pl: 1 }}>
+                      <PersonDetail person={p} />
+                    </Box>
+                  )}
+                </Box>
+              );
+            })}
+          </Box>
+
+          <Box sx={{ overflowX: "auto", display: { xs: "none", sm: "block" } }}>
             <Table size="small">
               <TableHead>
                 <TableRow>
@@ -330,7 +422,7 @@ export default function TargetVsActualsSection() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {data.people.map((p) => {
+                {tree.map(({ person: p, depth, managerName }) => {
                   const open = expanded.has(p.user_id);
                   const submitted = SUBMITTED.has(p.plan_status);
                   const lastApproved = countsAtLastApproved(p);
@@ -342,13 +434,14 @@ export default function TargetVsActualsSection() {
                             {open ? <KeyboardArrowDownIcon fontSize="small" /> : <KeyboardArrowRightIcon fontSize="small" />}
                           </IconButton>
                         </TableCell>
-                        <TableCell>
+                        <TableCell sx={{ pl: 2 + depth * 3 }}>
                           {p.display_name}
                           {p.late_opportunities.length > 0 && (
                             <Box component="span" sx={{ ml: 1, fontSize: "0.6875rem", fontWeight: 700, color: "#d03b3b" }}>
                               {p.late_opportunities.length} past closing date
                             </Box>
                           )}
+                          {managerName && <Box sx={noteSx}>reports to {managerName}</Box>}
                         </TableCell>
                         <TableCell sx={{ fontSize: "0.75rem", fontWeight: 700, color: STATUS_COLOR[p.plan_status], whiteSpace: "nowrap" }}>
                           {STATUS_LABEL[p.plan_status]}

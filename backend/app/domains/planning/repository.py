@@ -842,6 +842,14 @@ class TargetVsActualRepository:
         )
         return dict(self.db.execute(stmt).all())
 
+    def managers_of(self, user_ids: list[uuid.UUID]) -> dict[uuid.UUID, uuid.UUID | None]:
+        """Who each person reports to (user_profile.manager_id), so the
+        screen can show a manager's team under them (D76)."""
+        if not user_ids:
+            return {}
+        stmt = select(UserProfile.id, UserProfile.manager_id).where(UserProfile.id.in_(user_ids))
+        return dict(self.db.execute(stmt).all())
+
     def summary_totals(
         self,
         planning_period: str,

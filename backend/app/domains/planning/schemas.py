@@ -271,6 +271,9 @@ class TargetVsActualBrand(BaseModel):
 class TargetVsActualPerson(BaseModel):
     user_id: uuid.UUID
     display_name: str
+    # Who they report to: the screen lists a manager's team under them, as
+    # their targets are a share of the manager's (D76).
+    manager_id: uuid.UUID | None = None
     # Only waiting and approved plans count towards planned; a draft or
     # rejected plan shows its status with no figures.
     plan_status: RosterStatus
@@ -350,6 +353,8 @@ class TargetRosterPerson(BaseModel):
 
     user_id: uuid.UUID
     display_name: str
+    # Who they report to; Team Plans lists a manager's team under them (D76).
+    manager_id: uuid.UUID | None = None
     # False: a plan owner no longer on the team (moved SBU, deactivated) --
     # their plan still counts in the total; not part of "N of M".
     on_team: bool

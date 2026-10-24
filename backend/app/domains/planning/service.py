@@ -1025,7 +1025,11 @@ class TargetVsActualService:
 
         ordered = sorted(people.values(), key=lambda p: p.display_name.lower())
         person_targets = repo.person_targets(sbu_id, planning_period)
-        rows = [self._person_response(p, state, person_targets.get(p.user_id)) for p in ordered]
+        managers = repo.managers_of([p.user_id for p in ordered])
+        rows = [
+            self._person_response(p, state, person_targets.get(p.user_id), managers.get(p.user_id))
+            for p in ordered
+        ]
         # Totals count every credited person, so real wins by someone outside
         # the roster (another SBU's person, someone since deactivated) stay in
         # the headline and zone/brand tables; only the person rows follow the
@@ -1130,6 +1134,7 @@ class TargetVsActualService:
         on_team=False rows, so the rows explain the total and their plans can
         still be opened (code review 2026-10-06, Basheer)."""
         roster = _build_roster(self.repository, current_user, sbu_id, planning_period)
+        managers = self.repository.managers_of([e.user_id for e in roster])
         rows = []
         # Team members first, then former members; each group by name.
         for e in sorted(roster, key=lambda e: (not e.on_roster, e.display_name.lower())):
@@ -1142,6 +1147,7 @@ class TargetVsActualService:
                 TargetRosterPerson(
                     user_id=e.user_id,
                     display_name=e.display_name,
+                    manager_id=managers.get(e.user_id),
                     on_team=e.on_roster,
                     plan_status=e.status,
                     counted_lakhs=e.counted,
@@ -1159,7 +1165,9 @@ class TargetVsActualService:
         )
 
     @staticmethod
-    def _person_response(p: _PersonAcc, state: QuarterState, target: Decimal | None) -> TargetVsActualPerson:
+    def _person_response(
+        p: _PersonAcc, state: QuarterState, target: Decimal | None, manager_id: uuid.UUID | None
+    ) -> TargetVsActualPerson:
         planned, won = p.planned, p.won.quantize(_CENT)
         expected = None if state is QuarterState.PAST else (p.expected or _ZERO).quantize(_CENT)
         hospitals = [
@@ -1189,6 +1197,7 @@ class TargetVsActualService:
         return TargetVsActualPerson(
             user_id=p.user_id,
             display_name=p.display_name,
+            manager_id=manager_id,
             plan_status=p.plan_status,
             previous_approved_total_lakhs=p.previous_approved_total,
             target_lakhs=target,

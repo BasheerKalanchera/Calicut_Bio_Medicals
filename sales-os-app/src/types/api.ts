@@ -5674,6 +5674,8 @@ export interface components {
             user_id: string;
             /** Display Name */
             display_name: string;
+            /** Manager Id */
+            manager_id?: string | null;
             /** On Team */
             on_team: boolean;
             plan_status: components["schemas"]["RosterStatus"];
@@ -5774,6 +5776,8 @@ export interface components {
             user_id: string;
             /** Display Name */
             display_name: string;
+            /** Manager Id */
+            manager_id?: string | null;
             plan_status: components["schemas"]["RosterStatus"];
             /** Previous Approved Total Lakhs */
             previous_approved_total_lakhs: string | null;

@@ -46,6 +46,7 @@ import {
 } from "../utils/formatter";
 import type { RosterStatus, TargetPlan, TargetPlanSbu, TargetPlanStatus } from "../types/targetPlanning";
 import type { BrandResponse } from "../types/api-aliases";
+import { asTree } from "../utils/reportingTree";
 
 // Local stopgap type -- masterData.ts's listSbus returns Promise<unknown>
 // today -- see docs/Backlog.md "Type the shared frontend service functions
@@ -73,6 +74,11 @@ const COMPANY_WIDE_ROLES = new Set(["Admin", "General Manager"]);
 // SBU) but GM *does* get this section -- it's a real, deliberate business
 // exception, not a hierarchy generalization.
 const NO_PERSONAL_TARGET_ROLES = new Set(["Admin"]);
+
+// On a phone the approval and team tables drop their Hospitals column so
+// the actions and status chips stay inside the card; the count still shows
+// in the row's details (Basheer, 2026-10-24).
+const HIDE_ON_PHONE = { display: { xs: "none", sm: "table-cell" } };
 
 const STATUS_LABEL: Record<TargetPlanStatus, string> = {
   DRAFT: "Draft",
@@ -145,13 +151,13 @@ function countedLakhs(t: TargetPlan): number {
 // This is the visible nudge back to the owner to go revise and split it.
 function StatusWithNote({ target, sbuHasBrands }: { target: TargetPlan; sbuHasBrands: boolean }) {
   return (
-    <Box>
+    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
       <StatusChip status={target.status} />
       {sbuHasBrands && target.brand_splits.length === 0 && (
-        <Chip label="Needs Brand Split" color="warning" variant="outlined" size="small" sx={{ ml: 0.5 }} />
+        <Chip label="Needs Brand Split" color="warning" variant="outlined" size="small" />
       )}
       {target.decision_note && (
-        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
+        <Typography variant="caption" color="text.secondary" sx={{ display: "block", width: "100%" }}>
           {target.decision_note}
         </Typography>
       )}
@@ -307,6 +313,14 @@ export default function TargetPlanningScreen() {
     queryFn: () => getTargetRoster(rollupSbuId as string, period),
     enabled: showRollup && !isAnnual && !!rollupSbuId,
   });
+  // Team members as a tree by reporting line (D76); former members stay a
+  // flat group after them.
+  const rosterRows = roster
+    ? [
+        ...asTree(roster.people.filter((p) => p.on_team)),
+        ...roster.people.filter((p) => !p.on_team).map((person) => ({ person, depth: 0, managerName: null })),
+      ]
+    : [];
 
   // Annual rollup has no dedicated backend endpoint (Target-Planning-
   // Implementation-Plan.md's decision #3: "computed on read, not stored")
@@ -534,7 +548,7 @@ export default function TargetPlanningScreen() {
                   <TableCell padding="checkbox" />
                   <TableCell>Rep</TableCell>
                   <TableCell>Period</TableCell>
-                  <TableCell align="right">Hospitals</TableCell>
+                  <TableCell align="right" sx={HIDE_ON_PHONE}>Hospitals</TableCell>
                   <TableCell>Amount</TableCell>
                   <TableCell align="right">Actions</TableCell>
                 </TableRow>
@@ -557,7 +571,7 @@ export default function TargetPlanningScreen() {
                           {t.change_note && <Chip label="Revised" variant="outlined" size="small" sx={{ ml: 0.5 }} />}
                         </TableCell>
                         <TableCell>{formatPlanningPeriod(t.planning_period)}</TableCell>
-                        <TableCell align="right">{hospitalCount(t)}</TableCell>
+                        <TableCell align="right" sx={HIDE_ON_PHONE}>{hospitalCount(t)}</TableCell>
                         <TableCell>
                           <Box component="span" sx={belowApproved ? { color: "warning.main", fontWeight: 700 } : undefined}>
                             {formatLakhs(Number(t.target_amount_lakhs))}
@@ -569,8 +583,11 @@ export default function TargetPlanningScreen() {
                           )}
                         </TableCell>
                         <TableCell align="right">
-                          <Button size="small" color="success" onClick={() => openDecision(t, "APPROVED")}>Approve</Button>
-                          <Button size="small" color="error" onClick={() => openDecision(t, "REJECTED")}>Reject</Button>
+                          {/* Stacked on a phone so the column stays narrow. */}
+                          <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: "flex-end", justifyContent: "flex-end" }}>
+                            <Button size="small" color="success" onClick={() => openDecision(t, "APPROVED")}>Approve</Button>
+                            <Button size="small" color="error" onClick={() => openDecision(t, "REJECTED")}>Reject</Button>
+                          </Box>
                         </TableCell>
                       </TableRow>
                       {open && (
@@ -596,7 +613,7 @@ export default function TargetPlanningScreen() {
             label="SBU"
             value={rollupSbuId ?? ""}
             onChange={(e) => setSelectedSbuId(e.target.value)}
-            sx={{ minWidth: "12rem", alignSelf: "flex-start", bgcolor: "background.paper" }}
+            sx={{ minWidth: "12rem", alignSelf: "flex-start", bgcolor: "background.paper", mt: 1 }}
           >
             {sbus.map((s) => (
               <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>
@@ -651,18 +668,18 @@ export default function TargetPlanningScreen() {
                     <TableRow>
                       <TableCell padding="checkbox" />
                       <TableCell>Rep</TableCell>
-                      <TableCell align="right">Hospitals</TableCell>
+                      <TableCell align="right" sx={HIDE_ON_PHONE}>Hospitals</TableCell>
                       <TableCell>Amount</TableCell>
                       <TableCell>Status</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {(roster?.people ?? []).map((p, i, people) => {
+                    {rosterRows.map(({ person: p, depth, managerName }, i, rows) => {
                       const t = p.plan;
                       const open = t !== null && expanded.has(t.id);
                       const note = t && previousApprovedNote(p.plan_status, p.previous_approved_total_lakhs);
-                      // Former members come last (server order); head their group once.
-                      const firstFormer = !p.on_team && (i === 0 || people[i - 1].on_team);
+                      // Former members come last; head their group once.
+                      const firstFormer = !p.on_team && (i === 0 || rows[i - 1].person.on_team);
                       return (
                         <Fragment key={p.user_id}>
                           {firstFormer && (
@@ -678,8 +695,15 @@ export default function TargetPlanningScreen() {
                             <TableCell padding="checkbox">
                               {t && <ExpandToggle open={open} onClick={() => toggleExpanded(t.id)} />}
                             </TableCell>
-                            <TableCell>{p.display_name}</TableCell>
-                            <TableCell align="right">{t ? hospitalCount(t) : "—"}</TableCell>
+                            <TableCell sx={depth > 0 ? { pl: 2 + depth * 2 } : undefined}>
+                              {p.display_name}
+                              {managerName && (
+                                <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+                                  reports to {managerName}
+                                </Typography>
+                              )}
+                            </TableCell>
+                            <TableCell align="right" sx={HIDE_ON_PHONE}>{t ? hospitalCount(t) : "—"}</TableCell>
                             <TableCell>
                               {t ? <PlanAmount amount={t.target_amount_lakhs} note={note} /> : "—"}
                             </TableCell>

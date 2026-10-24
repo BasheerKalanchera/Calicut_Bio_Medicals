@@ -106,6 +106,7 @@ def _repo(**overrides) -> MagicMock:
     repo.undated_counts.return_value = []
     repo.active_sbu_targets.return_value = {}
     repo.person_targets.return_value = {}
+    repo.managers_of.return_value = {}
     repo.summary_totals.return_value = (Decimal(0), Decimal(0), Decimal(0))
     for k, v in overrides.items():
         getattr(repo, k).return_value = v
@@ -340,6 +341,25 @@ def test_area_manager_gets_their_team_against_their_own_target(monkeypatch):
     assert row.percent_of_target == Decimal("20.00")
     assert resp.sbu_row is None and resp.company_row is None
     repo.summary_totals.assert_not_called()
+
+
+def test_each_person_carries_who_they_report_to(monkeypatch):
+    # D76 (Basheer, 2026-10-24): a manager's team is listed under them, as
+    # their targets are a share of the manager's.
+    am, rep = uuid.uuid4(), uuid.uuid4()
+    repo = _repo(roster=[(am, "Basheer K"), (rep, "Shruthi")], managers_of={rep: am, am: None})
+    resp = _run(repo, IN_QUARTER, monkeypatch)
+    assert {p.display_name: p.manager_id for p in resp.people} == {"Basheer K": None, "Shruthi": am}
+    assert set(repo.managers_of.call_args.args[0]) == {am, rep}
+
+
+def test_managers_of_reads_the_reporting_line():
+    db = MagicMock()
+    a, m = uuid.uuid4(), uuid.uuid4()
+    db.execute.return_value.all.return_value = [(a, m)]
+    assert TargetVsActualRepository(db).managers_of([a]) == {a: m}
+    assert "manager_id" in str(db.execute.call_args.args[0])
+    assert TargetVsActualRepository(MagicMock()).managers_of([]) == {}
 
 
 def test_area_manager_team_row_without_a_target_has_no_percent(monkeypatch):
@@ -614,6 +634,14 @@ def test_roster_lists_everyone_by_name_with_not_started_rows(monkeypatch):
     ]
     assert resp.people[0].plan.id is plan.id and resp.people[1].plan is None
     assert (resp.total_lakhs, resp.roster_count, resp.not_submitted_count) == (Decimal("40"), 2, 1)
+
+
+def test_roster_rows_carry_who_they_report_to(monkeypatch):
+    # D76: Team Plans lists a manager's team under them, like Target vs Actuals.
+    am, rep = uuid.uuid4(), uuid.uuid4()
+    repo = _repo(roster=[(am, "Basheer K"), (rep, "Shruthi")], managers_of={rep: am, am: None})
+    resp = _roster(repo, monkeypatch)
+    assert {p.display_name: p.manager_id for p in resp.people} == {"Basheer K": None, "Shruthi": am}
 
 
 def test_roster_hides_someone_elses_draft_but_shows_your_own(monkeypatch):

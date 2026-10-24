@@ -47,7 +47,36 @@ export default function TargetPlanDetails({ target }: { target: TargetPlan }) {
           No hospitals on this plan — it was set before hospital-wise planning.
         </Typography>
       ) : (
-        <Box sx={{ overflowX: "auto" }}>
+        <>
+        {/* On a phone each hospital is a stacked block, so nothing needs a
+            sideways scroll inside the card (Basheer, 2026-10-24). */}
+        <Box sx={{ display: { xs: "block", sm: "none" } }}>
+          {accounts.map((a) => (
+            <Box key={a.id} sx={{ py: 1, borderBottom: 1, borderColor: "divider" }}>
+              <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1 }}>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>{a.account.name}</Typography>
+                <Typography variant="body2" sx={{ whiteSpace: "nowrap" }}>{lakhs2(a.planned_amount_lakhs)}</Typography>
+              </Box>
+              <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 0.5, mt: 0.5 }}>
+                <Typography variant="caption" color="text.secondary">{a.account.zone.name} ·</Typography>
+                <BusinessPotentialChip value={a.account.business_potential} />
+                <Typography variant="caption" color="text.secondary">
+                  · {VISIT_FREQUENCY_LABEL[a.visit_frequency] ?? a.visit_frequency}
+                </Typography>
+              </Box>
+              <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
+                {a.strategic_objective || "—"}
+              </Typography>
+            </Box>
+          ))}
+          <Box sx={{ display: "flex", justifyContent: "space-between", pt: 1 }}>
+            <Typography variant="body2" sx={{ fontWeight: 700 }}>
+              {accounts.length} hospital{accounts.length === 1 ? "" : "s"}
+            </Typography>
+            <Typography variant="body2" sx={{ fontWeight: 700 }}>{lakhs2(target.target_amount_lakhs)}</Typography>
+          </Box>
+        </Box>
+        <Box sx={{ overflowX: "auto", display: { xs: "none", sm: "block" } }}>
           <Table size="small">
             <TableHead>
               <TableRow>
@@ -78,6 +107,7 @@ export default function TargetPlanDetails({ target }: { target: TargetPlan }) {
             </TableBody>
           </Table>
         </Box>
+        </>
       )}
 
       {target.brand_splits.length > 0 && (
