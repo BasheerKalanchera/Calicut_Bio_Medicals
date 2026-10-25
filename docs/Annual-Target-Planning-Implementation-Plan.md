@@ -10,7 +10,7 @@ First approved 2026-10-16. E2E test plan:
 2026-10-21). Part 1 built on Dev (`f2f5edd`, `642f04c`; fixes
 `ed669e7`, `be27712`, `6016e6a`, `dd9cdb9`, `c2f025d`, `8d232c1`,
 `48e737b`); manual E2E passed, 65 of 65, 2026-10-24. Part 2 not
-started. Part 1 reaches the team with the full UAT move (D52); it was
+started. Part 1 on UAT 2026-10-25 (`8b2ec8a`, the full UAT move, D52); it was
 built so the Oct–Dec 2026 targets can be entered (D38, D44).
 **Traceability rows:** signed 3.1 ("Target splitting by product category,
 quarterly/annual tracking") — this plan finishes its "annual" part (D10).
@@ -336,7 +336,8 @@ this replan: D8, D12, D12a, D14.
   Basheer, 2026-10-22.
 - D67. In the Year view, each person's row shows both their target and
   their plan as running totals, as the Quarter view shows both — Basheer,
-  2026-10-22.
+  2026-10-22. Changed by D78 (the row shows the whole year; the running
+  totals move into the opened row).
 - D68. "Brands Billing to Cabio" shows all four of the brand's quarters,
   including those before Oct–Dec 2026 that have no saved Cabio target
   (D46a): it is the brand's own figure split evenly, nothing saved —
@@ -409,6 +410,27 @@ this replan: D8, D12, D12a, D14.
   Team Plans card (quarter view) gets the same tree, people no longer on
   the team still listed last; Team Targets stays one level (it lists only
   the people whose targets you set) — Basheer, 2026-10-24.
+- D77. Target vs Actuals' quarter picker (Insights Dashboard tab): the
+  right arrow runs past the card's edge, so the picker doesn't fit the
+  card. Seen on a phone, on UAT after the move (the phone layout changed
+  24 Oct, D76); fixed in Part 2, step 5, since the
+  Year view changes the same card — Basheer, 2026-10-25. The fix: on a
+  phone only, the card's header takes three lines — the title; the SBU
+  and Quarter/Year boxes; the period with its two arrows across the
+  card's full width. A computer keeps today's one-line header — Basheer,
+  2026-10-25 (mock-up below, D78).
+- D79. The Year view leaves out Expected, Likely finish, the zone table
+  and the brand table; they stay in the Quarter view as today. "Expected
+  this quarter" counts open Opportunities closing by the quarter's end
+  and has no agreed meaning for a whole year — Basheer, 2026-10-25.
+- D78. In the Year view, each person's row shows the whole year: the
+  year's target and plan for the year (all its counted quarters added
+  up, D66), with PO received and Won so far and what is still to win.
+  Opening the row shows it quarter by quarter as running totals (D31).
+  The SBU's quarter-by-quarter running totals (D31) are unchanged.
+  Changes D67, whose person rows were running totals up to the quarter
+  we are in — Basheer, 2026-10-25 (mock-up
+  https://claude.ai/artifact/NnyXKSzDYwoqvy6WXV4p9j).
 
 ## Figures and sources
 
@@ -494,7 +516,8 @@ targets as soon as it is live (D38); Part 2 adds the rest.
 - Target vs Actuals gets a **Year view**: at each quarter, what was won
   from April up to that quarter against the targets added up from April
   (D16, D31; FY 2026-27 counts from Oct–Dec 2026, D66). Each person's
-  row shows target and plan, both as running totals (D67).
+  row shows the year's target and plan, Won so far and what is still to
+  win; opening it shows the quarter-by-quarter running totals (D78).
 - **Plan notifications** on the bell: submitted or revised → the
   approver; approved or rejected → the rep; clicking opens the plan
   (D18–D21).
@@ -541,7 +564,8 @@ UAT with the full UAT move; Part 2 follows in a later move (D52).
 
 **Part 2**
 5. **Target vs Actuals: Year view** with running totals (D31); a mock-up
-   is shown before building. Checkpoint commit.
+   is shown before building. Also the quarter picker's right arrow kept
+   inside the card (D77). Checkpoint commit.
 6. **Plan notifications** (D18–D21) and **Brands Billing to Cabio**
    (D37, D54).
    Checkpoint commit.
@@ -689,8 +713,8 @@ Each gets a check before and after, in the E2E test plan.
 - **Year view (D31):** `get_target_vs_actual` gains a fiscal-year mode
   returning, per quarter, Won from April to that quarter's end and
   targets summed from April (from 2026-Q3 for FY 2026-27, D66), and per
-  person both target and plan running totals (D67); reuses the Quarter
-  view's per-quarter logic.
+  person the year's target and plan plus the per-quarter running totals
+  for the opened row (D78); reuses the Quarter view's per-quarter logic.
 - **Notifications (D18–D21):** `NotificationService.notify_plan_submitted`
   (recipient `get_approver_id(owner)`; skipped when None) and
   `notify_plan_decided` (recipient `target_plan.user_id`),

@@ -9,20 +9,24 @@ session edits this note._
 - api.ts guard is on (`5ca17aa`): a backend fix commit must carry the
   matching api.ts (`sh .githooks/check-api-types.sh --write` stages it).
 
-## Next: Annual Target Planning Part 1, built here
-- After Part 1's E2E: build Part 2 here (plan steps 5–7; Basheer 22
-  Oct). Plan & Chore writes Part 2's E2E sections meanwhile. Part 2 also
-  builds D70/D71 (GM hand-types one brand quarter's target, flag column
-  on brand_vendor_target — small migration); Q-C still open with Basheer.
-- Part 1 built and pushed: `f2f5edd`, `642f04c`, `ed669e7`, and
-  `be27712` (22 Oct: seasonal pattern "Save pattern" greyed out until
-  100 %, Basheer — phone use, no reload). Dev at 0063 (22 Oct, `6016e6a`).
-- Part 1 done 24 Oct: E2E 65 of 65, last fix `48e737b` pushed,
-  post-commit checklist done (docs `802510f`, pushed). A8
-  hint wording still awaiting Basheer.
-- **Next:** UAT move is early Sun 25 Oct; Plan & Chore is doing the
-  pre-move steps (Basheer 24 Oct) — this session doesn't touch it unless
-  asked. After the move: Part 2 build here (ask first).
+## Now: Annual Target Planning Part 2, step 5 (Year view + D77)
+- Part 1 done 24 Oct (E2E 65 of 65, last fix `48e737b`); on UAT since
+  the 25 Oct move (UAT on `8b2ec8a`, database 0063). A8 hint wording
+  still awaiting Basheer.
+- Basheer 25 Oct: start step 5. In progress: Year-view mock-up for
+  Target vs Actuals (Insights Dashboard), shown before any code; D77
+  (quarter picker's right arrow inside the card on a phone) rides along.
+  Mock-up (Dev Oct–Dec figures, Jan–Mar made up), look approved 25 Oct:
+  https://claude.ai/artifact/NnyXKSzDYwoqvy6WXV4p9j. Person rows: whole
+  year (D78, written to plan + test plan I5). Year view leaves out
+  Expected/Likely finish/zones/brands (D79); three-line phone header
+  (D77). All design questions decided 25 Oct; Basheer: build starts
+  26 Oct, not before. Next: check in, then build backend + frontend,
+  add test plan section I steps for D77/D79, checks, checkpoint commit.
+  Docs for D77–D79 (plan, test plan, this note) not yet committed.
+- After step 5: step 6 (notifications, Brands Billing to Cabio, and
+  D70–D73 — needs a small migration, not yet in plan §6; check in
+  first), then step 7 (docs and test).
 - Lesson (21 Oct): he found the raw review list hard to follow — bring
   it sorted by what users would notice, screen first, from the start.
 

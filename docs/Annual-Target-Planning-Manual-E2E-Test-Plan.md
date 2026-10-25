@@ -100,7 +100,9 @@ run. Amounts on screen read like "₹280.0L"; this plan writes "₹280 L".
 - Part 2: managers, plans, last approved figures, notification counts —
   Dev query as each tester, 2026-10-22
 - FY 2026-27 counted from Oct–Dec 2026, FY 2027-28 from April (D66, D31);
-  target and plan as running totals per person (D67) — Basheer, 2026-10-22
+  target and plan as running totals per person (D67) — Basheer, 2026-10-22;
+  changed by D78: the person row shows the whole year, the running
+  totals move into the opened row — Basheer, 2026-10-25
 - Year view running targets (Imaging ₹280 L / ₹280 L, Critical Care
   ₹185 L / ₹195 L, Company ₹465 L / ₹475 L) — added up from Part 1's
   figures above
@@ -391,7 +393,7 @@ Basheer K (D57). Shruthi goes back to Haroon in G7.
    quarters read like "Oct–Dec 2026"; no "2026-Q3"-style code anywhere;
    "FY 2026-27" year labels unchanged. — Pass, 2026-10-24 (Claude, read only, as Haroon, phone width; page text searched for "2026-Q3"-style and "Q1"–"Q4" codes on every view — none). Brand Target Tracking, 2026: Imaging and Critical Care with every brand opened — "Jan–Mar 2026" … "Oct–Dec 2026", "Jan–Mar 2027", "SonoScape · Jan–Dec 2026", "Medion · Apr 2026–Mar 2027". Target & Coverage Planning, Quarterly Oct–Dec 2026: SBU Target card "SBU target for Oct–Dec 2026", Team Targets "Divide the SBU target for Oct–Dec 2026 …", My Plan, Needs Your Approval ("Oct–Dec 2026", "Jan–Mar 2027", "Apr–Jun 2027"), plan box "Plan & Coverage — Oct–Dec 2026" (closed with Cancel, nothing saved); Annual "FY 2026-27" with "Apr–Jun 2026" … "Jan–Mar 2027". Target vs Actuals: Imaging and Critical Care Oct–Dec 2026, Critical Care Jan–Mar 2027. "Your target" not shown to Haroon (no target of his own); its label was read as Fazal at D1 ("Your target for Oct–Dec 2026")
 
-## I — Target vs Actuals: Year view (D16, D22, D31, D66, D67)
+## I — Target vs Actuals: Year view (D16, D22, D31, D66, D78)
 
 1. [Simple] As Haroon, Insights Dashboard → Target vs Actuals → Year view.
    **Expected:** "FY 2026-27"; its quarters read Apr–Jun 2026 … Jan–Mar
@@ -406,9 +408,11 @@ Basheer K (D57). Shruthi goes back to Haroon in G7.
 4. [Complex: Year view against Quarter view] For target, Team plans and
    Won, in both SBUs: the Jan–Mar figure minus the Oct–Dec figure = P8's
    Jan–Mar Quarter view figure (D22). —
-5. [Complex: person rows, D67] Critical Care rows, target / plan.
-   **Expected:** Vivek ₹90 L / ₹66 L at Oct–Dec, ₹90 L / ₹96 L at Jan–Mar
-   (the rejected ₹45 L counts as its last approved ₹30 L); Arun Adarsh
+5. [Complex: person rows, D78] Critical Care rows, year's target / plan
+   for the year. **Expected:** Vivek ₹90 L / ₹96 L (the rejected ₹45 L
+   counts as its last approved ₹30 L); Arun Adarsh ₹100 L / ₹80 L;
+   Nishad K V ₹85 L / ₹10 L. Opening each row shows the running totals:
+   Vivek ₹90 L / ₹66 L by Oct–Dec, ₹90 L / ₹96 L by Jan–Mar; Arun Adarsh
    ₹100 L / ₹50 L, then ₹100 L / ₹80 L; Nishad K V ₹85 L / none, then
    ₹85 L / ₹10 L. —
 6. [Simple] **Expected:** the Jul–Sep 2026 plans (Haroon ₹80 L and ₹120 L,

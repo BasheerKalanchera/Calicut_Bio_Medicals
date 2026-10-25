@@ -4608,3 +4608,32 @@ moved to after the restart (Basheer).
   Opportunity"; Account Management's button is "+ Add".
 - Today's routine UAT backup skipped: the move takes its own (on-the-day
   step 4, after Render is suspended).
+
+### 2026-10-25 — Build & Test: Annual Target Part 2 step 5 designed (Year view, D77–D79)
+
+- Mock-up for the Year view on Insights Dashboard → Target vs Actuals:
+  https://claude.ai/artifact/NnyXKSzDYwoqvy6WXV4p9j. The first version
+  was its own invented design; Basheer rejected it ("no relation to the
+  App front end look"). Redone as a copy of the live card (sizes and
+  colours from `SectionCard`, `StatTile` and the card's table styles,
+  checked against Haroon's screen on Dev), with Dev's Oct–Dec 2026
+  figures and made-up Jan–Mar 2027 targets.
+- D77 phone header: the first fix moved the boxes and arrows under the
+  title, but together they were still wider than a phone, so the right
+  arrow still ran off (Basheer). Now three lines — title; SBU and
+  Quarter/Year boxes; period with arrows across the full width —
+  checked in the browser before showing.
+- Decisions (Basheer, 25 Oct): D78 — each person's row shows the whole
+  year (year's target, plan for the year, Won so far, still to win),
+  running totals in the opened row; changes D67. D79 — Expected, Likely
+  finish, zones and brands stay out of the Year view. D77 three-line
+  phone header, phone only. Test plan I5 rewritten for D78.
+- Build starts 26 Oct (Basheer: not before).
+- Retro. Corrections from Basheer since the 24 Oct retro: 4 — mock-up
+  didn't look like the app; phone fix shown without checking it (right
+  arrow still hidden); "I didn't understand" the person-row question;
+  "why are we obsessed with a given quarter on a Year view?" (the
+  person rows had copied the quarter-by-quarter idea from D31 without
+  asking whether a year view should show the whole year). None could be
+  stopped by a tool check or touched live data, UAT or lost work — no
+  tracker line.
