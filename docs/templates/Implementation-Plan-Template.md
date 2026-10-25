@@ -46,6 +46,14 @@ this section filled in.
 choice (new table, screen, rule) here in plain words before the technical
 addendum.>
 
+### On a phone
+
+<This is a phone app (PWA). For every screen, card and pop-up the plan adds
+or changes, say how it looks at phone width, following Frontend standards
+rule 10 — e.g. "on a phone, each hospital is a block: name, zone, rating
+box, notes, Save". Approved with the rest of the plan, before any code.
+Write "No screen changes" if none.>
+
 ## 2. Build order
 
 <Numbered steps, with checkpoint commits. If the build lands in partial

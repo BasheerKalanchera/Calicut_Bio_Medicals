@@ -17,7 +17,11 @@ Refuses the save when, after it:
   lines (Who sees / Who can approve / Who can save / Existing values) is
   missing, empty or still a `<placeholder>`;
 - a step (`1.` or `- P1.`) doesn't start with `[Simple]` or
-  `[Complex: <reason>]` (a bare `[Complex]` is refused).
+  `[Complex: <reason>]` (a bare `[Complex]` is refused);
+- the plan has no `[Complex: phone layout]` step (2026-10-25: Basheer found
+  six screens running past a phone's edge in four days). Plans that have
+  already recorded a result ("Pass" or "Fail") are left alone, so finished
+  runs can still be updated.
 
 Fails open like plan_decisions_guard.py: if this script errors, the save
 goes through. Scripted edits via Bash are refused by shell_guard.py only
@@ -33,6 +37,8 @@ MARKER = "<!-- e2e-template v1"
 LIVE_LINES = ("Who sees", "Who can approve", "Who can save", "Existing values")
 STEP_RE = re.compile(r"^(?:\d+\.|- P\d+\.)\s+(.*)$")
 TAG_RE = re.compile(r"^\[(?:Simple|Complex:\s*[^\]\s<][^\]]*)\]")
+PHONE_RE = re.compile(r"\[Complex:\s*phone layout", re.I)
+RESULT_RE = re.compile(r"—\s*\**(?:Pass|Fail)\b")
 
 
 def is_test_plan(path: str) -> bool:
@@ -72,6 +78,9 @@ def problem(text: str, is_new: bool) -> str | None:
     if steps:
         issues.append(f"{len(steps)} step(s) lack a [Simple] or [Complex: <reason>] tag, e.g. "
                       + "; ".join(steps[:3]))
+    if not PHONE_RE.search(text) and not RESULT_RE.search(text):
+        issues.append("no [Complex: phone layout] step — add one per screen, card or pop-up "
+                      "the feature adds or changes")
     if not issues:
         return None
     return "Test plan not saved: " + "; ".join(issues) + ". See the template's instructions."

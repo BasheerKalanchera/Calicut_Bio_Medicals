@@ -25,6 +25,11 @@ Moved here word for word from CLAUDE.md on 2026-10-08
   *(2026-09-23)*
 - Before manual E2E, run pytest, ruff, tsc and lint and report plainly, noting
   any failures that already existed. *(2026-07-03)*
+- Before handing a build over for E2E, check every screen, card and pop-up
+  it adds or changes at phone width (390 px), every row, arrow and tab
+  opened. Measure, don't eyeball: in the browser, any element inside a card
+  whose `scrollWidth > clientWidth` runs past it. Fix before handover;
+  Basheer should never be the one to find a phone problem. *(2026-10-25)*
 - Suggest `/ultrareview` only for higher-risk changes (security, untested hotfix,
   large unreviewed change), not routine commits. *(2026-09-15)*
 

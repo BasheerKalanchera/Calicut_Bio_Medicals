@@ -13,43 +13,30 @@ session edits this note._
   hotfix-branch route (`docs/Deployment-Topology.md` "Fix to UAT ahead
   of a full promotion").
 
-## Now: Annual Target Planning Part 2, step 7 (pre-E2E review + E2E)
-- Basheer 25 Oct (afternoon): build step 5 now, as planned (plan §6
-  Part 2 "Year view" bullet holds the build notes). D80 added the same
-  day: Year view leaves out the red "past closing date" note.
-- Mock-up: https://claude.ai/artifact/NnyXKSzDYwoqvy6WXV4p9j (the
-  untracked `target-vs-actuals-mockup.html` at the repo root is an older,
-  different mock-up — not this one).
-- Step 5 committed and pushed `f5d30d5` (25 Oct), checkpoint, Part 2
-  partial. Main's app code now differs from UAT's: UAT fixes go by the
-  hotfix route. Timing on Dev in Progress-Archive; UAT timing in Backlog.
-- Docs batch held until step 7 (Basheer, 25 Oct): handover, Backlog,
-  Progress-Archive-2026-10, test plan Built line. Leave out the other
-  session's `session-handover-plan.md` and untracked docs.
-- Step 6 (notifications D18–D21, Brands Billing to Cabio D54/D68,
-  hand-typed brand quarters D70–D73) committed and pushed `99c64ad`
-  (25 Oct), checkpoint, Part 2 partial. Migration 0064 applied to Dev,
-  `alembic current` = 0064 (head); Physical-Schema regenerated in it.
-  Plan §6 Notifications "As built" note is uncommitted (docs batch).
-- Step 7 in progress (25 Oct). Pre-E2E review done. The 2 approved review
-  fixes (Year view cache key; D81 Year totals unset when a quarter so far
-  has no target) committed and pushed `51d4fe8` (pytest 1388 pass,
-  ruff/tsc clean, lint 0 errors / 133 old warnings; api.ts unchanged).
-  D81 written into the plan (uncommitted, docs batch). Post-commit
-  checklist waits for the end of step 7's E2E.
-- Dev check for review point 3 done (25 Oct, read-only): 8 cross-SBU
-  pairs, all under a General Manager with no SBU (Haroon Sidheeq 5;
-  inactive Test GM 3). GMs read every plan anyway, so nothing to fix.
-  Note for Progress-Archive in the docs batch.
-- E2E started 25 Oct: test plan I–K re-worded from the code. P6 found a
-  phone layout bug on Brand Target Tracking; fixed and P6 passed (1 of
-  41). Fix and docs batch committed at the day's end (see git log).
-  Review tidy-ups → Backlog "Annual Target Part 2: code tidy-ups".
-- Next: restart the Dev backend, then P7 (read-only Dev check — the
-  plan of it was shown 25 Oct, not yet run; ask first), P8, then I, J,
-  K. Post-commit checklist after the E2E.
-- Lesson (21 Oct): he found the raw review list hard to follow — bring
-  it sorted by what users would notice, screen first, from the start.
+## Now: phone layout fixes (26 Oct), then Part 2 step 7 E2E
+- Part 2 steps 5–6 and review fixes pushed (`f5d30d5`, `99c64ad`,
+  `51d4fe8`); migration 0064 on Dev = head. Main's app code is ahead of
+  UAT: UAT fixes go by the hotfix route.
+- Built on Dev 25 Oct, uncommitted: `src/theme/phoneTable.ts` (rows
+  become labelled blocks on a phone), applied to Target & Coverage
+  Planning's 5 tables and Rate Hospitals. Measured at 390 px: fits.
+- Basheer's check found 3 more; plan explained 25 Oct, his go-ahead
+  still needed (he stopped for the night): (a) Team Plans — keep the
+  push-in under each manager on a phone (row-level `& > td` pl by
+  depth); (b) Rate Hospitals — search on its own line, Zone picker on
+  line 2 beside the rating filter; (c) Brand Target Tracking — brand
+  row as a block (351 px table in a 283 px card; Part 2 only, stays
+  off UAT).
+- Then: measure all three at 390 px with rows opened, screenshots →
+  Basheer checks on his phone → `fix:` commit (own approval) →
+  `hotfix/phone-layout` from `origin/uat` with the Target & Coverage
+  and Rate Hospitals parts → deploy with approval → merge `uat` → main.
+- Then: full phone check of every screen on Dev (Haroon, Fahad,
+  marketing user), results per screen with proposed fixes.
+- Then E2E: restart the Dev backend, P7 (read-only Dev check; ask
+  first), P8, I, J, K (1 of 41 done). Post-commit checklist after it.
+- Lesson (21 Oct): bring review lists sorted by what users would
+  notice, screen first.
 
 ## From Plan & Chore (added 25 Oct at Basheer's request, `393beee`)
 - My Work: D18–D22 decided (Weekly Follow-up plan); D18 = build it

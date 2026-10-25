@@ -4762,7 +4762,37 @@ moved to after the restart (Basheer).
   existed; I meant a wording tidy-up); the phone layout on Brand Target
   Tracking ran past the card and hid the own figure and stretch (found
   by him at P6). Neither could be stopped by a tool check, and neither
-  touched UAT or live data; no tracker line.
+  touched UAT or live data; no tracker line. **Corrected later the same
+  evening:** the phone slip was the sixth in four days and a check on the
+  test plan can stop it reaching Basheer — P100 in Process-Improvements.
+- Evening (Basheer, after Team Plans was also found too wide on UAT):
+  three phone rules built — "On a phone" section in the plan template,
+  Claude's measured phone check before handover (`cabio-e2e-testing`),
+  a `[Complex: phone layout]` step required in every E2E test plan
+  (`test_plan_guard.py`). He cut five proposed measures to these three.
+- Measured on Dev at 390 px as Haroon, 25 Oct: Target & Coverage
+  Planning ran past the card by 50–123 px (Team Plans 123/47, Needs Your
+  Approval 116/116, My Plan 50/88 — quarter/year view).
+- Phone fix built on Dev, uncommitted: shared `src/theme/phoneTable.ts`
+  (each table row becomes a labelled block on a phone), applied to
+  Target & Coverage Planning's five tables and Rate Hospitals. Re-measured:
+  nothing past the card in either view with every row opened; laptop
+  view unchanged. tsc and lint clean.
+- Basheer's check of it found three more, not yet fixed (agreed for 26
+  Oct): Team Plans lost the push-in under each manager on a phone (the
+  stacking rule overrode the indent); Rate Hospitals' Zone picker is
+  squeezed beside the search box (move it to the second line); Brand
+  Target Tracking's brand row is still a four-column table — 351 px wide
+  in a 283 px card (measured 25 Oct) — the P6 fix covered only the
+  opened quarters and was not measured across the whole card.
+- Retro (Build & Test, 25 Oct evening, after the first retro).
+  Corrections from Basheer: 8 — why phone slips keep happening; Team
+  Plans too wide on UAT (he found it); "your carelessness" (rules read
+  but not applied); five measures were over-engineering; no special
+  commit for the rules, do a full docs batch; how the fixes reach UAT
+  with main ahead of it; tree view lost and Zone picker squeezed; Brand
+  Target Tracking still too wide after its fix. The Brand miss is one the
+  new measured check stops: +1 on P100.
 
 ### 2026-10-25 — Plan & Chore: My Work E2E test plan; New Opportunity help
 - My Work (Weekly Follow-up) plan: D18 build straight after the Annual

@@ -35,6 +35,13 @@ multi-step, cross-screen/cross-role, or a genuine visual check). Saves to
 Dev are "Basheer clicks, Claude watches"; Claude reads the record back in
 the app.
 
+**Phone:** this is a phone app (PWA). Every screen, card and pop-up the
+feature adds or changes gets its own `[Complex: phone layout]` step: at
+phone width, every row, arrow and tab opened, nothing runs past the card
+and nothing looks squashed. A save-time check refuses a plan without at
+least one. Claude has already checked each screen at phone width before
+handing the build over; this step is the second look.
+
 **Opportunities:** every step that names an Opportunity puts its hospital
 beside it in brackets, e.g. "usg m/c" (aster medicity). An Opportunity the
 test creates has its hospital fixed in this plan, never "any hospital".
@@ -48,3 +55,6 @@ test creates has its hospital fixed in this plan, never "any hospital".
 
 1. [Simple] <action>. **Expected:** <exact text/value from the code>. —
 2. [Complex: <reason>] <action>. **Expected:** <…>. —
+3. [Complex: phone layout] Phone width, <screen → card>, every row and
+   arrow opened. **Expected:** <how the plan's "On a phone" says it
+   looks>; nothing runs past the card. —

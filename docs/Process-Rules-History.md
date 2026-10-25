@@ -275,3 +275,6 @@ The backstory below is copied verbatim from each memory note's **Why:**.
 
 - **Rule:** E2E testing — during a manual E2E run, every reply's closing status line gives the steps passed out of the total and the percentage complete, counted from the test plan (`cabio-e2e-testing` skill).
   **Why:** 2026-10-24 — Basheer: "Again you forgot to show me %complete in the summary line" (Annual Target Part 1 E2E, after step C7). The percentage had been asked for before but was never written down as a rule, so nothing prompted it.
+
+- **Rule:** Frontend standards rule 10 / `cabio-e2e-testing` — every screen is built to fit a phone from the start: each plan says how each screen looks on a phone ("On a phone", plan template); Claude checks each screen at phone width (390 px, every row/arrow/tab opened, measured) before handover; every E2E test plan has a `[Complex: phone layout]` step per screen, and `test_plan_guard.py` refuses a plan without one.
+  **Why:** 2026-10-25 — Basheer found screens running past a phone's edge six times in four days (22–25 Oct), then Team Plans again on UAT: "You are not keeping the frontend standards in your mind when you build the screens." Claude proposed five measures; Basheer cut them to three: "If the first 3 is done right, why do we need steps 4 & 5?" (P100).
