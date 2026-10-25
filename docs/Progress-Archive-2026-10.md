@@ -4724,3 +4724,33 @@ moved to after the restart (Basheer).
   close and "This visit produced a new Opportunity". New section "Say why
   a stage or status changed"; "Create an Opportunity" step 7 now explains
   the First activity form.
+
+### 2026-10-25 — Plan & Chore: My Work E2E test plan; New Opportunity help
+- My Work (Weekly Follow-up) plan: D18 build straight after the Annual
+  Target Part 2 E2E; D19 first on the menu, not under Reports; D20 "N+
+  days" means N or more (BR-OP-20 reworded); D21 next-action cards show
+  a count only; D22 all three Opportunity lists owner only (Basheer).
+- Test plan `docs/Weekly-Follow-up-Daily-Hub-Manual-E2E-Test-Plan.md`
+  written ahead of the build: 33 steps, 5 pre-flight (counted 25 Oct). Figures from
+  read-only Dev queries 25 Oct (GM context verified): Fahad 5 / ₹78,
+  1 / ₹20, 6 / ₹95 Lakhs; teams by the reports' scoping rule (Arun:
+  Vivek; Fazal: Fahad; Shruthi: Rudrappa; Basheer K: four Imaging
+  people); the only shared Opportunity with a passed closing date is
+  "New USG m/c" (aster medicity), used for the owner-only check.
+- New Opportunity pop-up help agreed (help plan section 7). Checking the
+  form found two manual gaps, fixed: **+ Add Hospital**, and a Repeat
+  Order lead source skips the demo dates (and the closing date from
+  Negotiation on).
+- Edit Opportunity pop-up help agreed (section 7; no Manager box). Help
+  wording now 9 of 30 (counted from section 7's "agreed" headings).
+- Backlog decisions (Basheer, 25 Oct): "+ Add Hospital" becomes "+ Add
+  Customer" (customer types include clinics, dealers); file deletes on
+  the Documents tab and the brochure get an "Are you sure?" question;
+  "Stagnant Deals" becomes "Stagnant Opportunities" (Basheer tells
+  Haroon); Log Activity's Manager Note limited to Admin, GM, SBU Manager
+  and Area Manager (BR-ACT-02) — its own `fix:` commit, no plan needed.
+- Lead Source picker showing "REPEAT_ORDER": a screen-side conversion
+  would be hard-coding (Basheer). Reference Data plan D5 proposed: a
+  fixed code column for Lead Sources, rules compare the code
+  ("REPEAT_ORDER", "REFERRAL", "CONFERENCE"), the name becomes an
+  editable label.

@@ -16,13 +16,21 @@ session edits this note._
 - After the move: Duplicate hospitals step 19 on UAT; Audit Trail plan
   step 5 cautions.
 
+## My Work E2E test plan — drafted 2026-10-25
+
+- D18 (build straight after Annual Target Part 2 E2E) in the Weekly
+  Follow-up plan. Test plan `docs/Weekly-Follow-up-Daily-Hub-Manual-E2E-Test-Plan.md`
+  drafted from Dev data (scratchpad session c1568b11). D19–D22 decided
+  (first on menu; N or more, BR-OP-20 reworded; count-only next-action
+  cards; owner-only lists) and in the test plan; archive 25 Oct. Not
+  committed: docs batch at the next pause (show first). Basheer to tell
+  Build & Test about D18–D22.
+
 ## User Manual and help catch-up
 
 - Moves a day or two after the app (User Manual plan D15). Draft PDF
   `Desktop\cabio\Cabio-Sales-OS-User-Manual.pdf`. **Next:** Basheer
-  reviews it, then step 3 (in-app help); check in first. Open
-  (unanswered): Backlog items for deletes with no "Are you sure?" and the
-  Lead Source picker showing "REPEAT_ORDER"-style codes?
+  reviews it.
 
 ## In-app help (help plan step 3a) — in progress 2026-10-22
 
@@ -37,10 +45,12 @@ session edits this note._
   (Basheer). Agreed so far: Account Management, Customer 360, Pipeline
   (`d5e7c97`, `0d37e1c`); 25 Oct Log Activity, Close Next Action, Why
   this change?, First activity (help plan D16: 8 pop-ups, 30 pages) —
-  archive 25 Oct; uncommitted, docs batch. Basheer to tell Build & Test
-  about D14 and D16. New Opportunity wording drafted, not agreed. Open:
-  rename the "New Customer" pop-up title to "New Hospital"?
-  **Next:** New Opportunity pop-up help.
+  archive 25 Oct; committed and pushed in `c5870d2`. Basheer to tell Build & Test
+  about D14 and D16. New Opportunity, Edit Opportunity agreed 25 Oct;
+  Backlog decisions, Reference Data D5 — archive 25 Oct. Not committed.
+  Every reply here closes with "Help wording: N of 30 (P %)", counted
+  from section 7's "agreed" headings (Basheer, 25 Oct). **Next:** docs
+  batch commit (show first), then New Stakeholder pop-up help.
 
 ## Harness Engineering
 

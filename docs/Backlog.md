@@ -123,7 +123,7 @@ to decide: change the code, or change the rule.
 - **Close** when each has a decision recorded in Business-Rules (and the
   matrix, same commit) or a build entry of its own.
 
-### Log Activity: Manager Note for managers only — not started (2026-10-25)
+### Log Activity: Manager Note for managers only — decided, ready to build (2026-10-25)
 
 - **Found (Log Activity help wording, 2026-10-25):** the Type list in
   Log Activity shows **Manager Note** to everyone, Sales Reps included,
@@ -133,8 +133,41 @@ to decide: change the code, or change the rule.
   whoever reads it.
 - **Decided (Basheer, 2026-10-25):** hide it from people who aren't
   managers, and have the server refuse it too.
-- **Open:** which roles count as managers (Area Manager, SBU Manager, GM,
-  Admin?). Small; needs a short plan.
+- **Decided (Basheer, 2026-10-25):** managers are Admin, General
+  Manager, SBU Manager and Area Manager — the same four as the Marketing
+  Leads review queue (`marketing_lead/service.py:36` `_MANAGER_ROLES`).
+  Manager Notes already logged by others stay (Activities can't be
+  changed). No plan needed: Build & Test, its own `fix:` commit (it
+  changes who can save what), alongside the small-fixes batch.
+
+### New Opportunity: rename "+ Add Hospital" to "+ Add Customer" — not started (2026-10-25)
+
+- **Found (New Opportunity help wording, 2026-10-25):** the button on the
+  New Opportunity form says **+ Add Hospital** (`QuickLeadModal.tsx:506`),
+  but it opens the **New Customer** form, and customers include clinics,
+  dealers and diagnostic centres, not just hospitals (Customer Type,
+  `Physical-Schema.sql:392`).
+- **Decided (Basheer, 2026-10-25):** rename it **+ Add Customer**; the
+  "New Customer" title stays. Wording only — Build & Test, in a batch of
+  small fixes. Same commit: the manual (`UAT-User-Manual.md` "Add a new
+  hospital" step 1, "Create an Opportunity" step 1) and the New
+  Opportunity help in help plan section 7.
+
+### File deletes: ask "Are you sure?" first — not started (2026-10-25)
+
+- **Found (User Manual rewrite, 2026-10-15; checked in code
+  2026-10-25):** two buttons delete a file for good on one click, with
+  no question first: **Delete** on an Opportunity's Documents tab
+  (`OpportunityDetailScreen.tsx:1177`; owner, Admin, GM) and a
+  brochure's delete in Product Catalogue (`ProductCatalogScreen.tsx:214`;
+  Admin, GM). The server removes the stored file and its row
+  (`document/service.py:123–127`), so there is no undo.
+- **Decided (Basheer, 2026-10-25):** ask "Delete this file? This can't
+  be undone." before both. The stakeholder "×" on an Opportunity stays as
+  it is (it only removes the link; easy to add back); removing a person's
+  target stays without a question (Annual Target plan D74).
+- The app has no confirm pop-up yet — one small shared one. Build &
+  Test, in the next batch of small fixes.
 
 ### Commit check: keep `.githooks/commit-msg` in Unix line endings — not started (2026-10-08)
 
@@ -252,7 +285,7 @@ the last sort key in the Pipeline query.
 Seen in both rounds of the fix 3 screen check (existing behaviour, not
 caused by the fix). Fix: list the zones as soon as the box is opened.
 
-### Wording: "deal" → "Opportunity" across the app and docs — parked (2026-10-07, docs added 2026-10-12)
+### Wording: "deal" → "Opportunity" across the app and docs — decided, not started (2026-10-07, docs added 2026-10-12, names decided 2026-10-25)
 
 The app still says "deal" in about 25 places users can read (Opportunity
 wording rule, CLAUDE.md). Found in the fix 3 screen check ("· 7 deals" on
@@ -261,8 +294,9 @@ part of Query Load fix 3.
 - Where: Pipeline (drill-down bar, "No deals" columns); every report
   bar's count (`ReportingUI.tsx`); Pipeline Report and Insights Dashboard
   tiles; Sales Report ("Deals Won", "Avg Deal Size", empty text);
-  "Stagnant Deals" menu item, title and empty text; "Fast-Track this
-  Deal" tick-box (4 screens); "this deal is past Demo stage"; help
+  "Stagnant Deals" menu item, title and empty text; "this deal is past
+  Demo stage" (the Fast-Track tick-box already says "Opportunity",
+  checked 2026-10-25); help
   panels (today `helpContent.tsx`, ~12 sentences; moving to the help
   table — help plan D1, 2026-10-22); one server message
   (`document/service.py`); `docs/UAT-User-Manual.md` (10 places).
@@ -273,8 +307,11 @@ part of Query Load fix 3.
   written: signed requirement wording, PRD section titles (3.9, 3.10),
   file names, and screen names until the screens are renamed. Basheer
   2026-10-12: do the docs and the code in one go.
-- Recommended: rename the familiar names too ("Stagnant Opportunities",
-  "Fast-Track this Opportunity"); Basheer to tell Haroon. Not yet decided.
+- **Decided (Basheer, 2026-10-25):** "Stagnant Deals" becomes "Stagnant
+  Opportunities" too (menu item, title, empty text). Basheer to tell
+  Haroon. At the rename, also update the docs that name the screen
+  (search "Stagnant Deals"; Progress-Archive and dated review files stay
+  as written), including the My Work plan and its test plan section E.
 - No database change. Checks: tsc, lint, a visual walk on Dev. Could go
   to UAT with the next full move.
 - After the Traceability edit: regenerate the scorecard and show Basheer

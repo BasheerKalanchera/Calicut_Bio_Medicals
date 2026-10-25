@@ -82,7 +82,9 @@ form: **+ Lead** in the top bar, **+ Add** on a hospital's Opportunities
 tab, **+ Add** on a project, or **Convert** on a marketing lead.
 
 1. Fill **Name**, **Account** (already filled and locked if you started
-   from a hospital or project), **Stage** and **Owner**.
+   from a hospital or project), **Stage** and **Owner**. If the hospital
+   isn't in the app yet, **+ Add Hospital** adds it without leaving the
+   form.
 2. Choosing a stage fills **Win Probability %** with that stage's usual
    chance (Lead 5 %, Qualified 20 %, Demo 35 %, Clinical Evaluation 55 %,
    Negotiation 70 %, Order 90 %, Delivery & Installation 95 %, Payment
@@ -94,6 +96,8 @@ tab, **+ Add** on a project, or **Convert** on a marketing lead.
    - Negotiation or later: **Expected Closure Date**.
    - Order or later: **PO Number** and **PO Date**. PO Date is required
      from Delivery & Installation onwards and can't be a future date.
+   - With **Repeat Order** as the Lead Source, the demo dates aren't
+     asked for, and from Negotiation onwards nor is the closing date.
 5. If you set **Win Probability** to 50 % or more before Negotiation, the
    **Expected Closure Date** box appears and must be filled. A high chance
    without a closing date is refused with: "Win Probability is 50% or more

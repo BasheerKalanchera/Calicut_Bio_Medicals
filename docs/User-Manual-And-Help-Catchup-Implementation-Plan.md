@@ -617,3 +617,133 @@ Opportunity form.
 
 Sources (2026-10-25): `QuickLeadModal.tsx:387–389, 717–728`;
 `CloseReminderModal.tsx:316–331, 392–396, 593–604`.
+
+### New Opportunity pop-up (`popup_newOpportunity`, key name settled at build) — agreed 2026-10-25 (Basheer)
+
+Manual checked: Part A "Create an Opportunity" (two lines added the same
+day: **+ Add Hospital**, and a Repeat Order lead source skips the demo
+dates, and the closing date from Negotiation on — `opportunityStatus.ts:22–28`) and Part D "Create an Opportunity for either SBU".
+Manager box: the SBU choice for Admin and General Manager.
+
+**Title:** New Opportunity — Help
+
+**What this form is for**
+Use it when a hospital shows real interest in buying something, so the
+Opportunity is tracked from the first conversation to the order. The
+same form opens from **+ Lead** in the top bar, **+ Add** on a
+hospital's Opportunities tab, **+ Add** on a project, and **Convert** on
+a marketing lead.
+
+**The basics**
+- **Name**: a short name you'll recognise, for example "SonoScape P60
+  for radiology".
+- **Account**: the hospital. It's already filled and locked if you
+  started from a hospital or a project. If the hospital isn't in the app
+  yet, use **+ Add Hospital**.
+- **Project** (optional): link it to one of the hospital's projects.
+- **Stage**: how far along it is. Choosing a stage fills **Win
+  Probability %** with that stage's usual chance; you can change it.
+- **Owner**: who is responsible for it.
+- **Lead Source** (optional): where it came from. For a referral, tick
+  **External referrer (not Cabio staff)** and type the name, or leave it
+  unticked and pick a colleague.
+
+**Value and products**
+- From Qualified onwards, **Indicative Value (Lakhs)** is needed.
+- **+ Add Products**, then **Done**. Once products are added, the value
+  is worked out for you and shows "(auto)".
+
+**Fields that appear as the stage goes up**
+- Demo or later: **Demo Start Date** and **Demo End Date**.
+- Negotiation or later: **Expected Closure Date**. It also appears
+  earlier if you set the chance to 50 % or more, and then it must be
+  filled.
+- Order or later: **PO Number** and **PO Date**. PO Date is needed from
+  Delivery & Installation onwards and can't be a future date.
+- For a **Repeat Order** lead source, the demo dates aren't asked for,
+  and from Negotiation onwards nor is the closing date.
+
+**Fast-Track**
+Tick **Fast-Track this Opportunity** to skip the demo and closing-date
+steps with your manager's approval. Pick **Approved By** (your own
+manager or a General Manager) and a **Reason**. The manager you name is
+notified.
+
+**After Create**
+**Create** opens the **First activity** form: the conversation that led
+to this Opportunity and its first next action. **Create** there saves
+everything together; **Cancel** takes you back with nothing saved. A new
+Opportunity always starts as Active.
+
+**Manager box:** Admins and the General Manager also pick the **SBU**
+the Opportunity belongs to. Everyone else creates in their own SBU.
+
+Sources (2026-10-25): `QuickLeadModal.tsx:115, 323–346, 425, 450–663,
+715–726`. "SonoScape P60 for radiology" — made-up example.
+
+### Edit Opportunity pop-up (`popup_editOpportunity`, key name settled at build) — agreed 2026-10-25 (Basheer)
+
+Manual checked: Part A "Move an Opportunity forward", "Put an
+Opportunity On Hold, or mark it Lost", "Mark an Opportunity Won" — no
+gaps. Manager box: none. The form's "this deal is past Demo stage" line
+is covered by Backlog "Wording: "deal" → "Opportunity""; the help uses
+"Opportunity".
+
+**Title:** Edit Opportunity — Help
+
+**What this form is for**
+Keeps an Opportunity up to date as the sale moves: its stage, status,
+value, dates and who owns it. Open the Opportunity, **Overview** tab →
+**Edit**.
+
+**Stage and Status**
+- **Stage** is how far the sale has got; **Status** is whether it is
+  Active, On Hold, Won or Lost.
+- Changing the stage moves **Win Probability %** to the new stage's
+  usual chance, if it was still at the old stage's usual chance. A
+  figure you typed yourself is kept.
+- **On Hold** needs a **Hold Reason** and a **Reactivation Date** in the
+  future.
+- **Lost** needs a **Loss Reason**; for "Competitor Won", also the
+  **Competitor Name**.
+- **Won** comes in two saves: first save it at **Payment Pending** (Won
+  is greyed out until then), then set Won, tick **I confirm full
+  payment has been received**, and add an optional **Payment Note**.
+  Won needs a PO Number and PO Date.
+- Won and Lost are final: the Opportunity can't be reopened or its stage
+  changed. If the customer comes back, create a new one.
+
+**Why this change?**
+When you change the stage or status and press Save, a **Why this
+change?** form opens; nothing is saved until you fill it in. **Cancel**
+brings you back here.
+
+**Other fields**
+- **Name**, **Project**, **Owner** and **Lead Source** can be changed
+  any time. For a referral, tick **External referrer (not Cabio staff)**
+  and type the name, or leave it unticked and pick a colleague.
+- **Indicative Value (₹ Lakhs)** is needed from Qualified onwards. Once
+  products are added it is worked out from them and can't be typed.
+  Products are changed on the Overview tab, not in this form.
+- **High Priority**: tick it to flag the Opportunity, up to the Demo
+  stage. After Demo, every Opportunity is high priority automatically.
+
+**Dates and PO**
+- **Demo Start Date** and **Demo End Date** from Demo onwards.
+- **Expected Closure Date** from Negotiation onwards — or earlier once
+  the chance is 50 % or more, and then it must be filled.
+- For a **Repeat Order** lead source, the demo dates aren't asked for,
+  and from Negotiation onwards nor is the closing date.
+- **PO Number** and **PO Date** from Order onwards. PO Date is needed to
+  move to Delivery & Installation and to mark Won, and can't be a
+  future date.
+
+**Fast-Track**
+Tick **Fast-Track this Opportunity** to skip the demo and closing-date
+steps with your manager's approval. Pick **Approved By** (the owner's
+own manager or a General Manager) and a **Reason**. Unticking it
+removes the approval.
+
+Sources (2026-10-25): `OpportunityDetailScreen.tsx:217, 1515–1567,
+1624–1635, 1871–2090`; `opportunity/service.py:371`;
+`opportunity/validators.py:161`.

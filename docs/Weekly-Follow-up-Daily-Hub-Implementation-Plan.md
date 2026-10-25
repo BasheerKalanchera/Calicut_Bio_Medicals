@@ -3,8 +3,9 @@
 **Status:** Step 1 on UAT 2026-10-25 (`8b2ec8a`). Approved 2026-10-21 (Basheer; every line in Decisions
 answered). Step 1 (D9a, D10) built ahead of the approval, 2026-10-19
 (`508ff42`; Basheer: not part of My Work itself); commit and Dev check in
-Progress-Archive. Steps 2–5 not started: they begin after the Annual
-Target Planning Part 1 E2E (D14).
+Progress-Archive. Steps 2–5 not started: built straight after the Annual
+Target Planning Part 2 E2E (D18; the Part 1 E2E that D14 waited for
+passed 2026-10-24). E2E test plan being written 2026-10-25.
 **Traceability rows:** 11.1 Weekly Follow-up Report (Not started). Also
 touches 6.1 Beat Planning (Not started) once hospital-wise planning is on
 UAT.
@@ -24,12 +25,12 @@ in `— proposed`; once Basheer answers, change the ending to
 
 - D1. One screen design for everyone, opening on the viewer's own work. A rep sees only their own, with no picker. A manager also opens on their own work and gets a "Showing: Me ▾" switch with "My team" (everyone under them together) and each rep by name; picking a rep shows that rep's My Work exactly as the rep sees it. "Team" follows the existing reports: Area Manager — reps in their zones; SBU Manager — their SBU; Admin and General Manager — everyone — Basheer, 2026-10-14
 - D2. Formal screen name "Weekly Follow-up", matching signed requirement 11.1, so the scorecard row maps to it directly. Menu label "My Work" (chosen from the shortlist My Work / My Dashboard / My Hub / My Follow-up); "Insights Dashboard" keeps its name — Basheer, 2026-10-11
-- D3. Four sections: (1) "High priority or 70 %+": Opportunities that are high priority (BR-OP-15) or at 70 % chance or more, with a "70 %+ only" tick box that covers PRD §5.8's separate "probability ≥70%" list; (2) closing date passed (BR-OP-16); (3) "Not visited in N+ days" (BR-OP-20, D6); (4) overdue next actions. The PRD's two lists are merged because they almost fully overlap: every stage past Demo is high priority, and the starting chance is 70 % from Negotiation on (Seed-Data.sql); only early-stage Opportunities raised to 70 %+ by hand, and Clinical Evaluation at 55 %, fall outside the overlap. An Opportunity appears in every section it qualifies for; each card shows its own count and ₹ total, never a grand total across cards (it would count the same rupees twice). Each row shows Opportunity, hospital, owner, stage, chance, value, and days overdue or idle — Basheer, 2026-10-14
+- D3. Four sections: (1) "High priority or 70 %+": Opportunities that are high priority (BR-OP-15) or at 70 % chance or more, with a "70 %+ only" tick box that covers PRD §5.8's separate "probability ≥70%" list; (2) closing date passed (BR-OP-16); (3) "Not visited in N+ days" (BR-OP-20, D6); (4) overdue next actions. The PRD's two lists are merged because they almost fully overlap: every stage past Demo is high priority, and the starting chance is 70 % from Negotiation on (Seed-Data.sql); only early-stage Opportunities raised to 70 %+ by hand, and Clinical Evaluation at 55 %, fall outside the overlap. An Opportunity appears in every section it qualifies for; each card shows its own count and ₹ total (next-action cards count only, D21), never a grand total across cards (it would count the same rupees twice). Each row shows Opportunity, hospital, owner, stage, chance, value, and days overdue or idle — Basheer, 2026-10-14
 - D3a. Plain names on screen: never "Stagnant" or "Stalled" in what reps see; each list says what it is ("High priority or 70 %+", "Closing date passed", "Not visited in 30+ days" with the number following what the user types, "Overdue next actions"). The existing Stagnant Deals report keeps its name for now; renaming it is a separate later decision — Basheer, 2026-10-14
 - D4. Desk additions beyond the contract: "Next actions due this week" (not only overdue), and "My hospitals this quarter" (each hospital in the rep's approved quarterly plan) with last visit and next action due for each, built as the last step (step 5) — Basheer, 2026-10-14; timing reworded in D14 — Basheer, 2026-10-21
 - D5. "Automated generation" in 11.1 is met by the screen always being up to date when opened; no weekly email or WhatsApp in Phase 1 — Basheer, 2026-10-21
 - D6. "Not visited" counts days since the last visit, call, meeting or email on the Opportunity (D6d), or since it was created if none, and lists Active Opportunities only — not On Hold (Basheer, 2026-10-14). The user types any number of days (e.g. 30 or 60 — Basheer, 2026-10-11); the screen opens at a default of 30 days and returns to it each time it is opened. — Basheer, 2026-10-11, 2026-10-14
-- D6a. New rule BR-OP-20 "Not visited", wording in `docs/Business-Rules.md`: an Active Opportunity with no visit, call, meeting or email for more than N days (N chosen by the user) appears on the list; nothing about the Opportunity changes; logging one of those takes it off. Separate from BR-OP-06 because the trigger and the fix differ — Basheer, 2026-10-14
+- D6a. New rule BR-OP-20 "Not visited", wording in `docs/Business-Rules.md`: an Active Opportunity with no visit, call, meeting or email for N days or more (D20) (N chosen by the user) appears on the list; nothing about the Opportunity changes; logging one of those takes it off. Separate from BR-OP-06 because the trigger and the fix differ — Basheer, 2026-10-14
 - D6b. BR-OP-06 reworded to mean time in stage ("Stuck in Stage"), wording in `docs/Business-Rules.md`: an Active Opportunity that stays in one stage longer than that stage's limit becomes Stalled, counted from when it first entered the stage; it clears when the Opportunity moves to a stage it hasn't been in before, or is marked Won or Lost. Logging an activity does not clear it. Switched off until Basheer decides reps log regularly; the per-stage table is unchanged (Payment Pending still undecided). See section 4 for what must be built before it is switched on — Basheer, 2026-10-14
 - D6c. The existing Stagnant Deals report changes to the same measure as this desk: only visits, calls, meetings and emails count, and only Active Opportunities are listed (today it counts every activity type, Notes included, and also lists On Hold). It also gets the same type-any-number box, and its code comment claiming "BR-OP-06 says 180 days" is corrected, so a manager never sees two different answers — Basheer, 2026-10-14
 - D6d. "Not visited" counts only calls, visits, meetings and emails, not Notes, so a Note written for a stage change (BR-OP-22) or a new hospital doesn't reset the clock — Basheer, 2026-10-12
@@ -46,6 +47,11 @@ in `— proposed`; once Basheer answers, change the ending to
 - D16. "Closing date passed" lists only the Opportunities the person owns, since only the owner can change the date or close it; shared Opportunities are not repeated for each participant (unlike Target vs Actuals, which counts shares) — Basheer, 2026-10-21
 - D17. "Overdue" means due by the end of today (India time), the same cut as the Insights "Overdue Actions" count; "Due this week" then shows only those due after today — Basheer, 2026-10-21
 - D14a. Step 1 goes to UAT with the next full UAT move, not on its own (screen-only, no database change) — Basheer, 2026-10-21
+- D18. Steps 2–5 are built immediately after the Annual Target Planning Part 2 E2E is done, ahead of other new features; changes D14's "after the Part 1 E2E" — Basheer, 2026-10-25
+- D19. "My Work" is the first item on the menu, at the top of Sales Execution above Account Management, not under Reports. Marketing Users keep their own one-item menu and don't get it — Basheer, 2026-10-25
+- D20. "Not visited in N+ days" means N days or more: an Opportunity idle exactly 30 days is on the 30+ list, matching the label and the existing Stagnant Deals report; BR-OP-20 reworded from "more than N" — Basheer, 2026-10-25
+- D21. The two next-action cards ("Overdue next actions", "Next actions due this week") show a count only, no ₹ total, because many next actions are on a hospital with no Opportunity value; the three Opportunity cards keep count and ₹ total (narrows D3) — Basheer, 2026-10-25
+- D22. All three Opportunity lists ("High priority or 70 %+", "Closing date passed", "Not visited") list only Opportunities the person owns; a split partner doesn't see a shared one there, so it isn't counted twice in "My team" (extends D16) — Basheer, 2026-10-25
 
 ## 1. In plain terms
 
@@ -105,7 +111,7 @@ and 0056), since it lists each rep's approved hospital plan (D14).
    open those forms. E2E: this plan's test plan checks closing and logging
    from My Work's buttons and that its lists update; the forms' own rules
    are tested in the Next-Action Rules E2E plan.
-4. **Weekly Follow-up screen** in the menu under Reports, with "Done" and
+4. **Weekly Follow-up screen**, first item on the menu (D19), with "Done" and
    "Log Activity" on its rows. Checkpoint commit, then E2E.
 5. **My hospitals + landing on the desk**, built on Dev straight after
    step 4; to UAT only with or after hospital-wise planning (D14). Adds the planned-hospital list and switches the landing screen.

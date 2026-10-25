@@ -109,6 +109,19 @@ trigger function** (already proven, already generic — no new mechanism, just s
    outside any brand year get their target typed in by hand by the GM,
    once, on Brand Target Tracking — not on this screen, which sets no
    target or billing figure.
+5. **Lead Sources get a fixed code — proposed (raised 2026-10-25, from
+   the New Opportunity help wording; Basheer agreed it goes in this
+   plan).** `lead_source` has only `name`, and the app's rules check that
+   name: `"REPEAT_ORDER"` (BR-OP-13, `opportunity/validators.py:35, 67`
+   and both Opportunity forms), `"REFERRAL"` (BR-FIN-07,
+   `QuickLeadModal.tsx:367, 554`, `OpportunityDetailScreen.tsx`) and
+   `"CONFERENCE"` (`MarketingLeadCreateModal.tsx:102`). Renaming one on
+   this screen would quietly break those rules, and today reps see codes
+   like "REPEAT_ORDER" in the picker. Proposed: the migration adds
+   `lead_source.code`, filled from today's `name`; every check above
+   compares `code`; `name` becomes a plain label ("Repeat Order") that
+   this screen may rename. The Scope table's Lead Sources row and the
+   registry then follow the code/label shape of the other lists.
 
 ## Backend
 

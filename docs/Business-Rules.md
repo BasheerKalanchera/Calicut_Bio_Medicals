@@ -361,7 +361,7 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Enforcement:** built on Dev 2026-10-15 — see `docs/Business-Rule-Implementation-Matrix.md` and `docs/Win-Probability-Rule-and-One-Create-Form-Implementation-Plan.md`. On UAT 2026-10-25.
 
 ### BR-OP-20: Not Visited (agreed 2026-10-14, not built)
-* **Rule:** An Active Opportunity appears on the "Not visited" list when nobody has logged a visit, call, meeting or email on it for more than N days. The person viewing types N; the screen opens at 30 each time (Basheer, 2026-10-11). On Hold, Stalled, Won and Lost Opportunities are not listed (Basheer, 2026-10-14).
+* **Rule:** An Active Opportunity appears on the "Not visited" list when nobody has logged a visit, call, meeting or email on it for N days or more (Basheer, 2026-10-25; was "more than N"). The person viewing types N; the screen opens at 30 each time (Basheer, 2026-10-11). On Hold, Stalled, Won and Lost Opportunities are not listed (Basheer, 2026-10-14).
 * **What counts:** visits, calls, meetings and emails only. Notes, Manager Notes, Relationship Support and Sales Development activities (BR-ACT-09) don't reset the count (Basheer, 2026-10-12), so a Note written for a stage change (BR-OP-22) doesn't hide an Opportunity nobody has visited.
 * **No activity yet:** days are counted from the date the Opportunity was created.
 * **Effect:** a list only. Nothing on the Opportunity changes — status, forecast and notifications stay as they are.
@@ -590,7 +590,7 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Constraint:** An Activity without an Account reference must be rejected at both the application layer and the database layer, unless `activity_type` is one of the six BR-ACT-09 types.
 
 ### BR-ACT-02: Manager Push (Logging)
-*   **Rule:** Managers can log "Manager Notes" on any Opportunity.
+*   **Rule:** Managers can log "Manager Notes" on any Opportunity. Managers here are Admin, General Manager, SBU Manager and Area Manager; no other role can choose Manager Note (Basheer, 2026-10-25; not yet built — Backlog "Log Activity: Manager Note for managers only").
 *   **Visibility:** These are highlighted in the activity timeline and cannot be deleted or edited by the Sales Executive owner.
 
 ### BR-ACT-03: Activity Account Constraint — Database Enforcement (amended BR-ACT-09, 2026-08-27)
