@@ -11,7 +11,7 @@ session edits this note._
 
 - Move done 25 Oct; after-move work in the archive (25 Oct, "after the
   UAT move"). Both 25 Oct reports approved and moved out of drafts.
-  Scripts committed in `5992936`; docs batch right after; both pushed.
+  Scripts committed in `5992936`; docs batch `b294865`; both pushed.
   Checks paused to 1 Nov: then run both scripts on UAT (ask first).
 - After the move: Duplicate hospitals step 19 on UAT; Audit Trail plan
   step 5 cautions.

@@ -4685,3 +4685,20 @@ moved to after the restart (Basheer).
   UAT tab logging out on close (Supabase auth log, same user and IP);
   10:09 visit was Fahad. HEAD 405s are a second health checker (guess).
   Nothing to fix.
+
+### 2026-10-25 — Plan & Chore retro
+
+- **Corrections from Basheer this session: 7.**
+  1. `restore_uat.ps1` failed again at the same step ("We had already
+     made similar fix yesterday. What happened?") — tracker P99 (new).
+  2. "What do you mean (step 11 ran before step 10)?" — unclear wording.
+  3. "Where is the draft UAT Data Quality report?" — check run, report
+     not built.
+  4. Questioned the unread-comment highlight; it was Latheef Bhai's
+     request.
+  5. Leads usage PDF: unwanted covering note added, "What it means" box
+     removed — both undone.
+  6. DQ report section 11 "has some useless data" — groups rebuilt as
+     pairs.
+  7. Closure report "Open Opportunities" row read as missing dates —
+     renamed "All open Opportunities" with "of which:" rows.
