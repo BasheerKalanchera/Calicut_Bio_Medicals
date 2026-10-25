@@ -34,18 +34,13 @@ session edits this note._
   corrections) in the archive.
 - Help wording screen by screen into the help plan's section 7, each
   beside its manual section; each opens with "What this page is for"
-  (Basheer). 22 Oct: Account Management and Customer 360 agreed, manual
-  fixed beside each — committed and pushed in `d5e7c97` with the retro
-  (1 correction). 23 Oct: Pipeline agreed (manager box kept), manual
-  Part B "Pipeline" fixed. 23 Oct: help plan D14 (six pop-up forms get
-  help, 22 → 28; Basheer) written into the help plan, help editor plan
-  (D5, D9b, section 3 a2, addendum) and its test plan (steps 24–25) —
-  both committed and pushed in `0d37e1c` with the retro (6
-  corrections). Basheer to tell Build & Test. Doc tidy-up: tomorrow.
-  "+ Add Hospital" checked; wording drafted (not yet agreed) for New
-  Opportunity help + manual "Create an Opportunity". Open: rename
-  the "New Customer" pop-up title to "New Hospital"? **Next:** Log
-  Activity pop-up help.
+  (Basheer). Agreed so far: Account Management, Customer 360, Pipeline
+  (`d5e7c97`, `0d37e1c`); 25 Oct Log Activity, Close Next Action, Why
+  this change?, First activity (help plan D16: 8 pop-ups, 30 pages) —
+  archive 25 Oct; uncommitted, docs batch. Basheer to tell Build & Test
+  about D14 and D16. New Opportunity wording drafted, not agreed. Open:
+  rename the "New Customer" pop-up title to "New Hospital"?
+  **Next:** New Opportunity pop-up help.
 
 ## Harness Engineering
 

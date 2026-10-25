@@ -333,7 +333,7 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Where shown:** the Plan vs Actuals Tracking section of the Insights Dashboard; later, a section of the Weekly Follow-up Report ("My Work"), which lists it only for the Opportunity's owner, since only the owner can change the date or close it (Basheer, 2026-10-21; `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md` D16).
 * **Forecast effect:** in Plan vs Actuals Tracking, a flagged Opportunity counts in the current quarter's Expected, not in the past quarter its date points to.
 * **Rationale:** Basheer, 2026-09-29, after comparing Salesforce, Dynamics and Zoho: none blocks on a past closing date; common practice is to flag it and have the manager follow up. Salesforce's default of quietly dropping such Opportunities from forward-looking reports is what this avoids.
-* **Enforcement:** built for Plan vs Actuals Tracking (`cc4eb91`, split-aware `2e2e4c0`); manual E2E passed 2026-10-13 — `docs/Plan-vs-Actuals-Tracking-Implementation-Plan.md`. Not yet on UAT.
+* **Enforcement:** built for Plan vs Actuals Tracking (`cc4eb91`, split-aware `2e2e4c0`); manual E2E passed 2026-10-13 — `docs/Plan-vs-Actuals-Tracking-Implementation-Plan.md`. On UAT 2026-10-25.
 
 ### BR-OP-17: Payment Confirmation Before Won (2026-10-03)
 * **Rule:** "Won cannot be set if full payment is not collected." An Opportunity can be marked Won only (a) once it has already been **saved** at the last stage, **Payment Pending** (name confirmed by Haroon and Latheef Bhai — Basheer, 2026-10-16; `opportunity_stage.display_order` 80, after Delivery & Installation) — reaching Payment Pending and marking Won are always two separate saves (Basheer, 2026-10-03) — and (b) with "full payment received" confirmed in the save that marks it Won. Full payment only — a partial or advance payment does not qualify.
@@ -358,7 +358,7 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Rule:** An Active Opportunity at Lead, Qualified, Demo or Clinical Evaluation stage cannot be saved with a win probability of 50 % or more unless it has an Expected Closure Date. From Negotiation on, BR-OP-01 already requires the date.
 * **Effect:** The save is refused with the message "Win Probability is 50% or more but there's no expected closure date - add one." (wording Basheer, 2026-10-13; the same on the create form and the Opportunity page). Applies on create and on every later save of the Opportunity itself, so existing Opportunities already over the limit are held to it the next time anyone saves them (a stage change counts as a save). Adding a product, document, stakeholder or split is not refused. Until an Opportunity over the limit is fixed, its page shows a notice asking for the date; the notice never blocks anything (Basheer, 2026-10-09). Marking an Opportunity Lost, On Hold or Won is never refused by this rule, and the notice shows only while it is Active; an On Hold Opportunity made Active again is held to it on that save (Basheer, 2026-10-10).
 * **Rationale:** Cabio leadership via Basheer, 2026-10-09. On UAT 24 open Leads had a chance above 50 % and 8 more exactly 50 % (Expected Closure Dates report, 9 Oct), inflating the weighted forecast with no date to plan cash flow against. Leadership chases the existing ones with that report until this ships.
-* **Enforcement:** built on Dev 2026-10-15 — see `docs/Business-Rule-Implementation-Matrix.md` and `docs/Win-Probability-Rule-and-One-Create-Form-Implementation-Plan.md`. Reaches UAT with the next full promotion from Dev.
+* **Enforcement:** built on Dev 2026-10-15 — see `docs/Business-Rule-Implementation-Matrix.md` and `docs/Win-Probability-Rule-and-One-Create-Form-Implementation-Plan.md`. On UAT 2026-10-25.
 
 ### BR-OP-20: Not Visited (agreed 2026-10-14, not built)
 * **Rule:** An Active Opportunity appears on the "Not visited" list when nobody has logged a visit, call, meeting or email on it for more than N days. The person viewing types N; the screen opens at 30 each time (Basheer, 2026-10-11). On Hold, Stalled, Won and Lost Opportunities are not listed (Basheer, 2026-10-14).
@@ -374,7 +374,7 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 ### BR-OP-21: A New Opportunity Starts With an Activity (agreed 2026-10-12, built 2026-10-16)
 * **Rule:** An Opportunity cannot be saved without its first activity (the conversation that made it an Opportunity), entered in the same step. A call, visit or similar also sets a next action, as BR-ACT-04 already requires, so the Opportunity starts with both. Applies to every way an Opportunity is created, including converting a marketing lead.
 * **Rationale:** Haroon, 2026-10-12, answering question 5 of `docs/Discussion-Next-Action-Driven-Activity-Logging-2026-10.md`. On UAT 33 active Opportunities had never had any activity (data-quality check, 11 Oct), e.g. Om Hiremath's 17 Bangalore Opportunities entered 1–11 Sep.
-* **Enforcement:** built on Dev, manual E2E passed 2026-10-18; not yet on UAT — see `docs/Next-Action-Rules-Implementation-Plan.md` and `docs/Business-Rule-Implementation-Matrix.md`.
+* **Enforcement:** built on Dev, manual E2E passed 2026-10-18; on UAT 2026-10-25 — see `docs/Next-Action-Rules-Implementation-Plan.md` and `docs/Business-Rule-Implementation-Matrix.md`.
 
 ### BR-OP-22: A Stage or Status Change Carries a Note (agreed 2026-10-12, built 2026-10-16)
 * **Rule:** Every stage or status change on an Opportunity needs a note saying why.
@@ -384,7 +384,7 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Also:** owners can close their own next actions from the Opportunity page's Next Actions tab (read-only before this rule); other people's stay read-only there.
 * **Not yet:** stage and status can still be changed from the Opportunity page as today. Allowing changes *only* by closing a next action is a later tightening — see `docs/Backlog.md` "Stage changes only by closing a next action".
 * **Rationale:** Haroon, 2026-10-12 (note on every change); Basheer, 2026-10-12 (the closed next action is the note; manager case).
-* **Enforcement:** built on Dev, manual E2E passed 2026-10-18; not yet on UAT — see `docs/Next-Action-Rules-Implementation-Plan.md` and `docs/Business-Rule-Implementation-Matrix.md`.
+* **Enforcement:** built on Dev, manual E2E passed 2026-10-18; on UAT 2026-10-25 — see `docs/Next-Action-Rules-Implementation-Plan.md` and `docs/Business-Rule-Implementation-Matrix.md`.
 
 ---
 
@@ -674,13 +674,13 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
   commitment made now. `next_action_text` and `next_action_due_date` must be
   given together if given at all (validator-enforced); owner defaults to
   whoever closed the reminder, same default BR-ACT-04 uses.
-* **Change agreed 2026-10-12, built on Dev 2026-10-15 (manual E2E passed 2026-10-18; not yet on UAT) — the follow-up becomes required.**
+* **Change agreed 2026-10-12, built on Dev 2026-10-15 (manual E2E passed 2026-10-18; on UAT 2026-10-25) — the follow-up becomes required.**
   Closing one's own next action on an Opportunity needs a new next action
   on that Opportunity. The only exception: the Opportunity is marked Won
   or Lost in the same step (a follow-up may still be added, e.g. chasing
   payment). Another next action still being open does not exempt it
   (Basheer, 2026-10-12 — the discussion note's second exception dropped).
-  **Closing several at once (agreed 2026-10-19; built on Dev 2026-10-20, not on UAT):** a
+  **Closing several at once (agreed 2026-10-19; built on Dev 2026-10-20, on UAT 2026-10-25):** a
   person with more than one open next action of their own on the same
   Opportunity may close any of them together, with one "what happened"
   and one follow-up — so the count can come down to one in a single
@@ -842,8 +842,8 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
   section 4b; Basheer, 2026-10-12, own next actions only (question 2).
   Known cost: an unplanned visit while a planned call is still open is
   recorded by closing the call.
-* **Enforcement:** built on Dev, manual E2E passed 2026-10-18; not yet
-  on UAT — see `docs/Next-Action-Rules-Implementation-Plan.md` and
+* **Enforcement:** built on Dev, manual E2E passed 2026-10-18; on UAT
+  2026-10-25 — see `docs/Next-Action-Rules-Implementation-Plan.md` and
   `docs/Business-Rule-Implementation-Matrix.md`.
 
 ---

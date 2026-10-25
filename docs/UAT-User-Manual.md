@@ -102,7 +102,11 @@ tab, **+ Add** on a project, or **Convert** on a marketing lead.
    then **Done**).
    - If Lead Source is a referral, tick **External referrer (not Cabio
      staff)** and type the name, or leave it unticked and pick a colleague.
-7. **Create**. A new Opportunity always starts as Active.
+7. **Create**. The **First activity** form opens: what happened (the
+   conversation that led to this Opportunity), and its first next action,
+   which goes to the owner unless you change **Assign To**. **Create**
+   again saves all three together; **Cancel** goes back with nothing
+   saved. A new Opportunity always starts as Active.
 
 ### Skip the demo or closing date with your manager's approval (Fast-Track)
 Tick **Fast-Track this Opportunity** (in the create or edit form).
@@ -140,28 +144,81 @@ In **Edit**, change **Status**.
   Opportunity has been saved at Payment Pending.
 - Part payment or an advance does not count.
 
+### Say why a stage or status changed
+Every stage or status change needs a reason. When you press **Save** after
+changing either, a **Why this change?** form opens.
+
+If you have an open next action on the Opportunity, the change closes it.
+Write **Why the change?** and set the next step. With more than one open,
+pick which one to close first. If you have none, your reason is saved as a
+Note and you set a next action now.
+
+For **On Hold**, the next action must be due on or before the
+re-activation date. For **Won** or **Lost**, it's optional. **Cancel** goes
+back to the Edit form with nothing saved.
+
 ### Log what you did
+Record every visit, call, email or meeting, saying what happened and what
+you'll do next. Your manager and colleagues read these records, and the
+next person to deal with the hospital starts from them.
+
 1. **+ Log** (top bar), or **+ Log** on an Opportunity's or hospital's
    Activity tab.
-2. **Details**: **Type**, **Date & Time**, and Notes. Pick the hospital if
-   it isn't already filled.
+2. **Details**: **Type**, **Date & Time** and **Notes**. Pick the hospital
+   if it isn't already filled in. If the visit was about one Opportunity,
+   pick it under **Opportunity**; otherwise leave it on **None —
+   hospital-level**.
 3. **Next Action**: **Next Action**, **Next Action Due Date**, and
    optionally **Assign Next Action To** someone else. Required for Visit,
    Call, Email, Meeting and Note.
 4. **Log**.
-- Training and event types (Conference/Expo, OEM/Product Training,
-  Certification, Sales Training, Seminar/Trade Show, Other Development):
-  hospital optional, **Outcome/Learning** required, no next action. Other
-  Development also needs a **Description**.
-- **Relationship Support** (helping a colleague's Opportunity): pick the
-  **Related Opportunity** and fill **Description**; no next action.
+
+**Logging for a colleague.** The box below Date & Time says who the
+activity is for. It starts on **Me**. Change it only when you're recording
+work a colleague did, for example a call they asked you to log for them.
+
+**If you already have an open next action.** You can't log a new activity
+on an Opportunity while you have a next action still open there. The form
+shows that next action in a yellow box, and the button changes to **Close
+next action**. Close it and write what happened. If anything is still to
+be done, add a follow-up when you close it. This keeps every Opportunity
+to one open next action at a time, so nothing gets left behind. The same
+applies when you're logging for a colleague who has an open next action on
+that Opportunity. Activities at a hospital with no Opportunity picked are
+not affected.
+
+**Training and events.** Conference/Expo, OEM/Product Training,
+Certification, Sales Training, Seminar/Trade Show and Other Development.
+The hospital is optional and there's no next action. Fill in
+**Outcome/Learning** with what you got out of it. Other Development also
+needs a **Description**, because the type name alone doesn't say what it
+was.
+
+**Relationship Support.** For when you helped a colleague's Opportunity,
+for example by introducing them to a contact you know, whichever SBU or
+zone it's in. Pick the hospital, then the **Related Opportunity**, and
+write a **Description** of what you did. There's no next action. It
+doesn't change who owns the Opportunity or who gets credit for the sale.
 
 ### Finish a next action
-1. **Next Actions** → **Pending**.
-2. **Mark to complete** on the row.
-3. Fill **Type**, **Date & Time** and **What was done?**. Add a
-   **Follow-up** with a **Due Date** only if a new task came out of it.
-4. **Complete**.
+1. **Next Actions** → **Pending**, or the Opportunity's **Next Actions**
+   tab.
+2. **Mark to complete** on the row. You can close only your own.
+3. **Details**: **Type**, **Date & Time** and **What was done?**.
+4. **Follow-up**: the next step and its **Due Date**. Required: every
+   closed next action sets the next one, so each Opportunity always has
+   one planned. The box starts with the old text; change it to the real
+   next step.
+5. **Complete**.
+
+**Closing several at once.** If you have other open next actions on the
+same Opportunity, they're listed under **Also close**. Tick any you
+finished in the same visit or call.
+
+**When no follow-up is needed.** On a Won or Lost Opportunity, leave the
+follow-up empty. For a next action at a hospital with no Opportunity, you
+can tick **This visit produced a new Opportunity**: **Complete** opens the
+New Opportunity form, and the next action closes once that's saved.
 
 ### Make your quarterly plan
 **My Plan** shows **Your target for** the quarter (e.g. Oct–Dec 2026), set

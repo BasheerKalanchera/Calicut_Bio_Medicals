@@ -4702,3 +4702,25 @@ moved to after the restart (Basheer).
      pairs.
   7. Closure report "Open Opportunities" row read as missing dates —
      renamed "All open Opportunities" with "of which:" rows.
+
+### 2026-10-25 — Plan & Chore: in-app help for Log Activity and the Close Next Action pop-ups
+
+- Log Activity pop-up help agreed (help plan section 7); manual "Log what
+  you did" rewritten as short paragraphs (Basheer: "one line will not do
+  justice"). Found: any role can log a Manager Note — Basheer: change the
+  code; Backlog "Log Activity: Manager Note for managers only" (open:
+  which roles count as managers). BR-ACT-02 marked decided.
+- Found 13 lines in Business-Rules and the matrix still saying "not yet on
+  UAT" for rules that reached UAT in the 25 Oct move; all changed to "on
+  UAT 2026-10-25" (re-search found 0 left).
+- Close Next Action, Why this change? and First activity: three separate
+  pop-ups, each with its own help and `?` (help plan D16, Basheer) — they
+  share one code file (`CloseReminderModal.tsx`), so the help editor plan
+  had planned a `?` on the first only. Pop-ups with help 6 → 8, help
+  pages 28 → 30; help editor plan (D5, D9b, a2, addendum) and its test
+  plan (F, steps 24–25) updated. Basheer to tell Build & Test.
+- Manual: "Finish a next action" said the follow-up was optional; it has
+  been required since BR-ACT-05 (except Won/Lost) — rewritten, with Also
+  close and "This visit produced a new Opportunity". New section "Say why
+  a stage or status changed"; "Create an Opportunity" step 7 now explains
+  the First activity form.

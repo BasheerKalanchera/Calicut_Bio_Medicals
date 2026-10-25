@@ -55,7 +55,8 @@ user manual and in-app `?` help up to date").
   now, screen by screen with the manual review (step 3a), while Build &
   Test builds the table and editor (step 3b); the agreed text is then
   loaded into the table as starting content, so neither waits for the
-  other — Basheer, 2026-10-22. **Count widened to 28 by D14.**
+  other — Basheer, 2026-10-22. **Count widened to 28 by D14, 30 by
+  D16.**
 - D14. **Help for the six most-used pop-up forms**, each with its own `?`:
   Log Activity, Close Next Action, Edit Opportunity, New Stakeholder,
   New Customer (the add-hospital form) and New Opportunity. Chosen from
@@ -66,13 +67,24 @@ user manual and in-app `?` help up to date").
   opened from four places (**+ Lead**, a hospital's and a project's
   Opportunities tab, **Convert** on a marketing lead). Help pages go
   from 22 to 28; the help editor lists the six as a "Pop-up forms" group
-  (help editor plan D5, D9b) — Basheer, 2026-10-23
+  (help editor plan D5, D9b) — Basheer, 2026-10-23. **Widened to eight
+  by D16.**
 - D15. **The UAT move no longer waits for the manual or help.** The full
   move goes as soon as the Annual Target Planning Part 1 E2E finishes;
   the manual PDF and the in-app help follow a day or two later, in their
   own move once the help editor is built ("no one is looking at the help
   at the moment"). Changes the 2026-10-21 line in Status and step 5 —
   Basheer, 2026-10-24
+- D16. **Three separate pop-ups: Close Next Action, Why this change? and
+  First activity — each gets its own help.** "Close Next Action" opens
+  from **Mark to complete** or from Log Activity, "Why this change?" on
+  Save after a stage or status change, and "First activity" on Create in
+  New Opportunity. Each has its own purpose and button, so each gets its
+  own help and `?`. Pop-up forms go from six to eight, help pages from
+  28 to 30; replaces the help editor plan's "`?` in Close Next Action
+  mode only" — Basheer, 2026-10-25. For Build & Test: all three are
+  built from the same code file (`CloseReminderModal.tsx`), so each of
+  its three modes needs its own help key.
 
 ## 1. In plain terms
 
@@ -107,14 +119,15 @@ After this work:
 3. **In-app help, two strands in parallel (D13).**
    - **3a. Help wording (Plan & Chore, about 1 day).** Screen by screen:
      read the screen's code, draft its help (refresh 8, write 14, plus
-     the 6 pop-up forms of D14), review it beside that screen's manual
+     the 8 pop-up forms of D14 and D16), review it beside that screen's manual
      section and fix both. Agreed text is kept in section 7 of this plan
      until 3b can load it.
      *Docs-batch commits.*
    - **3b. Help table and editor (Build & Test, about 1.5–2 days,
      estimate).** Its own plan and test plan:
      `docs/In-App-Help-Editor-Implementation-Plan.md`; it loads section
-     7's text once all 28 are agreed (its step 4; 22 before D14).
+     7's text once all 30 are agreed (its step 4; 22 before D14, 28
+     before D16).
 4. **Review and test (half a day).** `/code-review` (medium); short manual
    E2E: open `?` on every screen as each role; edit a help page as Admin
    and as General Manager, check the Audit Log entry, and check another
@@ -179,7 +192,7 @@ Read from the code and git on 2026-10-15. **19 menu screens**
 a menu screen). 5 have help; **14 have none**; 3 more help pages cover
 pages opened from a record (Customer 360, Opportunity page, Project page),
 so **8 to refresh + 14 to write = 22 help pages** (28 with D14's six
-pop-up forms, 2026-10-23). Since the manual was
+pop-up forms, 2026-10-23; 30 with D16's eight, 2026-10-25). Since the manual was
 written (`3cfa132`, 2026-08-01): 169 feature/fix commits, 117 of them
 changing screens.
 
@@ -236,9 +249,10 @@ table at step 3b. Order (2026-10-22): Sales Rep daily screens first
 (Account Management, Customer 360, Pipeline, Opportunity page, Project
 page, Next Actions), then the reports, then the Admin screens; Target &
 Coverage Planning last (still changing while Annual Target Part 1 is
-tested). D14's six pop-up forms (2026-10-23) join the Sales Rep daily
-group, most used first: Log Activity, Close Next Action, New
-Opportunity, Edit Opportunity, New Stakeholder, New Customer.
+tested). The eight pop-up forms of D14 and D16 join the Sales Rep daily
+group, most used first: Log Activity, Close Next Action, Why this
+change?, First activity, New Opportunity, Edit Opportunity, New
+Stakeholder, New Customer.
 
 Format: help editor plan D2 (headings, **bold**, bullets) and D4
 (optional manager box). Every screen's help opens with a short **What
@@ -435,3 +449,171 @@ one-to-one.
 Sources (2026-10-23): `OpportunityPipelineScreen.tsx:81–155, 193–264,
 399–480, 491–580`; `DemoApp.tsx:726–750`; `opportunity/repository.py:164–279`
 (no status filter; High Priority then win probability, BR-OP-15).
+
+### Log Activity pop-up (`popup_logActivity`, key name settled at build — help editor plan) — agreed 2026-10-25 (Basheer)
+
+Manual checked: Part A "Log what you did" (fixed the same day, rewritten
+as short paragraphs: Opportunity picker, logging for a colleague, open
+next action, training and events, Relationship Support). Manager box:
+Manager Note. Found while checking: any role can pick Manager Note —
+Backlog "Log Activity: Manager Note for managers only" (Basheer: change
+the code); this help assumes the fix.
+
+**Title:** Log Activity — Help
+
+**What this form is for**
+Use it to record each contact with a customer: a visit, call, email or
+meeting. Write down what happened and what you'll do next. Your manager
+and colleagues read these records, and the next person to deal with the
+hospital starts from them. You can also record training and events you
+attended, help you gave a colleague on their Opportunity, or a note to
+someone in your team.
+
+**Details tab**
+- **Select account**: the hospital. It's filled in for you when you open
+  the form from a hospital's page or an Opportunity's page.
+- **Type**: Visit, Call, Email, Meeting or Note for work with a customer.
+  The other types are explained below.
+- **Date & Time**: when it happened. It starts at the current time;
+  change it if you're logging something from earlier.
+- The box below Date & Time is who the activity is for. Leave it on
+  **Me** unless you're logging for a colleague.
+- **Opportunity (optional)**: link the activity to one of the hospital's
+  Opportunities, or leave it on **None — hospital-level**. When you open
+  the form from an Opportunity's page, it says **Linked to this
+  opportunity** instead.
+- **Notes**: what was discussed and what was agreed.
+
+**Next Action tab**
+- Visit, Call, Email, Meeting and Note all need a next action: what
+  you'll do next, and by when.
+- **Next Action**: for example, "Call to confirm demo date".
+- **Next Action Due Date**: it starts at tomorrow.
+- **Assign Next Action To**: leave it on **Me**, or give the next action
+  to a colleague.
+- It appears in **Next Actions** for whoever it's assigned to.
+
+**If you already have an open next action**
+- If you have a next action still open on this Opportunity, the form
+  shows it in a yellow box. The button changes to **Close next action**.
+- Close that next action and say what happened. You can't log a new
+  activity on top of it. The same applies when you're logging for a
+  colleague who has an open next action there.
+
+**Training and events**
+- Conference/Expo, OEM/Product Training, Certification, Sales Training,
+  Seminar/Trade Show and Other Development.
+- The hospital is optional and there's no next action. Fill in
+  **Outcome/Learning** with what you got out of it. Other Development
+  also needs a **Description**.
+
+**Relationship Support**
+- For when you helped a colleague's Opportunity, for example by
+  introducing them to a contact you know. It doesn't matter which SBU or
+  zone the Opportunity is in.
+- Pick the hospital, then the **Related Opportunity**, and write a
+  **Description** of what you did. There's no next action. It doesn't
+  change who owns the Opportunity or who gets credit for the sale.
+
+**Manager box:** To write a note to someone in your team, pick **Manager
+Note** as the Type. Choose the person under **This Note Is For**. Tick
+**Urgent — notify immediately** to pop it up on their screen; otherwise
+they just get a notification. There's no next action.
+
+Sources (2026-10-25): `LogActivityModal.tsx:26–49, 156–173, 196–236,
+283–551`; `DemoApp.tsx:944–956`; `activity/service.py:202–209`;
+Business-Rules BR-ACT-02, BR-ACT-10, BR-ACT-11.
+
+### Close Next Action pop-up (`popup_closeNextAction`, key name settled at build) — agreed 2026-10-25 (Basheer)
+
+Manual checked: Part A "Finish a next action" (rewritten the same day:
+the follow-up is required except on Won/Lost — the old text said "only
+if a new task came out of it" — plus Also close and "This visit produced
+a new Opportunity"). Manager box: none.
+
+**Title:** Close Next Action — Help
+
+**What this form is for**
+A next action is a promise to do something by a date. Close it when
+you've done it: say what happened and set the next step. That way every
+Opportunity always has one next step planned, and your manager can see
+what was done.
+
+**What you're closing**
+- The grey box at the top shows the next action and its due date.
+- Other open next actions you have on the same Opportunity are listed
+  under **Also close**. Tick any you finished in the same visit or call.
+- When the form opens from Log Activity with several open, tick at least
+  one under **Next actions to close**.
+
+**Details tab**
+- **Type**: Visit, Call, Email, Meeting or Note.
+- **Date & Time**: when you did it. It starts at the current time.
+- **What was done?**: required.
+
+**Follow-up tab**
+- Required: every closed next action sets the next one. The box starts
+  with the text of the one you're closing; change it to the real next
+  step.
+- **Due Date** starts at tomorrow. **Assign To** stays on **Me** unless a
+  colleague will do it.
+- **Won or Lost:** the follow-up is optional; leave it empty to close
+  with no follow-up.
+- **A next action at a hospital with no Opportunity:** you can tick
+  **This visit produced a new Opportunity** instead of setting a
+  follow-up. Press **Complete** and fill in the New Opportunity form; the
+  next action closes once the Opportunity is saved.
+
+Sources (2026-10-25): `CloseReminderModal.tsx:80–90, 146–168, 333–354,
+426–463, 546–614`; `ReminderRow.tsx:98`; `OpportunityDetailScreen.tsx:282–345`
+(own rows only).
+
+### Why this change? pop-up (`popup_whyThisChange`, key name settled at build) — agreed 2026-10-25 (Basheer)
+
+Manual checked: Part A, new section "Say why a stage or status changed"
+(added the same day; the manual had none). Manager box: none.
+
+**Title:** Why this change? — Help
+
+**What this form is for**
+Every stage or status change on an Opportunity needs a reason, so anyone
+reading its history knows why it moved. The form appears when you press
+**Save** after changing the stage or status.
+
+**What to fill in**
+- If you have an open next action on this Opportunity, the change closes
+  it. With more than one, pick which under **Next action to close**.
+  Write **Why the change?** and set the follow-up.
+- If you have none, your reason is saved as a Note, and you set a next
+  action now.
+- **On Hold:** the follow-up must be due on or before the re-activation
+  date.
+- **Won or Lost:** the follow-up is optional.
+- **Cancel** takes you back to the Edit form; nothing is saved.
+
+Sources (2026-10-25): `OpportunityDetailScreen.tsx:1623–1636, 2092–2100`;
+`CloseReminderModal.tsx:189–192, 287–314, 397–425, 602–613`.
+
+### First activity pop-up (`popup_firstActivity`, key name settled at build) — agreed 2026-10-25 (Basheer)
+
+Manual checked: Part A "Create an Opportunity" step 7 (fixed the same
+day; it said Create saves at once). Manager box: none.
+
+**Title:** First activity — Help
+
+**What this form is for**
+Every new Opportunity starts with the conversation that led to it, and a
+next action. The form appears when you press **Create** on the New
+Opportunity form.
+
+**What to fill in**
+- **Type**, **Date & Time** and **What happened?** (required). When you
+  convert a marketing lead, its note is filled in for you.
+- **Follow-up:** the next action and its due date, both required. It
+  goes to the Opportunity's owner unless you change **Assign To**.
+- **Create** saves the Opportunity, this activity and the next action
+  together. **Cancel** takes you back to the New Opportunity form with
+  nothing saved.
+
+Sources (2026-10-25): `QuickLeadModal.tsx:387–389, 717–728`;
+`CloseReminderModal.tsx:316–331, 392–396, 593–604`.

@@ -39,8 +39,8 @@ not the design doc (for the editor, from the built code at P6).
   "Kanban vs. List view", "Moving deals", "Search", "Filters") and the
   manager tip — `sales-os-app/src/utils/helpContent.tsx`, read 2026-10-22.
 - 14 screens with no help; 22 help pages in all — `helpContent.tsx` and
-  `DemoApp.tsx` nav lists, read 2026-10-22. Plus 6 pop-up forms = 28
-  (help plan D14, Basheer, 2026-10-23).
+  `DemoApp.tsx` nav lists, read 2026-10-22. Plus 8 pop-up forms = 30
+  (help plan D14, Basheer, 2026-10-23; D16, 2026-10-25).
 - Test help text "Test heading" / "Click **Refresh** to reload." / bullets
   "First point", "Second point" / `<b>not bold</b>` — made-up example.
 - "Help needs at least one section with a heading and some text." — plan
@@ -97,11 +97,11 @@ the app.
 18. [Simple] As Haroon, **Audit Log**, open the table filter. **Expected:** "Help Page" is in the list. —
 19. [Complex: reading several entries] As Haroon, Audit Log filtered to Help Page. **Expected:** "Added" for Insights Dashboard by Haroon Sidheeq (step 13); "Changed" by Haroon (step 15); two "Changed" for Pipeline by Abdul Latheef P (step 17); nothing for step 16 (refused). —
 
-## F — Agreed texts loaded (plan step 4, after all 28 are agreed)
+## F — Agreed texts loaded (plan step 4, after all 30 are agreed)
 
 20. [Complex: read-only DB check] Claude confirms Dev's `alembic current` is the agreed-text migration and the schema doc is regenerated. —
 21. [Simple] As Haroon, **Help Pages**. **Expected:** no screen marked "No help yet"; Insights Dashboard shows its agreed text, not the step 13 test text. —
 22. [Simple] As Vivek, open **?** on Insights Dashboard, Daily Activity Report and Next Actions. **Expected:** each matches its text in the help plan's section 7. —
 23. [Simple] As Marketing User, **Marketing Leads**, click **?**. **Expected:** the Marketing Leads help from section 7. —
-24. [Simple] As Vivek, open each of the six pop-ups from where it is used, type a word into its first box, and click the **?** in its title bar: **Log Activity** (**+ Log**, top bar); **Close Next Action** (**Next Actions**, **Mark to complete** on any row); **New Opportunity** (**+ Lead**, top bar); **Edit Opportunity** (any Opportunity's page, **Edit**); **New Stakeholder** (any hospital's page, **Stakeholders** tab, **+ Add**); **New Customer** (**Account Management**, **+ Add**). Close each pop-up with **Cancel** afterwards — nothing is saved. **Expected:** for each, the help opens on top of the pop-up and matches its text in section 7; closing the help leaves the pop-up open with the typed word still there. —
-25. [Simple] As Haroon, **Help Pages**. **Expected:** a "Pop-up forms" group lists Log Activity, Close Next Action, Edit Opportunity, New Stakeholder, New Customer and New Opportunity, none marked "No help yet". —
+24. [Simple] As Vivek, open each of the eight pop-ups from where it is used, type a word into its first box, and click the **?** in its title bar: **Log Activity** (**+ Log**, top bar); **Close Next Action** (**Next Actions**, **Mark to complete** on any row); **Why this change?** (any Active Opportunity's page, **Edit**, change **Stage**, **Save**); **First activity** (**+ Lead**, fill the required boxes, **Create**); **New Opportunity** (**+ Lead**, top bar); **Edit Opportunity** (any Opportunity's page, **Edit**); **New Stakeholder** (any hospital's page, **Stakeholders** tab, **+ Add**); **New Customer** (**Account Management**, **+ Add**). Close each pop-up with **Cancel** afterwards — nothing is saved. **Expected:** for each, the help opens on top of the pop-up and matches its text in section 7; closing the help leaves the pop-up open with the typed word still there. —
+25. [Simple] As Haroon, **Help Pages**. **Expected:** a "Pop-up forms" group lists Log Activity, Close Next Action, Why this change?, First activity, Edit Opportunity, New Stakeholder, New Customer and New Opportunity, none marked "No help yet". —

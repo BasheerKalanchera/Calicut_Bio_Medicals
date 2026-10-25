@@ -25,10 +25,11 @@ Chore (parent plan step 3a) and loaded at step 4 below.
 - D5. **Editor layout:** on the left, the list of screens (grouped like the
   menu, by menu name, with the three record pages — Customer 360,
   Opportunity page, Project page — under their parent screen, and a
-  "Pop-up forms" group for the six pop-ups of parent plan D14: Log
-  Activity, Close Next Action, Edit Opportunity, New Stakeholder, New
-  Customer, New Opportunity, each with its own `?` in its title bar —
-  Basheer, 2026-10-23); screens with no help are marked "No help yet". Picking one opens its help on the
+  "Pop-up forms" group for the eight pop-ups of parent plan D14 and D16:
+  Log Activity, Close Next Action, Why this change?, First activity, Edit
+  Opportunity, New Stakeholder, New Customer, New Opportunity, each with
+  its own `?` in its title bar — Basheer, 2026-10-23; "Why this change?"
+  and "First activity" added 2026-10-25); screens with no help are marked "No help yet". Picking one opens its help on the
   right as a list of sections (a heading box and a text box each), with
   **Add section**, **Remove** and **Move up/down**, the optional manager
   tip, and a live preview of how the `?` panel will look. **Save** and
@@ -54,9 +55,9 @@ Chore (parent plan step 3a) and loaded at step 4 below.
   (migrations) so UAT gets them automatically with the move:** (a) with the
   new table, today's 8 help pages are copied in exactly as they read now,
   so no screen loses its help on Dev; (b) once Plan & Chore has agreed all
-  28 texts (parent plan section 7; 22 before parent plan D14,
-  2026-10-23), a second update replaces those 8 and adds the other 20
-  (14 screens and 6 pop-up forms). After the UAT move, help changes are made only on the
+  30 texts (parent plan section 7; 22 before parent plan D14,
+  2026-10-23; 28 before D16, 2026-10-25), a second update replaces
+  those 8 and adds the other 22 (14 screens and 8 pop-up forms). After the UAT move, help changes are made only on the
   editor screen, never by a database update — Basheer, 2026-10-22
 - D10. **When others see an edit:** the next time they open or reload the
   app, not instantly. The editor's own preview and `?` panel update at
@@ -70,7 +71,9 @@ Chore (parent plan step 3a) and loaded at step 4 below.
 - 8 screens with help today, 14 without, 22 help pages in all —
   `sales-os-app/src/utils/helpContent.tsx` keys and `DemoApp.tsx` nav
   lists, read 2026-10-22; matches parent plan section 6 (2026-10-15).
-  Plus 6 pop-up forms = 28 (parent plan D14, Basheer, 2026-10-23). Pop-up
+  Plus 6 pop-up forms = 28 (parent plan D14, Basheer, 2026-10-23); plus
+  "Why this change?" and "First activity" = 30 (parent plan D16, Basheer,
+  2026-10-25; titles at `CloseReminderModal.tsx:387`). Pop-up
   titles "Log Activity", "Close Next Action", "New Opportunity", "New
   Customer" — `LogActivityModal.tsx:279`, `CloseReminderModal.tsx:387`,
   `QuickLeadModal.tsx:425`, `AddHospitalModal.tsx:215`; "Edit
@@ -106,9 +109,9 @@ help lives in the database:
 
 - Admin and General Manager get a new **Help Pages** screen under
   Administration. It lists every screen in the menu, plus the Customer
-  360, Opportunity and Project pages and the six most-used pop-up forms
-  (such as Log Activity and New Opportunity), and marks the ones with no
-  help yet. Those six pop-ups gain their own `?` button.
+  360, Opportunity and Project pages and eight pop-up forms (such as Log
+  Activity and New Opportunity), and marks the ones with no help yet.
+  Those eight pop-ups gain their own `?` button.
   They pick a screen, change its sections, see a preview, and save.
 - Everyone else sees no change except better help: the `?` button looks
   and opens the same way. Once a screen has help, its `?` appears; a
@@ -117,7 +120,7 @@ help lives in the database:
 - The user manual (PDF) is not affected; it stays a separate document.
 
 **Environments:** built and tested on Dev. The table, today's 8 help
-pages and the 28 agreed texts all reach UAT with the full UAT move (the
+pages and the 30 agreed texts all reach UAT with the full UAT move (the
 database updates run there as part of it). From then on, UAT's help is the
 copy that matters; at Production go-live it is copied across from UAT
 (`docs/Deployment-Topology.md` to gain that line at step 5).
@@ -140,7 +143,7 @@ copy that matters; at Production go-live it is copied across from UAT
 3. **Pre-E2E review and E2E** (`cabio-e2e-testing`): `/code-review`
    (high — new table, access rules, migration), then the test plan's
    sections A–E.
-4. **Agreed texts loaded.** When parent plan section 7 holds all 28
+4. **Agreed texts loaded.** When parent plan section 7 holds all 30
    agreed texts: database update (b) (D9b); Basheer runs it on Dev; test
    plan section F. *Commit.*
 5. **Ships with the full UAT move** (parent plan step 5): both database
@@ -157,12 +160,14 @@ Code search 2026-10-22 for `HELP_CONTENT`, `helpContent` and `HelpDrawer`:
   `helpViewId`. Check before and after: `?` on Pipeline (has help, with
   the manager tip), Account Management Projects tab (shows the Project
   page help), Insights Dashboard (no help, no `?`).
-- (a2) The six pop-up forms of parent plan D14 (2026-10-23), each gaining
-  a `?` in its title bar: Log Activity (`LogActivityModal.tsx`, from the
-  top bar, a hospital's page and an Opportunity's page), Close Next
-  Action (`CloseReminderModal.tsx`, from Next Actions and an
-  Opportunity's page; also used as "First activity" and "Why this
-  change?"), New Opportunity (`QuickLeadModal.tsx`, from **+ Lead**, a
+- (a2) The eight pop-up forms of parent plan D14 (2026-10-23) and D16
+  (2026-10-25), each gaining a `?` in its title bar: Log Activity
+  (`LogActivityModal.tsx`, from the top bar, a hospital's page and an
+  Opportunity's page), Close Next Action (`CloseReminderModal.tsx`, from
+  Next Actions, an Opportunity's Next Actions tab and Log Activity), Why
+  this change? (same file, after Save on a stage or status change in
+  Edit Opportunity), First activity (same file, after Create in New
+  Opportunity), New Opportunity (`QuickLeadModal.tsx`, from **+ Lead**, a
   hospital's and a project's Opportunities tab, and **Convert** on a
   marketing lead), Edit Opportunity (`OpportunityDetailScreen.tsx`), New
   Stakeholder (`Customer360Screen.tsx`), New Customer
@@ -220,7 +225,7 @@ Code search 2026-10-22 for `HELP_CONTENT`, `helpContent` and `HelpDrawer`:
 - **Migrations:** (a) `0063_help_page` — table, policies, trigger, and
   today's 8 entries converted from `helpContent.tsx` JSX to the D6 subset
   (`<strong>` → `**…**`); (b) `00NN_help_page_agreed_text` — upsert of all
-  28 from parent plan section 7 (D9b). Use the next free number at the
+  30 from parent plan section 7 (D9b). Use the next free number at the
   time; Annual Target Part 2 may take 0063 first.
 - **Backend:** small domain (`help`, or inside `reference` — Standards §2
   Domain Boundaries decides). `GET /api/v1/help-pages` (all signed-in
@@ -235,13 +240,14 @@ Code search 2026-10-22 for `HELP_CONTENT`, `helpContent` and `HelpDrawer`:
   `HelpPagesScreen.tsx` under Administration (`getNavSections` admin
   list), `useMutation` + invalidate `['helpPages']`. The screen list for
   "No help yet" comes from the nav lists (exported constant) plus
-  `customer360`, `opportunityDetail`, `projectDetail`, plus the six
+  `customer360`, `opportunityDetail`, `projectDetail`, plus the eight
   pop-up keys (D5; e.g. `popup_logActivity` — names to settle at build,
-  ≤50 chars for `view_id`). Pop-up `?`: a small button in each of the six
-  forms' title bars opening `HelpDrawer` with that key; check the drawer
-  shows above the open pop-up (z-index). `CloseReminderModal` has three
-  titles (`CloseReminderModal.tsx:387`) — show its `?` in "Close Next
-  Action" mode only, unless Basheer says otherwise at build. Delete
+  ≤50 chars for `view_id`). Pop-up `?`: a small button in each of the
+  eight forms' title bars opening `HelpDrawer` with that key; check the
+  drawer shows above the open pop-up (z-index). `CloseReminderModal` has
+  three titles (`CloseReminderModal.tsx:387`), each with its own key:
+  plain close, `stageChange` and `firstActivity` modes (parent plan D16,
+  Basheer, 2026-10-25). Delete
   `utils/helpContent.tsx`.
 - **Tests:** backend — read as Sales Staff; save as Admin and as GM;
   refused as Area Manager, Sales Staff and Marketing User (service and

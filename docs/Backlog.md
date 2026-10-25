@@ -114,12 +114,27 @@ to decide: change the code, or change the rule.
 - BR-OP-06: Stalled status not built. Reworded 2026-10-14 (Basheer) in
   `docs/Business-Rules.md` to time in stage, switched off during adoption;
   see "Stuck in stage" below. "Nobody has visited" is now BR-OP-20.
-- BR-ACT-02: any role can log a Manager Note.
+- BR-ACT-02: any role can log a Manager Note. **Decided 2026-10-25
+  (Basheer): change the code** — the rule stands; see "Log Activity:
+  Manager Note for managers only" below.
 - BR-ACT-07: rule text predates company-wide product visibility.
 - BR-PROJ-01: no bid-submission-date check.
 - BR-ACC-01: Account Health not built.
 - **Close** when each has a decision recorded in Business-Rules (and the
   matrix, same commit) or a build entry of its own.
+
+### Log Activity: Manager Note for managers only — not started (2026-10-25)
+
+- **Found (Log Activity help wording, 2026-10-25):** the Type list in
+  Log Activity shows **Manager Note** to everyone, Sales Reps included,
+  and the server accepts it from any role (`LogActivityModal.tsx`
+  `ACTIVITY_TYPES`; no role check in `activity/service.py`). BR-ACT-02
+  says Manager Notes are for managers; a rep's "Manager Note" misleads
+  whoever reads it.
+- **Decided (Basheer, 2026-10-25):** hide it from people who aren't
+  managers, and have the server refuse it too.
+- **Open:** which roles count as managers (Area Manager, SBU Manager, GM,
+  Admin?). Small; needs a short plan.
 
 ### Commit check: keep `.githooks/commit-msg` in Unix line endings — not started (2026-10-08)
 
