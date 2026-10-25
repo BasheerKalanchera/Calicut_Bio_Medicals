@@ -411,6 +411,11 @@ export default function BrandTargetTrackingScreen() {
                       <TableCell>
                         {row.brand_name}
                         <Typography component="span" color="text.secondary"> · {brandYearLabel(row.year_start_month, row.start_year)}</Typography>
+                        {/* On a phone the two hidden columns show here instead. */}
+                        <Typography variant="caption" color="text.secondary" sx={{ display: { xs: "block", sm: "none" } }}>
+                          {isSet ? `Own figure ${formatLakhs(Number(row.vendor_amount_lakhs))}` : "Own figure not set"}
+                          {row.stretch_pct !== null && ` · Stretch ${Number(row.stretch_pct)}%`}
+                        </Typography>
                       </TableCell>
                       <TableCell sx={HIDE_ON_PHONE}>{isSet ? formatLakhs(Number(row.vendor_amount_lakhs)) : <Typography component="span" color="text.secondary">Not set</Typography>}</TableCell>
                       <TableCell sx={HIDE_ON_PHONE}>{row.stretch_pct !== null ? `${Number(row.stretch_pct)}%` : "—"}</TableCell>
@@ -421,7 +426,7 @@ export default function BrandTargetTrackingScreen() {
                     </TableRow>
                     {open && (
                       <TableRow>
-                        <TableCell />
+                        <TableCell sx={HIDE_ON_PHONE} />
                         <TableCell colSpan={5}>
                           <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
                             {row.own_pattern
@@ -430,48 +435,83 @@ export default function BrandTargetTrackingScreen() {
                                 ? `Spread by the SBU's seasonal pattern for ${row.start_year}.`
                                 : `No seasonal pattern for ${row.start_year} yet.`}
                           </Typography>
-                          <Table size="small">
-                            <TableHead>
-                              <TableRow>
-                                <TableCell>Quarter</TableCell>
-                                <TableCell>Target</TableCell>
-                                <TableCell>Brands Billing to Cabio</TableCell>
-                                <TableCell>Team committed</TableCell>
-                                <TableCell>Gap</TableCell>
-                                <TableCell />
-                              </TableRow>
-                            </TableHead>
-                            <TableBody>
-                              {row.quarters.map((q) => {
-                                const rollup = rollupFor(row.brand_id, q.planning_period);
-                                const gap = rollup?.gap ?? null;
-                                return (
-                                  <TableRow key={q.planning_period}>
-                                    <TableCell>{formatPlanningPeriod(q.planning_period)}</TableCell>
-                                    <TableCell>
-                                      {q.saved_lakhs !== null ? formatLakhs(Number(q.saved_lakhs)) : <Typography component="span" color="text.secondary">Not set</Typography>}
-                                      {/* Kept when the year is worked out again (D71); never removed (D73). */}
-                                      {q.set_by_hand && (
-                                        <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>changed by hand</Typography>
-                                      )}
-                                    </TableCell>
-                                    {/* Shown only, never typed (D54, D68). */}
-                                    <TableCell>{q.billing_lakhs !== null ? formatLakhs(Number(q.billing_lakhs)) : "—"}</TableCell>
-                                    <TableCell>{rollup ? formatLakhs(Number(rollup.committed_total)) : "—"}</TableCell>
-                                    <TableCell sx={{ color: gap === null ? "text.secondary" : Number(gap) < 0 ? "success.main" : "warning.main" }}>
-                                      {gap !== null ? formatLakhs(Number(gap)) : "—"}
-                                    </TableCell>
-                                    <TableCell align="right">
-                                      {/* Ended quarters, and those before Oct–Dec 2026, stay locked (D51, D70). */}
-                                      {!q.locked && (
-                                        <Button size="small" onClick={() => openQuarterEdit(row, q.planning_period, q.saved_lakhs)}>Change</Button>
-                                      )}
-                                    </TableCell>
-                                  </TableRow>
-                                );
-                              })}
-                            </TableBody>
-                          </Table>
+                          {(() => {
+                            const quarters = row.quarters.map((q) => {
+                              const rollup = rollupFor(row.brand_id, q.planning_period);
+                              const gap = rollup?.gap ?? null;
+                              return {
+                                q,
+                                target: (
+                                  <>
+                                    {q.saved_lakhs !== null ? formatLakhs(Number(q.saved_lakhs)) : <Typography component="span" color="text.secondary">Not set</Typography>}
+                                    {/* Kept when the year is worked out again (D71); never removed (D73). */}
+                                    {q.set_by_hand && (
+                                      <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>changed by hand</Typography>
+                                    )}
+                                  </>
+                                ),
+                                // Shown only, never typed (D54, D68).
+                                billing: q.billing_lakhs !== null ? formatLakhs(Number(q.billing_lakhs)) : "—",
+                                committed: rollup ? formatLakhs(Number(rollup.committed_total)) : "—",
+                                gap: gap !== null ? formatLakhs(Number(gap)) : "—",
+                                gapColor: gap === null ? "text.secondary" : Number(gap) < 0 ? "success.main" : "warning.main",
+                                // Ended quarters, and those before Oct–Dec 2026, stay locked (D51, D70).
+                                change: !q.locked && (
+                                  <Button size="small" onClick={() => openQuarterEdit(row, q.planning_period, q.saved_lakhs)}>Change</Button>
+                                ),
+                              };
+                            });
+                            return (
+                              <>
+                                {/* On a phone each quarter is a stacked block, so nothing leaves the card. */}
+                                <Box sx={{ display: { xs: "block", sm: "none" } }}>
+                                  {quarters.map((x) => (
+                                    <Box key={x.q.planning_period} sx={{ py: 1, borderBottom: 1, borderColor: "divider" }}>
+                                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
+                                        <Box sx={{ fontWeight: 700 }}>{formatPlanningPeriod(x.q.planning_period)}</Box>
+                                        {x.change}
+                                      </Box>
+                                      {([
+                                        ["Target", x.target, undefined],
+                                        ["Brands Billing to Cabio", x.billing, undefined],
+                                        ["Team committed", x.committed, undefined],
+                                        ["Gap", x.gap, x.gapColor],
+                                      ] as const).map(([label, value, color]) => (
+                                        <Box key={label} sx={{ display: "flex", justifyContent: "space-between", gap: 1, fontSize: "0.8125rem" }}>
+                                          <Box component="span" sx={{ color: "text.secondary" }}>{label}</Box>
+                                          <Box component="span" sx={{ textAlign: "right", color }}>{value}</Box>
+                                        </Box>
+                                      ))}
+                                    </Box>
+                                  ))}
+                                </Box>
+                                <Table size="small" sx={{ display: { xs: "none", sm: "table" } }}>
+                                  <TableHead>
+                                    <TableRow>
+                                      <TableCell>Quarter</TableCell>
+                                      <TableCell>Target</TableCell>
+                                      <TableCell>Brands Billing to Cabio</TableCell>
+                                      <TableCell>Team committed</TableCell>
+                                      <TableCell>Gap</TableCell>
+                                      <TableCell />
+                                    </TableRow>
+                                  </TableHead>
+                                  <TableBody>
+                                    {quarters.map((x) => (
+                                      <TableRow key={x.q.planning_period}>
+                                        <TableCell>{formatPlanningPeriod(x.q.planning_period)}</TableCell>
+                                        <TableCell>{x.target}</TableCell>
+                                        <TableCell>{x.billing}</TableCell>
+                                        <TableCell>{x.committed}</TableCell>
+                                        <TableCell sx={{ color: x.gapColor }}>{x.gap}</TableCell>
+                                        <TableCell align="right">{x.change}</TableCell>
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              </>
+                            );
+                          })()}
                         </TableCell>
                       </TableRow>
                     )}
