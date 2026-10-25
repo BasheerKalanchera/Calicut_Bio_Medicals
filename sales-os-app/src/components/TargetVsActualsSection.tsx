@@ -177,7 +177,8 @@ export default function TargetVsActualsSection() {
     enabled: !!sbuId && view === "QUARTER",
   });
   const yearQuery = useQuery({
-    queryKey: ["planning", "target-vs-actuals-year", sbuId, fiscalYear],
+    // Under the Quarter view's key, so every refresh of it reaches this too.
+    queryKey: ["planning", "target-vs-actuals", "year", sbuId, fiscalYear],
     queryFn: () => getTargetVsActualYear(sbuId as string, fiscalYear),
     enabled: !!sbuId && view === "YEAR",
   });

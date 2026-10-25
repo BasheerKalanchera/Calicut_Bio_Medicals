@@ -673,9 +673,9 @@ def test_year_skips_what_the_year_view_leaves_out(monkeypatch):
         getattr(repo, method).assert_not_called()
 
 
-def test_sbu_quarter_by_quarter_running_totals_carry_a_missing_target(monkeypatch):
+def test_a_quarter_so_far_without_a_target_leaves_the_year_target_unset(monkeypatch):
     # Today in Jan-Mar 2027: both counted quarters are "so far". Jan-Mar has
-    # no SBU target, so the target so far stays at Oct-Dec's.
+    # no SBU target, so from it on there is no target so far (D81).
     repo = _repo()
     repo.active_sbu_targets.side_effect = _by_period({"2026-Q3": {SBU_ID: Decimal("280")}}, {SBU_ID: None})
     repo.summary_totals.side_effect = lambda period, *a, sbu_id: {
@@ -693,19 +693,53 @@ def test_sbu_quarter_by_quarter_running_totals_carry_a_missing_target(monkeypatc
     )
     assert (q4.target_lakhs, q4.target_so_far_lakhs, q4.won_so_far_lakhs, q4.percent_of_target_so_far) == (
         None,
-        Decimal("280"),
+        None,
         Decimal("80.00"),
-        Decimal("28.57"),
+        None,
     )
     row = resp.sbu_row
     assert (row.target_lakhs, row.planned_lakhs, row.po_received_lakhs, row.won_lakhs, row.percent_of_target) == (
-        Decimal("280"),
+        None,
         Decimal("220"),
         Decimal("100"),
         Decimal("80.00"),
-        Decimal("28.57"),
+        None,
     )
     assert resp.company_row is None and resp.team_row is None
+
+
+def test_company_year_target_waits_for_every_quarter_so_far(monkeypatch):
+    # D81: Jan-Mar's company target is unset (another SBU has none), so the
+    # year's company target is too -- not Oct-Dec's alone.
+    other = uuid.uuid4()
+    repo = _repo()
+    repo.active_sbu_targets.side_effect = _by_period(
+        {"2026-Q3": {SBU_ID: Decimal("200"), other: Decimal("100")}}, {SBU_ID: Decimal("200"), other: None}
+    )
+    gm = _user_with_role("General Manager", sbu_id=None)
+    resp = _run_year(repo, date(2027, 2, 1), monkeypatch, user=gm)
+    assert resp.sbu_row.target_lakhs == Decimal("400")
+    assert resp.company_row.target_lakhs is None and resp.company_row.percent_of_target is None
+
+
+def test_person_with_a_quarter_so_far_without_a_target_has_no_year_target(monkeypatch):
+    rep, acc = uuid.uuid4(), uuid.uuid4()
+    repo = _repo(
+        roster=[(rep, "Vivek")], won_by_person_account=[(rep, "Vivek", acc, None, None, Decimal("20.00"))]
+    )
+    repo.person_targets.side_effect = _by_period({"2026-Q3": {rep: Decimal("90")}}, {})
+    (p,) = _run_year(repo, date(2027, 2, 1), monkeypatch).people
+    assert (p.target_lakhs, p.still_to_win_lakhs, p.won_lakhs) == (None, None, Decimal("40.00"))
+    assert [q.target_so_far_lakhs for q in p.quarters] == [Decimal("90"), None]
+
+
+def test_person_upcoming_quarter_without_a_target_keeps_the_year_target(monkeypatch):
+    # D81 is about quarters so far: Jan-Mar still to come adds nothing.
+    rep = uuid.uuid4()
+    repo = _repo(roster=[(rep, "Vivek")])
+    repo.person_targets.side_effect = _by_period({"2026-Q3": {rep: Decimal("90")}}, {})
+    (p,) = _run_year(repo, IN_QUARTER, monkeypatch).people
+    assert p.target_lakhs == Decimal("90")
 
 
 def test_upcoming_quarter_adds_to_target_but_not_to_so_far(monkeypatch):

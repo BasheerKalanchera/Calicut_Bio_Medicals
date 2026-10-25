@@ -1217,9 +1217,17 @@ class TargetVsActualService:
             return sum(values, _ZERO)
 
         def target_total(targets) -> Decimal | None:
-            # A quarter without a target adds nothing; None until one has.
-            set_targets = [t for t in targets if t is not None]
-            return total(set_targets) if set_targets else None
+            # D81: a quarter so far without a target leaves the total unset;
+            # a partial sum would read as a real target.
+            targets = list(targets)
+            return total(targets) if targets and None not in targets else None
+
+        def add_target(run: Decimal | None, gap: bool, target: Decimal | None, state: QuarterState):
+            """One quarter onto a running target and whether a quarter so far
+            had none (D81). An upcoming quarter without one adds nothing."""
+            if target is None:
+                return run, gap or state is not QuarterState.FUTURE
+            return (run or _ZERO) + target, gap
 
         def summary(pick) -> TargetVsActualSummaryRow | None:
             rows = [pick(r) for r in so_far]
@@ -1245,6 +1253,7 @@ class TargetVsActualService:
         quarters: list[TargetVsActualYearQuarter] = []
         if row_attr is not None:
             target_run: Decimal | None = None
+            target_gap = False
             won_run = _ZERO
             for p in periods:
                 r = by_period.get(p)
@@ -1271,8 +1280,8 @@ class TargetVsActualService:
                     )
                     continue
                 row = getattr(r, row_attr)
-                if row.target_lakhs is not None:
-                    target_run = (target_run or _ZERO) + row.target_lakhs
+                target_run, target_gap = add_target(target_run, target_gap, row.target_lakhs, r.quarter_state)
+                target_so_far = None if target_gap else target_run
                 upcoming = r.quarter_state is QuarterState.FUTURE
                 if not upcoming:
                     won_run += row.won_lakhs
@@ -1283,9 +1292,9 @@ class TargetVsActualService:
                         counted=True,
                         target_lakhs=row.target_lakhs,
                         won_lakhs=None if upcoming else row.won_lakhs,
-                        target_so_far_lakhs=target_run,
+                        target_so_far_lakhs=target_so_far,
                         won_so_far_lakhs=None if upcoming else won_run,
-                        percent_of_target_so_far=None if upcoming else _percent_of_target(won_run, target_run),
+                        percent_of_target_so_far=None if upcoming else _percent_of_target(won_run, target_so_far),
                     )
                 )
 
@@ -1301,12 +1310,12 @@ class TargetVsActualService:
         for user_id, (name, manager_id) in sorted(names.items(), key=lambda kv: kv[1][0].lower()):
             own = quarter_rows[user_id]
             target_run, planned_run, won_run, po_run = None, _ZERO, _ZERO, _ZERO
+            target_gap = False
             person_quarters = []
             for p in counted:
                 row, state = own.get(p), by_period[p].quarter_state
                 if row is not None:
-                    if row.target_lakhs is not None:
-                        target_run = (target_run or _ZERO) + row.target_lakhs
+                    target_run, target_gap = add_target(target_run, target_gap, row.target_lakhs, state)
                     planned_run += row.planned_lakhs
                     if state is not QuarterState.FUTURE:
                         won_run += row.won_lakhs
@@ -1315,21 +1324,22 @@ class TargetVsActualService:
                     TargetVsActualYearPersonQuarter(
                         planning_period=p,
                         quarter_state=state,
-                        target_so_far_lakhs=target_run,
+                        target_so_far_lakhs=None if target_gap else target_run,
                         planned_so_far_lakhs=planned_run,
                         won_so_far_lakhs=None if state is QuarterState.FUTURE else won_run,
                     )
                 )
+            year_target = None if target_gap else target_run
             people.append(
                 TargetVsActualYearPerson(
                     user_id=user_id,
                     display_name=name,
                     manager_id=manager_id,
-                    target_lakhs=target_run,
+                    target_lakhs=year_target,
                     planned_lakhs=planned_run,
                     po_received_lakhs=po_run,
                     won_lakhs=won_run,
-                    still_to_win_lakhs=None if target_run is None else max(_ZERO, target_run - won_run),
+                    still_to_win_lakhs=None if year_target is None else max(_ZERO, year_target - won_run),
                     quarters=person_quarters,
                 )
             )
