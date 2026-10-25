@@ -117,11 +117,14 @@ the UAT rule in CLAUDE.md.
   section heading has a "Back to summary" link. *(2026-10-07)*
 - Section 18 (look-alike hospitals): groups Basheer confirms as different places go
   into `scripts/uat_lookalike_hospitals_reviewed.json`, so they drop out of the
-  open count. *(2026-10-09)*
-- First check after the next full UAT move only: also run the lead-comment
-  usage check in `docs/Discussion-Marketing-Lead-Comment-Visibility-2026-09.md`
-  section 5; it decides whether to build the comment highlight (Backlog).
-  Remove this line once done. *(2026-10-21)*
+  open count. *(2026-10-09)* Since 2026-10-25 it lists look-alike pairs,
+  not groups, and leaves out branches that name different places; the
+  report shows the new pairs in full and the older ones at the end
+  (Basheer). *(2026-10-25)*
+- Section 19 (marketing leads waiting for a decision): the report gets a
+  leads section from 1 Nov, laid out like the 25 Oct usage PDF
+  (`Marketing-Leads-Usage-2026-10-25.pdf`) plus the waiting leads by name.
+  *(2026-10-25)*
 
 ## Diagnosing failures
 - When something fails repeatedly for an unclear reason, isolate the variable

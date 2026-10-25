@@ -202,6 +202,14 @@ Moved from the handover note 2026-10-12; none of these blocks the E2E.
   note); history docs keep the old name.
 - **Dev test Opportunity "Test +lead screen" (Basheer K):** reassign,
   don't delete (it has Activity rows).
+- **Marketing User on the people list (UAT smoke test, 2026-10-25):**
+  Haroon and Basheer K saw the Marketing User on Target vs Actuals. The
+  list takes every active SBU member except Admin
+  (`TargetVsActualRepository.roster`), and that UAT user still had an SBU
+  from before BR-ORG-03. Fixed on UAT by re-saving him in the User
+  Directory (Basheer). Code fix to build: leave Marketing Users off the
+  list even with an SBU, as `sbu_top_people` already does; it also feeds
+  the Target & Coverage Planning roster (`_build_roster`).
 
 ### Target Planning: screen keeps its own copy of who sees the SBU target — not started (2026-10-10)
 
@@ -376,8 +384,8 @@ The `<2.1` cap is in `backend/pyproject.toml` on `main` (`0ffe00c`,
 2026-10-03; fresh install resolves to SQLAlchemy 2.0.54). Why: 2.1 makes a
 plain `postgresql://` URL use the psycopg 3 driver, which isn't installed,
 so the app crashes at startup — hit on the UAT Render build 2026-09-27.
-**Left to do:** (1) at the next UAT move (which carries the cap), set the
-UAT Render Build Command back to `pip install .`; (2) review the other
+**Left to do:** (1) done 2026-10-25 — the UAT Render Build Command is back
+to `pip install .` (UAT move, SQLAlchemy 2.0.55); (2) review the other
 open-ended dependencies — that build also jumped FastAPI, Starlette and
 others to versions never tested here. Details: Progress-Archive
 2026-09-27 "UAT move".
@@ -715,11 +723,10 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
 
 - **Marketing User can't see which of their leads have new comments.**
   **Requested by Haroon and Latheef Bhai at the 2026-09-24 demo (as a
-  highlight on the lead; a bell was considered and dropped). Parked: a
-  UAT usage check of lead comments (on UAT since 2026-09-27) decides
-  whether to build the highlight. The check runs with the first UAT
-  data-quality check after the next full UAT move (Basheer, 2026-10-21;
-  was "about 12 Oct") —
+  highlight on the lead; a bell was considered and dropped). Usage check
+  done 2026-10-25 (13 of 43 comments from the sales team; no lead
+  converted); Basheer sent the result to Latheef Bhai and Haroon, who
+  decide whether to build the highlight —
   `docs/Discussion-Marketing-Lead-Comment-Visibility-2026-09.md`.**
   Listed as item 1 under "Requested
   by Cabio leadership — to be built" in

@@ -4,7 +4,7 @@ _Renamed 2026-10-02 (Basheer) from "Hospital-Wise Target Planning, Part 2".
 Hospital-wise Target Planning is finished; this feature tracks actuals
 against those plans on the Insights Dashboard._
 
-**Status:** Approved 2026-09-29 (Basheer; every line in Decisions answered
+**Status:** **On UAT 2026-10-25** (`8b2ec8a`, `docs/UAT-Promotion-2026-10-Plan.md`). Approved 2026-09-29 (Basheer; every line in Decisions answered
 the same day). First build on Dev: backend `0f7d75a`, frontend `231fbd0`, review fixes `903ad41`; E2E stopped 2026-10-04 by Basheer (not Done). Redesigned 2026-10-05 — see section 3 "Revised build order". Steps 1–6b built on Dev: `1821c30`, `ebc9613`, `cc4eb91`, `2c189d7`, review fixes `eab65e3`; step 6 `0b503ad`, `23582c1`, `a9e9277`; step 6b `2e2e4c0` (split credit, BR-FIN-09, decided
 2026-10-07). Changes made during the E2E: `cf64cd4` (SBU target shown apart from rep plans), `142b6fb`, `f28b39b`, `a9b3fa3` (card reloads after a plan change). Step 6c `8d4ce27`, `3249aa7`. Combined manual E2E finished 2026-10-13, P1–K39 all Pass (`docs/Plan-vs-Actuals-Tracking-Manual-E2E-Test-Plan.md`). Step 6d (card layout) decided 2026-10-10, not started; it now follows the UAT move (Basheer, 2026-10-13, see step 7).
 **Traceability rows:** 3.2 actual-vs-target dashboards (finishes the

@@ -1,6 +1,6 @@
 # Weekly Follow-up (Daily Hub) — Implementation Plan
 
-**Status:** Approved 2026-10-21 (Basheer; every line in Decisions
+**Status:** Step 1 on UAT 2026-10-25 (`8b2ec8a`). Approved 2026-10-21 (Basheer; every line in Decisions
 answered). Step 1 (D9a, D10) built ahead of the approval, 2026-10-19
 (`508ff42`; Basheer: not part of My Work itself); commit and Dev check in
 Progress-Archive. Steps 2–5 not started: they begin after the Annual

@@ -1,7 +1,7 @@
 # Zone Tree in Reports — Implementation Plan
 
 **Status:** Done 2026-09-27 — `ff33408` (build) + `76f9a0a` (E2E complete,
-note reworded); manual E2E 8/8 pass on Dev.
+note reworded); manual E2E 8/8 pass on Dev. **On UAT 2026-10-25** (`8b2ec8a`, `docs/UAT-Promotion-2026-10-Plan.md`).
 
 ## What this is (plain terms)
 

@@ -4609,6 +4609,31 @@ moved to after the restart (Basheer).
 - Today's routine UAT backup skipped: the move takes its own (on-the-day
   step 4, after Render is suspended).
 
+### 2026-10-25 — Plan & Chore: UAT move done (`8b2ec8a`, database 0063)
+
+- Full record in `docs/UAT-Promotion-2026-10-Plan.md` section 7. Steps
+  1–11 done the same morning; 13 features moved (their plan Status
+  lines now say "On UAT 2026-10-25"); team message sent by Haroon,
+  laid out by role (Claude drafted, Basheer's text).
+- Dress rehearsal snag: `restore_uat.ps1` failed at the `CREATE
+  DATABASE` step — the postgres image's first-start setup runs a
+  temporary socket-only server that answers "ready" and then restarts,
+  so the socket ready-check passed too early (24 Oct's polling fix
+  hadn't covered it). Now checks over TCP (`-h 127.0.0.1`); rerun
+  passed, then UAT itself.
+- Smoke test 14 of 14. Marketing User on Target vs Actuals' people list
+  (Haroon, Basheer K): `TargetVsActualRepository.roster` takes every
+  active SBU member except Admin, and his login still had an SBU from
+  before BR-ORG-03. Re-saved on UAT by Basheer; code fix in Backlog.
+- Step 11 before step 10 (Basheer): Render Build Command back to
+  `pip install .` (Deployment-Topology updated; Backlog SQLAlchemy item
+  (1) done); rebuild installed SQLAlchemy 2.0.55, Live 08:15. A single
+  health-check log line wasn't taken as proof; the full build log was.
+- Quarter picker on Target vs Actuals overflows the card on a phone
+  (Basheer, UAT) — Annual Target plan D77, Part 2 step 5.
+- Scorecard: signed row 3.2 stays Partial with a new client note;
+  beyond-contract row 19 to say it is live (Basheer, same day) — next.
+
 ### 2026-10-25 — Build & Test: Annual Target Part 2 step 5 designed (Year view, D77–D79)
 
 - Mock-up for the Year view on Insights Dashboard → Target vs Actuals:
@@ -4637,3 +4662,26 @@ moved to after the restart (Basheer).
   asking whether a year view should show the whole year). None could be
   stopped by a tool check or touched live data, UAT or lost work — no
   tracker line.
+
+### 2026-10-25 — Plan & Chore: after the UAT move (DQ baseline, leads, reports)
+
+- Client scorecard republished (v27, by-status v21). DQ baseline run on
+  UAT 08:59 (Basheer yes); regular checks paused to 1 Nov so the team
+  can clear old cases (`.claude/dq-check-paused`).
+- Marketing leads usage PDF (25 Oct) sent by Basheer to Latheef Bhai and
+  Haroon. DQ script section 19 (leads waiting for a decision) added,
+  Dev trial OK.
+- DQ report section 11 (look-alike hospitals) rebuilt as pairs, not
+  groups: groups had chained unrelated names and listed every branch.
+  Branches naming different places are left out. 25 Oct: 14 new pairs,
+  25 older ones at the end; not comparable with 13 Oct's 33 groups.
+  Basheer approved; same rule in script section 18 (Dev trial OK, and
+  the same 39 pairs on the 25 Oct output).
+- Expected Closure Dates report: first row read as "missing dates" by
+  Basheer; renamed "All open Opportunities" with "of which:" rows under
+  it, in the script and the 25 Oct report. Expect the no-date count to
+  stop growing (BR-OP-19 now on UAT); it falls only if reps add dates.
+- Render log check (Basheer): 7 × 401 at 10:05 IST were his own stale
+  UAT tab logging out on close (Supabase auth log, same user and IP);
+  10:09 visit was Fahad. HEAD 405s are a second health checker (guess).
+  Nothing to fix.

@@ -6,8 +6,8 @@ rows 6.1, 1.2, 1.3 → Done (`6b4c5d8`). Commits: `e55c112`, `04c5e87`,
 `72564dc`, `467dee8`, `70e41e1`, `bfeef46`, `6a2c9ed`, `1a4843a`,
 `3907b88`, E2E fixes `cf279b7`, `3d6ca27`. Part 2 became Plan vs Actuals Tracking
 (`docs/Plan-vs-Actuals-Tracking-Implementation-Plan.md`), built on Dev;
-combined manual E2E finished 2026-10-13, all Pass. Both go to UAT together
-with the next full move.
+combined manual E2E finished 2026-10-13, all Pass. Both on UAT together
+2026-10-25 (`8b2ec8a`, `docs/UAT-Promotion-2026-10-Plan.md`).
 **Earlier:** Approved 2026-09-27 (choices in section 3 answered by Basheer
 the same day). Unblocked: the main → UAT move, including the Product
 Catalog clean-up, was done 2026-09-27 (`docs/UAT-Promotion-2026-09-Plan.md`).

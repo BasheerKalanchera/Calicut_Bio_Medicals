@@ -1,7 +1,7 @@
 # UAT Promotion — October 2026 — Plan
 
-**Status:** Approved 2026-10-24 (Basheer). Move: early morning Sunday
-2026-10-25, once the Annual Target Part 1 E2E is finished (D2, D8).
+**Status:** Done 2026-10-25 — UAT on `8b2ec8a`, database at 0063; outcome
+in section 7. Approved 2026-10-24 (Basheer).
 **Traceability rows:** none change status by the move itself; each
 feature's own row already records it.
 **Design / discussion:** model `docs/UAT-Promotion-2026-09-Plan.md`;
@@ -237,3 +237,27 @@ then both pages republished (D11).
 - Step 7 checks: `alembic_version` = 0063; counts and value totals equal
   step 3's; stage list has Payment Pending at order 80; every new table
   has RLS on and policies present.
+
+## 7. Outcome (2026-10-25)
+
+- Steps 1–11 done the same morning; UAT back for the team after Haroon's
+  message. 13 features moved (plan Status lines say "On UAT 2026-10-25").
+- Step 3 before-check: UAT at 0054; 701 hospitals, 216 Opportunities,
+  1,750 activities; 15 target plans. Step 4 backup
+  `cabio_uat_2026-10-25_0727.dump` (also copied to Google Drive by
+  Basheer).
+- Step 5 rehearsal first failed: the restore script's "database ready"
+  check passed too early on a fresh copy. Fixed in `scripts/restore_uat.ps1`
+  (asks over the network instead), rerun passed.
+- Steps 6–7: 0054 → 0063 applied by Basheer; after-check ALL PASSED,
+  counts and value totals unchanged, Payment Pending at order 80.
+- Step 8: `uat` 569209f → 8b2ec8a (fast-forward); both services Live.
+- Step 9: 14 of 14 passed. Found: the Marketing User appeared on Target
+  vs Actuals' people list for Haroon and Basheer K (an SBU left on his
+  login from before BR-ORG-03). Re-saved in the User Directory on UAT;
+  code fix in Backlog (Target vs Actuals follow-ups).
+- **Order changed:** step 11 ran before step 10 (Basheer), so the team was
+  told only after the rebuild: Build Command `pip install .`, SQLAlchemy
+  2.0.55, Live 08:15.
+- After the move: Target vs Actuals' quarter picker overflows its card on
+  a phone — Annual Target plan D77, fixed in Part 2.

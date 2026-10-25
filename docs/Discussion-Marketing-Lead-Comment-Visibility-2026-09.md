@@ -1,10 +1,14 @@
 # Discussion: Marketing Leads — Seeing New Comments, and Whether the Feature Is Earning Its Keep — 2026-09-28
 
-**Status:** **Parked until the first UAT data-quality check after the next
-full UAT move** (Basheer, 2026-10-21; was "about 12 Oct 2026"). Lead comments reached UAT on
-2026-09-27. Before building anything more, the sales team gets 1–2 weeks to
-use them, then a read-only usage check on UAT (section 5) decides what, if
-anything, gets built. Nothing is built or changed.
+**Status:** **Usage check done 2026-10-25; the highlight waits for Latheef
+Bhai and Haroon.** UAT, 25 Oct: 26 leads, none converted, 1 discarded, 3
+never opened, 22 opened with no decision (19 for over 2 weeks); 43
+comments on 25 leads, 30 from the Marketing User, 13 from the sales team.
+Basheer sent them the usage PDF
+(`C:\Backups\CabioUAT\data_consistency_reports\drafts\Marketing-Leads-Usage-2026-10-25.pdf`)
+to decide on the highlight. Basheer: from 1 Nov the UAT data-quality check
+lists leads waiting for a decision (section 19 of the script). Nothing
+else is built or changed.
 **Participants:** Basheer (decisions), Claude (options and analysis).
 Latheef Bhai to be told the outcome.
 **Origin:** the 2026-09-24 demo to Latheef Bhai and Haroon — item 1 under

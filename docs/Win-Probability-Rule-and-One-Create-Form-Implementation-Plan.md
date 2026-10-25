@@ -1,6 +1,6 @@
 # Win Probability Rule (and One Create Form) — Implementation Plan
 
-**Status:** Built — `a76b02d`, `86dd1a3` (2026-10-14), `ae6bd14`, fixes `3e37c92`, `e1774a1` (2026-10-15); E2E on Dev all Pass 2026-10-15. Approved 2026-10-10 (Basheer; D1–D17 decided; D18–D19 added 2026-10-13/15); D12 rule in Frontend standards §6.2, UI-Inventory §2.2. UAT with the next full promotion.
+**Status:** Built — `a76b02d`, `86dd1a3` (2026-10-14), `ae6bd14`, fixes `3e37c92`, `e1774a1` (2026-10-15); E2E on Dev all Pass 2026-10-15. Approved 2026-10-10 (Basheer; D1–D17 decided; D18–D19 added 2026-10-13/15); D12 rule in Frontend standards §6.2, UI-Inventory §2.2. On UAT 2026-10-25 (`8b2ec8a`, `docs/UAT-Promotion-2026-10-Plan.md`).
 Build steps below are complete; kept as the original plan.
 **Traceability rows:** none (business-rule gap BR-OP-08, new rule BR-OP-19,
 front-end clean-up).

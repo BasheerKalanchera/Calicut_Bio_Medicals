@@ -149,10 +149,10 @@ GitHub repo (single source, two long-lived branches)
 | Data | Freely disposable, test writes OK | Real customer/opportunity data — no test writes, ever |
 | Migrations | Authored and run here first | Applied during the weekly deploy window, after Dev verification (incl. RLS/role smoke test) |
 
-**Render backend Build Command (UAT service `calicut-bio-medicals`, 2026-09-27):**
-`pip install . "sqlalchemy>=2.0,<2.1"` — a temporary pin, because SQLAlchemy 2.1
-fails the app at startup (psycopg 3 default driver). Revert to `pip install .` once
-`backend/pyproject.toml` carries the cap — see Backlog "Cap SQLAlchemy below 2.1".
+**Render backend Build Command (UAT service `calicut-bio-medicals`, 2026-10-25):**
+`pip install .` — the SQLAlchemy `<2.1` cap now lives in `backend/pyproject.toml`
+(`0ffe00c`), so the temporary pin `pip install . "sqlalchemy>=2.0,<2.1"` (2026-09-27)
+was removed at the October UAT move; the rebuild installed SQLAlchemy 2.0.55.
 
 ### Promotion flow
 

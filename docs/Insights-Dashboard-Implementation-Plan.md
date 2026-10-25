@@ -3,7 +3,7 @@
 **Status:** Built — Batch 1a `d7a0e6f`, Batch 1b `087c284`, Product breakdown
 `34d0170` (no separate E2E test plan yet: see `docs/Backlog.md` "Insights
 Dashboard E2E test plan"). Build steps below are complete; kept as the
-original plan.
+original plan. Sections as tabs (`2fdac69`) on UAT 2026-10-25 (`8b2ec8a`).
 
 Original status line: Approved for build, 2026-09-11 — **Batch 1a**, a 5-widget slice of Batch 1
 below, chosen as the fully-spec'd subset ready to build now. Target Planning (this

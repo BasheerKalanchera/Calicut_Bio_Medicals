@@ -1,7 +1,7 @@
 # Duplicate Hospital Prevention — Implementation Plan
 
 **Status:** Draft, 2026-10-08. Part A built `f04d309` (2026-10-14), E2E on Dev
-Pass; to UAT with the next full move. Parts B–D not scheduled.
+Pass; on UAT 2026-10-25 (`8b2ec8a`). Parts B–D not scheduled.
 **Traceability rows:** "What we built" #3 (near-duplicate hospital warning);
 business rule BR-ACC-03.
 **Design / discussion:** UAT findings in `docs/Progress-Archive-2026-10.md`

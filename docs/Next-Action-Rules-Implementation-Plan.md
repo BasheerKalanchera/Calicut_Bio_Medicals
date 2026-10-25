@@ -1,6 +1,6 @@
 # Next-Action Rules — Implementation Plan
 
-**Status:** Approved 2026-10-14 (Basheer). Step 1 built on Dev
+**Status:** **On UAT 2026-10-25** (`8b2ec8a`, `docs/UAT-Promotion-2026-10-Plan.md`). Approved 2026-10-14 (Basheer). Step 1 built on Dev
 2026-10-15 (`3d38e75`, checkpoint commit, tested by unit tests only; manual E2E at
 step 5). Step 2 built 2026-10-16: server `bd92e4a`, screen `4fc8531`
 (checkpoints; unit tests, type check and lint only; manual E2E at step

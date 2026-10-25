@@ -1,6 +1,6 @@
 # Brand Breakdown in Pipeline Report, Sales Report and Insights Dashboard — Implementation Plan
 
-**Status:** Shipped — `b4d6f18` (2026-09-26) + `ae248f8` (2026-09-27); manual E2E steps 1–24 passed.
+**Status:** Shipped — `b4d6f18` (2026-09-26) + `ae248f8` (2026-09-27); manual E2E steps 1–24 passed. **On UAT 2026-10-25** (`8b2ec8a`, `docs/UAT-Promotion-2026-10-Plan.md`).
 
 ## What this is (plain terms)
 

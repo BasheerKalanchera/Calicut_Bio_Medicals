@@ -2,8 +2,8 @@
 
 **Status:** Built and Dev-tested, 2026-10-03 — commits `b9e01e8`, `71f07b5`,
 `0d0133d`, `75ac199`; manual E2E 18/18 (`docs/Payment-Confirmation-Gate-Manual-E2E-Test-Plan.md`).
-Not on UAT yet: arrives with the next UAT move (migrations 0057/0058), its own
-approval. Name, interim instruction and timing settled (Basheer,
+On UAT 2026-10-25 (`8b2ec8a`, migrations 0057/0058;
+`docs/UAT-Promotion-2026-10-Plan.md`). Name, interim instruction and timing settled (Basheer,
 2026-10-16; see Decisions).
 **Traceability rows:** none directly (no signed requirement changes status); adds a
 rule beyond the signed scope — goes in "Commitment beyond contract" once shipped.

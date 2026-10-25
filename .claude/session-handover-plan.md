@@ -9,13 +9,10 @@ session edits this note._
 
 ## UAT move — approved 2026-10-24, move early Sun 25 Oct
 
-- `docs/UAT-Promotion-2026-10-Plan.md` Approved (D1–D11). Done 24 Oct
-  (archive): step 1 (`2547a0f`), D6 UAT check, step 6 check script +
-  team message (scratchpad, agreed), trial dress rehearsal passed.
-  `scripts/restore_uat.ps1` `-Keep` + wait-until-ready committed
-  `05a85f5` (not pushed). Step 3 fresh-install check passed (archive).
-  Step 4 Dev role check 14 of 14 passed 25 Oct (archive). **Next:**
-  push (asks first), then the on-the-day steps 1–11.
+- Move done 25 Oct; after-move work in the archive (25 Oct, "after the
+  UAT move"). Both 25 Oct reports approved and moved out of drafts.
+  Scripts committed in `5992936`; docs batch right after; both pushed.
+  Checks paused to 1 Nov: then run both scripts on UAT (ask first).
 - After the move: Duplicate hospitals step 19 on UAT; Audit Trail plan
   step 5 cautions.
 
