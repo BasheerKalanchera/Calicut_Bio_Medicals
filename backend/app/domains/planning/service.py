@@ -50,6 +50,10 @@ from app.domains.planning.schemas import (
     TargetVsActualPerson,
     TargetVsActualResponse,
     TargetVsActualSummaryRow,
+    TargetVsActualYearPerson,
+    TargetVsActualYearPersonQuarter,
+    TargetVsActualYearQuarter,
+    TargetVsActualYearResponse,
     TargetVsActualZone,
     TeamTargetPerson,
     TeamTargetsResponse,
@@ -915,8 +919,12 @@ class TargetVsActualService:
         self.repository = repository
 
     def get_target_vs_actual(
-        self, sbu_id: uuid.UUID, planning_period: str, *, current_user: UserProfile
+        self, sbu_id: uuid.UUID, planning_period: str, *, current_user: UserProfile, detail: bool = True
     ) -> TargetVsActualResponse:
+        """detail=False is the Year view's per-quarter pass: it skips what
+        that view doesn't show -- Expected, undated counts, zones, brand
+        wins and the late list (Annual Target Planning D79, D80) -- so
+        those come back empty."""
         today = today_ist()
         q_start, q_end = quarter_dates(planning_period)
         if today > q_end:
@@ -961,7 +969,7 @@ class TargetVsActualService:
 
         # Zone planned figures: by the hospital's zone, not the planner's.
         planned_account_ids = {a for p in people.values() for a in p.hospitals}
-        zone_of = repo.zone_of_accounts(list(planned_account_ids))
+        zone_of = repo.zone_of_accounts(list(planned_account_ids)) if detail else {}
         zones: dict[tuple[uuid.UUID | None, str | None], list[Decimal]] = {}  # key -> [planned, won]
         for p in people.values():
             for account_id, h in p.hospitals.items():
@@ -982,7 +990,8 @@ class TargetVsActualService:
                 acc.unplanned_won += amount
             zones.setdefault((zone_id, zone_name), [_ZERO, _ZERO])[1] += amount
 
-        for user_id, brand_id, brand_name, amount in repo.won_by_person_brand(current_user, sbu_id, start_dt, end_dt):
+        brand_wins = repo.won_by_person_brand(current_user, sbu_id, start_dt, end_dt) if detail else []
+        for user_id, brand_id, brand_name, amount in brand_wins:
             brand_names[brand_id] = brand_name
             acc = people.get(user_id)
             if acc is None:
@@ -996,14 +1005,14 @@ class TargetVsActualService:
         ):
             person(owner_id, owner_name).no_po_date = count
 
-        if state is not QuarterState.PAST:
+        if detail and state is not QuarterState.PAST:
             closing_from = q_start if state is QuarterState.FUTURE else None
             for user_id, name, amount in repo.expected_by_person(current_user, sbu_id, closing_from, q_end):
                 person(user_id, name).expected = amount
             # Owner only: fixing a missing date is the owner's job.
             for owner_id, owner_name, count in repo.undated_counts(current_user, sbu_id):
                 person(owner_id, owner_name).undated = count
-        if state is QuarterState.CURRENT:
+        if detail and state is QuarterState.CURRENT:
             # BR-FIN-09: listed on every sharer's row, so each sees the urgency.
             for (
                 opp_id, name, account_id, account_name, user_id, user_name,
@@ -1118,13 +1127,173 @@ class TargetVsActualService:
             zones=[
                 TargetVsActualZone(zone_id=zid, zone_name=zname, planned_lakhs=v[0], won_lakhs=v[1].quantize(_CENT))
                 for (zid, zname), v in sorted(zones.items(), key=lambda kv: (kv[0][1] is None, kv[0][1] or ""))
-            ],
+            ]
+            if detail
+            else [],
             brands=[
                 TargetVsActualBrand(
                     brand_id=bid, brand_name=brand_names[bid], planned_lakhs=v[0], won_lakhs=v[1].quantize(_CENT)
                 )
                 for bid, v in sorted(brand_totals.items(), key=lambda kv: brand_names[kv[0]].lower())
             ],
+        )
+
+    def get_target_vs_actual_year(
+        self, sbu_id: uuid.UUID, fiscal_year: int, *, current_user: UserProfile
+    ) -> TargetVsActualYearResponse:
+        """Target vs Actuals for a fiscal year (Annual Target Planning D31,
+        D66, D78, D79, D80): the quarter view run once per counted quarter
+        (from Oct-Dec 2026 for FY 2026-27, D66) and added up. "So far" is the
+        counted quarters up to the one we are in; a person's target and plan
+        are the whole year's (D78)."""
+        today = today_ist()
+        periods = [f"{fiscal_year}-Q{n}" for n in range(1, 5)]
+        # Periods are "YYYY-Qn", so they sort as text.
+        counted = [p for p in periods if p >= FIRST_SAVED_PERIOD]
+        by_period = {p: self.get_target_vs_actual(sbu_id, p, current_user=current_user, detail=False) for p in counted}
+        so_far = [r for r in by_period.values() if r.quarter_state is not QuarterState.FUTURE]
+
+        def total(values) -> Decimal:
+            return sum(values, _ZERO)
+
+        def target_total(targets) -> Decimal | None:
+            # A quarter without a target adds nothing; None until one has.
+            set_targets = [t for t in targets if t is not None]
+            return total(set_targets) if set_targets else None
+
+        def summary(pick) -> TargetVsActualSummaryRow | None:
+            rows = [pick(r) for r in so_far]
+            if not rows or rows[0] is None:
+                return None
+            target = target_total(r.target_lakhs for r in rows)
+            won = total(r.won_lakhs for r in rows)
+            return TargetVsActualSummaryRow(
+                target_lakhs=target,
+                planned_lakhs=total(r.planned_lakhs for r in rows),
+                po_received_lakhs=total(r.po_received_lakhs for r in rows),
+                won_lakhs=won,
+                percent_of_target=_percent_of_target(won, target),
+            )
+
+        # The quarter-by-quarter table follows the narrowest summary row the
+        # caller has: an Area Manager's team, else the SBU; a rep has none.
+        any_quarter = next(iter(by_period.values()), None)
+        row_attr = next(
+            (a for a in ("team_row", "sbu_row") if any_quarter is not None and getattr(any_quarter, a) is not None),
+            None,
+        )
+        quarters: list[TargetVsActualYearQuarter] = []
+        if row_attr is not None:
+            target_run: Decimal | None = None
+            won_run = _ZERO
+            for p in periods:
+                r = by_period.get(p)
+                if r is None:
+                    q_start, q_end = quarter_dates(p)
+                    state = (
+                        QuarterState.PAST
+                        if today > q_end
+                        else QuarterState.FUTURE
+                        if today < q_start
+                        else QuarterState.CURRENT
+                    )
+                    quarters.append(
+                        TargetVsActualYearQuarter(
+                            planning_period=p,
+                            quarter_state=state,
+                            counted=False,
+                            target_lakhs=None,
+                            won_lakhs=None,
+                            target_so_far_lakhs=None,
+                            won_so_far_lakhs=None,
+                            percent_of_target_so_far=None,
+                        )
+                    )
+                    continue
+                row = getattr(r, row_attr)
+                if row.target_lakhs is not None:
+                    target_run = (target_run or _ZERO) + row.target_lakhs
+                upcoming = r.quarter_state is QuarterState.FUTURE
+                if not upcoming:
+                    won_run += row.won_lakhs
+                quarters.append(
+                    TargetVsActualYearQuarter(
+                        planning_period=p,
+                        quarter_state=r.quarter_state,
+                        counted=True,
+                        target_lakhs=row.target_lakhs,
+                        won_lakhs=None if upcoming else row.won_lakhs,
+                        target_so_far_lakhs=target_run,
+                        won_so_far_lakhs=None if upcoming else won_run,
+                        percent_of_target_so_far=None if upcoming else _percent_of_target(won_run, target_run),
+                    )
+                )
+
+        # D78: a person's row is their whole year; the opened row shows the
+        # running totals by the end of each counted quarter.
+        names: dict[uuid.UUID, tuple[str, uuid.UUID | None]] = {}
+        quarter_rows: dict[uuid.UUID, dict[str, TargetVsActualPerson]] = {}
+        for p, r in by_period.items():
+            for row in r.people:
+                names[row.user_id] = (row.display_name, row.manager_id)  # latest quarter's line manager
+                quarter_rows.setdefault(row.user_id, {})[p] = row
+        people = []
+        for user_id, (name, manager_id) in sorted(names.items(), key=lambda kv: kv[1][0].lower()):
+            own = quarter_rows[user_id]
+            target_run, planned_run, won_run, po_run = None, _ZERO, _ZERO, _ZERO
+            person_quarters = []
+            for p in counted:
+                row, state = own.get(p), by_period[p].quarter_state
+                if row is not None:
+                    if row.target_lakhs is not None:
+                        target_run = (target_run or _ZERO) + row.target_lakhs
+                    planned_run += row.planned_lakhs
+                    if state is not QuarterState.FUTURE:
+                        won_run += row.won_lakhs
+                        po_run += row.po_received_lakhs
+                person_quarters.append(
+                    TargetVsActualYearPersonQuarter(
+                        planning_period=p,
+                        quarter_state=state,
+                        target_so_far_lakhs=target_run,
+                        planned_so_far_lakhs=planned_run,
+                        won_so_far_lakhs=None if state is QuarterState.FUTURE else won_run,
+                    )
+                )
+            people.append(
+                TargetVsActualYearPerson(
+                    user_id=user_id,
+                    display_name=name,
+                    manager_id=manager_id,
+                    target_lakhs=target_run,
+                    planned_lakhs=planned_run,
+                    po_received_lakhs=po_run,
+                    won_lakhs=won_run,
+                    still_to_win_lakhs=None if target_run is None else max(_ZERO, target_run - won_run),
+                    quarters=person_quarters,
+                )
+            )
+
+        planned = total(r.planned_lakhs for r in so_far)
+        won = total(r.won_lakhs for r in so_far)
+        current = next((r for r in so_far if r.quarter_state is QuarterState.CURRENT), None)
+        return TargetVsActualYearResponse(
+            sbu_id=sbu_id,
+            fiscal_year=fiscal_year,
+            as_of=today,
+            first_counted_period=counted[0] if counted else None,
+            planned_lakhs=planned,
+            po_received_lakhs=total(r.po_received_lakhs for r in so_far),
+            won_lakhs=won,
+            percent_of_target=_percent_of_target(won, planned),
+            no_po_date_count=sum(r.no_po_date_count for r in so_far),
+            roster_count=current.roster_count if current else None,
+            not_submitted_count=current.not_submitted_count if current else None,
+            sbu_row=summary(lambda r: r.sbu_row),
+            company_row=summary(lambda r: r.company_row),
+            team_row=summary(lambda r: r.team_row),
+            quarters=quarters,
+            people=people,
         )
 
     def get_roster(self, sbu_id: uuid.UUID, planning_period: str, *, current_user: UserProfile) -> TargetRosterResponse:

@@ -46,6 +46,11 @@ export function getPlanningYearQuarters(fyStartYear: number): string[] {
   return [1, 2, 3, 4].map((q) => `${fyStartYear}-Q${q}`);
 }
 
+// A fiscal year as screens show it: 2026 -> "FY 2026-27".
+export function formatFiscalYear(fyStartYear: number): string {
+  return `FY ${fyStartYear}-${String((fyStartYear + 1) % 100).padStart(2, "0")}`;
+}
+
 const QUARTER_MONTHS = ["Apr–Jun", "Jul–Sep", "Oct–Dec", "Jan–Mar"];
 
 // A "YYYY-Qn" planning period as screens show it (Annual Target Planning

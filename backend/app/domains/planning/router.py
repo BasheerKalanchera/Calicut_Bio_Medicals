@@ -35,6 +35,7 @@ from app.domains.planning.schemas import (
     TargetPlanUpdate,
     TargetRosterResponse,
     TargetVsActualResponse,
+    TargetVsActualYearResponse,
     TeamTargetsResponse,
 )
 from app.domains.planning.service import (
@@ -139,6 +140,19 @@ def get_target_vs_actual(
     """Target vs Actuals for one quarter (Insights Dashboard): roster rows,
     PO received, Won (paid), Expected; SBU and company rows by role. Read-only."""
     return APIResponse(data=service.get_target_vs_actual(sbu_id, planning_period, current_user=current_user))
+
+
+@router.get("/target-vs-actuals/year")
+def get_target_vs_actual_year(
+    sbu_id: uuid.UUID = Query(...),
+    fiscal_year: int = Query(..., ge=2000, le=2100),
+    current_user: UserProfile = Depends(get_current_user),
+    service: TargetVsActualService = Depends(_get_target_vs_actual_service),
+) -> APIResponse[TargetVsActualYearResponse]:
+    """Target vs Actuals for a fiscal year (Annual Target Planning D31): the
+    year so far and each person's whole year. fiscal_year is the April it
+    starts in (2026 = FY 2026-27). Read-only."""
+    return APIResponse(data=service.get_target_vs_actual_year(sbu_id, fiscal_year, current_user=current_user))
 
 
 @router.get("/roster")

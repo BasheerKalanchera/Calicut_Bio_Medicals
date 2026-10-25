@@ -10,6 +10,7 @@ import type {
   EligibleAccount,
   PlanWarning,
   TargetVsActualResponse,
+  TargetVsActualYearResponse,
   TargetRosterResponse,
   SbuTarget,
   BrandAnnualTargetRow,
@@ -68,6 +69,15 @@ export async function checkPlanOverlaps(
 export async function getTargetVsActual(sbuId: string, planningPeriod: string): Promise<TargetVsActualResponse> {
   const response = await api.get("/planning/targets/target-vs-actuals", {
     params: { sbu_id: sbuId, planning_period: planningPeriod },
+  });
+  return response.data.data;
+}
+
+// Target vs Actuals for a fiscal year (2026 = FY 2026-27): the year so far
+// and each person's whole year (Annual Target Planning D31, D78).
+export async function getTargetVsActualYear(sbuId: string, fiscalYear: number): Promise<TargetVsActualYearResponse> {
+  const response = await api.get("/planning/targets/target-vs-actuals/year", {
+    params: { sbu_id: sbuId, fiscal_year: fiscalYear },
   });
   return response.data.data;
 }

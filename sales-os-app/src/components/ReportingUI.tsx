@@ -120,15 +120,28 @@ export function StatTile({ label, value, sublabel }: { label: string; value: str
 export function SectionCard({
   title,
   action,
+  stackActionOnPhone = false,
   children,
 }: {
   title: string;
   action?: React.ReactNode;
+  // On a phone, put the action on its own lines under the title, full width,
+  // so a wide action stays inside the card (Annual Target Planning D77).
+  stackActionOnPhone?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <Box sx={{ bgcolor: "#fff", borderRadius: "1rem", border: "1px solid #f3f4f6", boxShadow: "0 1px 2px rgba(0,0,0,0.05)", p: 2 }}>
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          mb: 1.5,
+          ...(stackActionOnPhone
+            ? { flexDirection: { xs: "column", sm: "row" }, alignItems: { xs: "stretch", sm: "center" }, gap: 1 }
+            : { alignItems: "center" }),
+        }}
+      >
         <Box sx={{ fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#6b7280" }}>
           {title}
         </Box>

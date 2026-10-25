@@ -6,24 +6,24 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import { LoadingOrEmpty, SectionCard, StatTile } from "./ReportingUI";
+import { NoPoDateNote, SummaryRows } from "./TargetVsActualsParts";
+import TargetVsActualsYear from "./TargetVsActualsYear";
 import { useAuth } from "../contexts/AuthContext";
 import { listSbus } from "../services/masterData";
-import { getTargetVsActual } from "../services/targetPlanning";
+import { getTargetVsActual, getTargetVsActualYear } from "../services/targetPlanning";
 import type {
   QuarterState,
   RosterStatus,
   TargetVsActualBrand,
   TargetVsActualPerson,
-  TargetVsActualSummaryRow,
 } from "../types/targetPlanning";
-import { formatLakhs, formatPlanningPeriod, getCurrentPlanningPeriod, shiftPlanningPeriod } from "../utils/formatter";
+import { formatFiscalYear, formatPlanningPeriod, getCurrentPlanningPeriod, getFiscalYearOfPeriod, shiftPlanningPeriod } from "../utils/formatter";
 import { asTree } from "../utils/reportingTree";
+import { DASH, headCellSx, lakhs, noteSx, numCellSx, numHeadSx, percent, plural } from "../utils/targetVsActuals";
 
 // Local stopgap type -- listSbus returns Promise<unknown> today (see
 // docs/Backlog.md "Type the shared frontend service functions properly").
 interface SbuOption { id: string; name: string }
-
-const DASH = "—";
 
 const QUARTER_STATE_LABEL: Record<QuarterState, string> = {
   CURRENT: "This quarter",
@@ -63,23 +63,6 @@ const NOT_SUBMITTED_NOTE: Partial<Record<RosterStatus, string>> = {
   REJECTED: "Plan was sent back. Its figures show once it's resubmitted.",
 };
 
-// Backend sends Decimals as strings; null means "not applicable" (past
-// quarter's Expected, or a percent with nothing to compare with) and shows a dash.
-function lakhs(v: string | null): string {
-  return v === null ? DASH : formatLakhs(parseFloat(v));
-}
-function percent(v: string | null): string {
-  return v === null ? DASH : `${parseFloat(v).toFixed(0)}%`;
-}
-function plural(n: number, one: string, many: string): string {
-  return n === 1 ? one : many;
-}
-
-const headCellSx = { fontSize: "0.6875rem", fontWeight: 900, textTransform: "uppercase", color: "#6b7280" } as const;
-const numHeadSx = { ...headCellSx, textAlign: "right" } as const;
-const numCellSx = { fontVariantNumeric: "tabular-nums", textAlign: "right" } as const;
-const noteSx = { fontSize: "0.75rem", color: "text.secondary" } as const;
-
 function BrandTable({ brands }: { brands: TargetVsActualBrand[] }) {
   return (
     <Table size="small">
@@ -100,16 +83,6 @@ function BrandTable({ brands }: { brands: TargetVsActualBrand[] }) {
         ))}
       </TableBody>
     </Table>
-  );
-}
-
-function NoPoDateNote({ count }: { count: number }) {
-  if (count === 0) return null;
-  return (
-    <Box sx={noteSx}>
-      {count} {plural(count, "Opportunity past Order has", "Opportunities past Order have")} no PO date, so{" "}
-      {plural(count, "it isn't", "they aren't")} counted in PO received.
-    </Box>
   );
 }
 
@@ -170,85 +143,7 @@ function PersonDetail({ person }: { person: TargetVsActualPerson }) {
   );
 }
 
-// Team plans (bottom-up) as a share of the target (top-down); a dash until
-// a target is set.
-function plansVsTarget(row: TargetVsActualSummaryRow): string | null {
-  const target = row.target_lakhs === null ? 0 : parseFloat(row.target_lakhs);
-  return target > 0 ? String((parseFloat(row.planned_lakhs) / target) * 100) : null;
-}
-
-// The team row (Area Manager: against their own target), SBU row (SBU
-// Manager and above: against the SBU target, its brands' total) and company
-// row (Admin/GM: against every SBU's target) -- Annual Target Planning D49.
-function SummaryRows({ teamRow, sbuRow, companyRow }: { teamRow: TargetVsActualSummaryRow | null; sbuRow: TargetVsActualSummaryRow | null; companyRow: TargetVsActualSummaryRow | null }) {
-  // Widest first, so the narrowest row sits just above the person rows it
-  // sums (Basheer, 2026-10-24).
-  const rows: { key: string; label: string; row: TargetVsActualSummaryRow; notSet: string }[] = [];
-  if (companyRow) rows.push({ key: "company", label: "Company", row: companyRow, notSet: "Waits for every SBU's target" });
-  if (sbuRow) rows.push({ key: "sbu", label: "SBU", row: sbuRow, notSet: "Target not set" });
-  if (teamRow) rows.push({ key: "team", label: "Your team", row: teamRow, notSet: "Target not set" });
-  if (rows.length === 0) return null;
-  return (
-    <>
-    {/* On a phone each row is a stacked block, like the person rows below. */}
-    <Box sx={{ display: { xs: "block", sm: "none" } }}>
-      {rows.map(({ key, label, row, notSet }) => {
-        const figures: [string, string][] = [
-          ["Target", row.target_lakhs === null ? notSet : lakhs(row.target_lakhs)],
-          ["Team plans", lakhs(row.planned_lakhs)],
-          ["Plans vs target", percent(plansVsTarget(row))],
-          ["PO received", lakhs(row.po_received_lakhs)],
-          ["Won (paid)", lakhs(row.won_lakhs)],
-          ["Won % of target", percent(row.percent_of_target)],
-        ];
-        return (
-          <Box key={key} sx={{ py: 1, borderBottom: 1, borderColor: "divider" }}>
-            <Box sx={{ fontWeight: 700, mb: 0.5 }}>{label}</Box>
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", columnGap: 2, rowGap: 0.25 }}>
-              {figures.map(([figLabel, value]) => (
-                <Box key={figLabel} sx={{ display: "flex", justifyContent: "space-between", gap: 1, fontSize: "0.8125rem" }}>
-                  <Box component="span" sx={{ color: "text.secondary" }}>{figLabel}</Box>
-                  <Box component="span" sx={{ fontVariantNumeric: "tabular-nums", textAlign: "right" }}>{value}</Box>
-                </Box>
-              ))}
-            </Box>
-          </Box>
-        );
-      })}
-    </Box>
-    <Box sx={{ overflowX: "auto", display: { xs: "none", sm: "block" } }}>
-      <Table size="small">
-        <TableHead>
-          <TableRow>
-            <TableCell sx={headCellSx}>Against target</TableCell>
-            <TableCell sx={numHeadSx}>Target</TableCell>
-            <TableCell sx={numHeadSx}>Team plans</TableCell>
-            <TableCell sx={numHeadSx}>Plans vs target</TableCell>
-            <TableCell sx={numHeadSx}>PO received</TableCell>
-            <TableCell sx={numHeadSx}>Won (paid)</TableCell>
-            <TableCell sx={numHeadSx}>Won % of target</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {rows.map(({ key, label, row, notSet }) => (
-            <TableRow key={key}>
-              <TableCell sx={{ fontWeight: 700 }}>{label}</TableCell>
-              <TableCell sx={numCellSx}>
-                {row.target_lakhs === null ? <Box component="span" sx={noteSx}>{notSet}</Box> : lakhs(row.target_lakhs)}
-              </TableCell>
-              <TableCell sx={numCellSx}>{lakhs(row.planned_lakhs)}</TableCell>
-              <TableCell sx={numCellSx}>{percent(plansVsTarget(row))}</TableCell>
-              <TableCell sx={numCellSx}>{lakhs(row.po_received_lakhs)}</TableCell>
-              <TableCell sx={numCellSx}>{lakhs(row.won_lakhs)}</TableCell>
-              <TableCell sx={numCellSx}>{percent(row.percent_of_target)}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </Box>
-    </>
-  );
-}
+type View = "QUARTER" | "YEAR";
 
 export default function TargetVsActualsSection() {
   const { userProfile } = useAuth();
@@ -260,7 +155,11 @@ export default function TargetVsActualsSection() {
   // BR-FIN-09: a team view's totals are its members' shares, so an
   // Opportunity shared with someone outside the team counts only in part.
   const isTeamView = userProfile?.role_name === "Area Manager";
+  const [view, setView] = useState<View>("QUARTER");
+  // In the Year view the arrows step a whole year, so switching back shows
+  // the same quarter in the year being looked at.
   const [period, setPeriod] = useState(() => getCurrentPlanningPeriod());
+  const fiscalYear = getFiscalYearOfPeriod(period);
   const [selectedSbuId, setSelectedSbuId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
 
@@ -275,9 +174,17 @@ export default function TargetVsActualsSection() {
   const query = useQuery({
     queryKey: ["planning", "target-vs-actuals", sbuId, period],
     queryFn: () => getTargetVsActual(sbuId as string, period),
-    enabled: !!sbuId,
+    enabled: !!sbuId && view === "QUARTER",
   });
-  const data = query.data;
+  const yearQuery = useQuery({
+    queryKey: ["planning", "target-vs-actuals-year", sbuId, fiscalYear],
+    queryFn: () => getTargetVsActualYear(sbuId as string, fiscalYear),
+    enabled: !!sbuId && view === "YEAR",
+  });
+  const data = view === "QUARTER" ? query.data : undefined;
+  const yearData = view === "YEAR" ? yearQuery.data : undefined;
+  const active = view === "QUARTER" ? query : yearQuery;
+  const step = view === "QUARTER" ? 1 : 4;
   const tree = data ? asTree(data.people) : [];
 
   const toggle = (id: string) =>
@@ -288,35 +195,52 @@ export default function TargetVsActualsSection() {
       return next;
     });
 
+  // D77: on a phone the title, the SBU and Quarter/Year boxes, and the
+  // period with its arrows each take a line, so nothing leaves the card.
   const picker = (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-      {!homeSbuId && (
-        <TextField select size="small" value={sbuId ?? ""} onChange={(e) => setSelectedSbuId(e.target.value)} sx={{ minWidth: 140, mr: 1 }}>
-          {sbus.map((s) => (
-            <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>
-          ))}
+    <Box sx={{ display: "flex", flexWrap: { xs: "wrap", sm: "nowrap" }, alignItems: "center", gap: 1 }}>
+      <Box sx={{ display: "flex", gap: 1, flex: { xs: "1 1 100%", sm: "0 0 auto" } }}>
+        {!homeSbuId && (
+          <TextField select size="small" value={sbuId ?? ""} onChange={(e) => setSelectedSbuId(e.target.value)} sx={{ minWidth: 140, flex: { xs: 1, sm: "none" } }}>
+            {sbus.map((s) => (
+              <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>
+            ))}
+          </TextField>
+        )}
+        <TextField select size="small" value={view} onChange={(e) => setView(e.target.value as View)} sx={{ minWidth: 110 }} slotProps={{ htmlInput: { "aria-label": "Quarter or Year" } }}>
+          <MenuItem value="QUARTER">Quarter</MenuItem>
+          <MenuItem value="YEAR">Year</MenuItem>
         </TextField>
-      )}
-      <IconButton size="small" aria-label="Previous quarter" onClick={() => setPeriod((p) => shiftPlanningPeriod(p, -1))}>
-        <ChevronLeftIcon fontSize="small" />
-      </IconButton>
-      <Box sx={{ fontSize: "0.8125rem", fontWeight: 700, minWidth: 96, textAlign: "center" }}>{formatPlanningPeriod(period)}</Box>
-      <IconButton size="small" aria-label="Next quarter" onClick={() => setPeriod((p) => shiftPlanningPeriod(p, 1))}>
-        <ChevronRightIcon fontSize="small" />
-      </IconButton>
+      </Box>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flex: { xs: "1 1 100%", sm: "0 0 auto" } }}>
+        <IconButton size="small" aria-label={view === "QUARTER" ? "Previous quarter" : "Previous year"} onClick={() => setPeriod((p) => shiftPlanningPeriod(p, -step))}>
+          <ChevronLeftIcon fontSize="small" />
+        </IconButton>
+        <Box sx={{ fontSize: "0.8125rem", fontWeight: 700, minWidth: 96, textAlign: "center" }}>
+          {view === "QUARTER" ? formatPlanningPeriod(period) : formatFiscalYear(fiscalYear)}
+        </Box>
+        <IconButton size="small" aria-label={view === "QUARTER" ? "Next quarter" : "Next year"} onClick={() => setPeriod((p) => shiftPlanningPeriod(p, step))}>
+          <ChevronRightIcon fontSize="small" />
+        </IconButton>
+      </Box>
     </Box>
   );
 
   return (
-    <SectionCard title="Target vs Actuals" action={picker}>
+    <SectionCard title="Target vs Actuals" action={picker} stackActionOnPhone>
       <LoadingOrEmpty
-        isLoading={query.isLoading}
-        isError={query.isError}
-        isEmpty={!!data && data.people.length === 0 && Number(data.planned_lakhs) === 0 && Number(data.won_lakhs) === 0 && Number(data.po_received_lakhs) === 0 && !data.team_row?.target_lakhs && !data.sbu_row?.target_lakhs}
-        emptyText="No one to show for this quarter."
+        isLoading={active.isLoading}
+        isError={active.isError}
+        isEmpty={
+          view === "QUARTER"
+            ? !!data && data.people.length === 0 && Number(data.planned_lakhs) === 0 && Number(data.won_lakhs) === 0 && Number(data.po_received_lakhs) === 0 && !data.team_row?.target_lakhs && !data.sbu_row?.target_lakhs
+            : !!yearData && yearData.first_counted_period !== null && yearData.people.length === 0 && Number(yearData.won_lakhs) === 0 && !yearData.team_row?.target_lakhs && !yearData.sbu_row?.target_lakhs
+        }
+        emptyText={view === "QUARTER" ? "No one to show for this quarter." : "No one to show for this year."}
         errorText="Couldn't load Target vs Actuals."
-        onRetry={() => query.refetch()}
+        onRetry={() => active.refetch()}
       />
+      {yearData && <TargetVsActualsYear data={yearData} isTeamView={isTeamView} expanded={expanded} toggle={toggle} />}
       {data && (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <Box sx={noteSx}>

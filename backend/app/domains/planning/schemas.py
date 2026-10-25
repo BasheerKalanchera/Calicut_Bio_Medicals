@@ -348,6 +348,80 @@ class TargetVsActualResponse(BaseModel):
     brands: list[TargetVsActualBrand]
 
 
+class TargetVsActualYearQuarter(BaseModel):
+    """One quarter of the Year view's quarter-by-quarter table (Annual
+    Target Planning D31): that quarter's target and Won, and the running
+    totals from the year's first counted quarter. counted=False for a
+    quarter before targets began (FY 2026-27's Apr-Sep, D66): every figure
+    is None. Won figures are None for a quarter still to come."""
+
+    planning_period: str
+    quarter_state: QuarterState
+    counted: bool
+    target_lakhs: Decimal | None
+    won_lakhs: Decimal | None
+    # None until some counted quarter so far has a target.
+    target_so_far_lakhs: Decimal | None
+    won_so_far_lakhs: Decimal | None
+    percent_of_target_so_far: Decimal | None
+
+
+class TargetVsActualYearPersonQuarter(BaseModel):
+    """A person's running totals by the end of one counted quarter (D78)."""
+
+    planning_period: str
+    quarter_state: QuarterState
+    target_so_far_lakhs: Decimal | None
+    planned_so_far_lakhs: Decimal
+    # None for a quarter still to come.
+    won_so_far_lakhs: Decimal | None
+
+
+class TargetVsActualYearPerson(BaseModel):
+    """A person's whole year (D78): target and plan for every counted
+    quarter added up; PO received and Won so far."""
+
+    user_id: uuid.UUID
+    display_name: str
+    manager_id: uuid.UUID | None = None
+    # None when no counted quarter has a target for them.
+    target_lakhs: Decimal | None
+    planned_lakhs: Decimal
+    po_received_lakhs: Decimal
+    won_lakhs: Decimal
+    # Target less Won, never below 0; None without a target.
+    still_to_win_lakhs: Decimal | None
+    quarters: list[TargetVsActualYearPersonQuarter]
+
+
+class TargetVsActualYearResponse(BaseModel):
+    """Target vs Actuals for a fiscal year (D31, D66, D78, D79, D80). The
+    headline and summary rows are "so far": counted quarters up to the one
+    we are in. No Expected, zones, brands or late list (D79, D80)."""
+
+    sbu_id: uuid.UUID
+    fiscal_year: int  # the April it starts in: 2026 = FY 2026-27
+    as_of: date
+    # The first quarter that counts (D66); None if none of the year does.
+    first_counted_period: str | None
+    planned_lakhs: Decimal
+    po_received_lakhs: Decimal
+    won_lakhs: Decimal
+    # Won so far against team plans so far.
+    percent_of_target: Decimal | None
+    no_po_date_count: int
+    # The current quarter's "N of M" -- None outside the current year.
+    roster_count: int | None
+    not_submitted_count: int | None
+    sbu_row: TargetVsActualSummaryRow | None
+    company_row: TargetVsActualSummaryRow | None
+    team_row: TargetVsActualSummaryRow | None
+    # For the narrowest summary row the caller has (team, else SBU); empty
+    # for a rep, who has none.
+    quarters: list[TargetVsActualYearQuarter]
+    people: list[TargetVsActualYearPerson]
+
+
 class TargetRosterPerson(BaseModel):
     """One row of the Target Planning roster (Target-Coverage-Roster plan)."""
 

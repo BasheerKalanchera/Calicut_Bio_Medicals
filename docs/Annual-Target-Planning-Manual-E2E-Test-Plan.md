@@ -393,7 +393,7 @@ Basheer K (D57). Shruthi goes back to Haroon in G7.
    quarters read like "Oct–Dec 2026"; no "2026-Q3"-style code anywhere;
    "FY 2026-27" year labels unchanged. — Pass, 2026-10-24 (Claude, read only, as Haroon, phone width; page text searched for "2026-Q3"-style and "Q1"–"Q4" codes on every view — none). Brand Target Tracking, 2026: Imaging and Critical Care with every brand opened — "Jan–Mar 2026" … "Oct–Dec 2026", "Jan–Mar 2027", "SonoScape · Jan–Dec 2026", "Medion · Apr 2026–Mar 2027". Target & Coverage Planning, Quarterly Oct–Dec 2026: SBU Target card "SBU target for Oct–Dec 2026", Team Targets "Divide the SBU target for Oct–Dec 2026 …", My Plan, Needs Your Approval ("Oct–Dec 2026", "Jan–Mar 2027", "Apr–Jun 2027"), plan box "Plan & Coverage — Oct–Dec 2026" (closed with Cancel, nothing saved); Annual "FY 2026-27" with "Apr–Jun 2026" … "Jan–Mar 2027". Target vs Actuals: Imaging and Critical Care Oct–Dec 2026, Critical Care Jan–Mar 2027. "Your target" not shown to Haroon (no target of his own); its label was read as Fazal at D1 ("Your target for Oct–Dec 2026")
 
-## I — Target vs Actuals: Year view (D16, D22, D31, D66, D78)
+## I — Target vs Actuals: Year view (D16, D22, D31, D66, D77–D80)
 
 1. [Simple] As Haroon, Insights Dashboard → Target vs Actuals → Year view.
    **Expected:** "FY 2026-27"; its quarters read Apr–Jun 2026 … Jan–Mar
@@ -431,6 +431,22 @@ Basheer K (D57). Shruthi goes back to Haroon in G7.
     target ₹140 L. —
 12. [Simple] As Haroon, back to the Quarter view. **Expected:** every
     figure as at P8. —
+13. [Simple] As Haroon, Year view, Imaging (D79). **Expected:** no
+    "Expected" or "Likely finish" figure, no zone table and no brand
+    table; switching to the Quarter view shows all four again. —
+14. [Simple] Same screen (D80). **Expected:** no red "past closing date"
+    note beside any name in the Year view, even for a person whose row
+    shows one in the Quarter view for Oct–Dec 2026. —
+15. [Simple] Year view arrows. **Expected:** right arrow → "FY 2027-28",
+    left arrow twice → "FY 2025-26" with the note "Targets start in
+    Oct–Dec 2026, so this year has nothing to count"; switching back to
+    the Quarter view then shows Oct–Dec 2025 (the same quarter, in the
+    year being looked at). —
+16. [Complex: phone layout, D77] Phone width, as Haroon, Target vs
+    Actuals card header, in both views. **Expected:** three lines — the
+    title; the SBU and Quarter/Year boxes; the period with its two arrows
+    across the card's full width; nothing runs past the card's edge. On a
+    computer the header stays on one line. —
 
 ## J — Plan notifications on the bell (D18–D21, D69)
 

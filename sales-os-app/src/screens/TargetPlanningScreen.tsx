@@ -41,6 +41,7 @@ import {
   shiftPlanningPeriod,
   getFiscalYearOfPeriod,
   getPlanningYearQuarters,
+  formatFiscalYear,
   formatLakhs,
   formatPlanningPeriod,
 } from "../utils/formatter";
@@ -179,10 +180,6 @@ function hospitalCount(t: TargetPlan): string {
   return t.accounts.length === 0 ? "—" : String(t.accounts.length);
 }
 
-function fiscalYearLabel(fyStartYear: number): string {
-  return `FY ${fyStartYear}-${String((fyStartYear + 1) % 100).padStart(2, "0")}`;
-}
-
 // One person's target amounts across a fiscal year's 4 quarters -- the
 // team rollup's per-rep grouping (Group H's "grouped rows" layout).
 interface AnnualPerson {
@@ -237,7 +234,7 @@ export default function TargetPlanningScreen() {
   const fyStartYear = getFiscalYearOfPeriod(period);
   const yearQuarters = getPlanningYearQuarters(fyStartYear);
   const isAnnual = viewMode === "annual";
-  const periodLabel = isAnnual ? fiscalYearLabel(fyStartYear) : formatPlanningPeriod(period);
+  const periodLabel = isAnnual ? formatFiscalYear(fyStartYear) : formatPlanningPeriod(period);
 
   const { data: sbus = [] } = useQuery({
     queryKey: ["sbus"],

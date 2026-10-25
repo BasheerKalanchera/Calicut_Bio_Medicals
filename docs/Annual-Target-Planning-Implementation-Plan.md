@@ -431,6 +431,11 @@ this replan: D8, D12, D12a, D14.
   Changes D67, whose person rows were running totals up to the quarter
   we are in — Basheer, 2026-10-25 (mock-up
   https://claude.ai/artifact/NnyXKSzDYwoqvy6WXV4p9j).
+- D80. The Year view leaves out the red "N past closing date" note beside
+  a person's name (it is in the mock-up). The flag (BR-OP-16) is a "chase
+  this now" prompt tied to the current quarter's Expected, which the Year
+  view doesn't show (D79); the Quarter view keeps it, and My Work will
+  list it for the owner — Basheer, 2026-10-25.
 
 ## Figures and sources
 
@@ -715,6 +720,14 @@ Each gets a check before and after, in the E2E test plan.
   targets summed from April (from 2026-Q3 for FY 2026-27, D66), and per
   person the year's target and plan plus the per-quarter running totals
   for the opened row (D78); reuses the Quarter view's per-quarter logic.
+  Built as `GET /planning/targets/target-vs-actuals/year?sbu_id=&fiscal_year=`;
+  each counted quarter runs the quarter logic with `detail=False`, which
+  skips Expected, undated counts, zones and the late list (D79, D80).
+  "So far" = counted quarters up to the one we are in; the summary's
+  quarter-by-quarter table follows the narrowest row the caller has (team
+  row for an Area Manager, else SBU row; none for a rep); "N of M haven't
+  submitted" is the current quarter's (shown only in the current year) —
+  as presented to Basheer 2026-10-25.
 - **Notifications (D18–D21):** `NotificationService.notify_plan_submitted`
   (recipient `get_approver_id(owner)`; skipped when None) and
   `notify_plan_decided` (recipient `target_plan.user_id`),

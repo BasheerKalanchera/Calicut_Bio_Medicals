@@ -1461,6 +1461,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/planning/targets/target-vs-actuals/year": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Target Vs Actual Year
+         * @description Target vs Actuals for a fiscal year (Annual Target Planning D31): the
+         *     year so far and each person's whole year. fiscal_year is the April it
+         *     starts in (2026 = FY 2026-27). Read-only.
+         */
+        get: operations["get_target_vs_actual_year_api_v1_planning_targets_target_vs_actuals_year_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/planning/targets/roster": {
         parameters: {
             query?: never;
@@ -2370,6 +2392,20 @@ export interface components {
              */
             message: string;
             data: components["schemas"]["TargetVsActualResponse"];
+        };
+        /** APIResponse[TargetVsActualYearResponse] */
+        APIResponse_TargetVsActualYearResponse_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["TargetVsActualYearResponse"];
         };
         /** APIResponse[TeamTargetsResponse] */
         APIResponse_TeamTargetsResponse_: {
@@ -5868,6 +5904,117 @@ export interface components {
             won_lakhs: string;
             /** Percent Of Target */
             percent_of_target: string | null;
+        };
+        /**
+         * TargetVsActualYearPerson
+         * @description A person's whole year (D78): target and plan for every counted
+         *     quarter added up; PO received and Won so far.
+         */
+        TargetVsActualYearPerson: {
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /** Display Name */
+            display_name: string;
+            /** Manager Id */
+            manager_id?: string | null;
+            /** Target Lakhs */
+            target_lakhs: string | null;
+            /** Planned Lakhs */
+            planned_lakhs: string;
+            /** Po Received Lakhs */
+            po_received_lakhs: string;
+            /** Won Lakhs */
+            won_lakhs: string;
+            /** Still To Win Lakhs */
+            still_to_win_lakhs: string | null;
+            /** Quarters */
+            quarters: components["schemas"]["TargetVsActualYearPersonQuarter"][];
+        };
+        /**
+         * TargetVsActualYearPersonQuarter
+         * @description A person's running totals by the end of one counted quarter (D78).
+         */
+        TargetVsActualYearPersonQuarter: {
+            /** Planning Period */
+            planning_period: string;
+            quarter_state: components["schemas"]["QuarterState"];
+            /** Target So Far Lakhs */
+            target_so_far_lakhs: string | null;
+            /** Planned So Far Lakhs */
+            planned_so_far_lakhs: string;
+            /** Won So Far Lakhs */
+            won_so_far_lakhs: string | null;
+        };
+        /**
+         * TargetVsActualYearQuarter
+         * @description One quarter of the Year view's quarter-by-quarter table (Annual
+         *     Target Planning D31): that quarter's target and Won, and the running
+         *     totals from the year's first counted quarter. counted=False for a
+         *     quarter before targets began (FY 2026-27's Apr-Sep, D66): every figure
+         *     is None. Won figures are None for a quarter still to come.
+         */
+        TargetVsActualYearQuarter: {
+            /** Planning Period */
+            planning_period: string;
+            quarter_state: components["schemas"]["QuarterState"];
+            /** Counted */
+            counted: boolean;
+            /** Target Lakhs */
+            target_lakhs: string | null;
+            /** Won Lakhs */
+            won_lakhs: string | null;
+            /** Target So Far Lakhs */
+            target_so_far_lakhs: string | null;
+            /** Won So Far Lakhs */
+            won_so_far_lakhs: string | null;
+            /** Percent Of Target So Far */
+            percent_of_target_so_far: string | null;
+        };
+        /**
+         * TargetVsActualYearResponse
+         * @description Target vs Actuals for a fiscal year (D31, D66, D78, D79, D80). The
+         *     headline and summary rows are "so far": counted quarters up to the one
+         *     we are in. No Expected, zones, brands or late list (D79, D80).
+         */
+        TargetVsActualYearResponse: {
+            /**
+             * Sbu Id
+             * Format: uuid
+             */
+            sbu_id: string;
+            /** Fiscal Year */
+            fiscal_year: number;
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /** First Counted Period */
+            first_counted_period: string | null;
+            /** Planned Lakhs */
+            planned_lakhs: string;
+            /** Po Received Lakhs */
+            po_received_lakhs: string;
+            /** Won Lakhs */
+            won_lakhs: string;
+            /** Percent Of Target */
+            percent_of_target: string | null;
+            /** No Po Date Count */
+            no_po_date_count: number;
+            /** Roster Count */
+            roster_count: number | null;
+            /** Not Submitted Count */
+            not_submitted_count: number | null;
+            sbu_row: components["schemas"]["TargetVsActualSummaryRow"] | null;
+            company_row: components["schemas"]["TargetVsActualSummaryRow"] | null;
+            team_row: components["schemas"]["TargetVsActualSummaryRow"] | null;
+            /** Quarters */
+            quarters: components["schemas"]["TargetVsActualYearQuarter"][];
+            /** People */
+            people: components["schemas"]["TargetVsActualYearPerson"][];
         };
         /**
          * TargetVsActualZone
@@ -10113,6 +10260,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["APIResponse_TargetVsActualResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_target_vs_actual_year_api_v1_planning_targets_target_vs_actuals_year_get: {
+        parameters: {
+            query: {
+                sbu_id: string;
+                fiscal_year: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_TargetVsActualYearResponse_"];
                 };
             };
             /** @description Validation Error */

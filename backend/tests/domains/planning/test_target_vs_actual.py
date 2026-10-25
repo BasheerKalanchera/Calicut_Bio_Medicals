@@ -610,6 +610,235 @@ def test_late_opportunity_reaches_an_owner_with_no_share(monkeypatch):
     assert (f.won_lakhs, f.expected_lakhs) == (Decimal("0.00"), Decimal("0.00"))
 
 
+# --- Year view (Annual Target Planning D31, D66, D78-D80) --------------------
+
+Q3_START = datetime(2026, 10, 1, tzinfo=IST)
+
+
+def _by_period(values: dict, default):
+    """side_effect for a repo method whose last positional arg is the period."""
+    return lambda *a, **k: values.get(a[-1], default)
+
+
+def _by_window(q3, q4):
+    """side_effect for a repo method called with the quarter's start
+    (datetime or date) as its third positional arg."""
+
+    def pick(*a, **k):
+        start = a[2]
+        return q3 if start in (Q3_START, date(2026, 10, 1)) else q4
+
+    return pick
+
+
+def _run_year(repo, today: date, monkeypatch, user=None, fiscal_year=2026):
+    monkeypatch.setattr(service_module, "today_ist", lambda: today)
+    user = user or _user_with_role("Sales Rep")
+    return TargetVsActualService(repo).get_target_vs_actual_year(SBU_ID, fiscal_year, current_user=user)
+
+
+def test_year_counts_fy_2026_27_from_oct_dec(monkeypatch):
+    # D66: Apr-Sep 2026 had no targets, so those plans never count.
+    repo = _repo()
+    resp = _run_year(repo, IN_QUARTER, monkeypatch)
+    assert [c.args[2] for c in repo.list_plans.call_args_list] == ["2026-Q3", "2026-Q4"]
+    assert resp.first_counted_period == "2026-Q3"
+
+
+def test_later_years_count_all_four_quarters(monkeypatch):
+    repo = _repo()
+    resp = _run_year(repo, IN_QUARTER, monkeypatch, fiscal_year=2027)
+    assert [c.args[2] for c in repo.list_plans.call_args_list] == [f"2027-Q{n}" for n in range(1, 5)]
+    assert resp.first_counted_period == "2027-Q1"
+
+
+def test_year_before_targets_counts_nothing(monkeypatch):
+    repo = _repo()
+    resp = _run_year(repo, IN_QUARTER, monkeypatch, fiscal_year=2025)
+    repo.list_plans.assert_not_called()
+    assert resp.first_counted_period is None and resp.people == [] and resp.won_lakhs == Decimal(0)
+
+
+def test_year_skips_what_the_year_view_leaves_out(monkeypatch):
+    # D79, D80: no Expected, undated counts, zones, brands or late list.
+    repo = _repo()
+    _run_year(repo, IN_QUARTER, monkeypatch)
+    for method in (
+        "expected_by_person",
+        "undated_counts",
+        "zone_of_accounts",
+        "late_opportunities",
+        "won_by_person_brand",
+    ):
+        getattr(repo, method).assert_not_called()
+
+
+def test_sbu_quarter_by_quarter_running_totals_carry_a_missing_target(monkeypatch):
+    # Today in Jan-Mar 2027: both counted quarters are "so far". Jan-Mar has
+    # no SBU target, so the target so far stays at Oct-Dec's.
+    repo = _repo()
+    repo.active_sbu_targets.side_effect = _by_period({"2026-Q3": {SBU_ID: Decimal("280")}}, {SBU_ID: None})
+    repo.summary_totals.side_effect = lambda period, *a, sbu_id: {
+        "2026-Q3": (Decimal("100"), Decimal("60"), Decimal("50.00")),
+        "2026-Q4": (Decimal("120"), Decimal("40"), Decimal("30.00")),
+    }[period]
+    resp = _run_year(repo, date(2027, 2, 1), monkeypatch, user=_user_with_role("SBU Manager"))
+    q1, q2, q3, q4 = resp.quarters
+    assert not q1.counted and not q2.counted and q1.target_so_far_lakhs is None
+    assert (q3.target_lakhs, q3.won_lakhs, q3.target_so_far_lakhs, q3.won_so_far_lakhs) == (
+        Decimal("280"),
+        Decimal("50.00"),
+        Decimal("280"),
+        Decimal("50.00"),
+    )
+    assert (q4.target_lakhs, q4.target_so_far_lakhs, q4.won_so_far_lakhs, q4.percent_of_target_so_far) == (
+        None,
+        Decimal("280"),
+        Decimal("80.00"),
+        Decimal("28.57"),
+    )
+    row = resp.sbu_row
+    assert (row.target_lakhs, row.planned_lakhs, row.po_received_lakhs, row.won_lakhs, row.percent_of_target) == (
+        Decimal("280"),
+        Decimal("220"),
+        Decimal("100"),
+        Decimal("80.00"),
+        Decimal("28.57"),
+    )
+    assert resp.company_row is None and resp.team_row is None
+
+
+def test_upcoming_quarter_adds_to_target_but_not_to_so_far(monkeypatch):
+    # Today in Oct-Dec: Jan-Mar is still to come.
+    repo = _repo()
+    repo.active_sbu_targets.side_effect = _by_period(
+        {"2026-Q3": {SBU_ID: Decimal("280")}, "2026-Q4": {SBU_ID: Decimal("300")}}, {}
+    )
+    repo.summary_totals.side_effect = lambda period, *a, sbu_id: {
+        "2026-Q3": (Decimal("100"), Decimal("0"), Decimal("50.00")),
+        "2026-Q4": (Decimal("120"), Decimal("0"), Decimal("0")),
+    }[period]
+    resp = _run_year(repo, IN_QUARTER, monkeypatch, user=_user_with_role("SBU Manager"))
+    q4 = resp.quarters[3]
+    assert q4.quarter_state == QuarterState.FUTURE
+    assert (q4.target_so_far_lakhs, q4.won_lakhs, q4.won_so_far_lakhs, q4.percent_of_target_so_far) == (
+        Decimal("580"),
+        None,
+        None,
+        None,
+    )
+    assert resp.sbu_row.target_lakhs == Decimal("280")  # so far: Oct-Dec only
+    assert resp.sbu_row.planned_lakhs == Decimal("100")
+
+
+def test_person_row_is_the_whole_year_with_running_totals(monkeypatch):
+    # D78: target and plan for every counted quarter; Won so far.
+    rep, acc = uuid.uuid4(), uuid.uuid4()
+    repo = _repo(roster=[(rep, "Vivek")])
+    repo.list_plans.side_effect = _by_period(
+        {"2026-Q3": [_plan(rep, "Vivek", [(acc, "A", "100")])], "2026-Q4": [_plan(rep, "Vivek", [(acc, "A", "120")])]},
+        [],
+    )
+    repo.person_targets.side_effect = _by_period({"2026-Q3": {rep: Decimal("90")}, "2026-Q4": {rep: Decimal("96")}}, {})
+    repo.won_by_person_account.side_effect = _by_window(
+        [(rep, "Vivek", acc, None, None, Decimal("50.00"))], [(rep, "Vivek", acc, None, None, Decimal("7.00"))]
+    )
+    repo.po_received_by_person.side_effect = _by_window([(rep, "Vivek", Decimal("60.00"))], [])
+    resp = _run_year(repo, IN_QUARTER, monkeypatch)
+    (p,) = resp.people
+    assert (p.target_lakhs, p.planned_lakhs, p.po_received_lakhs, p.won_lakhs, p.still_to_win_lakhs) == (
+        Decimal("186"),
+        Decimal("220"),
+        Decimal("60.00"),
+        Decimal("50.00"),
+        Decimal("136.00"),
+    )
+    q3, q4 = p.quarters
+    assert (q3.target_so_far_lakhs, q3.planned_so_far_lakhs, q3.won_so_far_lakhs) == (
+        Decimal("90"),
+        Decimal("100"),
+        Decimal("50.00"),
+    )
+    assert (q4.target_so_far_lakhs, q4.planned_so_far_lakhs, q4.won_so_far_lakhs) == (
+        Decimal("186"),
+        Decimal("220"),
+        None,
+    )
+    # Headline is so far: Oct-Dec only.
+    assert (resp.planned_lakhs, resp.won_lakhs, resp.percent_of_target) == (
+        Decimal("100"),
+        Decimal("50.00"),
+        Decimal("50.00"),
+    )
+
+
+def test_still_to_win_never_goes_below_zero(monkeypatch):
+    rep, acc = uuid.uuid4(), uuid.uuid4()
+    repo = _repo(
+        roster=[(rep, "Vivek")],
+        person_targets={rep: Decimal("10")},
+        won_by_person_account=[(rep, "Vivek", acc, None, None, Decimal("50.00"))],
+    )
+    (p,) = _run_year(repo, date(2027, 2, 1), monkeypatch).people
+    assert p.still_to_win_lakhs == Decimal(0)
+
+
+def test_person_without_any_target_has_no_still_to_win(monkeypatch):
+    rep = uuid.uuid4()
+    (p,) = _run_year(_repo(roster=[(rep, "Vivek")]), IN_QUARTER, monkeypatch).people
+    assert p.target_lakhs is None and p.still_to_win_lakhs is None
+
+
+def test_year_counts_a_rejected_revision_at_its_last_approved_total(monkeypatch):
+    # BR-PL-05, as in the Quarter view.
+    rep, acc = uuid.uuid4(), uuid.uuid4()
+    plan = _plan(rep, "Vivek", [(acc, "A", "150")], status="REJECTED", previous="100")
+    (p,) = _run_year(_repo(roster=[(rep, "Vivek")], list_plans=[plan]), IN_QUARTER, monkeypatch).people
+    assert p.planned_lakhs == Decimal("200")  # 100 in each counted quarter
+
+
+def test_year_area_manager_table_follows_the_team_row(monkeypatch):
+    am = _user_with_role("Area Manager")
+    rep, acc = uuid.uuid4(), uuid.uuid4()
+    repo = _repo(
+        roster=[(rep, "Asha")],
+        person_targets={am.id: Decimal("160")},
+        won_by_person_account=[(rep, "Asha", acc, None, None, Decimal("20.00"))],
+    )
+    resp = _run_year(repo, date(2027, 2, 1), monkeypatch, user=am)
+    assert [q.target_lakhs for q in resp.quarters if q.counted] == [Decimal("160"), Decimal("160")]
+    assert resp.quarters[3].won_so_far_lakhs == Decimal("40.00")
+    assert resp.team_row.target_lakhs == Decimal("320")
+    assert resp.sbu_row is None
+    repo.summary_totals.assert_not_called()
+
+
+def test_year_rep_gets_no_summary_rows_or_quarter_table(monkeypatch):
+    resp = _run_year(_repo(), IN_QUARTER, monkeypatch)
+    assert resp.sbu_row is None and resp.company_row is None and resp.team_row is None
+    assert resp.quarters == []
+
+
+@pytest.mark.parametrize(("role", "has_company"), [("General Manager", True), ("SBU Manager", False)])
+def test_year_company_row_only_for_gm_and_admin(monkeypatch, role, has_company):
+    repo = _repo(active_sbu_targets={SBU_ID: Decimal("200")})
+    resp = _run_year(
+        repo, date(2027, 2, 1), monkeypatch, user=_user_with_role(role, sbu_id=None if has_company else SBU_ID)
+    )
+    assert (resp.company_row is not None) is has_company
+    if has_company:
+        assert resp.company_row.target_lakhs == Decimal("400")
+
+
+def test_n_of_m_is_the_current_quarters_and_absent_for_a_past_year(monkeypatch):
+    rep = uuid.uuid4()
+    repo = _repo(roster=[(rep, "Vivek")])
+    resp = _run_year(repo, IN_QUARTER, monkeypatch)
+    assert (resp.roster_count, resp.not_submitted_count) == (1, 1)
+    past = _run_year(_repo(roster=[(rep, "Vivek")]), date(2027, 5, 1), monkeypatch)
+    assert (past.roster_count, past.not_submitted_count) == (None, None)
+
+
 # --- Target Planning roster (Target-Coverage-Roster plan) -------------------
 
 

@@ -280,6 +280,67 @@ export interface TargetVsActualResponse {
   brands: TargetVsActualBrand[];
 }
 
+// One quarter of the Year view's quarter-by-quarter table (Annual Target
+// Planning D31). counted=false: before targets began (FY 2026-27's Apr–Sep,
+// D66), every figure null. Won figures null for a quarter still to come.
+export interface TargetVsActualYearQuarter {
+  planning_period: string;
+  quarter_state: QuarterState;
+  counted: boolean;
+  target_lakhs: string | null;
+  won_lakhs: string | null;
+  target_so_far_lakhs: string | null;
+  won_so_far_lakhs: string | null;
+  percent_of_target_so_far: string | null;
+}
+
+// A person's running totals by the end of one counted quarter (D78).
+export interface TargetVsActualYearPersonQuarter {
+  planning_period: string;
+  quarter_state: QuarterState;
+  target_so_far_lakhs: string | null;
+  planned_so_far_lakhs: string;
+  won_so_far_lakhs: string | null;
+}
+
+// A person's whole year (D78): target and plan for every counted quarter;
+// PO received and Won so far. still_to_win = target less Won, never below 0.
+export interface TargetVsActualYearPerson {
+  user_id: string;
+  display_name: string;
+  manager_id: string | null;
+  target_lakhs: string | null;
+  planned_lakhs: string;
+  po_received_lakhs: string;
+  won_lakhs: string;
+  still_to_win_lakhs: string | null;
+  quarters: TargetVsActualYearPersonQuarter[];
+}
+
+// Target vs Actuals for a fiscal year (D31, D66, D78–D80): "so far" =
+// counted quarters up to the one we are in. No Expected, zones, brands or
+// late list (D79, D80).
+export interface TargetVsActualYearResponse {
+  sbu_id: string;
+  fiscal_year: number;
+  as_of: string;
+  first_counted_period: string | null;
+  planned_lakhs: string;
+  po_received_lakhs: string;
+  won_lakhs: string;
+  percent_of_target: string | null;
+  no_po_date_count: number;
+  // The current quarter's "N of M" -- null outside the current year.
+  roster_count: number | null;
+  not_submitted_count: number | null;
+  sbu_row: TargetVsActualSummaryRow | null;
+  company_row: TargetVsActualSummaryRow | null;
+  team_row: TargetVsActualSummaryRow | null;
+  // For the narrowest summary row (team, else SBU); empty for a rep.
+  quarters: TargetVsActualYearQuarter[];
+  people: TargetVsActualYearPerson[];
+}
+
 // The SBU's quarterly target: its brands' quarterly total, never typed
 // (Annual Target Planning D47, D53, D55). null = no brand has a figure.
 export interface SbuTarget {
