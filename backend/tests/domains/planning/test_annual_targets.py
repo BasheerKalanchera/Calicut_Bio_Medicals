@@ -223,6 +223,56 @@ def test_pattern_change_resaves_brands_following_it(monkeypatch):
     }
 
 
+def test_resave_leaves_a_quarter_typed_by_hand_alone(monkeypatch):
+    # D71/D72: Jan-Mar 2027 was typed by hand as 30; the others are re-split
+    # from the pattern and are not redistributed to make up the year.
+    monkeypatch.setattr(service_module, "today_ist", lambda: date(2026, 11, 1))
+    brand = _brand(start_month=1)
+    repo = _annual_repo(brand)
+    by_hand = SimpleNamespace(set_by_hand=True, vendor_target_amount_lakhs=Decimal("30"))
+    from_pattern = SimpleNamespace(set_by_hand=False, vendor_target_amount_lakhs=Decimal("1"))
+    repo.get_vendor_target.side_effect = lambda _b, p: by_hand if p == "2026-Q4" else from_pattern
+    body = BrandAnnualTargetSet(
+        brand_id=brand.id, start_year=2027, vendor_amount_lakhs=Decimal("200"), pattern=SeasonalPattern(**EVEN)
+    )
+    AnnualTargetService(repo).set_annual(body, current_user=_user("General Manager", None))
+    assert by_hand.vendor_target_amount_lakhs == Decimal("30")
+    assert from_pattern.vendor_target_amount_lakhs == Decimal("50.00")
+
+
+def test_list_shows_billing_split_evenly_and_marks(monkeypatch):
+    # D54/D68: Brands Billing to Cabio is the brand's own figure (no stretch)
+    # in four even parts, the last taking the remainder; D73 marks a quarter
+    # typed by hand, and an ended quarter is locked.
+    monkeypatch.setattr(service_module, "today_ist", lambda: date(2026, 11, 1))
+    brand = _brand(start_month=4)
+    repo = _annual_repo(brand)
+    repo.list_active_brands.return_value = [brand]
+    repo.list_annual.return_value = [
+        SimpleNamespace(
+            brand_id=brand.id,
+            vendor_amount_lakhs=Decimal("100.01"),
+            stretch_pct=Decimal("10"),
+            pct_jan_mar=None,
+            pct_apr_jun=None,
+            pct_jul_sep=None,
+            pct_oct_dec=None,
+        )
+    ]
+    repo.brands_with_annual.return_value = {brand.id}
+    repo.vendor_targets.return_value = {(brand.id, "2026-Q4"): (Decimal("33"), True)}
+    [row] = AnnualTargetService(repo).list_annual(SBU_ID, 2026, current_user=_user("General Manager", None))
+    assert [q.billing_lakhs for q in row.quarters] == [
+        Decimal("25.00"),
+        Decimal("25.00"),
+        Decimal("25.00"),
+        Decimal("25.01"),
+    ]
+    assert [q.set_by_hand for q in row.quarters] == [False, False, False, True]
+    assert [q.locked for q in row.quarters] == [True, True, False, False]
+    assert row.quarters[3].saved_lakhs == Decimal("33")
+
+
 # --- person targets ---------------------------------------------------------
 
 

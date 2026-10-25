@@ -16,6 +16,7 @@ export default function NotificationBell({
   onSelectOpportunity,
   onSelectAccount,
   onSelectMarketingLead,
+  onSelectTargetPlan,
 }: {
   // detailTab lets MANAGER_NOTE_ADDED land straight on the Opportunity's
   // Activity tab (DemoApp's handleSelectOpportunity already supports this
@@ -34,6 +35,9 @@ export default function NotificationBell({
   // Marketing leads have no per-item detail screen (unlike Opportunity) --
   // there's nothing to select, just the queue itself to open.
   onSelectMarketingLead: () => void;
+  // Plan submitted / approved / rejected: opens Target & Coverage Planning
+  // on that plan's quarter and SBU, its row open (Annual Target Planning D21).
+  onSelectTargetPlan: (focus: { period: string; sbuId: string; planId: string }) => void;
 }) {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const queryClient = useQueryClient();
@@ -66,6 +70,19 @@ export default function NotificationBell({
       // entity_type read on view (mark_read_for_type), same read-receipt
       // idea as opening an Opportunity below.
       onSelectMarketingLead();
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
+        queryClient.invalidateQueries({ queryKey: ["notifications", "list"] });
+      }, 500);
+      return;
+    }
+    if (n.entity_type === "target_plan") {
+      // No GET-by-id route opens a plan, so mark it read explicitly, as for
+      // activity below. A plan deleted since has no quarter: just mark it.
+      markNotificationRead("target_plan", n.entity_id);
+      if (n.plan_period && n.plan_sbu_id) {
+        onSelectTargetPlan({ period: n.plan_period, sbuId: n.plan_sbu_id, planId: n.entity_id });
+      }
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
         queryClient.invalidateQueries({ queryKey: ["notifications", "list"] });

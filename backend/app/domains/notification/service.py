@@ -179,6 +179,46 @@ class NotificationService:
         )
         return self.repository.create(notification)
 
+    def notify_plan_submitted(
+        self,
+        *,
+        recipient_user_id: uuid.UUID,
+        target_plan_id: uuid.UUID,
+        actor_id: uuid.UUID,
+    ) -> Notification:
+        # Annual Target Planning D18: the owner's manager hears who submitted
+        # (or revised) a plan -- nothing else; the change note stays on the
+        # plan screen (Basheer, 2026-10-25). Bell only, never urgent (D20).
+        notification = Notification(
+            recipient_user_id=recipient_user_id,
+            type="TARGET_PLAN_SUBMITTED",
+            entity_type="target_plan",
+            entity_id=target_plan_id,
+            created_by=actor_id,
+            is_urgent=False,
+        )
+        return self.repository.create(notification)
+
+    def notify_plan_decided(
+        self,
+        *,
+        recipient_user_id: uuid.UUID,
+        target_plan_id: uuid.UUID,
+        actor_id: uuid.UUID,
+        approved: bool,
+    ) -> Notification:
+        # D19: the owner hears their plan was approved or rejected; the
+        # manager's note stays on the plan screen.
+        notification = Notification(
+            recipient_user_id=recipient_user_id,
+            type="TARGET_PLAN_APPROVED" if approved else "TARGET_PLAN_REJECTED",
+            entity_type="target_plan",
+            entity_id=target_plan_id,
+            created_by=actor_id,
+            is_urgent=False,
+        )
+        return self.repository.create(notification)
+
     def notify_marketing_lead_comment_added(
         self,
         *,

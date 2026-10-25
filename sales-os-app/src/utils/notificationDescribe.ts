@@ -1,4 +1,5 @@
 import type { NotificationResponse } from "../types/api-aliases";
+import { formatPlanningPeriod } from "./formatter";
 import { marketingLeadRef } from "./marketingLeadMilestone";
 
 // Shared by NotificationBell.tsx (dropdown) and UrgentNotificationDialog.tsx
@@ -33,6 +34,13 @@ export function describeNotification(n: NotificationResponse): string {
     // Always non-urgent (Activity-Comment-Implementation-Plan.md) -- no
     // is_urgent branch, unlike MANAGER_NOTE_ADDED above.
     return `${who} commented on an activity`;
+  }
+  if (n.type === "TARGET_PLAN_SUBMITTED" || n.type === "TARGET_PLAN_APPROVED" || n.type === "TARGET_PLAN_REJECTED") {
+    // Who and which quarter only -- the plan itself is on the screen the
+    // click opens (Annual Target Planning D18-D21; Basheer, 2026-10-25).
+    const quarter = n.plan_period ? ` for ${formatPlanningPeriod(n.plan_period)}` : "";
+    if (n.type === "TARGET_PLAN_SUBMITTED") return `${who} submitted a plan${quarter}`;
+    return `${who} ${n.type === "TARGET_PLAN_APPROVED" ? "approved" : "rejected"} your plan${quarter}`;
   }
   const what = n.opportunity_name ?? "an Opportunity";
   if (n.type === "GATE_OVERRIDE_NAMED") {

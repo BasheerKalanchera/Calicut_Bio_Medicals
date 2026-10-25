@@ -3465,6 +3465,12 @@ export interface components {
             planning_period: string;
             /** Saved Lakhs */
             saved_lakhs: string | null;
+            /** Set By Hand */
+            set_by_hand: boolean;
+            /** Locked */
+            locked: boolean;
+            /** Billing Lakhs */
+            billing_lakhs: string | null;
         };
         /**
          * BrandAnnualTargetRow
@@ -3617,6 +3623,8 @@ export interface components {
             planning_period: string;
             /** Vendor Target Amount Lakhs */
             vendor_target_amount_lakhs: string;
+            /** Set By Hand */
+            set_by_hand: boolean;
         };
         /** BrandVendorTargetSet */
         BrandVendorTargetSet: {
@@ -4126,6 +4134,10 @@ export interface components {
             account_id?: string | null;
             /** Opportunity Id */
             opportunity_id?: string | null;
+            /** Plan Period */
+            plan_period?: string | null;
+            /** Plan Sbu Id */
+            plan_sbu_id?: string | null;
         };
         /** OpportunitiesOnHoldResponse */
         OpportunitiesOnHoldResponse: {

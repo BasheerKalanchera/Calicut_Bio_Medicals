@@ -31,6 +31,11 @@ class NotificationResponse(BaseModel):
     # via account_id.
     account_id: uuid.UUID | None = None
     opportunity_id: uuid.UUID | None = None
+    # Only populated for entity_type == "target_plan" (Annual Target
+    # Planning D21) -- the plan's quarter and SBU, so the click opens Target
+    # & Coverage Planning there and the bell can name the quarter.
+    plan_period: str | None = None
+    plan_sbu_id: uuid.UUID | None = None
 
 
 class UnreadCountResponse(BaseModel):

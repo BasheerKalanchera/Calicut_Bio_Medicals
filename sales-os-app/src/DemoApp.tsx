@@ -129,6 +129,9 @@ export default function DemoApp() {
   // effect could correct it. Everyone else opens on Account Management, not Pipeline (Weekly Follow-up
   // plan D9a, Haroon via Basheer 2026-10-12).
   const [view, setView] = useState(() => (isMarketingUser ? "marketingLeads" : "customers"));
+  // The plan a bell click asked to open; nonce re-mounts Target & Coverage
+  // Planning even when the same plan is clicked twice.
+  const [targetPlanFocus, setTargetPlanFocus] = useState<{ period: string; sbuId: string; planId: string; nonce: number } | null>(null);
   const [isSidebarOpen, setIsSidebarOpen]       = useState(false);
   // Sidebar sections collapse independently -- Sales Execution open by
   // default (daily-use), Reports/Administration start collapsed since most
@@ -583,6 +586,10 @@ export default function DemoApp() {
                 onSelectOpportunity={handleSelectOpportunity}
                 onSelectAccount={handleSelectAccount}
                 onSelectMarketingLead={() => setView("marketingLeadQueue")}
+                onSelectTargetPlan={(focus) => {
+                  setTargetPlanFocus({ ...focus, nonce: Date.now() });
+                  setView("targetPlanning");
+                }}
               />
             )}
             {HELP_CONTENT[helpViewId] && (
@@ -911,7 +918,9 @@ export default function DemoApp() {
                 Target & Coverage Planning
               </Typography>
             </Box>
-            <TargetPlanningScreen />
+            {/* Re-mounted on each plan notification click so it opens on
+                that plan's quarter and SBU (Annual Target Planning D21). */}
+            <TargetPlanningScreen key={targetPlanFocus?.nonce ?? 0} initialFocus={targetPlanFocus} />
           </Box>
 
           <Box sx={{ flex: 1, overflow: "hidden", display: view === "brandTargetTracking" ? "flex" : "none", flexDirection: "column" }}>

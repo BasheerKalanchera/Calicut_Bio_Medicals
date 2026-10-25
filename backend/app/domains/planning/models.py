@@ -2,7 +2,18 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import UUID, CheckConstraint, DateTime, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import (
+    UUID,
+    Boolean,
+    CheckConstraint,
+    DateTime,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import AuditMixin, Base
@@ -194,5 +205,8 @@ class BrandVendorTarget(AuditMixin, Base):
     brand_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("brand.id"), nullable=False)
     planning_period: Mapped[str] = mapped_column(String(10), nullable=False)
     vendor_target_amount_lakhs: Mapped[Decimal] = mapped_column(Numeric(15, 2), nullable=False)
+    # Typed by the GM for this one quarter (D70); kept when the brand's year
+    # is worked out again (D71) and never cleared (D73). Migration 0064.
+    set_by_hand: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")
 
     brand: Mapped["Brand"] = relationship(lazy="joined")

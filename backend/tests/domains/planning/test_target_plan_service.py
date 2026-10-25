@@ -6,6 +6,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from app.core.exceptions import AuthorizationError, ConflictError, NotFoundError, ValidationError
+from app.domains.notification.service import NotificationService
 from app.domains.organization.models import UserProfile
 from app.domains.planning.models import BrandVendorTarget, TargetPlan
 from app.domains.planning.repository import BrandVendorTargetRepository, TargetPlanRepository
@@ -104,12 +105,18 @@ def _make_brand_repo(*, has_brands: bool = False) -> MagicMock:
     return brand_repo
 
 
-def _make_service(repo: MagicMock, *, has_brands: bool = False) -> TargetPlanService:
+def _make_service(
+    repo: MagicMock, *, has_brands: bool = False, notification_service: MagicMock | None = None
+) -> TargetPlanService:
     """Tests that don't care about brand splits default to `has_brands=False`
     -- _apply_brand_splits becomes a no-op, preserving pre-Brand-Level-
     Target-Planning behavior for every unrelated test. Only TestBrandSplits
     below passes has_brands=True."""
-    return TargetPlanService(repository=repo, brand_repository=_make_brand_repo(has_brands=has_brands))
+    return TargetPlanService(
+        repository=repo,
+        brand_repository=_make_brand_repo(has_brands=has_brands),
+        notification_service=notification_service or MagicMock(spec=NotificationService),
+    )
 
 
 class TestCreateTargetPlan:
@@ -765,6 +772,143 @@ class TestBrandVendorTargetService:
         assert result.vendor_target_amount_lakhs == Decimal("120")
         repo.create.assert_not_called()
         repo.update.assert_called_once_with(existing)
+
+    def test_a_typed_quarter_is_marked_set_by_hand(self):
+        """Annual Target Planning D70/D71: the yearly re-split leaves it alone."""
+        existing = _make_brand_vendor_target(vendor_target_amount_lakhs=Decimal("80"))
+        existing.set_by_hand = False
+        repo = MagicMock(spec=BrandVendorTargetRepository)
+        repo.get_by_brand_period.return_value = existing
+        repo.update.side_effect = lambda obj: obj
+        service = BrandVendorTargetService(repository=repo)
+        data = BrandVendorTargetSet(
+            brand_id=existing.brand_id,
+            planning_period=existing.planning_period,
+            vendor_target_amount_lakhs=Decimal("95"),
+        )
+
+        result = service.set_vendor_target(data, current_user=_make_user("General Manager"))
+
+        assert result.set_by_hand is True
+
+    def test_an_ended_quarter_cannot_be_changed(self):
+        """D51/D73: 2026-Q1 ended (and is before the first saved quarter)."""
+        repo = MagicMock(spec=BrandVendorTargetRepository)
+        service = BrandVendorTargetService(repository=repo)
+        data = BrandVendorTargetSet(
+            brand_id=uuid.uuid4(), planning_period="2026-Q1", vendor_target_amount_lakhs=Decimal("50")
+        )
+
+        with pytest.raises(ValidationError, match="quarter has ended"):
+            service.set_vendor_target(data, current_user=_make_user("Admin"))
+
+        repo.create.assert_not_called()
+        repo.update.assert_not_called()
+
+
+class TestPlanNotifications:
+    """Annual Target Planning D18/D19: who submitted, and approved or
+    rejected -- nothing from the plan itself."""
+
+    def test_submitting_notifies_the_owners_manager(self):
+        manager_id = uuid.uuid4()
+        owner = _make_user("Sales Staff", manager_id=manager_id)
+        repo = _make_repo()
+        repo.db.get.return_value = owner
+        notifications = MagicMock(spec=NotificationService)
+        service = _make_service(repo, notification_service=notifications)
+
+        plan, _warnings = service.create_target_plan(
+            TargetPlanCreate(sbu_id=SBU_ID, planning_period="2026-Q3", accounts=_entries("50")),
+            current_user=owner,
+        )
+
+        notifications.notify_plan_submitted.assert_called_once_with(
+            recipient_user_id=manager_id, target_plan_id=plan.id, actor_id=owner.id
+        )
+
+    def test_a_draft_notifies_no_one(self):
+        owner = _make_user("Sales Staff", manager_id=uuid.uuid4())
+        repo = _make_repo()
+        repo.db.get.return_value = owner
+        notifications = MagicMock(spec=NotificationService)
+        service = _make_service(repo, notification_service=notifications)
+
+        service.create_target_plan(
+            TargetPlanCreate(sbu_id=SBU_ID, planning_period="2026-Q3", accounts=_entries("50"), submit=False),
+            current_user=owner,
+        )
+
+        notifications.notify_plan_submitted.assert_not_called()
+
+    def test_no_manager_notifies_no_one(self):
+        """D18: a rep with no manager above them notifies no one."""
+        owner = _make_user("General Manager", manager_id=None)
+        repo = _make_repo()
+        repo.db.get.return_value = owner
+        notifications = MagicMock(spec=NotificationService)
+        service = _make_service(repo, notification_service=notifications)
+
+        service.create_target_plan(
+            TargetPlanCreate(sbu_id=SBU_ID, planning_period="2026-Q3", accounts=_entries("50")),
+            current_user=owner,
+        )
+
+        notifications.notify_plan_submitted.assert_not_called()
+
+    def test_revising_notifies_the_manager_again(self):
+        manager_id = uuid.uuid4()
+        owner = _make_user("Sales Staff", manager_id=manager_id)
+        target_plan = _make_target_plan(user_id=owner.id, status="APPROVED")
+        repo = _make_repo(get_by_id=MagicMock(return_value=target_plan))
+        repo.db.get.return_value = owner
+        notifications = MagicMock(spec=NotificationService)
+        service = _make_service(repo, notification_service=notifications)
+
+        service.update_target_plan(
+            target_plan.id, TargetPlanUpdate(accounts=_entries("60"), change_note="Revised"), current_user=owner
+        )
+
+        notifications.notify_plan_submitted.assert_called_once_with(
+            recipient_user_id=manager_id, target_plan_id=target_plan.id, actor_id=owner.id
+        )
+
+    @pytest.mark.parametrize("status", ["APPROVED", "REJECTED"])
+    def test_deciding_notifies_the_owner(self, status):
+        manager = _make_user("Area Manager")
+        owner = _make_user("Sales Staff", manager_id=manager.id)
+        target_plan = _make_target_plan(user_id=owner.id, status="PENDING_APPROVAL")
+        repo = _make_repo(get_by_id=MagicMock(return_value=target_plan))
+        repo.db.get.return_value = owner
+        notifications = MagicMock(spec=NotificationService)
+        service = _make_service(repo, notification_service=notifications)
+
+        service.approve_or_reject_target_plan(
+            target_plan.id, status=status, current_user=manager, expected_updated_at=PLAN_UPDATED_AT
+        )
+
+        notifications.notify_plan_decided.assert_called_once_with(
+            recipient_user_id=owner.id,
+            target_plan_id=target_plan.id,
+            actor_id=manager.id,
+            approved=status == "APPROVED",
+        )
+
+    def test_a_refused_decision_notifies_no_one(self):
+        manager = _make_user("Area Manager")
+        owner = _make_user("Sales Staff", manager_id=manager.id)
+        target_plan = _make_target_plan(user_id=owner.id, status="APPROVED")
+        repo = _make_repo(get_by_id=MagicMock(return_value=target_plan))
+        repo.db.get.return_value = owner
+        notifications = MagicMock(spec=NotificationService)
+        service = _make_service(repo, notification_service=notifications)
+
+        with pytest.raises(ConflictError):
+            service.approve_or_reject_target_plan(
+                target_plan.id, status="APPROVED", current_user=manager, expected_updated_at=PLAN_UPDATED_AT
+            )
+
+        notifications.notify_plan_decided.assert_not_called()
 
 
 class TestHospitalLines:

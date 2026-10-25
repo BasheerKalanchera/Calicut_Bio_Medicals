@@ -9,6 +9,7 @@ from app.domains.activity.models import Activity
 from app.domains.marketing_lead.models import MarketingLead
 from app.domains.notification.models import Notification
 from app.domains.opportunity.models import Opportunity
+from app.domains.planning.models import TargetPlan
 
 # (Notification, opportunity name, account name, account_id, opportunity_id)
 # -- account/opportunity are outer-joined and resolved at read time (no
@@ -20,8 +21,18 @@ from app.domains.opportunity.models import Opportunity
 # (MANAGER_NOTE_ADDED, docs/Manager-Note-Notification-Implementation-Plan.md)
 # -- the frontend needs them to know which detail screen to open, since an
 # Activity has no detail screen of its own (unlike Opportunity, where
-# entity_id already doubles as the navigable id).
-NotificationRow = tuple[Notification, str | None, str | None, uuid.UUID | None, uuid.UUID | None]
+# entity_id already doubles as the navigable id). The last two (plan
+# period, plan SBU id) are only populated for entity_type == "target_plan"
+# (Annual Target Planning D21: the click opens that quarter and SBU).
+NotificationRow = tuple[
+    Notification,
+    str | None,
+    str | None,
+    uuid.UUID | None,
+    uuid.UUID | None,
+    str | None,
+    uuid.UUID | None,
+]
 
 
 class NotificationRepository(BaseRepository[Notification]):
@@ -42,6 +53,8 @@ class NotificationRepository(BaseRepository[Notification]):
                 ),
                 Activity.account_id,
                 Activity.opportunity_id,
+                TargetPlan.planning_period,
+                TargetPlan.sbu_id,
             )
             .outerjoin(
                 Opportunity,
@@ -67,6 +80,13 @@ class NotificationRepository(BaseRepository[Notification]):
                 ),
             )
             .outerjoin(activity_account, activity_account.c.id == Activity.account_id)
+            .outerjoin(
+                TargetPlan,
+                and_(
+                    Notification.entity_type == "target_plan",
+                    TargetPlan.id == Notification.entity_id,
+                ),
+            )
             .options(joinedload(Notification.actor))
         )
 

@@ -7,6 +7,8 @@ from sqlalchemy.orm import Session
 from app.api.dependencies import get_current_user
 from app.api.schemas import APIResponse
 from app.db.session import get_db
+from app.domains.notification.repository import NotificationRepository
+from app.domains.notification.service import NotificationService
 from app.domains.organization.models import UserProfile
 from app.domains.planning.repository import (
     AnnualTargetRepository,
@@ -59,7 +61,11 @@ annual_target_router = APIRouter(prefix="/planning", tags=["Target Planning"])
 def _get_service(
     db: Session = Depends(get_db),
 ) -> TargetPlanService:
-    return TargetPlanService(repository=TargetPlanRepository(db), brand_repository=BrandRepository(db))
+    return TargetPlanService(
+        repository=TargetPlanRepository(db),
+        brand_repository=BrandRepository(db),
+        notification_service=NotificationService(repository=NotificationRepository(db)),
+    )
 
 
 def _get_brand_vendor_service(

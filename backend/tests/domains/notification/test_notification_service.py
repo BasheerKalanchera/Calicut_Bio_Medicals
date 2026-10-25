@@ -13,6 +13,8 @@ Repository is fully mocked — no DB required. Tests cover:
 import uuid
 from unittest.mock import MagicMock
 
+import pytest
+
 from app.domains.notification.repository import NotificationRepository
 from app.domains.notification.service import NotificationService
 
@@ -209,6 +211,38 @@ class TestNotifyMarketingLeadCommentAdded:
             actor_id=ACTOR_ID,
         )
 
+        assert notification.is_urgent is False
+
+
+class TestNotifyPlan:
+    """Annual Target Planning D18/D19: bell only, never urgent (D20)."""
+
+    def test_submitted_points_at_the_plan(self):
+        plan_id = uuid.uuid4()
+        service = NotificationService(repository=_make_repo())
+
+        notification = service.notify_plan_submitted(
+            recipient_user_id=RECIPIENT_ID, target_plan_id=plan_id, actor_id=ACTOR_ID
+        )
+
+        assert notification.type == "TARGET_PLAN_SUBMITTED"
+        assert notification.entity_type == "target_plan"
+        assert notification.entity_id == plan_id
+        assert notification.created_by == ACTOR_ID
+        assert notification.is_urgent is False
+
+    @pytest.mark.parametrize(
+        ("approved", "expected"), [(True, "TARGET_PLAN_APPROVED"), (False, "TARGET_PLAN_REJECTED")]
+    )
+    def test_decided_says_approved_or_rejected(self, approved, expected):
+        service = NotificationService(repository=_make_repo())
+
+        notification = service.notify_plan_decided(
+            recipient_user_id=RECIPIENT_ID, target_plan_id=uuid.uuid4(), actor_id=ACTOR_ID, approved=approved
+        )
+
+        assert notification.type == expected
+        assert notification.entity_type == "target_plan"
         assert notification.is_urgent is False
 
 

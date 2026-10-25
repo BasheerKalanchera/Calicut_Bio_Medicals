@@ -207,6 +207,7 @@ class BrandVendorTargetResponse(BaseModel):
     brand: BrandNested
     planning_period: str
     vendor_target_amount_lakhs: Decimal
+    set_by_hand: bool
 
 
 class BrandRollupResponse(BaseModel):
@@ -517,6 +518,13 @@ class BrandAnnualTargetQuarter(BaseModel):
     # (brand_vendor_target), whether worked out from the year or typed in
     # before 2026-Q3 (D46a).
     saved_lakhs: Decimal | None
+    # Typed by the GM for this quarter alone (D70, D71).
+    set_by_hand: bool
+    # Ended, or before 2026-Q3: its target can't be changed (D46a, D51).
+    locked: bool
+    # "Brands Billing to Cabio": the brand's own yearly figure split evenly,
+    # shown only, never saved (D54, D68). None until the figure is entered.
+    billing_lakhs: Decimal | None
 
 
 class BrandAnnualTargetRow(BaseModel):

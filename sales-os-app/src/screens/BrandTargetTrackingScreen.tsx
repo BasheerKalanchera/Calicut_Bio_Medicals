@@ -26,6 +26,7 @@ import {
   getSeasonalPattern,
   listBrandAnnualTargets,
   setBrandAnnualTarget,
+  setBrandVendorTarget,
   setBrandYearStart,
   setSeasonalPattern,
 } from "../services/targetPlanning";
@@ -191,6 +192,9 @@ export default function BrandTargetTrackingScreen() {
   const [stretchInput, setStretchInput] = useState("");
   const [ownPattern, setOwnPattern] = useState(false);
   const [patternInput, setPatternInput] = useState<PatternDraft>(EMPTY_PATTERN);
+  // One brand quarter whose target the GM is typing by hand (D70).
+  const [quarterEdit, setQuarterEdit] = useState<{ row: BrandAnnualTargetRow; period: string } | null>(null);
+  const [quarterInput, setQuarterInput] = useState("");
 
   const { data: sbus = [] } = useQuery({
     queryKey: ["sbus"],
@@ -287,6 +291,28 @@ export default function BrandTargetTrackingScreen() {
         vendor_amount_lakhs: amount,
         stretch_pct: stretch,
         pattern,
+      });
+    } finally {
+      await invalidateTargets();
+    }
+  };
+
+  const openQuarterEdit = (row: BrandAnnualTargetRow, period: string, saved: string | null) => {
+    setQuarterEdit({ row, period });
+    setQuarterInput(saved !== null ? String(Number(saved)) : "");
+  };
+
+  const handleQuarterSave = async () => {
+    if (!quarterEdit) return;
+    const amount = Number(quarterInput);
+    if (!quarterInput.trim() || !Number.isFinite(amount) || amount < 0) {
+      throw new Error("Enter the quarter's target, zero or more");
+    }
+    try {
+      await setBrandVendorTarget({
+        brand_id: quarterEdit.row.brand_id,
+        planning_period: quarterEdit.period,
+        vendor_target_amount_lakhs: amount,
       });
     } finally {
       await invalidateTargets();
@@ -409,8 +435,10 @@ export default function BrandTargetTrackingScreen() {
                               <TableRow>
                                 <TableCell>Quarter</TableCell>
                                 <TableCell>Target</TableCell>
+                                <TableCell>Brands Billing to Cabio</TableCell>
                                 <TableCell>Team committed</TableCell>
                                 <TableCell>Gap</TableCell>
+                                <TableCell />
                               </TableRow>
                             </TableHead>
                             <TableBody>
@@ -420,10 +448,24 @@ export default function BrandTargetTrackingScreen() {
                                 return (
                                   <TableRow key={q.planning_period}>
                                     <TableCell>{formatPlanningPeriod(q.planning_period)}</TableCell>
-                                    <TableCell>{q.saved_lakhs !== null ? formatLakhs(Number(q.saved_lakhs)) : <Typography component="span" color="text.secondary">Not set</Typography>}</TableCell>
+                                    <TableCell>
+                                      {q.saved_lakhs !== null ? formatLakhs(Number(q.saved_lakhs)) : <Typography component="span" color="text.secondary">Not set</Typography>}
+                                      {/* Kept when the year is worked out again (D71); never removed (D73). */}
+                                      {q.set_by_hand && (
+                                        <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>changed by hand</Typography>
+                                      )}
+                                    </TableCell>
+                                    {/* Shown only, never typed (D54, D68). */}
+                                    <TableCell>{q.billing_lakhs !== null ? formatLakhs(Number(q.billing_lakhs)) : "—"}</TableCell>
                                     <TableCell>{rollup ? formatLakhs(Number(rollup.committed_total)) : "—"}</TableCell>
                                     <TableCell sx={{ color: gap === null ? "text.secondary" : Number(gap) < 0 ? "success.main" : "warning.main" }}>
                                       {gap !== null ? formatLakhs(Number(gap)) : "—"}
+                                    </TableCell>
+                                    <TableCell align="right">
+                                      {/* Ended quarters, and those before Oct–Dec 2026, stay locked (D51, D70). */}
+                                      {!q.locked && (
+                                        <Button size="small" onClick={() => openQuarterEdit(row, q.planning_period, q.saved_lakhs)}>Change</Button>
+                                      )}
                                     </TableCell>
                                   </TableRow>
                                 );
@@ -502,6 +544,32 @@ export default function BrandTargetTrackingScreen() {
             {ownPattern && <PatternFields draft={patternInput} onChange={setPatternInput} />}
             <Typography variant="caption" color="text.secondary">
               The stretched target is spread over the brand's four quarters. Quarters already ended keep their targets.
+            </Typography>
+          </Box>
+        )}
+      </FormModal>
+
+      <FormModal
+        isOpen={quarterEdit !== null}
+        onClose={() => setQuarterEdit(null)}
+        title={quarterEdit ? `${quarterEdit.row.brand_name} · ${formatPlanningPeriod(quarterEdit.period)}` : ""}
+        onSubmit={handleQuarterSave}
+        submitLabel="Save"
+      >
+        {quarterEdit && (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <TextField
+              label="Target for this quarter (₹ Lakhs) *"
+              type="number"
+              size="small"
+              value={quarterInput}
+              onChange={(e) => setQuarterInput(e.target.value)}
+              slotProps={{ htmlInput: { min: 0, step: "0.01" } }}
+              fullWidth
+              autoFocus
+            />
+            <Typography variant="caption" color="text.secondary">
+              This quarter is marked "changed by hand" and keeps this figure when the brand's yearly figure, stretch or pattern changes. The other quarters are not adjusted.
             </Typography>
           </Box>
         )}

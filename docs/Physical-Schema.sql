@@ -11,8 +11,8 @@
 -- it is not consumed by Alembic or the application at runtime, and cannot be
 -- used as an `alembic stamp <rev>` checkpoint.
 --
--- Regenerated 2026-10-22 from the Dev database, catching up migration
--- 0063: person_quarter_target: the people who may set a target may also remove it
+-- Regenerated 2026-10-25 from the Dev database, catching up migration
+-- 0064: brand_vendor_target.set_by_hand: a brand quarter the GM typed by hand
 -- See docs/Backend-Implementation-Standards.md's migration workflow.
 --
 -- Regenerate with: .\scripts\regen_physical_schema.ps1
@@ -22,7 +22,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 5rLOJnTij5kcCa1Ou34S9Ququy4ipFiblKbUsj9syayXh46HqHavPytnaLpWzKM
+\restrict eT4ublxkQVGwsBCLmfNyb8aMnBCVynjAEOTbwg4oaqLoTcfzwaTjR4wSogDp7J6
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.11 (Debian 17.11-1.pgdg13+2)
@@ -503,6 +503,7 @@ CREATE TABLE public.brand_vendor_target (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     created_by uuid,
     updated_by uuid,
+    set_by_hand boolean DEFAULT false NOT NULL,
     CONSTRAINT ck_brand_vendor_target_planning_period CHECK (((planning_period)::text ~ '^\d{4}-Q[1-4]$'::text))
 );
 
@@ -3961,5 +3962,5 @@ CREATE POLICY target_plan_write ON public.target_plan FOR INSERT WITH CHECK ((us
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 5rLOJnTij5kcCa1Ou34S9Ququy4ipFiblKbUsj9syayXh46HqHavPytnaLpWzKM
+\unrestrict eT4ublxkQVGwsBCLmfNyb8aMnBCVynjAEOTbwg4oaqLoTcfzwaTjR4wSogDp7J6
 

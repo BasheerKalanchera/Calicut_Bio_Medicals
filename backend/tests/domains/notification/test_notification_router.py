@@ -67,7 +67,7 @@ class TestListNotifications:
         notification = _mock_notification()
         mock_db = MagicMock()
         mock_db.execute.return_value.all.return_value = [
-            (notification, "Radiology Upgrade", "Test Hospital", None, None)
+            (notification, "Radiology Upgrade", "Test Hospital", None, None, None, None)
         ]
 
         _setup_overrides(mock_db)
@@ -94,7 +94,7 @@ class TestListNotifications:
         )
         mock_db = MagicMock()
         mock_db.execute.return_value.all.return_value = [
-            (notification, None, "Test Hospital", account_id, opportunity_id)
+            (notification, None, "Test Hospital", account_id, opportunity_id, None, None)
         ]
 
         _setup_overrides(mock_db)
@@ -107,6 +107,29 @@ class TestListNotifications:
         item = response.json()["data"][0]
         assert item["account_id"] == str(account_id)
         assert item["opportunity_id"] == str(opportunity_id)
+
+    def test_plan_notification_carries_quarter_and_sbu(self, client: TestClient) -> None:
+        """Annual Target Planning D21: the click opens that quarter and SBU."""
+        sbu_id = uuid.uuid4()
+        notification = _mock_notification(
+            type="TARGET_PLAN_SUBMITTED", entity_type="target_plan", entity_id=uuid.uuid4()
+        )
+        mock_db = MagicMock()
+        mock_db.execute.return_value.all.return_value = [
+            (notification, None, None, None, None, "2026-Q3", sbu_id)
+        ]
+
+        _setup_overrides(mock_db)
+        try:
+            response = client.get("/api/v1/notifications")
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 200
+        item = response.json()["data"][0]
+        assert item["plan_period"] == "2026-Q3"
+        assert item["plan_sbu_id"] == str(sbu_id)
+        assert item["opportunity_name"] is None
 
     def test_empty_list_when_no_notifications(self, client: TestClient) -> None:
         mock_db = MagicMock()
@@ -188,7 +211,7 @@ class TestListUrgentUnread:
     def test_returns_serialized_urgent_notifications(self, client: TestClient) -> None:
         notification = _mock_notification(is_urgent=True)
         mock_db = MagicMock()
-        mock_db.execute.return_value.all.return_value = [(notification, None, None, None, None)]
+        mock_db.execute.return_value.all.return_value = [(notification, None, None, None, None, None, None)]
 
         _setup_overrides(mock_db)
         try:

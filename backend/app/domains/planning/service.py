@@ -8,6 +8,7 @@ from sqlalchemy import func
 from app.core.exceptions import AuthorizationError, ConflictError, NotFoundError, ValidationError
 from app.core.periods import period_bounds, quarter_dates, quarter_of, today_ist
 from app.domains.account.models import Account
+from app.domains.notification.service import NotificationService
 from app.domains.organization.models import UserProfile
 from app.domains.planning.models import (
     BrandAnnualTarget,
@@ -95,9 +96,26 @@ def _require_admin_or_gm(current_user: UserProfile) -> None:
 
 
 class TargetPlanService:
-    def __init__(self, repository: TargetPlanRepository, brand_repository: BrandRepository):
+    def __init__(
+        self,
+        repository: TargetPlanRepository,
+        brand_repository: BrandRepository,
+        notification_service: NotificationService,
+    ):
         self.repository = repository
         self.brand_repository = brand_repository
+        self.notification_service = notification_service
+
+    def _notify_submitted(self, target_plan: TargetPlan, current_user: UserProfile) -> None:
+        """D18: the owner's own manager hears a plan was submitted or revised;
+        no one does when the owner has no manager (D69)."""
+        approver_id = self.get_approver_id(target_plan.user_id)
+        if approver_id is not None:
+            self.notification_service.notify_plan_submitted(
+                recipient_user_id=approver_id,
+                target_plan_id=target_plan.id,
+                actor_id=current_user.id,
+            )
 
     def get_approver_id(self, user_id: uuid.UUID) -> uuid.UUID | None:
         """Resolved purely from the real reporting line -- no role-name check.
@@ -321,6 +339,8 @@ class TargetPlanService:
         self._apply_brand_splits(
             target_plan, data.brand_splits, submit=data.submit, current_user=current_user
         )
+        if data.submit:
+            self._notify_submitted(target_plan, current_user)
         return target_plan, self._build_warnings(data.accounts, accounts_by_id, target_plan)
 
     def update_target_plan(
@@ -378,6 +398,10 @@ class TargetPlanService:
         self._apply_brand_splits(
             target_plan, data.brand_splits, submit=data.submit, current_user=current_user
         )
+        # Every submitted save is waiting for approval, a first submit and a
+        # revision alike (D18).
+        if data.submit:
+            self._notify_submitted(target_plan, current_user)
         return target_plan, self._build_warnings(data.accounts, accounts_by_id, target_plan)
 
     def approve_or_reject_target_plan(
@@ -437,7 +461,15 @@ class TargetPlanService:
             # keeps the old one for the next revision.
             target_plan.previous_approved_total_lakhs = None
         target_plan.updated_by = current_user.id
-        return self.repository.update(target_plan)
+        target_plan = self.repository.update(target_plan)
+        # D19: the owner hears the decision; the note stays on the plan screen.
+        self.notification_service.notify_plan_decided(
+            recipient_user_id=target_plan.user_id,
+            target_plan_id=target_plan.id,
+            actor_id=current_user.id,
+            approved=status == "APPROVED",
+        )
+        return target_plan
 
     def delete_target_plan(self, target_plan_id: uuid.UUID, *, current_user: UserProfile) -> None:
         target_plan = self.repository.get_by_id(target_plan_id)
@@ -468,12 +500,16 @@ class BrandVendorTargetService:
     def set_vendor_target(
         self, data: BrandVendorTargetSet, *, current_user: UserProfile
     ) -> BrandVendorTarget:
-        """Upsert -- a brand's number for a quarter can be corrected, not
-        just entered once (decision #2)."""
+        """One brand quarter typed by hand (D70): upsert, marked so that
+        working the brand's year out again leaves it alone (D71). Only from
+        the quarter in progress on (D46a, D51)."""
         _require_admin_or_gm(current_user)
+        if quarter_locked(data.planning_period):
+            raise ValidationError("That quarter has ended, so its target can't be changed.")
         existing = self.repository.get_by_brand_period(data.brand_id, data.planning_period)
         if existing:
             existing.vendor_target_amount_lakhs = data.vendor_target_amount_lakhs
+            existing.set_by_hand = True
             existing.updated_by = current_user.id
             return self.repository.update(existing)
 
@@ -481,6 +517,7 @@ class BrandVendorTargetService:
             brand_id=data.brand_id,
             planning_period=data.planning_period,
             vendor_target_amount_lakhs=data.vendor_target_amount_lakhs,
+            set_by_hand=True,
             created_by=current_user.id,
             updated_by=current_user.id,
         )
@@ -614,6 +651,12 @@ class SbuTargetService:
 # D46a, D38: brand quarters are worked out and saved from Oct-Dec 2026 on;
 # earlier quarters keep the figures typed in by hand.
 FIRST_SAVED_PERIOD = "2026-Q3"
+
+
+def quarter_locked(planning_period: str) -> bool:
+    """A brand quarter before 2026-Q3 (D46a) or already ended (D51): never
+    worked out again, and can't be typed by hand (D70)."""
+    return planning_period < FIRST_SAVED_PERIOD or quarter_dates(planning_period)[1] < today_ist()
 
 
 def brand_year_quarters(year_start_month: int, start_year: int) -> list[tuple[int, str]]:
@@ -763,14 +806,17 @@ class AnnualTargetService:
         current_user: UserProfile,
     ) -> None:
         """Save the brand's quarters into brand_vendor_target -- only from
-        2026-Q3 on (D46a) and only quarters not yet ended (D51)."""
-        today = today_ist()
+        2026-Q3 on (D46a), only quarters not yet ended (D51), and not a
+        quarter typed by hand (D71). The others keep their pattern share, so
+        the four may no longer add up to the year (D72)."""
         stretched = stretched_amount(annual.vendor_amount_lakhs, annual.stretch_pct)
         amounts = split_brand_year(stretched, pattern.by_month(), [m for m, _ in quarters])
         for (_, period), amount in zip(quarters, amounts, strict=True):
-            if period < FIRST_SAVED_PERIOD or quarter_dates(period)[1] < today:
+            if quarter_locked(period):
                 continue
             existing = self.repository.get_vendor_target(annual.brand_id, period)
+            if existing and existing.set_by_hand:
+                continue
             if existing:
                 existing.vendor_target_amount_lakhs = amount
                 existing.updated_by = current_user.id
@@ -793,11 +839,18 @@ class AnnualTargetService:
         annual: BrandAnnualTarget | None,
         sbu_pattern: SeasonalPattern | None,
         quarters: list[tuple[int, str]],
-        saved: dict[tuple[uuid.UUID, str], Decimal],
+        saved: dict[tuple[uuid.UUID, str], tuple[Decimal, bool]],
         *,
         has_any_annual: bool,
     ) -> BrandAnnualTargetRow:
         own = _own_pattern(annual)
+        months = [m for m, _ in quarters]
+        # Brands Billing to Cabio: the brand's own figure split evenly (D54, D68).
+        billing = (
+            split_brand_year(annual.vendor_amount_lakhs, dict.fromkeys(months, Decimal("25")), months)
+            if annual
+            else [None] * len(quarters)
+        )
         return BrandAnnualTargetRow(
             brand_id=brand.id,
             brand_name=brand.name,
@@ -811,7 +864,14 @@ class AnnualTargetService:
             own_pattern=own,
             effective_pattern=own or sbu_pattern,
             quarters=[
-                BrandAnnualTargetQuarter(planning_period=p, saved_lakhs=saved.get((brand.id, p))) for _, p in quarters
+                BrandAnnualTargetQuarter(
+                    planning_period=p,
+                    saved_lakhs=saved[(brand.id, p)][0] if (brand.id, p) in saved else None,
+                    set_by_hand=saved[(brand.id, p)][1] if (brand.id, p) in saved else False,
+                    locked=quarter_locked(p),
+                    billing_lakhs=bill,
+                )
+                for (_, p), bill in zip(quarters, billing, strict=True)
             ],
         )
 

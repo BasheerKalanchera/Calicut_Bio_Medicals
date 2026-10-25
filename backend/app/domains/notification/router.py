@@ -22,7 +22,7 @@ def _get_service(db: Session = Depends(get_db)) -> NotificationService:
 
 
 def _to_response(row: NotificationRow) -> NotificationResponse:
-    notification, opportunity_name, account_name, account_id, opportunity_id = row
+    notification, opportunity_name, account_name, account_id, opportunity_id, plan_period, plan_sbu_id = row
     return NotificationResponse(
         id=notification.id,
         type=notification.type,
@@ -36,6 +36,8 @@ def _to_response(row: NotificationRow) -> NotificationResponse:
         account_name=account_name,
         account_id=account_id,
         opportunity_id=opportunity_id,
+        plan_period=plan_period,
+        plan_sbu_id=plan_sbu_id,
     )
 
 

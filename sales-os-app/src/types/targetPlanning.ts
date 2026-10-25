@@ -381,6 +381,14 @@ export interface BrandAnnualTargetQuarter {
   // What is saved as the brand's quarterly target (worked out from the
   // year, or typed in before 2026-Q3, D46a).
   saved_lakhs: string | null;
+  // Typed by the GM for this one quarter; the yearly re-split leaves it
+  // alone (D70, D71).
+  set_by_hand: boolean;
+  // Ended, or before 2026-Q3: its target can't be typed (D51, D70).
+  locked: boolean;
+  // Brands Billing to Cabio: the brand's own figure split evenly, shown
+  // only (D54, D68); null when the brand has no figure for the year.
+  billing_lakhs: string | null;
 }
 
 // One brand on Brand Target Tracking for a calendar year (D43).

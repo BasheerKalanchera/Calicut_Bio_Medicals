@@ -197,7 +197,13 @@ interface AnnualSbuBlock {
   byQuarter: Record<string, TargetPlan | undefined>;
 }
 
-export default function TargetPlanningScreen() {
+export default function TargetPlanningScreen({
+  initialFocus = null,
+}: {
+  // Set when a plan notification was clicked: open on that plan's quarter
+  // and SBU with its row open (Annual Target Planning D21).
+  initialFocus?: { period: string; sbuId: string; planId: string } | null;
+} = {}) {
   const { userProfile } = useAuth();
   const queryClient = useQueryClient();
   const roleName: string | undefined = userProfile?.role_name;
@@ -211,8 +217,8 @@ export default function TargetPlanningScreen() {
   const isCompanyWide = !!roleName && COMPANY_WIDE_ROLES.has(roleName);
 
   const [viewMode, setViewMode] = useState<"quarterly" | "annual">("quarterly");
-  const [period, setPeriod] = useState(() => getCurrentPlanningPeriod());
-  const [selectedSbuId, setSelectedSbuId] = useState<string | null>(null);
+  const [period, setPeriod] = useState(() => initialFocus?.period ?? getCurrentPlanningPeriod());
+  const [selectedSbuId, setSelectedSbuId] = useState<string | null>(() => (needsSbuChoice ? initialFocus?.sbuId ?? null : null));
   // The plan dialog mounts only while this is set, so each opening starts
   // fresh from the chosen target (Frontend Standards 6.2).
   const [planDialog, setPlanDialog] = useState<{ period: string; sbuId: string; existing: TargetPlan | null } | null>(null);
@@ -222,7 +228,7 @@ export default function TargetPlanningScreen() {
   // already decided) after the approver opened it -- BR-PL-08.
   const [staleNotice, setStaleNotice] = useState<string | null>(null);
   // Plan rows (approval queue and team list) whose detail panel is open.
-  const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set(initialFocus ? [initialFocus.planId] : []));
   const toggleExpanded = (id: string) =>
     setExpanded((prev) => {
       const next = new Set(prev);

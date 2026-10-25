@@ -393,13 +393,17 @@ class AnnualTargetRepository(BaseRepository[BrandAnnualTarget]):
 
     def vendor_targets(
         self, brand_ids: list[uuid.UUID], planning_periods: list[str]
-    ) -> dict[tuple[uuid.UUID, str], Decimal]:
+    ) -> dict[tuple[uuid.UUID, str], tuple[Decimal, bool]]:
+        """(brand, period) -> (saved figure, typed by hand, D71)."""
         if not brand_ids or not planning_periods:
             return {}
         stmt = select(
-            BrandVendorTarget.brand_id, BrandVendorTarget.planning_period, BrandVendorTarget.vendor_target_amount_lakhs
+            BrandVendorTarget.brand_id,
+            BrandVendorTarget.planning_period,
+            BrandVendorTarget.vendor_target_amount_lakhs,
+            BrandVendorTarget.set_by_hand,
         ).where(BrandVendorTarget.brand_id.in_(brand_ids), BrandVendorTarget.planning_period.in_(planning_periods))
-        return {(b, p): v for b, p, v in self.db.execute(stmt).all()}
+        return {(b, p): (v, h) for b, p, v, h in self.db.execute(stmt).all()}
 
     def get_vendor_target(self, brand_id: uuid.UUID, planning_period: str) -> BrandVendorTarget | None:
         stmt = select(BrandVendorTarget).where(
