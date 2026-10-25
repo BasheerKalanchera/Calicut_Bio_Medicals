@@ -148,12 +148,15 @@ try {
         $script:DrillDbCreated = $true
         # A fresh container sets up its database on first start; a fixed
         # 5-second wait wasn't enough with Docker just started (2026-10-24).
+        # Ask over TCP: during first-start setup the image runs a temporary
+        # socket-only server that answers "ready" and then restarts, so a
+        # socket check can pass too early (2026-10-25).
         $ready = $false
         for ($i = 0; $i -lt 30 -and -not $ready; $i++) {
             Start-Sleep -Seconds 2
             $prevPref = $ErrorActionPreference
             $ErrorActionPreference = "Continue"
-            docker exec $DrillContainer pg_isready -U postgres *> $null
+            docker exec $DrillContainer pg_isready -U postgres -h 127.0.0.1 *> $null
             $ready = ($LASTEXITCODE -eq 0)
             $ErrorActionPreference = $prevPref
         }

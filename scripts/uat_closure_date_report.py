@@ -195,10 +195,15 @@ def build_html(stages, rows, today: str, prev: dict | None) -> tuple[str, dict[s
 
     buckets = ("future", "passed", "step2", "step4")
     summary_rows = [
-        ("Open Opportunities", len(rows), fmt_l(tot(rows)), delta(len(rows), buckets, None)),
-        ("Expected Closure Date in the future", len(fut), fmt_l(tot(fut)), delta(len(fut), ("future",), True)),
-        ("Expected Closure Date already passed", len(s1), fmt_l(tot(s1)), delta(len(s1), ("passed",), False)),
-        ("No Expected Closure Date", len(nodate), fmt_l(tot(nodate)), delta(len(nodate), ("step2", "step4"), False)),
+        # "All" and "of which" so the first row isn't read as a count of
+        # missing dates (Basheer, 2026-10-25).
+        ("<b>All open Opportunities</b>", len(rows), fmt_l(tot(rows)), delta(len(rows), buckets, None)),
+        ("&nbsp;&nbsp;of which: Expected Closure Date in the future", len(fut), fmt_l(tot(fut)),
+         delta(len(fut), ("future",), True)),
+        ("&nbsp;&nbsp;of which: Expected Closure Date already passed", len(s1), fmt_l(tot(s1)),
+         delta(len(s1), ("passed",), False)),
+        ("&nbsp;&nbsp;of which: No Expected Closure Date", len(nodate), fmt_l(tot(nodate)),
+         delta(len(nodate), ("step2", "step4"), False)),
     ]
     vs_label = f"vs {prev['_on']}" if prev and "_on" in prev else "vs last check"
 

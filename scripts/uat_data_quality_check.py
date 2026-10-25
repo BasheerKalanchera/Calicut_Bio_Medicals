@@ -11,6 +11,8 @@ before a UAT run; it doesn't write the UAT run log.
 
 import argparse
 import difflib
+import itertools
+import re
 import sys
 from collections import Counter
 from datetime import datetime
@@ -98,6 +100,71 @@ def lookalike_groups(hospitals: list[dict]) -> list[list[dict]]:
     for h in hospitals:
         groups.setdefault(root(h["id"]), []).append(h)
     return [g for g in groups.values() if len(g) > 1]
+
+
+# Pairs within the groups above (Basheer, 2026-10-25: groups chained unrelated
+# names together and listed every branch of a chain). Two hospitals pair up
+# only if their own name -- minus common words and place words -- matches,
+# and they don't name different places (branches: "Aster MIMS Calicut" /
+# "Aster MIMS Kannur").
+LOOKALIKE_GENERIC = set("""hospital hospitals hispital multi speciality specialty multispeciality super
+diagnostic diagnostics centre center clinic clinics health healthcare care lab labs laboratory laboratories
+medical college scan scans scanning the and dr sri shri sree mission nursing home women womens children
+childrens child services pvt p ltd limited medicity research mri institute cooperative coperative co operative
+hosp memorial mother system systems dispensary global fertility neuro heart cardiac eye dental ortho centres
+polyclinic st saint new north south east west""".split())
+# Places reps write into names without a comma (words after a comma are
+# taken as a place automatically).
+LOOKALIKE_PLACES = set("""calicut kozhikode kannur kotakkal areekode payyannur vadakara koyilandi thalassery
+thrissur mala hoskote gunjur tumkur nelamangala madhugiri kalikavu edavanna kuttipuram kuttippuram malappuram
+perambra mukkam cherupuzha thaliparamba chalakka paravur neyyattinkara kottayam thiruvalla tiruvalla
+chenganassery malakkara perinthalmanna koduvally kasaragod kanhangad tirur puthiyara pottammal thamarassery
+payyoli falnir manglore mangalore bc road varthur kadugodi kizhissery venjarammoodu vadasserikkara magrath
+infantry jayanagar bangalore bengaluru layout nagar""".split())
+
+
+def _name_words(s: str) -> list[str]:
+    s = s.lower().replace("’", "").replace("'", "")
+    return re.sub(r"[^a-z ]", " ", s).split()
+
+
+def _own_name_and_place(name: str, places: set[str]) -> tuple[str, str]:
+    head, _, tail = name.partition(",")
+    hw = _name_words(head)
+    own = [x for x in hw if x not in LOOKALIKE_GENERIC and x not in places and len(x) > 1]
+    place = [x for x in hw if x in places] + _name_words(tail)
+    return "".join(own), "".join(place)
+
+
+def _same_place(pa: str, pb: str) -> bool:
+    # Fuzzy, so "kuttipuram" / "kuttippuram" count as the same place.
+    return pa in pb or pb in pa or difflib.SequenceMatcher(None, pa, pb).ratio() >= 0.8
+
+
+def lookalike_pairs(groups: list[list[dict]]) -> list[tuple[dict, dict]]:
+    """Pairs of look-alike hospitals. Exactly the same name is left out
+    (section 1 lists those)."""
+    places = set(LOOKALIKE_PLACES)
+    for g in groups:
+        for h in g:
+            if "," in h["name"]:
+                places.update(_name_words(h["name"].split(",", 1)[1]))
+    places -= LOOKALIKE_GENERIC
+    pairs = []
+    for g in groups:
+        for a, b in itertools.combinations(g, 2):
+            if a["name"] == b["name"]:
+                continue
+            oa, pa = _own_name_and_place(a["name"], places)
+            ob, pb = _own_name_and_place(b["name"], places)
+            if len(oa) < 3 or len(ob) < 3:
+                continue
+            if oa != ob and difflib.SequenceMatcher(None, oa, ob).ratio() < 0.85:
+                continue
+            if pa and pb and not _same_place(pa, pb):
+                continue
+            pairs.append((a, b) if a["name"].lower() <= b["name"].lower() else (b, a))
+    return pairs
 
 
 def load_env(path: Path) -> dict[str, str]:
@@ -612,25 +679,77 @@ def main() -> None:
     groups = lookalike_groups(cur.fetchall())
     reviewed = json.loads(LOOKALIKE_REVIEWED.read_text(encoding="utf-8"))["confirmed_different"]
     confirmed = [set(r["hospital_ids"]) for r in reviewed]
-    open_groups = [g for g in groups if not any({h["id"] for h in g} <= c for c in confirmed)]
+    open_pairs = [(a, b) for a, b in lookalike_pairs(groups)
+                  if not any({a["id"], b["id"]} <= c for c in confirmed)]
     last_run = None
     if RUN_LOG.exists():
         lines = [x for x in RUN_LOG.read_text(encoding="utf-8").splitlines() if x.strip()]
         if lines:
             last_run = datetime.strptime(lines[-1][:16], "%Y-%m-%d %H:%M")
-    # The run log is in local (India) time; created_at is stored in UTC.
-    new_groups = [g for g in open_groups if last_run and any(
-        h["created_at"].astimezone().replace(tzinfo=None) > last_run for h in g)]
+
+    def added_since(h) -> bool:
+        # The run log is in local (India) time; created_at is stored in UTC.
+        return bool(last_run) and h["created_at"].astimezone().replace(tzinfo=None) > last_run
+
+    new_pairs = [p for p in open_pairs if added_since(p[0]) or added_since(p[1])]
     since = f"{last_run:%Y-%m-%d %H:%M}" if last_run else "no earlier run"
-    print(f"\n-- Look-alike groups: {len(open_groups)} open ({len(groups) - len(open_groups)} confirmed "
-          f"different places), {len(new_groups)} with a hospital added since the last check ({since})")
-    for g in sorted(open_groups, key=lambda g: (g[0]["territory"], sorted(h["name"].lower() for h in g))):
-        mark = "NEW " if g in new_groups else ""
-        print(f"   {mark}[{g[0]['territory']}] " + "  ||  ".join(
-            f"{h['name']} ({h['added_by']}, {h['created_at']:%Y-%m-%d}, opps {h['opps']}, visits {h['visits']})"
-            for h in sorted(g, key=lambda h: h["name"].lower())))
-    counts.append(("Look-alike hospital groups open", len(open_groups)))
-    counts.append(("Look-alike groups new since last check", len(new_groups)))
+    print(f"\n-- Look-alike pairs: {len(open_pairs)} open, {len(new_pairs)} with a hospital added "
+          f"since the last check ({since})")
+
+    def show(h) -> str:
+        return f"{h['name']} ({h['added_by']}, {h['created_at']:%Y-%m-%d}, opps {h['opps']}, visits {h['visits']})"
+
+    for title, rows in (("New since the last check", new_pairs),
+                        ("Still open from before", [p for p in open_pairs if p not in new_pairs])):
+        print(f"\n   {title} ({len(rows)}):")
+        for a, b in sorted(rows, key=lambda p: (p[0]["territory"], p[0]["name"].lower(), p[1]["name"].lower())):
+            print(f"   [{a['territory']}] {show(a)}  ==  {show(b)}")
+    counts.append(("Look-alike hospital pairs open", len(open_pairs)))
+    counts.append(("Look-alike pairs new since last check", len(new_pairs)))
+
+    # The 25 Oct usage check found no lead converted and most opened leads
+    # left undecided for weeks (Basheer added this section 2026-10-25).
+    # "Opened" = the salesperson first viewed it (first_viewed_at).
+    section("19. Marketing leads waiting for a decision")
+    lead_outcome = """CASE WHEN ml.status = 'CONVERTED' THEN 'converted'
+                           WHEN ml.status = 'DISCARDED' THEN 'discarded'
+                           WHEN ml.first_viewed_at IS NULL THEN 'never opened'
+                           ELSE 'opened, no decision' END"""
+    cur.execute(f"""
+        SELECT {lead_outcome} AS outcome, COUNT(*) AS leads
+        FROM marketing_lead ml GROUP BY 1 ORDER BY 2 DESC""")
+    print("\n-- All leads by outcome (information only)")
+    for r in cur.fetchall():
+        print(f"   {dict(r)}")
+    cur.execute(f"""
+        SELECT up.display_name AS salesperson,
+               COUNT(*) FILTER (WHERE {lead_outcome} = 'never opened') AS never_opened,
+               COUNT(*) FILTER (WHERE {lead_outcome} = 'opened, no decision') AS opened_no_decision,
+               COUNT(*) FILTER (WHERE {lead_outcome} = 'converted') AS converted,
+               COUNT(*) FILTER (WHERE {lead_outcome} = 'discarded') AS discarded
+        FROM marketing_lead ml JOIN user_profile up ON up.id = ml.assigned_to_user_id
+        GROUP BY 1 ORDER BY COUNT(*) DESC""")
+    print("\n-- Leads by salesperson (information only)")
+    for r in cur.fetchall():
+        print(f"   {dict(r)}")
+    waiting = """
+        SELECT COALESCE(a.name, ml.event_name, '(no hospital)') AS hospital,
+               up.display_name AS salesperson, ml.created_at::date AS entered,
+               {since}::date AS {since_label},
+               (now()::date - {since}::date) AS days_waiting,
+               (SELECT COUNT(*) FROM marketing_lead_comment c WHERE c.marketing_lead_id = ml.id) AS comments
+        FROM marketing_lead ml
+        JOIN user_profile up ON up.id = ml.assigned_to_user_id
+        LEFT JOIN account a ON a.id = ml.account_id
+        WHERE ml.status = 'NEW' AND {cond}
+        ORDER BY {since}
+    """
+    run(waiting.format(since="ml.first_viewed_at", since_label="first_opened",
+                       cond="ml.first_viewed_at < now() - interval '14 days'"),
+        "Leads opened 2+ weeks ago, no decision")
+    run(waiting.format(since="ml.created_at", since_label="waiting_since",
+                       cond="ml.first_viewed_at IS NULL AND ml.created_at < now() - interval '7 days'"),
+        "Leads never opened, entered 1+ week ago")
 
     # Every result above came from the same transaction; confirm the RLS
     # context was still in place for the last query before trusting them.
