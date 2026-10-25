@@ -8,6 +8,12 @@
 #   instead - DESTRUCTIVE, requires typing RESTORE to confirm. Only meant for
 #   an actual recovery, never a routine check.
 #
+#   -Keep (drill mode only): after a successful restore, leave the copy
+#   running on localhost:5433 (and Docker up) so database changes and checks
+#   can be run against it - the UAT move dress rehearsal
+#   (docs/UAT-Promotion-2026-10-Plan.md, D5). The log prints its address and
+#   the command that removes it. A failed restore still removes it.
+#
 #   -Force skips that typed confirmation. Only for use when a human has
 #   already explicitly told the operator (e.g. Claude Code, in chat) to
 #   proceed with this specific restore - never as a default or convenience.
@@ -23,6 +29,7 @@
 param(
     [string]$DumpFile,
     [switch]$Drill,
+    [switch]$Keep,
     [string]$TargetUrl,
     [string]$TargetEnvFile,
     [switch]$Force
@@ -42,6 +49,7 @@ $DrillContainer  = "cabio-restore-drill-db"
 $script:DockerStartedByScript = $false
 $script:DrillNetworkCreated   = $false
 $script:DrillDbCreated        = $false
+$script:KeepCopy              = $false
 
 function Write-Log {
     param([string]$Message)
@@ -134,11 +142,22 @@ try {
         Write-Log "Mode: DRILL (safe, disposable local database)"
         docker network create $DrillNetwork | Out-Null
         $script:DrillNetworkCreated = $true
-        docker run -d --name $DrillContainer --network $DrillNetwork `
+        $portArgs = if ($Keep) { @("-p", "127.0.0.1:5433:5432") } else { @() }
+        docker run -d --name $DrillContainer --network $DrillNetwork @portArgs `
             -e POSTGRES_PASSWORD=drillpass -e POSTGRES_DB=postgres postgres:17 | Out-Null
         $script:DrillDbCreated = $true
-        Start-Sleep -Seconds 5
-        docker exec $DrillContainer pg_isready -U postgres | Out-Null
+        # A fresh container sets up its database on first start; a fixed
+        # 5-second wait wasn't enough with Docker just started (2026-10-24).
+        $ready = $false
+        for ($i = 0; $i -lt 30 -and -not $ready; $i++) {
+            Start-Sleep -Seconds 2
+            $prevPref = $ErrorActionPreference
+            $ErrorActionPreference = "Continue"
+            docker exec $DrillContainer pg_isready -U postgres *> $null
+            $ready = ($LASTEXITCODE -eq 0)
+            $ErrorActionPreference = $prevPref
+        }
+        if (-not $ready) { throw "Drill database did not become ready within 60 seconds" }
         docker exec $DrillContainer psql -U postgres -c "CREATE DATABASE cabio_drill;" | Out-Null
         $dbUrl = "postgres://postgres:drillpass@${DrillContainer}:5432/cabio_drill"
         $dockerNetArgs = @("--network", $DrillNetwork)
@@ -218,12 +237,19 @@ try {
     $ErrorActionPreference = $prevPref
 
     Write-Log "RESTORE COMPLETE"
+    if ($Keep -and $isDrillMode) {
+        $script:KeepCopy = $true
+        Write-Log "Copy kept: postgres://postgres:drillpass@localhost:5433/cabio_drill"
+        Write-Log "Remove it afterwards: docker rm -f $DrillContainer; docker network rm $DrillNetwork"
+    }
 }
 catch {
     Write-Log "FAILED: $($_.Exception.Message)"
     throw
 }
 finally {
-    Remove-DrillResources
-    Stop-DockerIfStartedByScript
+    if (-not $script:KeepCopy) {
+        Remove-DrillResources
+        Stop-DockerIfStartedByScript
+    }
 }
