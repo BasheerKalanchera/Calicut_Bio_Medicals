@@ -219,6 +219,33 @@ Target plan D76, shared `utils/reportingTree.ts`); Team Activity and
 Overdue Actions on the Insights Dashboard could use it too, optionally.
 Raised during Annual Target E2E G5. Basheer, 2026-10-24: Backlog for now.
 
+### Annual Target Part 2: code tidy-ups from the pre-E2E review — not started (2026-10-25)
+
+Nothing a user sees; found in the review of `f5d30d5` and `99c64ad`, left
+for later so the E2E could start:
+- The brands list is not held back by the "detail" check (review note,
+  wording only — re-read the code before fixing).
+- The rule for a quarter's state (ended / in progress / upcoming) is
+  written in two places on the server; keep one.
+- The four plan screens each repeat the same "refresh the bell" lines;
+  move them into one shared helper.
+- The year's saved brand quarters are looked up twice on one save.
+- The Year view asks for actuals for upcoming quarters too, though it
+  shows none for them.
+
+### Target vs Actuals: time the Year view on UAT, once Part 2 is there with real plans — not started (2026-10-25)
+
+The Year view does the Quarter view's work once per counted quarter, one
+after another. On Dev (25 Oct, as Haroon) it took about 2.4 s for FY
+2026-27 and 3.6 s for FY 2027-28, against 1.8 s for a quarter (detail in
+Progress-Archive-2026-10). Fetching the quarters at the same time could
+shorten the wait, but would hold up to four database connections per
+load. Dev can't settle it (the app there runs on this computer, far from
+the database) and UAT has no Year view or plans yet. Once Part 2 is on
+UAT and the Oct–Dec 2026 plans and targets are entered, time it there —
+ask Basheer first (UAT rule) — then decide whether to build it
+(Basheer, 2026-10-25).
+
 ### Target vs Actuals: Area Manager misses a member's share outside the team — accepted, not planned (2026-10-07)
 
 When someone in an Area Manager's team holds a split share on an

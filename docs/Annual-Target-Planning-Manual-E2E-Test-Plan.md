@@ -8,7 +8,10 @@ P6–P8, sections I–K).
 (screens), `ed669e7` (review fixes), `be27712` (seasonal pattern save
 greyed out until 100 %), 21–22 Oct 2026; fixes during the E2E
 `6016e6a`, `dd9cdb9`, `c2f025d`, `8d232c1`, `48e737b`, 22–24 Oct.
-Part 1 E2E passed 65 of 65, 2026-10-24. Part 2 not yet.
+Part 1 E2E passed 65 of 65, 2026-10-24. Part 2 — step 5 (Year view,
+D77) `f5d30d5`; step 6 (notifications, billing, hand-typed quarters,
+migration 0064) `99c64ad`; pre-E2E review fixes (D81) `51d4fe8`; all
+25 Oct. E2E not yet.
 **Where:** Dev, after `/build` merges into `main` and migration 0062 is
 applied. Replaces the 17 Oct on-hold version, which tested the withdrawn
 yearly SBU figure (D4–D15, D22a). Part 2 runs after Part 1's E2E has
@@ -68,9 +71,10 @@ three RLS settings verified. Re-run at P7.
 
 Button labels, messages and the order of checks are taken from the code,
 not the design doc. Part 1 (sections A–H) checked against the built code,
-2026-10-22. Part 2 isn't built yet, so its labels and messages are
-descriptions; each is replaced with the built code's wording before its
-run. Amounts on screen read like "₹280.0L"; this plan writes "₹280 L".
+2026-10-22. Part 2 (sections I–K) checked against the built code,
+2026-10-25 (`TargetVsActualsSection.tsx`, `TargetVsActualsYear.tsx`,
+`notificationDescribe.ts`, `TargetPlanningScreen.tsx`,
+`TargetPlanDialog.tsx`, `BrandTargetTrackingScreen.tsx`). Amounts on screen read like "₹280.0L"; this plan writes "₹280 L".
 
 ## Figures and sources
 
@@ -158,7 +162,12 @@ remove the mark, D73).
 **Part 2 pre-flight** (before section I):
 
 - P6. [Simple] Part 1's E2E passed and its figures are still on Dev
-  (person targets, brand figures, patterns; Maquet ₹100 L). —
+  (person targets, brand figures, patterns; Maquet ₹100 L). — Pass,
+  2026-10-25 (Basheer, as Haroon, on a phone after the layout fix):
+  SonoScape ₹400 L / 100 % / ₹800 L; EDAN ₹200 L / 50 % / ₹300 L;
+  Maquet ₹100 L / 0 %, own pattern; Medion ₹100 L / 0 %, Apr 2026–Mar
+  2027; SBU pattern for 2026 shown. Person targets checked at P7. Dev
+  backend restarted before the run (Basheer); `alembic current` = 0064.
 - P7. [Complex: read-only Dev query, shown first] Re-run the 22 Oct check.
   Note each tester's unread bell count. Name one hospital in Fahad's area
   and one in Imaging for Haroon. Name one Opportunity notification
@@ -395,11 +404,15 @@ Basheer K (D57). Shruthi goes back to Haroon in G7.
 
 ## I — Target vs Actuals: Year view (D16, D22, D31, D66, D77–D80)
 
-1. [Simple] As Haroon, Insights Dashboard → Target vs Actuals → Year view.
-   **Expected:** "FY 2026-27"; its quarters read Apr–Jun 2026 … Jan–Mar
-   2027, never "2026-Q1". —
+1. [Simple] As Haroon, Insights Dashboard → Target vs Actuals card → the
+   "Quarter" box → "Year". **Expected:** "FY 2026-27" between the arrows;
+   the note under it starts "This year · as of …" and says "counted from
+   Oct–Dec 2026, when this year's targets start"; the quarter-by-quarter
+   table reads Apr–Jun 2026 … Jan–Mar 2027, never "2026-Q1". —
 2. [Complex: running totals against P8] Imaging. **Expected:** Apr–Jun and
-   Jul–Sep 2026 not counted (D66). Oct–Dec 2026: target ₹280 L, Won = P8's
+   Jul–Sep 2026 read "No target that quarter, so not counted" (D66);
+   Oct–Dec 2026 is marked "This quarter", Jan–Mar 2027 "Upcoming".
+   Oct–Dec 2026: target ₹280 L, Won = P8's
    Oct–Dec. Jan–Mar 2027: target still ₹280 L (no Jan–Mar target), Won =
    P8's Oct–Dec + Jan–Mar. —
 3. [Complex: running totals against P8] Critical Care. **Expected:** target
@@ -408,10 +421,11 @@ Basheer K (D57). Shruthi goes back to Haroon in G7.
 4. [Complex: Year view against Quarter view] For target, Team plans and
    Won, in both SBUs: the Jan–Mar figure minus the Oct–Dec figure = P8's
    Jan–Mar Quarter view figure (D22). —
-5. [Complex: person rows, D78] Critical Care rows, year's target / plan
-   for the year. **Expected:** Vivek ₹90 L / ₹96 L (the rejected ₹45 L
+5. [Complex: person rows, D78] Critical Care rows, columns "Year's
+   target" / "Plan for year". **Expected:** Vivek ₹90 L / ₹96 L (the rejected ₹45 L
    counts as its last approved ₹30 L); Arun Adarsh ₹100 L / ₹80 L;
-   Nishad K V ₹85 L / ₹10 L. Opening each row shows the running totals:
+   Nishad K V ₹85 L / ₹10 L. Opening each row (the arrow, "Show
+   details") shows "Target so far" / "Rep Plan so far" by quarter:
    Vivek ₹90 L / ₹66 L by Oct–Dec, ₹90 L / ₹96 L by Jan–Mar; Arun Adarsh
    ₹100 L / ₹50 L, then ₹100 L / ₹80 L; Nishad K V ₹85 L / none, then
    ₹85 L / ₹10 L. —
@@ -421,7 +435,8 @@ Basheer K (D57). Shruthi goes back to Haroon in G7.
    Jan–Mar. —
 8. [Simple] Move to FY 2027-28. **Expected:** counts from April (D31);
    Apr–Jun 2027 plans Arun Adarsh ₹30 L, Nishad K V ₹10 L, Vivek ₹30 L;
-   targets not set; nothing from FY 2026-27 carried over. —
+   targets "Not set" in the quarter-by-quarter table and "Target not set"
+   in the SBU row; nothing from FY 2026-27 carried over. —
 9. [Complex: team row as an Area Manager] As Fazal, Year view.
    **Expected:** "Your team" against ₹160 L at both quarters; Fahad's row
    shows target ₹140 L; no SBU or Company row. —
@@ -458,19 +473,23 @@ P7.
    ₹20 L, SonoScape ₹20 L → "Save draft". **Expected:** Fazal's bell
    unchanged (a draft isn't submitted). —
 2. [Complex: cross-user] Fahad: "Continue" → "Submit for approval".
-   **Expected:** Fazal's bell +1: Fahad's Oct–Dec 2026 plan submitted.
-   Haroon's and Abdul Latheef P's bells unchanged (D18). —
+   **Expected:** Fazal's bell +1: "Fahad submitted a plan for Oct–Dec
+   2026". Haroon's and Abdul Latheef P's bells unchanged (D18). —
 3. [Complex: click-through] As Fazal, click it. **Expected:** Target &
    Coverage Planning opens on Oct–Dec 2026 at Fahad's plan, with "Approve"
    and "Reject"; the badge drops by one (D21). —
-4. [Complex: cross-user] Fazal: "Reject", note "Add one more hospital".
-   **Expected:** Fahad's bell +1: rejected, with the note; clicking opens
-   his Oct–Dec 2026 plan. —
-5. [Complex: revision carries the change note] As Fahad: "Revise", ₹25 L,
-   change note "Added a second hospital"; submit. **Expected:** Fazal's
-   bell: revised plan, with that note (D18). —
-6. [Complex: cross-user] Fazal: "Approve", note "OK". **Expected:**
-   Fahad's bell: approved, with "OK" (D19). —
+4. [Complex: cross-user] Fazal: "Reject" → pop-up "Reject Fahad's plan?",
+   "Note (optional)" "Add one more hospital" → "Reject". **Expected:**
+   Fahad's bell +1: "Fazal rejected your plan for Oct–Dec 2026", no note
+   in the bell (D19); clicking opens his Oct–Dec 2026 plan, which shows
+   the note. —
+5. [Complex: cross-user] As Fahad: "Revise", ₹25 L, "Why did the plan
+   change?" "Added a second hospital" → "Submit for approval".
+   **Expected:** Fazal's bell +1: "Fahad submitted a plan for Oct–Dec
+   2026", no note in the bell (D18). —
+6. [Complex: cross-user] Fazal: "Approve" → pop-up "Approve Fahad's
+   plan?", note "OK" → "Approve". **Expected:** Fahad's bell +1: "Fazal
+   approved your plan for Oct–Dec 2026", no note in the bell (D19). —
 7. [Complex: an Area Manager's plan goes to the GM] As Nishad K V: revise
    the Jan–Mar 2027 ₹10 L plan to ₹12 L, note "Second hospital added".
    **Expected:** Haroon's bell +1. Haroon approves. **Expected:** Nishad K
@@ -502,16 +521,17 @@ P7.
    each of Apr–Jun 2026 … Jan–Mar 2027. —
 4. [Complex: look for an edit the screen shouldn't offer] **Expected:** no
    way to type or change a billing figure (D54, D70). —
-5. [Complex: save, read back, put back] Maquet's own figure → ₹100.01 L;
-   save. **Expected:** billing ₹25.00, ₹25.00, ₹25.00, ₹25.01. Put it back
+5. [Complex: save, read back, put back] Maquet's line → "Revise" →
+   "Brand's own yearly figure (₹ Lakhs)" ₹100.01 L → "Save". **Expected:** billing ₹25.00, ₹25.00, ₹25.00, ₹25.01. Put it back
    to ₹100 L; save. **Expected:** ₹25 L each; Oct–Dec target back to
    ₹25 L. —
-6. [Complex: save, then check another screen] Medion, Jan–Mar 2027: type a
-   target of ₹20 L; save. **Expected:** Jan–Mar ₹20 L marked "changed by
+6. [Complex: save, then check another screen] Medion, Jan–Mar 2027 →
+   "Change" → pop-up "Medion · Jan–Mar 2027", "Target for this quarter
+   (₹ Lakhs)" ₹20 L → "Save". **Expected:** Jan–Mar ₹20 L marked "changed by
    hand"; Medion's line still ₹100 L / 0 % / ₹100 L, nothing extra (D72);
    Target & Coverage Planning, Critical Care, Jan–Mar 2027 target ₹20 L. —
-7. [Simple] **Expected:** quarters before Oct–Dec 2026 have no way to type
-   a target; Oct–Dec 2026 and later do (D70). —
+7. [Simple] **Expected:** quarters before Oct–Dec 2026 have no "Change"
+   button; Oct–Dec 2026 and later do (D70). —
 8. [Complex: save, read back] Medion's own figure → ₹120 L; save.
    **Expected:** Oct–Dec 2026 ₹48 L; Jan–Mar 2027 stays ₹20 L, still
    marked (D71); billing ₹30 L a quarter. Put it back to ₹100 L; save.
@@ -519,3 +539,11 @@ P7.
    ₹10 L; save. **Expected:** ₹10 L, still marked (D73). —
 9. [Simple] Hide-check: as Basheer K and as Fazal, no Brand Target
    Tracking in the menu; "Brands Billing to Cabio" nowhere. —
+10. [Complex: phone layout] Phone width, as Haroon, Brand Target
+    Tracking, 2026, Critical Care. **Expected:** under each brand's name
+    a line "Own figure … · Stretch …%" (e.g. Maquet "Own figure ₹100.0L ·
+    Stretch 0%"); opening Medion shows each quarter as its own block
+    (Target, Brands Billing to Cabio, Team committed, Gap), with "Change"
+    beside Oct–Dec 2026 and Jan–Mar 2027; nothing runs past the card's
+    edge. On a computer the quarters stay a table. (Found by Basheer at
+    P6, 2026-10-25.) —

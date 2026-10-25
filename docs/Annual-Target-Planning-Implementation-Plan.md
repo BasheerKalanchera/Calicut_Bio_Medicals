@@ -76,12 +76,15 @@ quarterly/annual tracking") — this plan finishes its "annual" part (D10).
   it must land before that move — Basheer, 2026-10-16. Changed by D44,
   then D52.
 - D18. When a rep submits or revises a plan, the person who approves it
-  (their own manager) gets a bell notification; a revision's message
-  carries the rep's change note. Not the GM or Admin as well. A rep with
-  no manager above them notifies no one (15 Oct demo ask) — Basheer,
-  2026-10-16.
+  (their own manager) gets a bell notification saying who submitted it.
+  Not the GM or Admin as well. A rep with no manager above them notifies
+  no one (15 Oct demo ask) — Basheer, 2026-10-16. The rep's change note
+  is not in the notification; the plan screen shows it — Basheer,
+  2026-10-25 (at build: "why clutter the notification window").
 - D19. When a plan is approved or rejected, the rep gets a bell
-  notification with the manager's note — Basheer, 2026-10-16.
+  notification saying so; the manager's note stays on the plan screen,
+  not in the notification — Basheer, 2026-10-16, note dropped
+  2026-10-25.
 - D20. Plan notifications go to the in-app bell only, like every other
   notification; no email or WhatsApp — Basheer, 2026-10-16.
 - D21. Clicking a plan notification opens Target & Coverage Planning at
@@ -436,6 +439,13 @@ this replan: D8, D12, D12a, D14.
   this now" prompt tied to the current quarter's Expected, which the Year
   view doesn't show (D79); the Quarter view keeps it, and My Work will
   list it for the owner — Basheer, 2026-10-25.
+- D81. In the Year view, when any quarter so far (ended or in progress)
+  has no target, the year's target so far and its % are not shown — for
+  the SBU, Company and person rows and the quarter-by-quarter table. Won,
+  Plan and PO received still show. An upcoming quarter without a target
+  adds nothing. Same rule as the Quarter view's company target: a
+  part-total would read as the real target. Found in the pre-E2E code
+  review — Basheer, 2026-10-25.
 
 ## Figures and sources
 
@@ -524,12 +534,16 @@ targets as soon as it is live (D38); Part 2 adds the rest.
   row shows the year's target and plan, Won so far and what is still to
   win; opening it shows the quarter-by-quarter running totals (D78).
 - **Plan notifications** on the bell: submitted or revised → the
-  approver; approved or rejected → the rep; clicking opens the plan
-  (D18–D21).
+  approver ("who submitted"); approved or rejected → the rep; no notes in
+  the bell; clicking opens the plan (D18–D21).
 - Brand Target Tracking shows each brand's **even quarterly billing**
   beside Cabio's seasonal split, as **"Brands Billing to Cabio"**: the
   brand's year split evenly, shown only, all four quarters (D37, D54,
   D68).
+- On Brand Target Tracking the GM can **type a new target for one brand
+  quarter**, from the quarter in progress on; it is marked "changed by
+  hand" and keeps its figure when the brand's year is worked out again
+  (D70–D73).
 
 **What doesn't change.** Plans, their approval, and the quarterly Target
 vs Actuals for Admin, GM and reps' own plans work as today. The stored
@@ -571,9 +585,10 @@ UAT with the full UAT move; Part 2 follows in a later move (D52).
 5. **Target vs Actuals: Year view** with running totals (D31); a mock-up
    is shown before building. Also the quarter picker's right arrow kept
    inside the card (D77). Checkpoint commit.
-6. **Plan notifications** (D18–D21) and **Brands Billing to Cabio**
-   (D37, D54).
-   Checkpoint commit.
+6. **Plan notifications** (D18–D21), **Brands Billing to Cabio**
+   (D37, D54, D68) and **one brand quarter typed by hand** (D70–D73;
+   added to this step by Basheer, 2026-10-25 — same screen, one round of
+   testing). Small migration 0064. Checkpoint commit.
 7. **Docs and test for Part 2**, as step 4.
 
 ## 3. What could be affected
@@ -736,8 +751,22 @@ Each gets a check before and after, in the E2E test plan.
   from `approve_or_reject_target_plan` (line numbers re-read at build).
   No migration: `notification.type` and `entity_type` are free
   varchar(50). `NotificationBell.tsx` gains a `target_plan` route to
-  `TargetPlanningScreen` with period and rep.
+  `TargetPlanningScreen` with period and rep. As built: the bell row
+  says who and which quarter only (Basheer, 2026-10-25: nothing else
+  from the plan); the notification list reads `plan_period` and
+  `plan_sbu_id` through an outer join on `target_plan`, and the click
+  opens the screen on that quarter and SBU with the plan's row open
+  (the row names the rep).
 - **Brands Billing to Cabio (D37, D54):** `vendor_amount_lakhs / 4` per
   quarter (last quarter takes the rounding remainder), shown beside the
   saved seasonal quarters for all four quarters, including those before
   2026-Q3 with no saved target (D68); nothing stored, no migration.
+- **One brand quarter typed by hand (D70–D73):** migration 0064 adds
+  `brand_vendor_target.set_by_hand` boolean NOT NULL DEFAULT false (main's
+  older code ignores it). The existing `POST /planning/brand-vendor-targets`
+  (`BrandVendorTargetService.set_vendor_target`) refuses a quarter before
+  2026-Q3 or already ended (D51) and sets `set_by_hand`;
+  `AnnualTargetService._save_quarters` skips rows with it set (D71).
+  `BrandAnnualTargetQuarter` gains `set_by_hand`, `locked` (ended or before
+  2026-Q3) and `billing_lakhs`. Brand Target Tracking's quarter table
+  gets an edit button on unlocked quarters and the "changed by hand" mark.

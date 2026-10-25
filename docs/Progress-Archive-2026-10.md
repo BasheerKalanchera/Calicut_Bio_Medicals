@@ -4725,6 +4725,45 @@ moved to after the restart (Basheer).
   a stage or status changed"; "Create an Opportunity" step 7 now explains
   the First activity form.
 
+### 2026-10-25 — Build & Test: Annual Target Part 2 step 5 built (Year view, D77)
+- Year view built (server endpoint, 14 new tests; Quarter/Year box, Year
+  body, three-line phone header D77); test plan I13–I16 added for D77,
+  D79, D80. pytest 1370 passed; ruff, tsc and lint clean. Checkpoint
+  commit `f5d30d5`, pushed (Part 2 partial; steps 6–7 to come).
+- Timing on Dev (Haroon, from the browser, 3 runs each SBU, 25 Oct):
+  Quarter view (Oct–Dec 2026) 1.7–1.9 s; Year view FY 2026-27 (2
+  quarters counted) 2.2–2.6 s; FY 2027-28 (4 quarters) 3.4–3.9 s. Each extra
+  counted quarter adds about 0.6 s (FY 2027-28 minus FY 2026-27, over two
+  quarters) — a third of a Quarter view, because the year skips Expected, zones, brands and the late list. All 200.
+
+### 2026-10-25 — Build & Test: Annual Target Part 2 step 7 (pre-E2E review, E2E)
+- Step 6 committed `99c64ad` (migration 0064 applied to Dev). Pre-E2E
+  review of `f5d30d5` + `99c64ad`: two fixes approved and committed
+  `51d4fe8` — the Year view now refreshes with the Quarter view, and
+  D81 (year target unset when a quarter so far has no target). pytest
+  1388 passed.
+- Review point 3 (a manager whose team member is in another SBU can't
+  read that member's plan): Dev check, read-only, 25 Oct — 8 such pairs,
+  all under a General Manager with no SBU (Haroon 5, inactive Test GM
+  3); GMs read every plan, so nothing to fix.
+- Test plan sections I–K re-worded from the built code (labels, bell
+  lines, pop-ups).
+- Found by Basheer at P6: on a phone, Brand Target Tracking's opened
+  quarters ran past the card, and the brand's own figure and stretch
+  were hidden (only the Revise form showed them). Fixed, uncommitted
+  (small-fixes batch): quarters stack as blocks on a phone; "Own figure
+  … · Stretch …%" under the brand name. Phone check added as K10.
+- P6 passed after the fix (Basheer, on a phone). Stopped for the day
+  before P7 (1 of 41 steps). Small fixes committed before the break
+  (Basheer: wind up for the day); pytest 1388 passed, tsc clean, lint 0
+  errors.
+- Retro (Build & Test, 25 Oct). Corrections from Basheer this session: 2
+  — "What do you mean by hands-on test scripts" (the E2E steps already
+  existed; I meant a wording tidy-up); the phone layout on Brand Target
+  Tracking ran past the card and hid the own figure and stretch (found
+  by him at P6). Neither could be stopped by a tool check, and neither
+  touched UAT or live data; no tracker line.
+
 ### 2026-10-25 — Plan & Chore: My Work E2E test plan; New Opportunity help
 - My Work (Weekly Follow-up) plan: D18 build straight after the Annual
   Target Part 2 E2E; D19 first on the menu, not under Reports; D20 "N+
