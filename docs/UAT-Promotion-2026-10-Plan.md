@@ -93,6 +93,9 @@ Dev since then moves across in one go:
 - **Rep plan wording**, **duplicate-hospital warning** (Part A), and the
   app opening on Account Management, with a new hospital opening its own
   page.
+- **Reports** — Pipeline, Sales Report and Dashboard show Active
+  Opportunities only, with Brand and Zone breakdowns and counts on the
+  bars; Insights Dashboard sections as tabs, with Plan vs Actuals.
 
 Two things happen on the day:
 1. **The database is updated with 9 changes.** Eight only add new fields,
@@ -120,8 +123,10 @@ Before the day:
    (Build & Test).
 3. Fresh-install check the day before (Deployment-Topology): the backend
    built from scratch on the laptop exactly as Render does, and it starts.
-4. RLS / role smoke test on Dev: one rep, one Area Manager, one SBU
-   Manager, Admin, GM, look only.
+4. RLS / role smoke test on Dev: section 3's 14 steps, same people,
+   Abdul Latheef P as Admin, step 2 as Vivek (Rudrappa has no next
+   actions on Dev; read-only Dev query, 2026-10-25); no SBU Manager check (none on UAT; Basheer,
+   2026-10-24), look only.
 5. Read-only UAT check (D6), with your go-ahead.
 6. Claude writes the after-move check script (scratchpad) and the team
    message (D9); you send Haroon the date.
@@ -149,16 +154,39 @@ Basheer's call on the day. Rolling back loses anything saved after step 8.
 
 ## 3. What could be affected
 
-All screens changed since 27 Sep. Smoke test, look only (UAT is live data;
-open and **Cancel**, never save):
-- **Rep:** My Work / Next Actions list; open a next action's close dialog
-  and cancel; Pipeline shows the Payment Pending column; New Opportunity
-  form opens; Add Hospital shows the near-duplicate warning on a known
-  name, then cancel; Target & Coverage Planning loads.
-- **Area Manager:** Team Targets and Team Plans cards, Quarterly and
-  Annual views; Target vs Actuals.
-- **Admin / GM:** SBU Target card; Brand Target Tracking with yearly
-  targets; Audit Log opens and filters; app opens on Account Management.
+All screens changed since 27 Sep. Smoke test (step 9), look only (UAT is
+live data; open and **Cancel**, never save). One real person per role
+and SBU, from UAT's User Directory (read-only query, 2026-10-24); UAT has
+no SBU Manager (Basheer, 2026-10-24). Basheer signs in as each:
+
+- **Rudrappa Deevatagi** (Imaging rep, reports to Shruthi):
+  1. The app opens on **Account Management** (everyone except the
+     Marketing User).
+  2. **Next Actions:** the list loads; **Mark to complete** on one row
+     opens "Close Next Action"; Cancel.
+  3. **Pipeline:** a **Payment Pending** column; Imaging Opportunities
+     only.
+  4. **+ Lead** (top bar): the "New Opportunity" form opens; Cancel.
+  5. **Account Management → + Add:** typing "Aster" shows the
+     similar-name warning (it lists up to 5 similar hospitals in the
+     rep's own zone, which the form fills in — not every Aster); Cancel,
+     never Create.
+  6. **Target & Coverage Planning:** loads; no SBU Target card.
+- **Vivek** (Critical Care rep, reports to Arun Adarsh):
+  7. **Pipeline:** Critical Care Opportunities only, none from Imaging.
+- **Shruthi** (Imaging Area Manager):
+  8. **Target & Coverage Planning:** Team Targets and Team Plans show her
+     team (Dhanushma, Om Hiremath, Ravi Kumar, Rudrappa), Quarterly and
+     Annual views; no SBU Target card.
+  9. **Target vs Actuals:** loads, Imaging only.
+- **Arun Adarsh** (Critical Care Area Manager):
+  10. **Target vs Actuals:** loads, Critical Care only.
+- **Basheer K** (Admin on UAT; Basheer's own login):
+  11. **Brand Target Tracking:** loads, with the yearly targets.
+  12. **Audit Log:** opens; a filter works.
+  13. **Target & Coverage Planning:** the SBU Target card shows both SBUs.
+- **Haroon Sidheeq** (GM):
+  14. **Target vs Actuals:** both SBUs and the company row.
 
 ## 4. Not in this plan (with reasons)
 

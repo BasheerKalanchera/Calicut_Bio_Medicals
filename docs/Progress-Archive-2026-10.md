@@ -4531,6 +4531,45 @@ moved to after the restart (Basheer).
   started). Next: UAT move early Sun 25 Oct (Plan & Chore doing the
   pre-move steps); then Part 2 build here.
 
+### 2026-10-24 (later) — Plan & Chore: UAT move pre-checks, next-action breakdown, trial dress rehearsal
+
+- D6 read-only UAT check (Basheer's go-ahead; not saved): version 0054;
+  7 stages (Lead 10 … Delivery & Installation 70); 689 hospitals, 215
+  Opportunities, 230 product lines, 1,724 activities; 1,384 next
+  actions, 842 open, 458 overdue; 15 target plans (13 Approved, 2
+  Pending approval); no table with RLS on and no policies.
+- Open next actions on UAT, by where they sit (read-only query, 24 Oct):
+  Active Opportunities 116 (83 overdue), On Hold 7, hospital-level 695
+  (355 overdue), Won 19, Lost 5. Only the 123 on Active / On Hold
+  Opportunities block logging (Next Action Rules plan D11, plan wording).
+  Of those, 75 are up to 30 days overdue, 10 older. Team message now
+  asks reps to start with those. Hospital-level count is concentrated
+  (Om Hiremath 172, Rudrappa 116, Gopika 100) — left for later, a
+  question for Haroon (Basheer).
+- Team message (D9) revised after Basheer found demo items missing
+  (hospital ratings, manager-approved plans, Target vs Actuals, PO
+  Date, Active-only reports, Audit Log); move plan section 1 gained the
+  Reports line.
+- `scripts/restore_uat.ps1`: drill mode deleted its copy at the end, so
+  D5 couldn't run. Added `-Keep` (copy left on localhost:5433). The
+  first trial then failed safely: a fresh copy wasn't ready after the
+  fixed 5-second wait. Now it checks every 2 seconds for up to 60
+  (Basheer yes to both).
+- Trial dress rehearsal on the 10:39 backup: restored (686 hospitals,
+  213 Opportunities, 1,719 activities — fewer than D6 because the backup
+  was taken at 10:39 and the D6 check ran at 16:27), migrations 0054 → 0063
+  ran clean, after-move check "ALL CHECKS PASSED" (counts unchanged,
+  Payment Pending at 80 with no Opportunities, no table with RLS on
+  and no policies). Copy removed.
+- Fresh-install check (step 3), after Part 1 E2E commit `802510f`: in
+  Docker, Python 3.11.9 and Render's build and start commands (from
+  Basheer), code copied without the laptop's packages. All packages
+  installed fresh (SQLAlchemy 2.0.55, FastAPI 0.162.0, Pydantic 2.14.1,
+  Uvicorn 0.54.0); server started, database warm-up OK on Dev,
+  `/api/v1/health` answered healthy. First attempt failed on Claude's
+  own start line (port read before it was set), not the app. Box
+  removed.
+
 ### 2026-10-24 (later) — Build & Test retro
 
 - **Corrections from Basheer this session: 6** — (1) "For area managers
@@ -4546,3 +4585,26 @@ moved to after the restart (Basheer).
   without checking the move plan (early Sun 25 Oct).
 - (5) a tool could stop: new tracker item P98. Nothing touched UAT or
   live data; no lost work (approve box opened twice, cancelled both).
+
+### 2026-10-25 — Plan & Chore: UAT move step 4, Dev role check 14 of 14
+
+- UAT User Directory (read-only, 24 Oct, Basheer's go-ahead): 18 people,
+  all active. Adydev and Irfan have left (Basheer); he deactivates them
+  in the UAT User Directory after the move. Irfan had no zone or manager.
+- Smoke-test list rebuilt from UAT's real people (Basheer: Dev logins
+  "make no sense" on UAT); no SBU Manager step (nobody holds it on UAT);
+  Admin checks as Basheer on UAT, Abdul Latheef P on Dev.
+- Dev role check, look only, all 14 passed (Basheer ran, 25 Oct).
+  Rudrappa has no next actions on Dev (read-only query), so step 2 ran
+  as Vivek. Vivek's Pipeline also shows two Imaging Opportunities where
+  he holds a next action — expected (BR-ACT-06 assignee visibility).
+- Step 5 finding: Rudrappa added "kims" with no warning although "KIMS
+  Hospital Trivandrum" exists — not a fault. The form fills in the rep's
+  own zone (Bangalore branch) and BR-ACC-03 compares within that branch
+  only; Trivandrum is South Kerala (read-only Dev query). Backlog item
+  for Haroon (other-zone note); the Dev "kims" hospital joins the Dev
+  test-data clean-up chore. Step wording: Cancel, never Create.
+- Smoke-test wording fixed from the code: "+ Lead" opens "New
+  Opportunity"; Account Management's button is "+ Add".
+- Today's routine UAT backup skipped: the move takes its own (on-the-day
+  step 4, after Render is suspended).

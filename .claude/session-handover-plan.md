@@ -7,24 +7,15 @@ session edits this note._
 
 - Forecast plan (untracked, other session): not in commits; at review, line 110 → BR-FIN-09.
 
-## Annual Target Planning — approved 2026-10-20
-
-- Part 1 and Part 2 test sections done (`7dceac8`, `d654427`; archive).
-  Nothing here until Build & Test runs Part 1's E2E; then Part 2 is
-  built against those sections.
-
 ## UAT move — approved 2026-10-24, move early Sun 25 Oct
 
-- `docs/UAT-Promotion-2026-10-Plan.md` Approved (D1–D11; uncommitted);
-  it lists what goes. Before-the-day step 1 done 24 Oct: Pipeline
-  comparison 92/92 identical, fix 3 closed (Basheer); merge `2547a0f`
-  pushed; `uat-fix3` removed; tool change `0854766` pushed. **Next:**
-  docs batch (retro first); then before-the-day steps 3–6
-  (fresh-install check, Dev role smoke test, D6 UAT check — ask first,
-  after-move script + team message).
-- 24 Oct: UAT backup done (`cabio_uat_2026-10-24_1039.dump`); doc
-  tidy-up done (Annual Target plan Status, log line; uncommitted).
-  Passed to Basheer for Build & Test: Dev is at 0063, not 0062.
+- `docs/UAT-Promotion-2026-10-Plan.md` Approved (D1–D11). Done 24 Oct
+  (archive): step 1 (`2547a0f`), D6 UAT check, step 6 check script +
+  team message (scratchpad, agreed), trial dress rehearsal passed.
+  `scripts/restore_uat.ps1` `-Keep` + wait-until-ready committed
+  `05a85f5` (not pushed). Step 3 fresh-install check passed (archive).
+  Step 4 Dev role check 14 of 14 passed 25 Oct (archive). **Next:**
+  push (asks first), then the on-the-day steps 1–11.
 - After the move: Duplicate hospitals step 19 on UAT; Audit Trail plan
   step 5 cautions.
 
@@ -62,6 +53,8 @@ session edits this note._
 ## Harness Engineering
 
 - Next weekly review 2026-10-28 (21 Oct changes in archive, `1f5b425`).
+  Basheer: thorough analysis of corrections then (tracker "For the next
+  review").
 
 ## Chores
 
@@ -71,5 +64,6 @@ session edits this note._
   Managers), "Team Targets", "Team Plans" (everyone), each in the
   Quarterly and Annual views. Fix once D75 is committed.
 - Delete Dev test data from Duplicate hospitals Part A (five "zz Test
-  duplicate guard…" hospitals, "zz Test contact"); read-only check first.
+  duplicate guard…" hospitals, "zz Test contact") and "kims" (Rudrappa,
+  Dev role check 25 Oct); read-only check first.
   Open: deactivate the test Marketing User login (2026-10-10)?

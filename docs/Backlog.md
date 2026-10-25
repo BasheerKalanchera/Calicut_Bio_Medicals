@@ -92,6 +92,19 @@ goes into that move's plan.
   merge tool, Admin approval to pass the warning.
 - **Close** when the plan's parts are on UAT and the pairs are resolved.
 
+### Similar-hospital warning: also mention same-name hospitals in other zones — not started, needs Haroon (2026-10-25)
+
+- **Found (Dev role check, 2026-10-25):** Rudrappa (Bangalore) added
+  "kims" with no warning, though "KIMS Hospital Trivandrum" exists. The
+  warning only compares hospitals under the rep's own zone (the form
+  fills it in; BR-ACC-03, Haroon's Option B, 2026-09-07), and Trivandrum
+  is South Kerala.
+- **Idea (lighter option):** keep the same-zone warning as it is; add a
+  plain note, not a block, listing similar names in other zones ("KIMS
+  Hospital Trivandrum, South Kerala, is already in the directory").
+- **Needs:** Haroon's decision, since it changes BR-ACC-03; then a short
+  plan. Not before the October UAT move.
+
 ### Business rules vs code — 6 gaps awaiting decision (2026-10-08)
 
 Found while checking all 59 rules for the matrix rewrite (Progress-Archive
