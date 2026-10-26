@@ -333,8 +333,10 @@ exempt until 1 Nov 2026. Origin:
    `xs` in `sx`) — Google's Material Design width classes put 99.96 % of
    upright phones under 600; anything wider uses the laptop layout. Each
    changed screen is checked at 390, 768 and 1280 px.
-2. **Tables on a phone become cards.** Use the shared table-or-cards
-   component; never reshape a table with CSS (no `display: block` on
+2. **Tables on a phone become cards.** Every table uses the shared
+   table-or-cards component, however few columns it has, so a table that
+   grows later still turns into cards on a phone (Basheer, 2026-10-26: no
+   exceptions). Never reshape a table with CSS (no `display: block` on
    rows, `data-label`, hiding classes, or MUI internal class names).
 3. **Pop-up forms always use `FormModal`**, which fills the screen on a
    phone. A separate `Dialog` is only for a short confirmation, message
