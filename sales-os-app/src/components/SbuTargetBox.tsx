@@ -1,5 +1,6 @@
 import { useQueries, useQuery } from "@tanstack/react-query";
-import { Alert, Box, Table, TableBody, TableCell, TableRow, Typography } from "@mui/material";
+import { Alert, Box, Typography } from "@mui/material";
+import TableOrCards, { TocCell, TocRow } from "./TableOrCards";
 import { listSbuTargets } from "../services/targetPlanning";
 import { formatLakhs, formatPlanningPeriod } from "../utils/formatter";
 
@@ -70,20 +71,22 @@ export function AnnualSbuTargetCard({ sbuId, quarters, yearLabel }: { sbuId: str
       <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
         The total of this SBU's brand targets, set on Brand Target Tracking. The year is its four quarters added up.
       </Typography>
-      <Table size="small">
-        <TableBody>
-          <TableRow sx={{ "& td": { fontWeight: 700 } }}>
-            <TableCell>{yearLabel} — Annual Total</TableCell>
-            <TableCell>{year !== null ? formatLakhs(year) : <Typography component="span" variant="body2" color="text.secondary">Not set</Typography>}</TableCell>
-          </TableRow>
-          {quarters.map((q, i) => (
-            <TableRow key={q}>
-              <TableCell sx={{ pl: 3, color: "text.secondary" }}>{formatPlanningPeriod(q)}</TableCell>
-              <TableCell>{byQuarter[i] !== null ? formatLakhs(byQuarter[i]!) : notSet}</TableCell>
-            </TableRow>
+      {/* One card on a phone: the year is its title, the quarters inside. */}
+      <TableOrCards columns={[{ label: "Period" }, { label: "SBU target" }]}>
+        <TocRow
+          subRows={quarters.map((q, i) => (
+            <TocRow key={q} indent={1}>
+              <TocCell title sx={{ color: "text.secondary", fontWeight: 400 }}>{formatPlanningPeriod(q)}</TocCell>
+              <TocCell label="SBU target">{byQuarter[i] !== null ? formatLakhs(byQuarter[i]!) : notSet}</TocCell>
+            </TocRow>
           ))}
-        </TableBody>
-      </Table>
+        >
+          <TocCell title sx={{ fontWeight: 700 }}>{yearLabel} — Annual Total</TocCell>
+          <TocCell label="SBU target" sx={{ fontWeight: 700 }}>
+            {year !== null ? formatLakhs(year) : <Typography component="span" variant="body2" color="text.secondary">Not set</Typography>}
+          </TocCell>
+        </TocRow>
+      </TableOrCards>
     </Box>
   );
 }
