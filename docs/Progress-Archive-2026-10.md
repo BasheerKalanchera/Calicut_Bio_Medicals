@@ -4937,6 +4937,45 @@ moved to after the restart (Basheer).
   edge on a phone (474 px in 356 px) — added to Backlog's MUI entry.
 - Checks: tsc clean; lint 0 errors, 133 warnings (unchanged).
 
+### 2026-10-26 — Plan & Chore: New Customer help; wording rules
+
+- New Customer pop-up help agreed (Basheer) — help plan section 7, 11 of
+  30. Written from `AddHospitalModal.tsx`, `account/service.py:130–137`
+  and the zone search (`master_data.py:136–150`).
+- Basheer's corrections to the first draft: a customer is not just a
+  hospital (clinics, diagnostic centres, dealers); too technical —
+  "screen", never "form" ("field" is fine). Both written into the help
+  plan's format notes; the 10 earlier entries get one pass for both
+  rules after the pop-ups (word search: "form" ~20 places in section 7).
+- Backlog: "+ Add Hospital → + Add Customer" widened into an app-wide
+  "Hospital" → "Customer" sweep (Basheer: "small small fixes are piling
+  up"). Basheer: do it with the "deal" → "Opportunity" sweep in one
+  pass, one commit (both Backlog entries); Basheer passes it to Build &
+  Test.
+- Basheer yes: manual A2 line "A customer with exactly the same name
+  can't be added twice"; BR-ACC-03 Enforcement corrected — its "no other
+  screen creates Accounts" was out of date since 2 Sep (New
+  Opportunity's + Add Hospital uses the same pop-up).
+
+### 2026-10-26 — Plan & Chore: MUI standard check reviewed against §6.11
+
+- `check-mui-standard.js` (`2e3ddd7`) correct for what it checks (hex
+  colours, typed text sizes, `className`, old phone-table styling; whole
+  staged file; urgent-fix exemption ends 1 Nov). Covers rules 4–6 and
+  part of 2; §6.11 left rules 1–3 and 7 to the pre-E2E code review, but
+  no skill mentioned §6.11 (grep of `.claude/skills`, 26 Oct).
+- Gaps in the check: helper `.ts` files with colours (4 in `src/utils`),
+  `rgba` colours (45 lines, 20 files), plain tables (6 files), icon
+  size "large" (0 uses). Report mode: 40 files, 989 lines below the
+  standard today.
+- Basheer: MUI standard item added to the pre-E2E code review
+  (`cabio-e2e-testing`), pointer in §6.11's opening. Tightening the
+  check: Basheer passed it to Build & Test directly. Build & Test's
+  review of the item (via Basheer): tables — look for a hand-built phone
+  version beside the laptop one (the check now catches plain tables;
+  seen in Target vs Actuals, 3 places, and Team Plans' plan details);
+  widths — measured, not by eye. Both taken in.
+
 ### 2026-10-26 — Build & Test: retro
 - **Corrections from Basheer this session: 9** (from his 38 messages,
   counted from the transcript): (1) phone fixes built without MUI good

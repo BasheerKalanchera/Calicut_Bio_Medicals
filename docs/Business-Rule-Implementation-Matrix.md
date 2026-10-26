@@ -63,7 +63,7 @@ nothing enforces it yet.
 | BR-FIN-09 | Credit on Shared Opportunities | `TargetVsActualRepository._credit` and its won / expected / late queries (`domains/planning/repository.py`) | Target vs Actuals only so far; built on Dev `2e2e4c0`, E2E pending. Other reports follow with their own plan. |
 | BR-ACC-01 | Stakeholder Sentiment | `stakeholder.nps_score` (`ck_stakeholder_nps_score`), `stakeholder.sentiment` | "Account Health" aggregate not built. |
 | BR-ACC-02 | Payer Behavior | `ck_account_payer_behavior` | |
-| BR-ACC-03 | Near-Duplicate Hospital Warning | `AccountRepository.find_similar_by_name`, `account/duplicate_matching.py`; `AccountService.create_account` (`force_create`, `PossibleDuplicateError` → 409); `sales-os-app/` `CustomerDirectoryScreen.tsx` | |
+| BR-ACC-03 | Near-Duplicate Hospital Warning | `AccountRepository.find_similar_by_name`, `account/duplicate_matching.py`; `AccountService.create_account` (`force_create`, `PossibleDuplicateError` → 409); `sales-os-app/` `AddHospitalModal.tsx` (opened from `CustomerDirectoryScreen.tsx` and `QuickLeadModal.tsx`) | |
 | BR-ACC-04 | Hospital Business Potential Rating | `AccountService.set_business_potential`; `redact_business_potential_notes` (`account/schemas.py`) | |
 | BR-ACC-05 | A New Hospital Starts With a Next Action | Withdrawn 2026-10-16, not built | `docs/Next-Action-Rules-Implementation-Plan.md` D21. |
 | BR-ORG-01 | Manager Assignment SBU Eligibility | `UserService.create_user` / `update_user` (`domains/organization/service.py`) | |

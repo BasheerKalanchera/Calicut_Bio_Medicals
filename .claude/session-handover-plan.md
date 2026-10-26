@@ -8,19 +8,11 @@ session edits this note._
 - Forecast plan (untracked, other session): not in commits; at review, line 110 → BR-FIN-09.
 ## MUI clean-up plan — started 26 Oct (current task)
 
-- Handed over by Build & Test (Basheer, 26 Oct): plan Backlog "MUI good
-  practice on phone, tablet and laptop" (standard, commit-time check,
-  screen review); fold in "Front-end consistency audit" and
-  `statusColors.ts`. Also its "Filters and search boxes" bullet (shared
-  zone filter style; Basheer, 26 Oct). Lighter review first, most-used
-  phone screens (Basheer, 26 Oct). Plan written 26 Oct
-  (`docs/MUI-Good-Practice-Implementation-Plan.md`, Approved, D1–D17
-  Basheer). Step 1 done 26 Oct: Frontend
-  standards §6.11 + rule 10 shortened. D17 Basheer: Build & Test builds
-  step 2 + the 3 phone-fix screens before their commit; write-up given
-  to Basheer to pass on (done). Committed `de10903`, not pushed.
-  Doc tidy-up and retro (6 corrections) done 26 Oct, committed. Next:
-  Build & Test reports step 2; then round 1 review (plan step 4).
+- `docs/MUI-Good-Practice-Implementation-Plan.md` (Approved, D1–D17;
+  history in the archive 26 Oct). Step 1 done and pushed (`de10903`);
+  Build & Test shipped step 2 (`2e3ddd7`, `64b5fef`). Lighter review
+  first, most-used phone screens (Basheer). **Next:** round 1 review
+  (plan step 4).
 
 ## After the UAT move (25 Oct, details in the archive)
 
@@ -52,8 +44,10 @@ session edits this note._
   pushed in `393beee`. Every reply here closes with "Help wording: N of
   30 (P %)", counted from section 7's "agreed" headings (Basheer, 25
   Oct). New Stakeholder agreed 26 Oct (10 of 30) + manual A2 step —
-  archive 26 Oct; committed `de10903`. **Next (parked 26 Oct for
-  the MUI plan):** New Customer pop-up help.
+  archive 26 Oct; committed `de10903`. New Customer agreed 26 Oct (11
+  of 30; all 8 pop-ups done), manual A2 line, BR-ACC-03 fix, wording
+  sweeps one pass (Basheer tells Build & Test) — not committed. **Next:** one pass over the 10 earlier entries for the word
+  rules (help plan section 7 format notes), then the next screen.
 
 ## Harness Engineering
 

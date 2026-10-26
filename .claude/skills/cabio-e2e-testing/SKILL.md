@@ -30,6 +30,17 @@ Moved here word for word from CLAUDE.md on 2026-10-08
   opened. Measure, don't eyeball: in the browser, any element inside a card
   whose `scrollWidth > clientWidth` runs past it. Fix before handover;
   Basheer should never be the one to find a phone problem. *(2026-10-25)*
+- For every screen and pop-up the change adds or touches, check the MUI
+  standard rules the automatic check can't (Frontend standards §6.11),
+  across the whole file, not just the changed lines (MUI plan D10): a
+  pop-up with fields uses `FormModal`, a plain `Dialog` only for a short
+  confirmation, message or list (rule 3); every table goes through
+  `TableOrCards`, with no hand-built phone version beside the laptop one
+  (`display: { xs: "block", sm: "none" }`) (rule 2); each filter has its
+  name above it and "All …" inside, each search box a 🔍 and an ✕ once
+  typed in (rule 7); and it is measured at 768 and 1280 px as well as
+  390 (rule 1). A miss is a review finding, fixed before handover.
+  *(2026-10-26; tables and widths wording from Build & Test's review)*
 - Suggest `/ultrareview` only for higher-risk changes (security, untested hotfix,
   large unreviewed change), not routine commits. *(2026-09-15)*
 

@@ -73,6 +73,7 @@ and the six reports.
   you mean … ? It's already in the directory." Click **Use this one
   instead** rather than creating a second copy. Use **Create Anyway**
   only if it really is a different hospital.
+- A customer with exactly the same name can't be added twice.
 - If you have no territory yet, the form doesn't open; ask your manager
   to set one up.
 

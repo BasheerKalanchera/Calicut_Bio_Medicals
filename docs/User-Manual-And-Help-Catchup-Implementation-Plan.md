@@ -257,7 +257,11 @@ Stakeholder, New Customer.
 Format: help editor plan D2 (headings, **bold**, bullets) and D4
 (optional manager box). Every screen's help opens with a short **What
 this page is for** paragraph — why the screen exists — before the
-sections on its buttons (Basheer, 2026-10-22). Each entry gives its help
+sections on its buttons (Basheer, 2026-10-22). Sales-friendly words
+(Basheer, 2026-10-26): "screen", never "form" ("field" is fine);
+"customer" wherever any customer type fits, not "hospital". The 10
+entries agreed before 26 Oct get one pass for both rules once the pop-ups
+are done. Each entry gives its help
 key, the date Basheer agreed it, and the manual section checked beside
 it.
 
@@ -794,3 +798,60 @@ Sources (2026-10-26): `Customer360Screen.tsx:981–1006, 1267–1291`;
 `account/stakeholder_schemas.py:7–14`; `account/stakeholder_router.py`
 (no delete); `account/stakeholder_service.py:27–47` (no duplicate
 check); `OpportunityDetailScreen.tsx:861, 970`.
+
+### New Customer pop-up (`popup_newCustomer`, key name settled at build) — agreed 2026-10-26 (Basheer)
+
+Manual checked: A2 "Add a new hospital" — covered, except the
+exact-same-name refusal (line added 2026-10-26, Basheer).
+Manager box: none (Admin, GM and SBU Managers may also pick any zone;
+left out — reps use this screen). First entry written to the
+sales-friendly word rules above. The pop-up's own "hospital" messages
+are in Backlog "Wording: "Hospital" → "Customer" across the app".
+
+**Title:** New Customer — Help
+
+**What this screen is for**
+Adds a new customer — a hospital, clinic, diagnostic centre, medical
+college or dealer — so you can start logging visits, adding contacts and
+creating Opportunities for them.
+
+**Check first**
+- Search **Account Management** before adding. The customer may already
+  be there under a slightly different name.
+- If you haven't been given a territory yet, this screen won't open. Ask
+  your manager to set one up.
+
+**What to fill in**
+- **Name** and **Zone** — you must fill in both. Your own zone is
+  already filled in. To pick a different one, type the first two
+  letters; you'll only see zones in your own territory.
+- **Parent Customer** — the main hospital or group, if this customer is
+  a branch of it.
+- **Payer Behavior** — how reliably they pay: Good, Average, Problematic
+  or Unknown.
+- **Customer Type** — Multispeciality Hospital, Specialty Hospital,
+  Diagnostic Center, Clinic, Dealer, Medical College Hospital,
+  Government Hospital or Other.
+
+**If you see "Did you mean …?"**
+- A customer with a similar name is already listed in the same zone.
+- Press **Use this one instead** to work with the existing customer.
+  This is nearly always the right choice.
+- Press **Create Anyway** only when it really is a different customer,
+  such as another branch in a different town.
+- If you change anything after this message, press **Create** again so
+  the new details get checked.
+- A customer with exactly the same name can't be added twice.
+
+**After you press Create**
+- Added from **Account Management**: the new customer's page opens
+  straight away.
+- Added while creating an Opportunity: you go back to the **New
+  Opportunity** screen with the new customer already chosen, so you can
+  finish the Opportunity.
+
+Sources (2026-10-26): `AddHospitalModal.tsx:34–43, 102–128, 150–313`;
+`account/service.py:130–137` (no territory; exact same name);
+`api/routers/master_data.py:136–150` (zone search: own zones, 2
+letters); `CustomerDirectoryScreen.tsx:92–103`;
+`QuickLeadModal.tsx:710–715`.

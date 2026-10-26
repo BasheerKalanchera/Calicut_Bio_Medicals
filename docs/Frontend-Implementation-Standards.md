@@ -325,7 +325,8 @@ D75, 2026-10-23.) Code identifiers (`target_plan`,
 Applies to every commit that changes a screen, from 2026-10-26; the whole
 changed file must follow it, not just the changed lines. Rules a machine
 can spot are enforced by `npm run lint`; the rest are checked at the
-pre-E2E code review; layout is checked in E2E. Urgent bug fixes are
+pre-E2E code review (its MUI standard item in the `cabio-e2e-testing`
+skill, 2026-10-26); layout is checked in E2E. Urgent bug fixes are
 exempt until 1 Nov 2026. Origin:
 `docs/MUI-Good-Practice-Implementation-Plan.md`.
 

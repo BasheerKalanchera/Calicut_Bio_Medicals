@@ -143,7 +143,7 @@ to decide: change the code, or change the rule.
   changed). No plan needed: Build & Test, its own `fix:` commit (it
   changes who can save what), alongside the small-fixes batch.
 
-### New Opportunity: rename "+ Add Hospital" to "+ Add Customer" — not started (2026-10-25)
+### Wording: "Hospital" → "Customer" across the app — decided, not started (2026-10-25, widened 2026-10-26)
 
 - **Found (New Opportunity help wording, 2026-10-25):** the button on the
   New Opportunity form says **+ Add Hospital** (`QuickLeadModal.tsx:506`),
@@ -151,10 +151,22 @@ to decide: change the code, or change the rule.
   dealers and diagnostic centres, not just hospitals (Customer Type,
   `Physical-Schema.sql:392`).
 - **Decided (Basheer, 2026-10-25):** rename it **+ Add Customer**; the
-  "New Customer" title stays. Wording only — Build & Test, in a batch of
-  small fixes. Same commit: the manual (`UAT-User-Manual.md` "Add a new
-  hospital" step 1, "Create an Opportunity" step 1) and the New
-  Opportunity help in help plan section 7.
+  "New Customer" title stays.
+- **Widened to an app-wide sweep (Basheer, 2026-10-26, New Customer help
+  wording):** "small fixes are piling up" — one pass instead of one entry
+  per screen. Say "customer" wherever any customer type fits; keep
+  "hospital" only where only hospitals are meant. Known so far: the
+  button above; the New Customer pop-up's warning "This looks similar to
+  hospitals already in the directory" and its "no territory" message
+  ("…you can't add a new hospital", `AddHospitalModal.tsx:226, 306–307`,
+  also the server's copy in `account/service.py:131–134`). The full list
+  starts with a search of the screens; not counted yet.
+- Wording only — Build & Test, in a batch of small fixes. Same commit:
+  the manual (`UAT-User-Manual.md`, e.g. "Add a new hospital", "Create an
+  Opportunity" step 1) and the agreed help in help plan section 7.
+- **Decided (Basheer, 2026-10-26):** done together with "deal" →
+  "Opportunity" below — one pass, one commit (same screens, manual and
+  help).
 
 ### File deletes: ask "Are you sure?" first — not started (2026-10-25)
 
@@ -342,6 +354,8 @@ part of Query Load fix 3.
   Haroon. At the rename, also update the docs that name the screen
   (search "Stagnant Deals"; Progress-Archive and dated review files stay
   as written), including the My Work plan and its test plan section E.
+- **Decided (Basheer, 2026-10-26):** one pass and one commit with
+  "Hospital" → "Customer" above.
 - No database change. Checks: tsc, lint, a visual walk on Dev. Could go
   to UAT with the next full move.
 - After the Traceability edit: regenerate the scorecard and show Basheer
