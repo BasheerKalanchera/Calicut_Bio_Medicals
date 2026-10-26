@@ -22,6 +22,9 @@ about any line older than 14 days (Basheer, 2026-10-16).
   2026-09-14, BR-CAT-04, not built): who keeps the cost figures up to
   date, and is it needed in Phase 1 or can it wait for Phase 2? The signed
   Margin Report (Traceability 11.1) depends on it.
+- **Haroon** (to be asked; raised 2026-10-26) — remove the NPS Score from
+  contacts and keep Sentiment only (Basheer's preference)? Also what
+  happens to the 19 saved scores. Backlog NPS entry (Stakeholders, item 1).
 
 ## Parked initiatives
 
@@ -523,8 +526,10 @@ maintainability once handed to the customer's IT team.
   removes two copies), then the rule and check, then the audit.
 - **Create forms: resolved 2026-10-14/15.** Every way of creating an
   Opportunity now opens the one create form (`a76b02d`, `86dd1a3`); the
-  rule is in `docs/Frontend-Implementation-Standards.md` §6.2. Still open:
-  the edit side and other objects' forms.
+  rule is in `docs/Frontend-Implementation-Standards.md` §6.2. **Edit forms:
+  resolved 2026-10-01** — the Customer 360 and Project Directory copies
+  were removed (`a430152`); only Opportunity Detail edits an Opportunity
+  (code checked 2026-10-26). Still open: other objects' forms.
 - **Kept separate from the MUI clean-up** (Basheer, 2026-10-26): it is
   about how the code is organised, not how screens look
   (`docs/MUI-Good-Practice-Implementation-Plan.md` D6).
@@ -1455,7 +1460,8 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   data — not something to build now. Nothing for this session to pick up
   unless/until Latheef Bhai wants the integration itself scoped.
 
-- **Engagement History generation — planned, not built, one open decision.**
+- **Engagement History generation — parked until Phase 2 (Basheer,
+  2026-10-26: not in the Phase 1 signed requirements); planned, not built, one open decision.**
   Superseded the earlier "Relationship Notes" plan (manual Activity type)
   2026-09-01: reps get zero new fields to fill in. Instead, a weekly batch
   job (plus an on-demand refresh) synthesizes a standing "where does this

@@ -4868,7 +4868,20 @@ moved to after the restart (Basheer).
   set, text styles, full-screen pop-up, table-or-cards) today and moves
   its three uncommitted phone-fix screens onto them before that commit
   (changes Option A). Write-up passed by Basheer.
-- Corrections: Basheer asked twice for a plainer explanation (the
-  600-pixel question, the "four pieces"); and said I "keep updating"
-  Build & Test's note — this session never edited it (checked the
-  transcript: no edits), but my reply about it confused him.
+
+### 2026-10-26 — Plan & Chore: tidy-up and retro
+- Documentation tidy-up: found 6, fixed 6, broken links 23 (sweep log).
+  Opportunity edit forms confirmed resolved 1 Oct (`a430152`; only
+  Opportunity Detail saves edits, code checked). NPS question for Haroon
+  added to "Waiting on people"; Engagement History parked until Phase 2
+  (Basheer: not in the Phase 1 signed requirements).
+- **Retro — corrections from Basheer this session: 6** (from his 27
+  messages): (1) BR-ACC-01/ADR-007 changed for NPS before he decided —
+  reverted; (2) "why do you keep updating Build & Test's handover note?"
+  — no edits made, but my answer confused him; (3) "you didn't get any
+  note from Build & Test?" — unclear account of the MUI hand-over;
+  (4) 600-pixel cut-off not plain enough; (5) "four shared pieces" took
+  two explanations; (6) plan called duplicate Opportunity edit forms
+  open — copied a stale Backlog line without checking archive and code.
+  3–5 are one kind: first explanation not plain enough. No tracker
+  change: none touched live data, UAT or lost work, none guard-able.

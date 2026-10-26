@@ -1,8 +1,9 @@
 # Engagement History Generation — Implementation Plan
 
-**Status:** Planned, not built. One decision (data privacy / provider choice,
-§6) needs leadership sign-off before implementation starts — everything
-else is resolved.
+**Status:** Parked until Phase 2 — not in the Phase 1 signed requirements
+(Basheer, 2026-10-26). Planned, not built. One decision (data privacy /
+provider choice, §6) needs leadership sign-off before implementation
+starts; it is not being asked during Phase 1.
 
 **Supersedes:** `docs/Relationship-Note-Implementation-Plan.md`. That plan
 proposed a new `ENGAGEMENT_NOTE` Activity type reps would manually log.

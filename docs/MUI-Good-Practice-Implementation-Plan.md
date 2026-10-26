@@ -23,8 +23,8 @@ laptop" (raised by Build & Test 26 Oct, handed to Plan & Chore).
 - D5. Lighter review first: the screens reps use most on a phone; the
   rest in a second round, planned after the first — Basheer, 2026-10-26
 - D6. Colours (`statusColors.ts`, the repeated greys) and the shared zone
-  filter style are in this plan; the duplicate Opportunity edit forms
-  stay a separate plan (Backlog "Front-end consistency audit") —
+  filter style are in this plan; duplicate forms for other objects (the
+  Opportunity edit copies were removed 1 Oct, `a430152`) stay a separate plan (Backlog "Front-end consistency audit") —
   Basheer, 2026-10-26
 - D7. Order: the standard and the automatic check first, so My Work is
   built the right way; fixes to existing screens only after My Work is
@@ -169,7 +169,8 @@ screen that uses them, found by a code search at that step.
 
 ## 4. Not in this plan (with reasons)
 
-- Duplicate Opportunity edit forms — about how the code is organised, not
+- Duplicate forms for other objects (the Opportunity edit copies were
+  removed 1 Oct, `a430152`) — about how the code is organised, not
   how it looks; mixing them would make each screen's fix much bigger
   (D6). Stays Backlog "Front-end consistency audit".
 - An automatic browser test at each width — D3.
@@ -203,7 +204,7 @@ screen that uses them, found by a code search at that step.
 - Colours: palette entries in `src/theme/index.ts` plus
   `src/theme/statusColors.ts` (§6.5); screens use theme keys, not hex.
 - Text sizes: theme `typography` variants instead of `fontSize` in `sx`.
-- Check: a script beside `scripts/check-no-tailwind.js`, run by
+- Check: a script beside `sales-os-app/scripts/check-no-tailwind.js`, run by
   `npm run lint` (so `.githooks/pre-commit` already calls it). Counts per
   file: hex colours in `.tsx`, `fontSize:` literals in `sx`, `className=`,
   and the retired phone classes; fails if any staged `.tsx` file has any

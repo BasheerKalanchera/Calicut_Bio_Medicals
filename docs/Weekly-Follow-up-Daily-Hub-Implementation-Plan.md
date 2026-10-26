@@ -5,7 +5,9 @@ answered). Step 1 (D9a, D10) built ahead of the approval, 2026-10-19
 (`508ff42`; Basheer: not part of My Work itself); commit and Dev check in
 Progress-Archive. Steps 2–5 not started: built straight after the Annual
 Target Planning Part 2 E2E (D18; the Part 1 E2E that D14 waited for
-passed 2026-10-24). E2E test plan being written 2026-10-25.
+passed 2026-10-24). E2E test plan written 2026-10-25
+(`docs/Weekly-Follow-up-Daily-Hub-Manual-E2E-Test-Plan.md`, 33 steps per
+`393beee`'s message).
 **Traceability rows:** 11.1 Weekly Follow-up Report (Not started). Also
 touches 6.1 Beat Planning (Not started) once hospital-wise planning is on
 UAT.

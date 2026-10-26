@@ -6,7 +6,6 @@ keeps its own note: `.claude/session-handover-build.md`. Only the Plan & Chore
 session edits this note._
 
 - Forecast plan (untracked, other session): not in commits; at review, line 110 → BR-FIN-09.
-
 ## MUI clean-up plan — started 26 Oct (current task)
 
 - Handed over by Build & Test (Basheer, 26 Oct): plan Backlog "MUI good
@@ -16,10 +15,12 @@ session edits this note._
   zone filter style; Basheer, 26 Oct). Lighter review first, most-used
   phone screens (Basheer, 26 Oct). Plan written 26 Oct
   (`docs/MUI-Good-Practice-Implementation-Plan.md`, Approved, D1–D17
-  Basheer; build order redone to match). Step 1 done 26 Oct: Frontend
+  Basheer). Step 1 done 26 Oct: Frontend
   standards §6.11 + rule 10 shortened. D17 Basheer: Build & Test builds
   step 2 + the 3 phone-fix screens before their commit; write-up given
-  to Basheer to pass on. Not committed (docs batch).
+  to Basheer to pass on (done). Committed `de10903`, not pushed.
+  Doc tidy-up and retro (6 corrections) done 26 Oct, committed. Next:
+  Build & Test reports step 2; then round 1 review (plan step 4).
 
 ## After the UAT move (25 Oct, details in the archive)
 
@@ -51,14 +52,13 @@ session edits this note._
   pushed in `393beee`. Every reply here closes with "Help wording: N of
   30 (P %)", counted from section 7's "agreed" headings (Basheer, 25
   Oct). New Stakeholder agreed 26 Oct (10 of 30) + manual A2 step —
-  archive 26 Oct; not committed (docs batch). **Next (parked 26 Oct for
+  archive 26 Oct; committed `de10903`. **Next (parked 26 Oct for
   the MUI plan):** New Customer pop-up help.
 
 ## Harness Engineering
 
-- Next weekly review 2026-10-28 (21 Oct changes in archive, `1f5b425`).
-  Basheer: thorough analysis of corrections then (tracker "For the next
-  review").
+- Next weekly review 2026-10-28 (`1f5b425`); Basheer wants a thorough
+  analysis of corrections (tracker "For the next review").
 
 ## Chores
 

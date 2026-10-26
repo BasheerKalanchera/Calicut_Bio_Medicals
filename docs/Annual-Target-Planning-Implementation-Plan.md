@@ -9,8 +9,8 @@ First approved 2026-10-16. E2E test plan:
 `docs/Annual-Target-Planning-Manual-E2E-Test-Plan.md` (Part 1, written
 2026-10-21). Part 1 built on Dev (`f2f5edd`, `642f04c`; fixes
 `ed669e7`, `be27712`, `6016e6a`, `dd9cdb9`, `c2f025d`, `8d232c1`,
-`48e737b`); manual E2E passed, 65 of 65, 2026-10-24. Part 2 not
-started. Part 1 on UAT 2026-10-25 (`8b2ec8a`, the full UAT move, D52); it was
+`48e737b`); manual E2E passed, 65 of 65, 2026-10-24. Part 2 built on Dev 25 Oct (step 5 `f5d30d5`, step 6 `99c64ad`,
+review fixes `51d4fe8`); its E2E not yet run. Part 1 on UAT 2026-10-25 (`8b2ec8a`, the full UAT move, D52); it was
 built so the Oct–Dec 2026 targets can be entered (D38, D44).
 **Traceability rows:** signed 3.1 ("Target splitting by product category,
 quarterly/annual tracking") — this plan finishes its "annual" part (D10).
