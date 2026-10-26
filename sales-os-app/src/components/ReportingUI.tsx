@@ -1,4 +1,5 @@
 import { Alert, Box, Button } from "@mui/material";
+import { shadows } from "../theme/shadows";
 
 // dataviz skill: a single-series magnitude comparison -- one sequential hue,
 // thin bar with rounded ends, value always shown as visible text (never
@@ -24,7 +25,7 @@ export function MiniBar({
   // affect the bar's width, which is still driven by `value` alone.
   secondaryValue?: number;
   secondaryLabel?: string;
-  // How many deals make up this bar -- shown under the label so a bar can
+  // How many Opportunities make up this bar -- shown under the label so a bar can
   // be checked against the list it drills into.
   count?: number;
   // Tree depth (Zone breakdown) -- indents the label only; the bar still
@@ -54,7 +55,7 @@ export function MiniBar({
           mx: -1,
           px: 1,
           py: 0.25,
-          "&:hover": { bgcolor: "#f3f4f6" },
+          "&:hover": { bgcolor: "gray.100" },
         }),
       }}
       title={title}
@@ -62,7 +63,7 @@ export function MiniBar({
       <Box sx={{ flex: "0 0 38%", minWidth: 0, pl: indent * 1.5 }}>
         <Box
           sx={{
-            fontSize: "0.8125rem",
+            typography: "body3",
             fontWeight: 600,
             color: "text.primary",
             overflow: "hidden",
@@ -73,20 +74,20 @@ export function MiniBar({
           {label}
         </Box>
         {count !== undefined && (
-          <Box sx={{ fontSize: "0.6875rem", color: "text.secondary" }}>
-            {count} {count === 1 ? "deal" : "deals"}
+          <Box sx={{ typography: "caption2", color: "text.secondary" }}>
+            {count} {count === 1 ? "Opportunity" : "Opportunities"}
           </Box>
         )}
       </Box>
-      <Box sx={{ flex: 1, height: 10, borderRadius: "5px", bgcolor: "#f3f4f6", overflow: "hidden" }}>
-        <Box sx={{ width: `${pct}%`, height: "100%", borderRadius: "5px", bgcolor: "#2a78d6" }} />
+      <Box sx={{ flex: 1, height: 10, borderRadius: "5px", bgcolor: "gray.100", overflow: "hidden" }}>
+        <Box sx={{ width: `${pct}%`, height: "100%", borderRadius: "5px", bgcolor: "report.bar" }} />
       </Box>
       <Box sx={{ flex: "0 0 auto", minWidth: secondaryValue === undefined ? 64 : 92, textAlign: "right" }}>
-        <Box sx={{ fontSize: "0.75rem", fontWeight: 700, color: "text.secondary", fontVariantNumeric: "tabular-nums" }}>
+        <Box sx={{ typography: "caption", fontWeight: 700, color: "text.secondary", fontVariantNumeric: "tabular-nums" }}>
           {formatValue(value)}
         </Box>
         {secondaryValue !== undefined && (
-          <Box sx={{ fontSize: "0.6875rem", color: "#9ca3af", fontVariantNumeric: "tabular-nums" }}>
+          <Box sx={{ typography: "caption2", color: "gray.400", fontVariantNumeric: "tabular-nums" }}>
             {formatValue(secondaryValue)} {secondaryLabel}
           </Box>
         )}
@@ -101,18 +102,19 @@ export function StatTile({ label, value, sublabel }: { label: string; value: str
       sx={{
         flex: 1,
         minWidth: 160,
-        bgcolor: "#fff",
+        bgcolor: "background.paper",
         borderRadius: "1rem",
-        border: "1px solid #f3f4f6",
-        boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+        border: 1,
+        borderColor: "gray.100",
+        boxShadow: shadows.sm,
         p: 2,
       }}
     >
-      <Box sx={{ fontSize: "10px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#9ca3af", mb: 0.5 }}>
+      <Box sx={{ typography: "tiny", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "gray.400", mb: 0.5 }}>
         {label}
       </Box>
-      <Box sx={{ fontSize: "1.5rem", fontWeight: 900, color: "#0b0b0b", fontVariantNumeric: "tabular-nums" }}>{value}</Box>
-      {sublabel && <Box sx={{ fontSize: "0.75rem", color: "#6b7280", mt: 0.25 }}>{sublabel}</Box>}
+      <Box sx={{ typography: "h5", fontWeight: 900, color: "report.figure", fontVariantNumeric: "tabular-nums" }}>{value}</Box>
+      {sublabel && <Box sx={{ typography: "caption", color: "gray.500", mt: 0.25 }}>{sublabel}</Box>}
     </Box>
   );
 }
@@ -131,7 +133,7 @@ export function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <Box sx={{ bgcolor: "#fff", borderRadius: "1rem", border: "1px solid #f3f4f6", boxShadow: "0 1px 2px rgba(0,0,0,0.05)", p: 2 }}>
+    <Box sx={{ bgcolor: "background.paper", borderRadius: "1rem", border: 1, borderColor: "gray.100", boxShadow: shadows.sm, p: 2 }}>
       <Box
         sx={{
           display: "flex",
@@ -142,7 +144,7 @@ export function SectionCard({
             : { alignItems: "center" }),
         }}
       >
-        <Box sx={{ fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#6b7280" }}>
+        <Box sx={{ typography: "caption", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "gray.500" }}>
           {title}
         </Box>
         {action}
@@ -168,7 +170,7 @@ export function LoadingOrEmpty({
   onRetry: () => void;
 }) {
   if (isLoading) {
-    return <Box sx={{ color: "#9ca3af", fontSize: "0.875rem", py: 2, textAlign: "center" }}>Loading...</Box>;
+    return <Box sx={{ color: "gray.400", typography: "body2", py: 2, textAlign: "center" }}>Loading...</Box>;
   }
   if (isError) {
     return (
@@ -179,7 +181,7 @@ export function LoadingOrEmpty({
   }
   if (isEmpty) {
     return (
-      <Box sx={{ color: "#9ca3af", fontSize: "0.875rem", py: 2, textAlign: "center", fontStyle: "italic" }}>
+      <Box sx={{ color: "gray.400", typography: "body2", py: 2, textAlign: "center", fontStyle: "italic" }}>
         {emptyText}
       </Box>
     );
@@ -191,7 +193,7 @@ export function LoadingOrEmpty({
 // top-level rows add up to the report total.
 export function ZoneTreeNote() {
   return (
-    <Box sx={{ fontSize: "0.6875rem", color: "text.secondary", mt: 1 }}>
+    <Box sx={{ typography: "caption2", color: "text.secondary", mt: 1 }}>
       Each zone's figures include the zones listed under it.
     </Box>
   );

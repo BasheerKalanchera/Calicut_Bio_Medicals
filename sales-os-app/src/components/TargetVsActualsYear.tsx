@@ -1,13 +1,13 @@
-import { Fragment } from "react";
-import { Box, IconButton, Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material";
+import { Box, IconButton } from "@mui/material";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import { StatTile } from "./ReportingUI";
+import TableOrCards, { TocCell, TocRow } from "./TableOrCards";
 import { NoPoDateNote, SummaryRows } from "./TargetVsActualsParts";
 import type { QuarterState, TargetVsActualYearPerson, TargetVsActualYearResponse } from "../types/targetPlanning";
 import { formatPlanningPeriod, getCurrentPlanningPeriod, getFiscalYearOfPeriod } from "../utils/formatter";
 import { asTree } from "../utils/reportingTree";
-import { DASH, headCellSx, lakhs, noteSx, numCellSx, numHeadSx, percent } from "../utils/targetVsActuals";
+import { DASH, lakhs, noteSx, numCellSx, percent } from "../utils/targetVsActuals";
 
 // Target vs Actuals, Year view (Annual Target Planning D31, D66, D78–D80):
 // running totals from the year's first counted quarter. No Expected, Likely
@@ -23,32 +23,29 @@ const dimSx = { color: "text.disabled" } as const;
 
 function PersonYearDetail({ person }: { person: TargetVsActualYearPerson }) {
   return (
-    <Table size="small">
-      <TableHead>
-        <TableRow>
-          <TableCell sx={headCellSx}>By end of</TableCell>
-          <TableCell sx={numHeadSx}>Target so far</TableCell>
-          <TableCell sx={numHeadSx}>Rep Plan so far</TableCell>
-          <TableCell sx={numHeadSx}>Won so far</TableCell>
-        </TableRow>
-      </TableHead>
-      <TableBody>
-        {person.quarters.map((q) => {
-          const upcoming = q.quarter_state === "FUTURE";
-          return (
-            <TableRow key={q.planning_period} sx={upcoming ? { "& td": dimSx } : undefined}>
-              <TableCell>
-                {formatPlanningPeriod(q.planning_period)}
-                {UPCOMING_LABEL[q.quarter_state] && <Box component="span" sx={{ ...noteSx, ml: 1 }}>{UPCOMING_LABEL[q.quarter_state]}</Box>}
-              </TableCell>
-              <TableCell sx={numCellSx}>{lakhs(q.target_so_far_lakhs)}</TableCell>
-              <TableCell sx={numCellSx}>{lakhs(q.planned_so_far_lakhs)}</TableCell>
-              <TableCell sx={numCellSx}>{lakhs(q.won_so_far_lakhs)}</TableCell>
-            </TableRow>
-          );
-        })}
-      </TableBody>
-    </Table>
+    <TableOrCards
+      columns={[
+        { label: "By end of" },
+        { label: "Target so far", align: "right" },
+        { label: "Rep Plan so far", align: "right" },
+        { label: "Won so far", align: "right" },
+      ]}
+    >
+      {person.quarters.map((q) => {
+        const cellSx = q.quarter_state === "FUTURE" ? { ...numCellSx, ...dimSx } : numCellSx;
+        return (
+          <TocRow key={q.planning_period}>
+            <TocCell title sx={q.quarter_state === "FUTURE" ? dimSx : undefined}>
+              {formatPlanningPeriod(q.planning_period)}
+              {UPCOMING_LABEL[q.quarter_state] && <Box component="span" sx={{ ...noteSx, ml: 1 }}>{UPCOMING_LABEL[q.quarter_state]}</Box>}
+            </TocCell>
+            <TocCell label="Target so far" align="right" sx={cellSx}>{lakhs(q.target_so_far_lakhs)}</TocCell>
+            <TocCell label="Rep Plan so far" align="right" sx={cellSx}>{lakhs(q.planned_so_far_lakhs)}</TocCell>
+            <TocCell label="Won so far" align="right" sx={cellSx}>{lakhs(q.won_so_far_lakhs)}</TocCell>
+          </TocRow>
+        );
+      })}
+    </TableOrCards>
   );
 }
 
@@ -81,7 +78,7 @@ export default function TargetVsActualsYear({
         {data.roster_count !== null && data.not_submitted_count !== null && data.roster_count > 0 && (
           <>
             {" · "}
-            <Box component="span" sx={data.not_submitted_count > 0 ? { color: "#b45309", fontWeight: 700 } : undefined}>
+            <Box component="span" sx={data.not_submitted_count > 0 ? { color: "amber.700", fontWeight: 700 } : undefined}>
               {data.not_submitted_count} of {data.roster_count} haven't submitted a plan this quarter
             </Box>
           </>
@@ -102,139 +99,88 @@ export default function TargetVsActualsYear({
 
       {data.quarters.length > 0 && (
         <Box sx={{ overflowX: "auto" }}>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell sx={headCellSx}>{quarterRowLabel}, quarter by quarter</TableCell>
-                <TableCell sx={numHeadSx}>Target</TableCell>
-                <TableCell sx={numHeadSx}>Won (paid)</TableCell>
-                <TableCell sx={numHeadSx}>Target so far</TableCell>
-                <TableCell sx={numHeadSx}>Won so far</TableCell>
-                <TableCell sx={numHeadSx}>Won % of target so far</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {data.quarters.map((q) => {
-                const label = (
-                  <>
-                    {formatPlanningPeriod(q.planning_period)}
-                    {UPCOMING_LABEL[q.quarter_state] && (
-                      <Box component="span" sx={{ ...noteSx, ml: 1, whiteSpace: "nowrap" }}>{UPCOMING_LABEL[q.quarter_state]}</Box>
-                    )}
-                  </>
-                );
-                if (!q.counted) {
-                  return (
-                    <TableRow key={q.planning_period} sx={{ "& td": dimSx }}>
-                      <TableCell sx={{ whiteSpace: "nowrap" }}>{label}</TableCell>
-                      <TableCell colSpan={5} sx={{ fontSize: "0.75rem" }}>No target that quarter, so not counted</TableCell>
-                    </TableRow>
-                  );
-                }
-                const upcoming = q.quarter_state === "FUTURE";
+          <TableOrCards
+            columns={[
+              { label: `${quarterRowLabel}, quarter by quarter` },
+              { label: "Target", align: "right" },
+              { label: "Won (paid)", align: "right" },
+              { label: "Target so far", align: "right" },
+              { label: "Won so far", align: "right" },
+              { label: "Won % of target so far", align: "right" },
+            ]}
+          >
+            {data.quarters.map((q) => {
+              const label = (
+                <>
+                  {formatPlanningPeriod(q.planning_period)}
+                  {UPCOMING_LABEL[q.quarter_state] && (
+                    <Box component="span" sx={{ ...noteSx, ml: 1, whiteSpace: "nowrap" }}>{UPCOMING_LABEL[q.quarter_state]}</Box>
+                  )}
+                </>
+              );
+              if (!q.counted) {
                 return (
-                  <TableRow key={q.planning_period} sx={upcoming ? { "& td": dimSx } : undefined}>
-                    <TableCell sx={{ whiteSpace: "nowrap" }}>{label}</TableCell>
-                    <TableCell sx={numCellSx}>{q.target_lakhs === null ? <Box component="span" sx={noteSx}>Not set</Box> : lakhs(q.target_lakhs)}</TableCell>
-                    <TableCell sx={numCellSx}>{lakhs(q.won_lakhs)}</TableCell>
-                    <TableCell sx={numCellSx}>{lakhs(q.target_so_far_lakhs)}</TableCell>
-                    <TableCell sx={numCellSx}>{lakhs(q.won_so_far_lakhs)}</TableCell>
-                    <TableCell sx={numCellSx}>{percent(q.percent_of_target_so_far)}</TableCell>
-                  </TableRow>
+                  <TocRow key={q.planning_period}>
+                    <TocCell title sx={{ ...dimSx, whiteSpace: "nowrap" }}>{label}</TocCell>
+                    <TocCell colSpan={5} sx={{ ...dimSx, typography: "caption" }}>No target that quarter, so not counted</TocCell>
+                  </TocRow>
                 );
-              })}
-            </TableBody>
-          </Table>
+              }
+              const rowSx = q.quarter_state === "FUTURE" ? dimSx : undefined;
+              const cellSx = { ...numCellSx, ...rowSx };
+              return (
+                <TocRow key={q.planning_period}>
+                  <TocCell title sx={{ ...rowSx, whiteSpace: "nowrap" }}>{label}</TocCell>
+                  <TocCell label="Target" align="right" sx={cellSx}>
+                    {q.target_lakhs === null ? <Box component="span" sx={noteSx}>Not set</Box> : lakhs(q.target_lakhs)}
+                  </TocCell>
+                  <TocCell label="Won (paid)" align="right" sx={cellSx}>{lakhs(q.won_lakhs)}</TocCell>
+                  <TocCell label="Target so far" align="right" sx={cellSx}>{lakhs(q.target_so_far_lakhs)}</TocCell>
+                  <TocCell label="Won so far" align="right" sx={cellSx}>{lakhs(q.won_so_far_lakhs)}</TocCell>
+                  <TocCell label="Won % of target so far" align="right" sx={cellSx}>{percent(q.percent_of_target_so_far)}</TocCell>
+                </TocRow>
+              );
+            })}
+          </TableOrCards>
         </Box>
       )}
 
-      {/* On a phone each person is a stacked block, as in the Quarter view. */}
-      <Box sx={{ display: { xs: "block", sm: "none" } }}>
-        {tree.map(({ person: p, depth, managerName }) => {
-          const open = expanded.has(p.user_id);
-          const figures: [string, string][] = [
-            ["Year's target", lakhs(p.target_lakhs)],
-            ["Plan for year", lakhs(p.planned_lakhs)],
-            ["PO received so far", lakhs(p.po_received_lakhs)],
-            ["Won (paid) so far", lakhs(p.won_lakhs)],
-            ["Still to win", lakhs(p.still_to_win_lakhs)],
-          ];
-          return (
-            <Box key={p.user_id} sx={{ py: 1, borderBottom: 1, borderColor: "divider", ml: depth * 2, ...(depth > 0 && { pl: 1, borderLeft: 2, borderLeftColor: "divider" }) }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                <IconButton size="small" onClick={() => toggle(p.user_id)} aria-expanded={open} aria-label={open ? "Hide details" : "Show details"}>
-                  {open ? <KeyboardArrowDownIcon fontSize="small" /> : <KeyboardArrowRightIcon fontSize="small" />}
-                </IconButton>
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Box sx={{ fontWeight: 700 }}>{p.display_name}</Box>
-                  {managerName && <Box sx={noteSx}>reports to {managerName}</Box>}
-                </Box>
-              </Box>
-              <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", columnGap: 2, rowGap: 0.25, pl: 5, pt: 0.5 }}>
-                {figures.map(([label, value]) => (
-                  <Box key={label} sx={{ display: "flex", justifyContent: "space-between", gap: 1, fontSize: "0.8125rem" }}>
-                    <Box component="span" sx={{ color: "text.secondary" }}>{label}</Box>
-                    <Box component="span" sx={{ fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>{value}</Box>
-                  </Box>
-                ))}
-              </Box>
-              {open && (
-                <Box sx={{ pl: 1, py: 1, overflowX: "auto" }}>
-                  <PersonYearDetail person={p} />
-                </Box>
-              )}
-            </Box>
-          );
-        })}
-      </Box>
-
-      <Box sx={{ overflowX: "auto", display: { xs: "none", sm: "block" } }}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ width: 40 }} />
-              <TableCell sx={headCellSx}>Person</TableCell>
-              <TableCell sx={numHeadSx}>Year's target</TableCell>
-              <TableCell sx={numHeadSx}>Plan for year</TableCell>
-              <TableCell sx={numHeadSx}>PO received so far</TableCell>
-              <TableCell sx={numHeadSx}>Won (paid) so far</TableCell>
-              <TableCell sx={numHeadSx}>Still to win</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {tree.map(({ person: p, depth, managerName }) => {
-              const open = expanded.has(p.user_id);
-              return (
-                <Fragment key={p.user_id}>
-                  <TableRow hover>
-                    <TableCell>
-                      <IconButton size="small" onClick={() => toggle(p.user_id)} aria-expanded={open} aria-label={open ? "Hide details" : "Show details"}>
-                        {open ? <KeyboardArrowDownIcon fontSize="small" /> : <KeyboardArrowRightIcon fontSize="small" />}
-                      </IconButton>
-                    </TableCell>
-                    <TableCell sx={{ pl: 2 + depth * 3 }}>
-                      {p.display_name}
-                      {managerName && <Box sx={noteSx}>reports to {managerName}</Box>}
-                    </TableCell>
-                    <TableCell sx={numCellSx}>{lakhs(p.target_lakhs)}</TableCell>
-                    <TableCell sx={numCellSx}>{lakhs(p.planned_lakhs)}</TableCell>
-                    <TableCell sx={numCellSx}>{lakhs(p.po_received_lakhs)}</TableCell>
-                    <TableCell sx={numCellSx}>{lakhs(p.won_lakhs)}</TableCell>
-                    <TableCell sx={numCellSx}>{p.still_to_win_lakhs === null ? DASH : lakhs(p.still_to_win_lakhs)}</TableCell>
-                  </TableRow>
-                  {open && (
-                    <TableRow>
-                      <TableCell />
-                      <TableCell colSpan={6}>
-                        <PersonYearDetail person={p} />
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </Fragment>
-              );
-            })}
-          </TableBody>
-        </Table>
+      {/* One card per person on a phone, pushed in under their manager;
+          the chevron opens their quarters inside it. */}
+      <Box sx={{ overflowX: "auto" }}>
+        <TableOrCards
+          columns={[
+            { toggle: true },
+            { label: "Person" },
+            { label: "Year's target", align: "right" },
+            { label: "Plan for year", align: "right" },
+            { label: "PO received so far", align: "right" },
+            { label: "Won (paid) so far", align: "right" },
+            { label: "Still to win", align: "right" },
+          ]}
+        >
+          {tree.map(({ person: p, depth, managerName }) => {
+            const open = expanded.has(p.user_id);
+            return (
+              <TocRow key={p.user_id} indent={depth} detail={open && <PersonYearDetail person={p} />}>
+                <TocCell toggle>
+                  <IconButton size="small" onClick={() => toggle(p.user_id)} aria-expanded={open} aria-label={open ? "Hide details" : "Show details"}>
+                    {open ? <KeyboardArrowDownIcon fontSize="small" /> : <KeyboardArrowRightIcon fontSize="small" />}
+                  </IconButton>
+                </TocCell>
+                <TocCell title>
+                  {p.display_name}
+                  {managerName && <Box sx={{ ...noteSx, fontWeight: 400 }}>reports to {managerName}</Box>}
+                </TocCell>
+                <TocCell label="Year's target" align="right" sx={numCellSx}>{lakhs(p.target_lakhs)}</TocCell>
+                <TocCell label="Plan for year" align="right" sx={numCellSx}>{lakhs(p.planned_lakhs)}</TocCell>
+                <TocCell label="PO received so far" align="right" sx={numCellSx}>{lakhs(p.po_received_lakhs)}</TocCell>
+                <TocCell label="Won (paid) so far" align="right" sx={numCellSx}>{lakhs(p.won_lakhs)}</TocCell>
+                <TocCell label="Still to win" align="right" sx={numCellSx}>{p.still_to_win_lakhs === null ? DASH : lakhs(p.still_to_win_lakhs)}</TocCell>
+              </TocRow>
+            );
+          })}
+        </TableOrCards>
       </Box>
       <NoPoDateNote count={data.no_po_date_count} />
     </Box>

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Box, MenuItem, TextField } from "@mui/material";
 import dayjs from "dayjs";
-import { LoadingOrEmpty, MiniBar, StatTile, ZoneTreeNote } from "../components/ReportingUI";
+import { LoadingOrEmpty, MiniBar, SectionCard, StatTile, ZoneTreeNote } from "../components/ReportingUI";
 import { getSalesHeadline, getSalesSummary } from "../services/reporting";
 import { listStatuses } from "../services/masterData";
 import type { ReportingFilters, SalesGroupBy } from "../types/reporting";
@@ -63,7 +63,7 @@ export default function SalesReportScreen({
   });
 
   // Report Drill-down (Feature 11.2): every drill from this report lands
-  // on Won deals only, matching what the report itself counts.
+  // on Won Opportunities only, matching what the report itself counts.
   const { data: statuses = [] } = useQuery({
     queryKey: ["statuses"],
     queryFn: async () => (await listStatuses()) as { id: string; status_code: string }[],
@@ -71,7 +71,7 @@ export default function SalesReportScreen({
   });
   const wonStatusId = statuses.find((s) => s.status_code === "WON")?.id;
   // Every drill carries the selected period too (closed_at window), so the
-  // drilled list is the same Won deals the bar counted -- not all-time.
+  // drilled list is the same Won Opportunities the bar counted -- not all-time.
   const drillBase = { statusId: wonStatusId, closedFrom: filters.period_start, closedTo: filters.period_end };
   const periodLabel = PERIOD_OPTIONS.find((o) => o.value === period)?.label;
   const drillLabel = (name: string) => (period === "all" ? `${name}, Won` : `${name}, Won, ${periodLabel}`);
@@ -94,37 +94,36 @@ export default function SalesReportScreen({
         <StatTile
           label="Revenue Won"
           value={headline ? formatLakhs(parseFloat(headline.revenue_lakhs)) : "—"}
-          sublabel={headline ? `${headline.won_count} deals` : undefined}
+          sublabel={headline ? `${headline.won_count} ${headline.won_count === 1 ? "Opportunity" : "Opportunities"}` : undefined}
         />
-        <StatTile label="Deals Won" value={headline ? String(headline.won_count) : "—"} />
+        <StatTile label="Opportunities Won" value={headline ? String(headline.won_count) : "—"} />
         <StatTile
           label="Win Rate"
           value={headline ? formatPercent(parseFloat(headline.win_rate)) : "—"}
           sublabel={headline ? `${headline.won_count} won, ${headline.lost_count} lost` : undefined}
         />
         <StatTile
-          label="Avg Deal Size"
+          label="Avg Opportunity Size"
           value={headline ? formatLakhs(parseFloat(headline.avg_deal_size_lakhs)) : "—"}
         />
       </Box>
 
-      <Box sx={{ bgcolor: "#fff", borderRadius: "1rem", border: "1px solid #f3f4f6", boxShadow: "0 1px 2px rgba(0,0,0,0.05)", p: 2 }}>
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
-          <Box sx={{ fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#6b7280" }}>
-            Revenue Won by {GROUP_BY_OPTIONS.find((o) => o.value === groupBy)?.label}
-          </Box>
+      <SectionCard
+        title={`Revenue Won by ${GROUP_BY_OPTIONS.find((o) => o.value === groupBy)?.label}`}
+        action={
           <TextField select size="small" value={groupBy} onChange={(e) => setGroupBy(e.target.value as SalesGroupBy)} sx={{ minWidth: 110 }}>
             {GROUP_BY_OPTIONS.map((o) => (
               <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
             ))}
           </TextField>
-        </Box>
+        }
+      >
 
         <LoadingOrEmpty
           isLoading={breakdownQuery.isLoading}
           isError={breakdownQuery.isError}
           isEmpty={rows.length === 0}
-          emptyText="No deals won in this period."
+          emptyText="No Opportunities won in this period."
           errorText="Couldn't load sales summary."
           onRetry={() => breakdownQuery.refetch()}
         />
@@ -132,7 +131,7 @@ export default function SalesReportScreen({
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
             {rows.map((row) => {
               // Same as Pipeline Report: the synthetic Trade-Ins/Returns
-              // bucket drills to every Won deal carrying a Buyback line.
+              // bucket drills to every Won Opportunity carrying a Buyback line.
               const isTradeIns = (groupBy === "product" || groupBy === "brand") && row.group_id === "trade-in";
               const filterKey: keyof Omit<DrillFilter, "label" | "statusId" | "tradeInsOnly" | "zoneExact" | "closedFrom" | "closedTo" | "expectedCount"> | null =
                 groupBy === "rep" ? "ownerId" :
@@ -162,7 +161,7 @@ export default function SalesReportScreen({
           </Box>
         )}
         {groupBy === "zone" && rows.length > 0 && <ZoneTreeNote />}
-      </Box>
+      </SectionCard>
     </Box>
   );
 }

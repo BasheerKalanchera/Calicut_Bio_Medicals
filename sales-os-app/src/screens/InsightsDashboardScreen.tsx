@@ -9,10 +9,12 @@ import { useAuth } from "../contexts/AuthContext";
 import { getActivityLevels, getOverdueActions, getPipelineSummary } from "../services/reporting";
 import type { PipelineGroupBy } from "../types/reporting";
 import { formatLakhs } from "../utils/formatter";
+import { shadows } from "../theme/shadows";
+import { statusColors } from "../theme/statusColors";
 
 // Insights-Dashboard-Implementation-Plan.md's Dashboard-vs-Reports split
 // (2026-09-11): this screen stays tiles-only -- single numbers and per-rep
-// comparisons. Stagnant Deals, Product Performance Summary, and
+// comparisons. Stagnant Opportunities, Product Performance Summary, and
 // Opportunities On Hold are each their own full report screen now (see
 // StagnantDealsReportScreen.tsx, ProductPerformanceReportScreen.tsx,
 // OpportunitiesOnHoldReportScreen.tsx), not dashboard tiles.
@@ -39,8 +41,6 @@ const TABS: { id: TabId; label: string; managerOnly: boolean }[] = [
   { id: "activity", label: "Team Activity", managerOnly: true },
   { id: "overdue", label: "Overdue Actions", managerOnly: true },
 ];
-
-const SHADOW_SM = "0 1px 2px rgba(0,0,0,0.05)";
 
 interface Props {
   // DemoApp keeps this screen mounted while hidden; used to reset to the
@@ -99,10 +99,10 @@ export default function InsightsDashboardScreen({ isActive }: Props) {
   });
 
   // Headline totals are fetched separately, always grouped by Stage --
-  // every deal has exactly one stage, so summing across these rows can
+  // every Opportunity has exactly one stage, so summing across these rows can
   // never double-count. Deliberately independent of `groupBy`/`pipelineQuery`
   // above: those exist to feed the "Pipeline by X" breakdown list, which
-  // Product doesn't share this 1:1 guarantee (a deal can carry more than one
+  // Product doesn't share this 1:1 guarantee (an Opportunity can carry more than one
   // product), so reusing its rows here would misstate the headline numbers
   // whenever "Product" is selected. Shares its cache with `pipelineQuery`
   // when Stage is the selected breakdown, no duplicate request.
@@ -159,20 +159,20 @@ export default function InsightsDashboardScreen({ isActive }: Props) {
                 onClick={() => handleTabChange(tab.id)}
                 sx={{
                   flexShrink: 0, display: "flex", alignItems: "center", gap: 0.75, px: 2, py: 1,
-                  borderRadius: "9999px", fontSize: "0.875rem", fontWeight: 700, whiteSpace: "nowrap",
+                  borderRadius: "9999px", typography: "body2", fontWeight: 700, whiteSpace: "nowrap",
                   transition: "all 0.2s", border: "1px solid", textTransform: "none",
                   ...(isActive
-                    ? { bgcolor: "primary.main", color: "#fff", borderColor: "primary.main", boxShadow: SHADOW_SM }
-                    : { bgcolor: "#fff", color: "#6b7280", borderColor: "#e5e7eb", "&:hover": { borderColor: "#93c5fd", color: "primary.main" } }),
+                    ? { bgcolor: "primary.main", color: "common.white", borderColor: "primary.main", boxShadow: shadows.sm }
+                    : { bgcolor: "background.paper", color: "gray.500", borderColor: "gray.200", "&:hover": { borderColor: "blue.300", color: "primary.main" } }),
                 }}
               >
-                {isActive && <CheckIcon sx={{ fontSize: 14, flexShrink: 0 }} />}
+                {isActive && <CheckIcon fontSize="inherit" sx={{ flexShrink: 0 }} />}
                 {tab.label}
               </Button>
             );
           })}
         </Box>
-        <Box sx={{ position: "absolute", right: 0, top: 0, height: "100%", width: 40, pointerEvents: "none", background: "linear-gradient(to left, #f9fafb, transparent)" }} />
+        <Box sx={{ position: "absolute", right: 0, top: 0, height: "100%", width: 40, pointerEvents: "none", background: (theme) => `linear-gradient(to left, ${theme.palette.background.default}, transparent)` }} />
       </Box>
 
       <Box sx={{ flex: 1, overflowY: "auto", px: 2, pb: 2, display: "flex", flexDirection: "column", gap: 1.5 }}>
@@ -181,8 +181,8 @@ export default function InsightsDashboardScreen({ isActive }: Props) {
         {activeTab === "pipeline" && (
           <>
             <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
-              <StatTile label="Active Pipeline Value" value={formatLakhs(totalValue)} sublabel={`${totalCount} active deals`} />
-              <StatTile label="Weighted Forecast" value={formatLakhs(totalWeighted)} sublabel="Active deals, win-probability adjusted" />
+              <StatTile label="Active Pipeline Value" value={formatLakhs(totalValue)} sublabel={`${totalCount} active ${totalCount === 1 ? "Opportunity" : "Opportunities"}`} />
+              <StatTile label="Weighted Forecast" value={formatLakhs(totalWeighted)} sublabel="Active Opportunities, win-probability adjusted" />
             </Box>
 
             <SectionCard
@@ -199,7 +199,7 @@ export default function InsightsDashboardScreen({ isActive }: Props) {
                 isLoading={pipelineQuery.isLoading}
                 isError={pipelineQuery.isError}
                 isEmpty={pipelineRows.length === 0}
-                emptyText={isManagerTier ? "No active pipeline." : "You don't own any active deals yet."}
+                emptyText={isManagerTier ? "No active pipeline." : "You don't own any active Opportunities yet."}
                 errorText="Couldn't load pipeline summary."
                 onRetry={() => pipelineQuery.refetch()}
               />
@@ -259,16 +259,16 @@ export default function InsightsDashboardScreen({ isActive }: Props) {
               <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
                 {overdueRows.map((row) => (
                   <Box key={row.user_id} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", py: 0.5 }}>
-                    <Box sx={{ fontSize: "0.8125rem", fontWeight: 600, color: "text.primary" }}>{row.display_name}</Box>
+                    <Box sx={{ typography: "body3", fontWeight: 600, color: "text.primary" }}>{row.display_name}</Box>
                     <Box
                       sx={{
-                        fontSize: "0.75rem",
+                        typography: "caption",
                         fontWeight: 900,
                         px: 1,
                         py: 0.25,
                         borderRadius: "0.375rem",
-                        bgcolor: row.overdue_count > 0 ? "#fdecea" : "#f3f4f6",
-                        color: row.overdue_count > 0 ? "#d03b3b" : "#9ca3af",
+                        bgcolor: row.overdue_count > 0 ? statusColors.overdue.bg : "gray.100",
+                        color: row.overdue_count > 0 ? statusColors.overdue.text : "gray.400",
                       }}
                     >
                       {row.overdue_count} overdue

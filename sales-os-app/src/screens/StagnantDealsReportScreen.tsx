@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Box, MenuItem, TextField } from "@mui/material";
 import { LoadingOrEmpty } from "../components/ReportingUI";
 import { getStagnantDeals } from "../services/reporting";
+import { statusColors } from "../theme/statusColors";
+import { shadows } from "../theme/shadows";
 
 // BR-OP-06 says 180 days, PRD says ~90 -- shipped as parameter options
 // rather than picking one (Insights-Dashboard-Implementation-Plan.md,
@@ -47,8 +49,8 @@ export default function StagnantDealsReportScreen({
           isLoading={query.isLoading}
           isError={query.isError}
           isEmpty={rows.length === 0}
-          emptyText="No deals past the threshold. Nice."
-          errorText="Couldn't load stagnant deals."
+          emptyText="No Opportunities past the threshold. Nice."
+          errorText="Couldn't load stagnant Opportunities."
           onRetry={() => query.refetch()}
         />
         {rows.length > 0 && (
@@ -60,10 +62,11 @@ export default function StagnantDealsReportScreen({
                   key={row.opportunity_id}
                   onClick={onSelectOpportunity ? () => onSelectOpportunity({ id: row.opportunity_id, name: row.opportunity_name }) : undefined}
                   sx={{
-                    bgcolor: "#fff",
+                    bgcolor: "background.paper",
                     borderRadius: "1rem",
-                    boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-                    border: "1px solid #f3f4f6",
+                    boxShadow: shadows.sm,
+                    border: 1,
+                    borderColor: "gray.100",
                     p: 2,
                     display: "flex",
                     alignItems: "center",
@@ -73,10 +76,10 @@ export default function StagnantDealsReportScreen({
                   }}
                 >
                   <Box sx={{ minWidth: 0 }}>
-                    <Box sx={{ fontSize: "0.9375rem", fontWeight: 700, color: "text.primary", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    <Box sx={{ typography: "body1", fontWeight: 700, color: "text.primary", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {row.opportunity_name}
                     </Box>
-                    <Box sx={{ fontSize: "0.75rem", color: "#6b7280", mt: 0.25 }}>
+                    <Box sx={{ typography: "caption", color: "gray.500", mt: 0.25 }}>
                       {row.account_name} · {row.owner_name} · {row.stage_name}
                       {row.last_activity_date && ` · last touched ${row.last_activity_date}`}
                     </Box>
@@ -84,13 +87,13 @@ export default function StagnantDealsReportScreen({
                   <Box
                     sx={{
                       flexShrink: 0,
-                      fontSize: "0.75rem",
+                      typography: "caption",
                       fontWeight: 900,
                       px: 1.25,
                       py: 0.5,
                       borderRadius: "0.5rem",
-                      bgcolor: critical ? "#fdecea" : "#fff8e6",
-                      color: critical ? "#d03b3b" : "#b8790f",
+                      bgcolor: critical ? statusColors.overdue.bg : statusColors.waiting.bg,
+                      color: critical ? statusColors.overdue.text : statusColors.waiting.text,
                     }}
                   >
                     {row.days_stagnant}d idle

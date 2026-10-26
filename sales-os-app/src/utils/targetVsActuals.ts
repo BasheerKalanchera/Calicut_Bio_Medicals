@@ -16,7 +16,7 @@ export function plural(n: number, one: string, many: string): string {
   return n === 1 ? one : many;
 }
 
-export const headCellSx = { fontSize: "0.6875rem", fontWeight: 900, textTransform: "uppercase", color: "#6b7280" } as const;
-export const numHeadSx = { ...headCellSx, textAlign: "right" } as const;
-export const numCellSx = { fontVariantNumeric: "tabular-nums", textAlign: "right" } as const;
-export const noteSx = { fontSize: "0.75rem", color: "text.secondary" } as const;
+// A small heading over a list that isn't a table ("Closing date passed").
+export const headCellSx = { typography: "caption2", fontWeight: 900, textTransform: "uppercase", color: "gray.500" } as const;
+export const numCellSx = { fontVariantNumeric: "tabular-nums" } as const;
+export const noteSx = { typography: "caption", color: "text.secondary" } as const;

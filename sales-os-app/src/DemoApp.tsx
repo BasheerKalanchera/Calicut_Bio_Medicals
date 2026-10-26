@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Backdrop, Box, Button, IconButton, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useAuth } from "./contexts/AuthContext";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -34,6 +35,7 @@ import TargetPlanningScreen from "./screens/TargetPlanningScreen";
 import RateHospitalsScreen from "./screens/RateHospitalsScreen";
 import BrandTargetTrackingScreen from "./screens/BrandTargetTrackingScreen";
 import type { PipelineOpportunity } from "./types/api-aliases";
+import { shadows } from "./theme/shadows";
 
 const ADMIN_ROLES = new Set(["Admin", "General Manager"]);
 const MARKETING_ROLE = "Marketing User";
@@ -68,7 +70,7 @@ const REPORTS_SECTION = {
   title: "REPORTS",
   items: [
     { id: "dailyActivity", label: "Daily Activity Report", icon: "📋" },
-    { id: "stagnantDeals", label: "Stagnant Deals", icon: "🥶" },
+    { id: "stagnantDeals", label: "Stagnant Opportunities", icon: "🥶" },
     { id: "opportunitiesOnHold", label: "Opportunities On Hold", icon: "⏸️" },
     { id: "productPerformance", label: "Product Performance", icon: "🏆" },
     { id: "pipelineReport", label: "Pipeline Report", icon: "🧭" },
@@ -116,8 +118,6 @@ const MARKETING_NAV_SECTIONS = [
     items: [{ id: "marketingLeads", label: "Marketing Leads", icon: "📥" }],
   },
 ];
-
-const SHADOW_SM = "0 1px 2px rgba(0,0,0,0.05)";
 
 export default function DemoApp() {
   const { userProfile, signOut } = useAuth();
@@ -355,7 +355,7 @@ export default function DemoApp() {
   }
 
   return (
-    <Box sx={{ height: "100dvh", display: "flex", flexDirection: "column", bgcolor: "#f3f4f6", overflow: "hidden", position: "relative" }}>
+    <Box sx={{ height: "100dvh", display: "flex", flexDirection: "column", bgcolor: "gray.100", overflow: "hidden", position: "relative" }}>
       {/* Sidebar overlay */}
       {isSidebarOpen && (
         <Backdrop open sx={{ zIndex: 200 }} onClick={() => setIsSidebarOpen(false)} />
@@ -373,7 +373,7 @@ export default function DemoApp() {
           zIndex: 210,
           overflow: "hidden",
           transition: "box-shadow 300ms ease-in-out",
-          boxShadow: isSidebarOpen ? "0 25px 50px -12px rgba(0,0,0,0.25)" : "none",
+          boxShadow: isSidebarOpen ? shadows.xxl : "none",
           pointerEvents: isSidebarOpen ? "auto" : "none",
         }}
       >
@@ -381,7 +381,7 @@ export default function DemoApp() {
           sx={{
             width: "100%",
             height: "100%",
-            bgcolor: "#fff",
+            bgcolor: "background.paper",
             transform: isSidebarOpen ? "translateX(0)" : "translateX(-100%)",
             transition: "transform 300ms ease-in-out",
             display: "flex",
@@ -389,15 +389,15 @@ export default function DemoApp() {
           }}
         >
           {/* Sidebar header */}
-          <Box sx={{ p: 2.5, borderBottom: "1px solid #f3f4f6", display: "flex", justifyContent: "space-between", alignItems: "center", bgcolor: "#1e3a8a", color: "#fff", flexShrink: 0 }}>
+          <Box sx={{ p: 2.5, borderBottom: 1, borderColor: "gray.100", display: "flex", justifyContent: "space-between", alignItems: "center", bgcolor: "blue.900", color: "common.white", flexShrink: 0 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-              <Box sx={{ width: 40, height: 40, bgcolor: "#fff", borderRadius: "0.75rem", display: "flex", alignItems: "center", justifyContent: "center", p: 0.75, boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)" }}>
+              <Box sx={{ width: 40, height: 40, bgcolor: "background.paper", borderRadius: "0.75rem", display: "flex", alignItems: "center", justifyContent: "center", p: 0.75, boxShadow: shadows.lg }}>
                 <Box component="img" src="/Cabio%20logo.jpeg" alt="Logo" sx={{ width: "100%", height: "100%", objectFit: "contain" }} />
               </Box>
-              <Typography component="h2" sx={{ fontWeight: 800, fontSize: "1.125rem", letterSpacing: "-0.025em" }}>Sales OS</Typography>
+              <Typography component="h2" sx={{ typography: "lead", fontWeight: 800, letterSpacing: "-0.025em" }}>Sales OS</Typography>
             </Box>
-            <IconButton onClick={() => setIsSidebarOpen(false)} sx={{ color: "rgba(255,255,255,0.7)", "&:hover": { color: "#fff" } }}>
-              <Box component="span" sx={{ fontSize: "1.5rem", lineHeight: 1 }}>&times;</Box>
+            <IconButton onClick={() => setIsSidebarOpen(false)} sx={{ color: (theme) => alpha(theme.palette.common.white, 0.7), "&:hover": { color: "common.white" } }}>
+              <Box component="span" sx={{ typography: "h5", lineHeight: 1 }}>&times;</Box>
             </IconButton>
           </Box>
 
@@ -433,15 +433,15 @@ export default function DemoApp() {
                       textAlign: "left",
                     }}
                   >
-                    <Typography component="h3" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em" }}>
+                    <Typography component="h3" sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.2em" }}>
                       {section.title}
                     </Typography>
                     {isCollapsible && (
                       <ExpandMoreIcon
                         aria-hidden="true"
+                        fontSize="small"
                         sx={{
-                          fontSize: "1.125rem",
-                          color: "#6b7280",
+                          color: "gray.500",
                           transform: isCollapsed ? "rotate(-90deg)" : "none",
                           transition: "transform 0.15s",
                         }}
@@ -466,16 +466,17 @@ export default function DemoApp() {
                               gap: 1.5,
                               px: 1.75,
                               py: 1,
-                              fontWeight: 700,
-                              fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                              typography: { xs: "caption", sm: "body2" },
+                              // per-width, or each width's variant brings back its normal weight
+                              fontWeight: { xs: 700, sm: 700 },
                               textTransform: "none",
                               transition: "all 0.15s",
                               ...(isActive
-                                ? { bgcolor: "#eff6ff", color: "#1d4ed8", boxShadow: SHADOW_SM }
-                                : { color: "#6b7280", "&:hover": { bgcolor: "#f9fafb" } }),
+                                ? { bgcolor: "blue.50", color: "blue.700", boxShadow: shadows.sm }
+                                : { color: "gray.500", "&:hover": { bgcolor: "gray.50" } }),
                             }}
                           >
-                            <Box component="span" sx={{ fontSize: "1.125rem" }}>{item.icon}</Box>
+                            <Box component="span" sx={{ typography: "lead" }}>{item.icon}</Box>
                             {item.label}
                           </Button>
                         );
@@ -489,15 +490,15 @@ export default function DemoApp() {
 
           {/* Profile footer */}
           {userProfile && (
-            <Box sx={{ p: 2, borderTop: "1px solid #f3f4f6", flexShrink: 0, bgcolor: "#fff" }}>
-              <Box sx={{ p: 1.5, background: "linear-gradient(135deg, #1e3a8a, #312e81)", borderRadius: "0.75rem", color: "#fff", boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)" }}>
-                <Box sx={{ fontSize: "9px", fontWeight: 900, opacity: 0.6, textTransform: "uppercase", mb: 0.25 }}>Logged in as</Box>
-                <Box sx={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 1, mb: 0.25, fontSize: { xs: "0.75rem", sm: "0.875rem" } }}>
+            <Box sx={{ p: 2, borderTop: 1, borderColor: "gray.100", flexShrink: 0, bgcolor: "background.paper" }}>
+              <Box sx={{ p: 1.5, background: (theme) => `linear-gradient(135deg, ${theme.palette.blue[900]}, ${theme.palette.indigo[900]})`, borderRadius: "0.75rem", color: "common.white", boxShadow: shadows.lg }}>
+                <Box sx={{ typography: "micro", fontWeight: 900, opacity: 0.6, textTransform: "uppercase", mb: 0.25 }}>Logged in as</Box>
+                <Box sx={{ typography: { xs: "caption", sm: "body2" }, fontWeight: { xs: 700, sm: 700 }, display: "flex", alignItems: "center", gap: 1, mb: 0.25 }}>
                   <Box
                     sx={{
                       width: 6,
                       height: 6,
-                      bgcolor: "#4ade80",
+                      bgcolor: "green.400",
                       borderRadius: "50%",
                       animation: "demoAppPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
                       "@keyframes demoAppPulse": {
@@ -508,7 +509,7 @@ export default function DemoApp() {
                   />
                   {(userProfile as any).display_name}
                 </Box>
-                <Box sx={{ fontSize: "9px", opacity: 0.85, lineHeight: "normal", borderTop: "1px solid rgba(255,255,255,0.1)", pt: 0.5, mt: 0.5 }}>
+                <Box sx={{ typography: "micro", opacity: 0.85, lineHeight: "normal", borderTop: 1, borderColor: (theme) => alpha(theme.palette.common.white, 0.1), pt: 0.5, mt: 0.5 }}>
                   <Box>
                     {(userProfile as any).role_name}
                     {/* Marketing User isn't territory-scoped (same reasoning as the
@@ -521,7 +522,7 @@ export default function DemoApp() {
                       in the create form, not scoped to their own profile's leftover
                       value -- see docs/Lead-Management-Implementation-Plan.md. */}
                   {!ADMIN_ROLES.has((userProfile as any)?.role_name) && !isMarketingUser && (
-                    <Box sx={{ fontWeight: 700, color: "#bfdbfe", textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "7px", mt: 0.25, bgcolor: "rgba(255,255,255,0.1)", px: 0.5, py: 0.25, borderRadius: "4px", width: "fit-content" }}>
+                    <Box sx={{ typography: "micro", fontWeight: 700, color: "blue.200", textTransform: "uppercase", letterSpacing: "0.05em", mt: 0.25, bgcolor: (theme) => alpha(theme.palette.common.white, 0.1), px: 0.5, py: 0.25, borderRadius: "4px", width: "fit-content" }}>
                       SBU: {(userProfile as any).sbu?.name}
                     </Box>
                   )}
@@ -533,18 +534,18 @@ export default function DemoApp() {
       </Box>
 
       {/* Top header */}
-      <Box sx={{ bgcolor: "#fff", boxShadow: SHADOW_SM, borderBottom: "1px solid #f3f4f6", zIndex: 100 }}>
+      <Box sx={{ bgcolor: "background.paper", boxShadow: shadows.sm, borderBottom: 1, borderColor: "gray.100", zIndex: 100 }}>
         <Box sx={{ maxWidth: "56rem", mx: "auto", width: "100%", px: 2, py: 1.5, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1, sm: 1.5 } }}>
             <IconButton
               onClick={() => setIsSidebarOpen(true)}
-              sx={{ width: 40, height: 40, flexShrink: 0, borderRadius: "0.75rem", bgcolor: "#f9fafb", color: "#4b5563", "&:hover": { bgcolor: "#f3f4f6" }, boxShadow: SHADOW_SM }}
+              sx={{ width: 40, height: 40, flexShrink: 0, borderRadius: "0.75rem", bgcolor: "gray.50", color: "gray.600", "&:hover": { bgcolor: "gray.100" }, boxShadow: shadows.sm }}
             >
-              <Box component="span" sx={{ fontSize: "1.25rem" }}>☰</Box>
+              <Box component="span" sx={{ typography: "h6" }}>☰</Box>
             </IconButton>
             <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1, sm: 1.5 } }}>
               <Box component="img" src="/Cabio%20logo.jpeg" alt="Logo" sx={{ height: 40, flexShrink: 0, objectFit: "contain" }} />
-              <Typography component="h1" sx={{ fontSize: "1.125rem", fontWeight: 900, color: "#1f2937", letterSpacing: "-0.025em", display: { xs: "none", sm: "block" } }}>
+              <Typography component="h1" sx={{ typography: "lead", fontWeight: 900, color: "gray.800", letterSpacing: "-0.025em", display: { xs: "none", sm: "block" } }}>
                 Sales OS
               </Typography>
             </Box>
@@ -560,7 +561,7 @@ export default function DemoApp() {
               <Button
                 variant="contained"
                 onClick={() => setShowQuickLead(true)}
-                sx={{ px: { xs: 1, sm: 1.5 }, py: 1, fontSize: "0.75rem", fontWeight: 900, letterSpacing: "0.05em", whiteSpace: "nowrap", bgcolor: "#059669", "&:hover": { bgcolor: "#047857" } }}
+                sx={{ px: { xs: 1, sm: 1.5 }, py: 1, typography: "caption", fontWeight: 900, letterSpacing: "0.05em", whiteSpace: "nowrap", bgcolor: "emerald.600", "&:hover": { bgcolor: "emerald.700" } }}
               >
                 + Lead
               </Button>
@@ -570,7 +571,7 @@ export default function DemoApp() {
                 variant="contained"
                 color="primary"
                 onClick={() => setShowLogActivity(true)}
-                sx={{ px: { xs: 1, sm: 1.5 }, py: 1, fontSize: "0.75rem", fontWeight: 900, letterSpacing: "0.05em", whiteSpace: "nowrap" }}
+                sx={{ px: { xs: 1, sm: 1.5 }, py: 1, typography: "caption", fontWeight: 900, letterSpacing: "0.05em", whiteSpace: "nowrap" }}
               >
                 + Log
               </Button>
@@ -596,24 +597,24 @@ export default function DemoApp() {
               <IconButton
                 onClick={() => setShowHelp(true)}
                 aria-label="Help"
-                sx={{ width: 40, height: 40, flexShrink: 0, borderRadius: "0.75rem", bgcolor: "#f9fafb", color: "#4b5563", "&:hover": { bgcolor: "#f3f4f6" }, boxShadow: SHADOW_SM }}
+                sx={{ width: 40, height: 40, flexShrink: 0, borderRadius: "0.75rem", bgcolor: "gray.50", color: "gray.600", "&:hover": { bgcolor: "gray.100" }, boxShadow: shadows.sm }}
               >
-                <Box component="span" sx={{ fontSize: "1rem", fontWeight: 900 }}>?</Box>
+                <Box component="span" sx={{ typography: "body1", fontWeight: 900 }}>?</Box>
               </IconButton>
             )}
             <Button
               onClick={() => signOut()}
               sx={{
-                bgcolor: "#f3f4f6",
-                color: "#4b5563",
-                "&:hover": { bgcolor: "#fef2f2", color: "#dc2626" },
+                bgcolor: "gray.100",
+                color: "gray.600",
+                "&:hover": { bgcolor: "red.50", color: "red.600" },
                 fontWeight: 900,
                 px: 1.25,
                 py: 1,
                 minWidth: 0,
               }}
             >
-              <Box component="span" sx={{ display: { xs: "none", sm: "inline" }, fontSize: "0.75rem", letterSpacing: "0.1em", textTransform: "uppercase" }}>Sign Out</Box>
+              <Box component="span" sx={{ display: { xs: "none", sm: "inline" }, typography: "caption", fontWeight: "inherit", letterSpacing: "0.1em", textTransform: "uppercase" }}>Sign Out</Box>
               <Box
                 component="svg"
                 sx={{ display: { xs: "block", sm: "none" }, width: 16, height: 16 }}
@@ -648,12 +649,12 @@ export default function DemoApp() {
           <Box sx={{ flex: 1, overflow: "hidden", display: view === "customers" ? "flex" : "none", flexDirection: "column" }}>
             {!projectDetailMode && (
               <>
-                <Box sx={{ px: 2, py: 1.5, bgcolor: "#fff", borderBottom: "1px solid #f3f4f6", flexShrink: 0 }}>
-                  <Typography component="h2" sx={{ fontWeight: 800, fontSize: "1.5rem", color: "#1f2937", letterSpacing: "-0.025em" }}>
+                <Box sx={{ px: 2, py: 1.5, bgcolor: "background.paper", borderBottom: 1, borderColor: "gray.100", flexShrink: 0 }}>
+                  <Typography component="h2" sx={{ typography: "h5", fontWeight: 800, color: "gray.800", letterSpacing: "-0.025em" }}>
                     Account Management
                   </Typography>
                 </Box>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1, px: 2, py: 1, bgcolor: "#fff", borderBottom: "1px solid #f3f4f6", flexShrink: 0 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, px: 2, py: 1, bgcolor: "background.paper", borderBottom: 1, borderColor: "gray.100", flexShrink: 0 }}>
                   <Box sx={{ display: "flex", gap: 1, flex: 1 }}>
                     {[
                       { id: "customers", label: "Customers" },
@@ -665,13 +666,13 @@ export default function DemoApp() {
                         sx={{
                           px: 2,
                           py: 1,
-                          fontSize: "0.75rem",
+                          typography: "caption",
                           fontWeight: 900,
                           letterSpacing: "0.05em",
                           borderRadius: "0.5rem",
                           ...(accountSubTab === tab.id
-                            ? { bgcolor: "primary.main", color: "#fff", "&:hover": { bgcolor: "primary.main" } }
-                            : { color: "#9ca3af", "&:hover": { color: "#4b5563", bgcolor: "#f3f4f6" } }),
+                            ? { bgcolor: "primary.main", color: "common.white", "&:hover": { bgcolor: "primary.main" } }
+                            : { color: "gray.400", "&:hover": { color: "gray.600", bgcolor: "gray.100" } }),
                         }}
                       >
                         {tab.label}
@@ -686,7 +687,7 @@ export default function DemoApp() {
                         ? customerCreateRef.current?.()
                         : projectCreateRef.current?.()
                     }
-                    sx={{ px: 2, py: 1, fontSize: "0.75rem", fontWeight: 900, letterSpacing: "0.05em", flexShrink: 0 }}
+                    sx={{ px: 2, py: 1, typography: "caption", fontWeight: 900, letterSpacing: "0.05em", flexShrink: 0 }}
                   >
                     + Add
                   </Button>
@@ -731,15 +732,15 @@ export default function DemoApp() {
 
           {/* Opportunity Pipeline */}
           <Box sx={{ flex: 1, overflow: "hidden", display: view === "opportunities" ? "flex" : "none", flexDirection: "column" }}>
-            <Box sx={{ px: 2, py: 1.5, bgcolor: "#fff", borderBottom: "1px solid #f3f4f6", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
-              <Typography component="h2" sx={{ fontWeight: 800, fontSize: "1.5rem", color: "#1f2937", letterSpacing: "-0.025em" }}>
+            <Box sx={{ px: 2, py: 1.5, bgcolor: "background.paper", borderBottom: 1, borderColor: "gray.100", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
+              <Typography component="h2" sx={{ typography: "h5", fontWeight: 800, color: "gray.800", letterSpacing: "-0.025em" }}>
                 Pipeline
               </Typography>
               <ToggleButtonGroup
                 value={pipelineViewMode}
                 exclusive
                 onChange={(_, value) => { if (value !== null) setPipelineViewMode(value); }}
-                sx={{ border: "1px solid #e5e7eb", borderRadius: "0.75rem", overflow: "hidden", flexShrink: 0 }}
+                sx={{ border: 1, borderColor: "gray.200", borderRadius: "0.75rem", overflow: "hidden", flexShrink: 0 }}
               >
                 {(["kanban", "list"] as const).map((mode) => (
                   <ToggleButton
@@ -747,10 +748,10 @@ export default function DemoApp() {
                     value={mode}
                     disableRipple
                     sx={{
-                      px: 1.5, py: 0.75, fontSize: "10px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
-                      border: "none", color: "#9ca3af", bgcolor: "#fff",
+                      px: 1.5, py: 0.75, typography: "tiny", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
+                      border: "none", color: "gray.400", bgcolor: "background.paper",
                       "&:hover": { bgcolor: "background.default" },
-                      "&.Mui-selected": { bgcolor: "primary.main", color: "#fff" },
+                      "&.Mui-selected": { bgcolor: "primary.main", color: "common.white" },
                       "&.Mui-selected:hover": { bgcolor: "primary.main" },
                     }}
                   >
@@ -803,8 +804,8 @@ export default function DemoApp() {
           {/* Rate Hospitals — always mounted, hidden when not active; nav entry is Admin/GM-gated.
               active gates its query so it doesn't fetch in the background. */}
           <Box sx={{ flex: 1, overflow: "hidden", display: view === "rateHospitals" ? "flex" : "none", flexDirection: "column" }}>
-            <Box sx={{ px: 2, py: 1.5, bgcolor: "#fff", borderBottom: "1px solid #f3f4f6", flexShrink: 0 }}>
-              <Typography component="h2" sx={{ fontWeight: 800, fontSize: "1.5rem", color: "#1f2937", letterSpacing: "-0.025em" }}>
+            <Box sx={{ px: 2, py: 1.5, bgcolor: "background.paper", borderBottom: 1, borderColor: "gray.100", flexShrink: 0 }}>
+              <Typography component="h2" sx={{ typography: "h5", fontWeight: 800, color: "gray.800", letterSpacing: "-0.025em" }}>
                 Rate Hospitals
               </Typography>
             </Box>
@@ -830,8 +831,8 @@ export default function DemoApp() {
 
           {/* Next Actions — always mounted, hidden when not active */}
           <Box sx={{ flex: 1, overflow: "hidden", display: view === "nextActions" ? "flex" : "none", flexDirection: "column" }}>
-            <Box sx={{ px: 2, py: 1.5, bgcolor: "#fff", borderBottom: "1px solid #f3f4f6", flexShrink: 0 }}>
-              <Typography component="h2" sx={{ fontWeight: 800, fontSize: "1.5rem", color: "#1f2937", letterSpacing: "-0.025em" }}>
+            <Box sx={{ px: 2, py: 1.5, bgcolor: "background.paper", borderBottom: 1, borderColor: "gray.100", flexShrink: 0 }}>
+              <Typography component="h2" sx={{ typography: "h5", fontWeight: 800, color: "gray.800", letterSpacing: "-0.025em" }}>
                 Next Actions
               </Typography>
             </Box>
@@ -845,8 +846,8 @@ export default function DemoApp() {
           {/* Daily Activity Report — always mounted, hidden when not active; scoped per
               user's own tier (self/team/SBU/everyone), not admin-gated */}
           <Box sx={{ flex: 1, overflow: "hidden", display: view === "dailyActivity" ? "flex" : "none", flexDirection: "column" }}>
-            <Box sx={{ px: 2, py: 1.5, bgcolor: "#fff", borderBottom: "1px solid #f3f4f6", flexShrink: 0 }}>
-              <Typography component="h2" sx={{ fontWeight: 800, fontSize: "1.5rem", color: "#1f2937", letterSpacing: "-0.025em" }}>
+            <Box sx={{ px: 2, py: 1.5, bgcolor: "background.paper", borderBottom: 1, borderColor: "gray.100", flexShrink: 0 }}>
+              <Typography component="h2" sx={{ typography: "h5", fontWeight: 800, color: "gray.800", letterSpacing: "-0.025em" }}>
                 Daily Activity Report
               </Typography>
             </Box>
@@ -857,8 +858,8 @@ export default function DemoApp() {
               inside the screen itself, no admin gate on visibility (see
               docs/Insights-Dashboard-Implementation-Plan.md) */}
           <Box sx={{ flex: 1, overflow: "hidden", display: view === "insights" ? "flex" : "none", flexDirection: "column" }}>
-            <Box sx={{ px: 2, py: 1.5, bgcolor: "#fff", borderBottom: "1px solid #f3f4f6", flexShrink: 0 }}>
-              <Typography component="h2" sx={{ fontWeight: 800, fontSize: "1.5rem", color: "#1f2937", letterSpacing: "-0.025em" }}>
+            <Box sx={{ px: 2, py: 1.5, bgcolor: "background.paper", borderBottom: 1, borderColor: "gray.100", flexShrink: 0 }}>
+              <Typography component="h2" sx={{ typography: "h5", fontWeight: 800, color: "gray.800", letterSpacing: "-0.025em" }}>
                 Insights Dashboard
               </Typography>
             </Box>
@@ -868,17 +869,17 @@ export default function DemoApp() {
           {/* Reports — always mounted, hidden when not active; no admin
               gate on visibility, same reasoning as Insights above */}
           <Box sx={{ flex: 1, overflow: "hidden", display: view === "stagnantDeals" ? "flex" : "none", flexDirection: "column" }}>
-            <Box sx={{ px: 2, py: 1.5, bgcolor: "#fff", borderBottom: "1px solid #f3f4f6", flexShrink: 0 }}>
-              <Typography component="h2" sx={{ fontWeight: 800, fontSize: "1.5rem", color: "#1f2937", letterSpacing: "-0.025em" }}>
-                Stagnant Deals
+            <Box sx={{ px: 2, py: 1.5, bgcolor: "background.paper", borderBottom: 1, borderColor: "gray.100", flexShrink: 0 }}>
+              <Typography component="h2" sx={{ typography: "h5", fontWeight: 800, color: "gray.800", letterSpacing: "-0.025em" }}>
+                Stagnant Opportunities
               </Typography>
             </Box>
             <StagnantDealsReportScreen onSelectOpportunity={handleSelectOpportunity} />
           </Box>
 
           <Box sx={{ flex: 1, overflow: "hidden", display: view === "opportunitiesOnHold" ? "flex" : "none", flexDirection: "column" }}>
-            <Box sx={{ px: 2, py: 1.5, bgcolor: "#fff", borderBottom: "1px solid #f3f4f6", flexShrink: 0 }}>
-              <Typography component="h2" sx={{ fontWeight: 800, fontSize: "1.5rem", color: "#1f2937", letterSpacing: "-0.025em" }}>
+            <Box sx={{ px: 2, py: 1.5, bgcolor: "background.paper", borderBottom: 1, borderColor: "gray.100", flexShrink: 0 }}>
+              <Typography component="h2" sx={{ typography: "h5", fontWeight: 800, color: "gray.800", letterSpacing: "-0.025em" }}>
                 Opportunities On Hold
               </Typography>
             </Box>
@@ -886,8 +887,8 @@ export default function DemoApp() {
           </Box>
 
           <Box sx={{ flex: 1, overflow: "hidden", display: view === "productPerformance" ? "flex" : "none", flexDirection: "column" }}>
-            <Box sx={{ px: 2, py: 1.5, bgcolor: "#fff", borderBottom: "1px solid #f3f4f6", flexShrink: 0 }}>
-              <Typography component="h2" sx={{ fontWeight: 800, fontSize: "1.5rem", color: "#1f2937", letterSpacing: "-0.025em" }}>
+            <Box sx={{ px: 2, py: 1.5, bgcolor: "background.paper", borderBottom: 1, borderColor: "gray.100", flexShrink: 0 }}>
+              <Typography component="h2" sx={{ typography: "h5", fontWeight: 800, color: "gray.800", letterSpacing: "-0.025em" }}>
                 Product Performance
               </Typography>
             </Box>
@@ -895,8 +896,8 @@ export default function DemoApp() {
           </Box>
 
           <Box sx={{ flex: 1, overflow: "hidden", display: view === "pipelineReport" ? "flex" : "none", flexDirection: "column" }}>
-            <Box sx={{ px: 2, py: 1.5, bgcolor: "#fff", borderBottom: "1px solid #f3f4f6", flexShrink: 0 }}>
-              <Typography component="h2" sx={{ fontWeight: 800, fontSize: "1.5rem", color: "#1f2937", letterSpacing: "-0.025em" }}>
+            <Box sx={{ px: 2, py: 1.5, bgcolor: "background.paper", borderBottom: 1, borderColor: "gray.100", flexShrink: 0 }}>
+              <Typography component="h2" sx={{ typography: "h5", fontWeight: 800, color: "gray.800", letterSpacing: "-0.025em" }}>
                 Pipeline Report
               </Typography>
             </Box>
@@ -904,8 +905,8 @@ export default function DemoApp() {
           </Box>
 
           <Box sx={{ flex: 1, overflow: "hidden", display: view === "salesReport" ? "flex" : "none", flexDirection: "column" }}>
-            <Box sx={{ px: 2, py: 1.5, bgcolor: "#fff", borderBottom: "1px solid #f3f4f6", flexShrink: 0 }}>
-              <Typography component="h2" sx={{ fontWeight: 800, fontSize: "1.5rem", color: "#1f2937", letterSpacing: "-0.025em" }}>
+            <Box sx={{ px: 2, py: 1.5, bgcolor: "background.paper", borderBottom: 1, borderColor: "gray.100", flexShrink: 0 }}>
+              <Typography component="h2" sx={{ typography: "h5", fontWeight: 800, color: "gray.800", letterSpacing: "-0.025em" }}>
                 Sales Report
               </Typography>
             </Box>
@@ -913,8 +914,8 @@ export default function DemoApp() {
           </Box>
 
           <Box sx={{ flex: 1, overflow: "hidden", display: view === "targetPlanning" ? "flex" : "none", flexDirection: "column" }}>
-            <Box sx={{ px: 2, py: 1.5, bgcolor: "#fff", borderBottom: "1px solid #f3f4f6", flexShrink: 0 }}>
-              <Typography component="h2" sx={{ fontWeight: 800, fontSize: "1.5rem", color: "#1f2937", letterSpacing: "-0.025em" }}>
+            <Box sx={{ px: 2, py: 1.5, bgcolor: "background.paper", borderBottom: 1, borderColor: "gray.100", flexShrink: 0 }}>
+              <Typography component="h2" sx={{ typography: "h5", fontWeight: 800, color: "gray.800", letterSpacing: "-0.025em" }}>
                 Target & Coverage Planning
               </Typography>
             </Box>
@@ -924,8 +925,8 @@ export default function DemoApp() {
           </Box>
 
           <Box sx={{ flex: 1, overflow: "hidden", display: view === "brandTargetTracking" ? "flex" : "none", flexDirection: "column" }}>
-            <Box sx={{ px: 2, py: 1.5, bgcolor: "#fff", borderBottom: "1px solid #f3f4f6", flexShrink: 0 }}>
-              <Typography component="h2" sx={{ fontWeight: 800, fontSize: "1.5rem", color: "#1f2937", letterSpacing: "-0.025em" }}>
+            <Box sx={{ px: 2, py: 1.5, bgcolor: "background.paper", borderBottom: 1, borderColor: "gray.100", flexShrink: 0 }}>
+              <Typography component="h2" sx={{ typography: "h5", fontWeight: 800, color: "gray.800", letterSpacing: "-0.025em" }}>
                 Brand Target Tracking
               </Typography>
             </Box>

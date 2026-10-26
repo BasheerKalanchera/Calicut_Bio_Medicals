@@ -1,11 +1,12 @@
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Box, IconButton, MenuItem, Table, TableBody, TableCell, TableHead, TableRow, TextField } from "@mui/material";
+import { Box, IconButton, MenuItem, TextField, type SxProps, type Theme } from "@mui/material";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import { LoadingOrEmpty, SectionCard, StatTile } from "./ReportingUI";
+import TableOrCards, { TocCell, TocRow } from "./TableOrCards";
 import { NoPoDateNote, SummaryRows } from "./TargetVsActualsParts";
 import TargetVsActualsYear from "./TargetVsActualsYear";
 import { useAuth } from "../contexts/AuthContext";
@@ -19,7 +20,7 @@ import type {
 } from "../types/targetPlanning";
 import { formatFiscalYear, formatPlanningPeriod, getCurrentPlanningPeriod, getFiscalYearOfPeriod, shiftPlanningPeriod } from "../utils/formatter";
 import { asTree } from "../utils/reportingTree";
-import { DASH, headCellSx, lakhs, noteSx, numCellSx, numHeadSx, percent, plural } from "../utils/targetVsActuals";
+import { DASH, headCellSx, lakhs, noteSx, numCellSx, percent, plural } from "../utils/targetVsActuals";
 
 // Local stopgap type -- listSbus returns Promise<unknown> today (see
 // docs/Backlog.md "Type the shared frontend service functions properly").
@@ -39,12 +40,13 @@ const STATUS_LABEL: Record<RosterStatus, string> = {
   REJECTED: "Rejected",
 };
 
+// Theme names (Frontend standards §6.11 rule 4).
 const STATUS_COLOR: Record<RosterStatus, string> = {
-  NOT_STARTED: "#9ca3af",
-  DRAFT: "#6b7280",
-  PENDING_APPROVAL: "#b45309",
-  APPROVED: "#059669",
-  REJECTED: "#d03b3b",
+  NOT_STARTED: "gray.400",
+  DRAFT: "gray.500",
+  PENDING_APPROVAL: "amber.700",
+  APPROVED: "emerald.600",
+  REJECTED: "report.overdue",
 };
 
 // Only pending-approval and approved plans carry figures; the backend sends Draft and
@@ -63,26 +65,32 @@ const NOT_SUBMITTED_NOTE: Partial<Record<RosterStatus, string>> = {
   REJECTED: "Plan was sent back. Its figures show once it's resubmitted.",
 };
 
+// A name column plus Planned and Won: the hospital, zone and brand tables.
+function PlannedWonTable({ heading, children }: { heading: string; children: React.ReactNode }) {
+  return (
+    <TableOrCards columns={[{ label: heading }, { label: "Planned", align: "right" }, { label: "Won", align: "right" }]}>
+      {children}
+    </TableOrCards>
+  );
+}
+
+function PlannedWonRow({ name, planned, won, nameSx, total = false }: { name: string; planned: string | null; won: string | null; nameSx?: SxProps<Theme>; total?: boolean }) {
+  return (
+    <TocRow total={total}>
+      <TocCell title sx={nameSx}>{name}</TocCell>
+      <TocCell label="Planned" align="right" sx={numCellSx}>{lakhs(planned)}</TocCell>
+      <TocCell label="Won" align="right" sx={numCellSx}>{lakhs(won)}</TocCell>
+    </TocRow>
+  );
+}
+
 function BrandTable({ brands }: { brands: TargetVsActualBrand[] }) {
   return (
-    <Table size="small">
-      <TableHead>
-        <TableRow>
-          <TableCell sx={headCellSx}>Brand</TableCell>
-          <TableCell sx={numHeadSx}>Planned</TableCell>
-          <TableCell sx={numHeadSx}>Won</TableCell>
-        </TableRow>
-      </TableHead>
-      <TableBody>
-        {brands.map((b) => (
-          <TableRow key={b.brand_id}>
-            <TableCell>{b.brand_name}</TableCell>
-            <TableCell sx={numCellSx}>{lakhs(b.planned_lakhs)}</TableCell>
-            <TableCell sx={numCellSx}>{lakhs(b.won_lakhs)}</TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+    <PlannedWonTable heading="Brand">
+      {brands.map((b) => (
+        <PlannedWonRow key={b.brand_id} name={b.brand_name} planned={b.planned_lakhs} won={b.won_lakhs} />
+      ))}
+    </PlannedWonTable>
   );
 }
 
@@ -92,41 +100,32 @@ function PersonDetail({ person }: { person: TargetVsActualPerson }) {
     : NOT_SUBMITTED_NOTE[person.plan_status];
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2, py: 1 }}>
-      {note && <Box sx={{ fontSize: "0.8125rem" }}>{note}</Box>}
+      {note && <Box sx={{ typography: "body3" }}>{note}</Box>}
       {person.hospitals.length > 0 && (
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell sx={headCellSx}>Hospital</TableCell>
-              <TableCell sx={numHeadSx}>Planned</TableCell>
-              <TableCell sx={numHeadSx}>Won</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {person.hospitals.map((h) => (
-              <TableRow key={h.account_id ?? h.account_name}>
-                <TableCell sx={h.account_id === null ? { fontStyle: "italic" } : undefined}>
-                  {h.account_name}
-                </TableCell>
-                <TableCell sx={numCellSx}>{lakhs(h.planned_lakhs)}</TableCell>
-                <TableCell sx={numCellSx}>{lakhs(h.won_lakhs)}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <PlannedWonTable heading="Hospital">
+          {person.hospitals.map((h) => (
+            <PlannedWonRow
+              key={h.account_id ?? h.account_name}
+              name={h.account_name}
+              planned={h.planned_lakhs}
+              won={h.won_lakhs}
+              nameSx={h.account_id === null ? { fontStyle: "italic" } : undefined}
+            />
+          ))}
+        </PlannedWonTable>
       )}
       {person.brands.length > 0 && <BrandTable brands={person.brands} />}
       {person.late_opportunities.length > 0 && (
         <Box>
           <Box sx={{ ...headCellSx, mb: 0.5 }}>Closing date passed</Box>
           {person.late_opportunities.map((o) => (
-            <Box key={o.opportunity_id} sx={{ fontSize: "0.8125rem", display: "flex", justifyContent: "space-between", gap: 2, py: 0.25 }}>
+            <Box key={o.opportunity_id} sx={{ typography: "body3", display: "flex", justifyContent: "space-between", gap: 2, py: 0.25 }}>
               <span>
                 {o.name} — {o.account_name} (was due {o.expected_closure_date})
                 {(o.owner_name || Number(o.share_percentage) < 100) &&
                   ` · shared${o.owner_name ? `, owner ${o.owner_name}` : ""}, ${Number(o.share_percentage)} %`}
               </span>
-              <span style={{ fontVariantNumeric: "tabular-nums" }}>{lakhs(o.share_lakhs)}</span>
+              <Box component="span" sx={numCellSx}>{lakhs(o.share_lakhs)}</Box>
             </Box>
           ))}
         </Box>
@@ -217,7 +216,7 @@ export default function TargetVsActualsSection() {
         <IconButton size="small" aria-label={view === "QUARTER" ? "Previous quarter" : "Previous year"} onClick={() => setPeriod((p) => shiftPlanningPeriod(p, -step))}>
           <ChevronLeftIcon fontSize="small" />
         </IconButton>
-        <Box sx={{ fontSize: "0.8125rem", fontWeight: 700, minWidth: 96, textAlign: "center" }}>
+        <Box sx={{ typography: "body3", fontWeight: 700, minWidth: 96, textAlign: "center" }}>
           {view === "QUARTER" ? formatPlanningPeriod(period) : formatFiscalYear(fiscalYear)}
         </Box>
         <IconButton size="small" aria-label={view === "QUARTER" ? "Next quarter" : "Next year"} onClick={() => setPeriod((p) => shiftPlanningPeriod(p, step))}>
@@ -249,7 +248,7 @@ export default function TargetVsActualsSection() {
             {data.roster_count > 0 && (
               <>
                 {" · "}
-                <Box component="span" sx={data.not_submitted_count > 0 ? { color: "#b45309", fontWeight: 700 } : undefined}>
+                <Box component="span" sx={data.not_submitted_count > 0 ? { color: "amber.700", fontWeight: 700 } : undefined}>
                   {data.not_submitted_count} of {data.roster_count} haven't submitted a plan
                 </Box>
               </>
@@ -270,172 +269,78 @@ export default function TargetVsActualsSection() {
 
           <SummaryRows teamRow={data.team_row} sbuRow={data.sbu_row} companyRow={data.company_row} />
 
-          {/* On a phone each person is a stacked block, with their details
-              opening under it, so nothing needs a sideways scroll (Basheer,
-              2026-10-24). */}
-          <Box sx={{ display: { xs: "block", sm: "none" } }}>
-            {tree.map(({ person: p, depth, managerName }) => {
-              const open = expanded.has(p.user_id);
-              const submitted = SUBMITTED.has(p.plan_status);
-              const lastApproved = countsAtLastApproved(p);
-              const figures: [string, string][] = [
-                ["Target", lakhs(p.target_lakhs)],
-                ["Rep Plan", submitted || lastApproved ? lakhs(p.planned_lakhs) : DASH],
-                ["PO received", lakhs(p.po_received_lakhs)],
-                ["Won (paid)", lakhs(p.won_lakhs)],
-                ["Expected", lakhs(p.expected_lakhs)],
-                ["Likely finish", lakhs(p.likely_finish_lakhs)],
-                ["% of plan", percent(p.percent_of_target)],
-              ];
-              return (
-                <Box key={p.user_id} sx={{ py: 1, borderBottom: 1, borderColor: "divider", ml: depth * 2, ...(depth > 0 && { pl: 1, borderLeft: 2, borderLeftColor: "divider" }) }}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                    <IconButton size="small" onClick={() => toggle(p.user_id)} aria-expanded={open} aria-label={open ? "Hide details" : "Show details"}>
-                      {open ? <KeyboardArrowDownIcon fontSize="small" /> : <KeyboardArrowRightIcon fontSize="small" />}
-                    </IconButton>
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Box sx={{ fontWeight: 700 }}>{p.display_name}</Box>
-                      {managerName && <Box sx={noteSx}>reports to {managerName}</Box>}
-                      <Box sx={{ display: "flex", flexWrap: "wrap", columnGap: 1 }}>
-                        <Box component="span" sx={{ fontSize: "0.75rem", fontWeight: 700, color: STATUS_COLOR[p.plan_status] }}>
-                          {STATUS_LABEL[p.plan_status]}
+          {/* One card per person on a phone, pushed in under their manager;
+              the chevron opens their details inside it (Basheer, 2026-10-24). */}
+          <Box sx={{ overflowX: "auto" }}>
+            <TableOrCards
+              columns={[
+                { toggle: true },
+                { label: "Person" },
+                { label: "Status" },
+                { label: "Target", align: "right" },
+                { label: "Rep Plan", align: "right" },
+                { label: "PO received", align: "right" },
+                { label: "Won (paid)", align: "right" },
+                { label: "Expected", align: "right" },
+                { label: "Likely finish", align: "right" },
+                { label: "% of plan", align: "right" },
+              ]}
+            >
+              {tree.map(({ person: p, depth, managerName }) => {
+                const open = expanded.has(p.user_id);
+                const submitted = SUBMITTED.has(p.plan_status);
+                const lastApproved = countsAtLastApproved(p);
+                return (
+                  <TocRow key={p.user_id} indent={depth} detail={open && <PersonDetail person={p} />}>
+                    <TocCell toggle>
+                      <IconButton size="small" onClick={() => toggle(p.user_id)} aria-expanded={open} aria-label={open ? "Hide details" : "Show details"}>
+                        {open ? <KeyboardArrowDownIcon fontSize="small" /> : <KeyboardArrowRightIcon fontSize="small" />}
+                      </IconButton>
+                    </TocCell>
+                    <TocCell title>
+                      {p.display_name}
+                      {p.late_opportunities.length > 0 && (
+                        <Box component="span" sx={{ ml: 1, typography: "caption2", fontWeight: 700, color: "report.overdue" }}>
+                          {p.late_opportunities.length} past closing date
                         </Box>
-                        {p.late_opportunities.length > 0 && (
-                          <Box component="span" sx={{ fontSize: "0.6875rem", fontWeight: 700, color: "#d03b3b" }}>
-                            {p.late_opportunities.length} past closing date
-                          </Box>
-                        )}
-                      </Box>
-                    </Box>
-                  </Box>
-                  <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", columnGap: 2, rowGap: 0.25, pl: 5, pt: 0.5 }}>
-                    {figures.map(([label, value]) => (
-                      <Box key={label} sx={{ display: "flex", justifyContent: "space-between", gap: 1, fontSize: "0.8125rem" }}>
-                        <Box component="span" sx={{ color: "text.secondary" }}>{label}</Box>
-                        <Box component="span" sx={{ fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>{value}</Box>
-                      </Box>
-                    ))}
-                  </Box>
-                  {submitted && p.previous_approved_total_lakhs !== null && (
-                    <Box sx={{ ...noteSx, pl: 5 }}>Rep Plan was {lakhs(p.previous_approved_total_lakhs)} approved</Box>
-                  )}
-                  {lastApproved && <Box sx={{ ...noteSx, pl: 5 }}>Rep Plan approved, still counts</Box>}
-                  {open && (
-                    <Box sx={{ pl: 1 }}>
-                      <PersonDetail person={p} />
-                    </Box>
-                  )}
-                </Box>
-              );
-            })}
-          </Box>
-
-          <Box sx={{ overflowX: "auto", display: { xs: "none", sm: "block" } }}>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ width: 40 }} />
-                  <TableCell sx={headCellSx}>Person</TableCell>
-                  <TableCell sx={headCellSx}>Status</TableCell>
-                  <TableCell sx={numHeadSx}>Target</TableCell>
-                  <TableCell sx={numHeadSx}>Rep Plan</TableCell>
-                  <TableCell sx={numHeadSx}>PO received</TableCell>
-                  <TableCell sx={numHeadSx}>Won (paid)</TableCell>
-                  <TableCell sx={numHeadSx}>Expected</TableCell>
-                  <TableCell sx={numHeadSx}>Likely finish</TableCell>
-                  <TableCell sx={numHeadSx}>% of plan</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {tree.map(({ person: p, depth, managerName }) => {
-                  const open = expanded.has(p.user_id);
-                  const submitted = SUBMITTED.has(p.plan_status);
-                  const lastApproved = countsAtLastApproved(p);
-                  return (
-                    <Fragment key={p.user_id}>
-                      <TableRow hover>
-                        <TableCell>
-                          <IconButton size="small" onClick={() => toggle(p.user_id)} aria-expanded={open} aria-label={open ? "Hide details" : "Show details"}>
-                            {open ? <KeyboardArrowDownIcon fontSize="small" /> : <KeyboardArrowRightIcon fontSize="small" />}
-                          </IconButton>
-                        </TableCell>
-                        <TableCell sx={{ pl: 2 + depth * 3 }}>
-                          {p.display_name}
-                          {p.late_opportunities.length > 0 && (
-                            <Box component="span" sx={{ ml: 1, fontSize: "0.6875rem", fontWeight: 700, color: "#d03b3b" }}>
-                              {p.late_opportunities.length} past closing date
-                            </Box>
-                          )}
-                          {managerName && <Box sx={noteSx}>reports to {managerName}</Box>}
-                        </TableCell>
-                        <TableCell sx={{ fontSize: "0.75rem", fontWeight: 700, color: STATUS_COLOR[p.plan_status], whiteSpace: "nowrap" }}>
-                          {STATUS_LABEL[p.plan_status]}
-                        </TableCell>
-                        <TableCell sx={numCellSx}>{lakhs(p.target_lakhs)}</TableCell>
-                        <TableCell sx={numCellSx}>
-                          {submitted || lastApproved ? lakhs(p.planned_lakhs) : DASH}
-                          {submitted && p.previous_approved_total_lakhs !== null && (
-                            <Box sx={{ ...noteSx, whiteSpace: "nowrap" }}>was {lakhs(p.previous_approved_total_lakhs)} approved</Box>
-                          )}
-                          {lastApproved && (
-                            <Box sx={{ ...noteSx, whiteSpace: "nowrap" }}>approved, still counts</Box>
-                          )}
-                        </TableCell>
-                        <TableCell sx={numCellSx}>{lakhs(p.po_received_lakhs)}</TableCell>
-                        <TableCell sx={numCellSx}>{lakhs(p.won_lakhs)}</TableCell>
-                        <TableCell sx={numCellSx}>{lakhs(p.expected_lakhs)}</TableCell>
-                        <TableCell sx={numCellSx}>{lakhs(p.likely_finish_lakhs)}</TableCell>
-                        <TableCell sx={numCellSx}>{percent(p.percent_of_target)}</TableCell>
-                      </TableRow>
-                      {open && (
-                        <TableRow>
-                          <TableCell />
-                          <TableCell colSpan={9}>
-                            <PersonDetail person={p} />
-                          </TableCell>
-                        </TableRow>
                       )}
-                    </Fragment>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                      {managerName && <Box sx={{ ...noteSx, fontWeight: 400 }}>reports to {managerName}</Box>}
+                    </TocCell>
+                    <TocCell label="Status" sx={{ typography: "caption", fontWeight: 700, color: STATUS_COLOR[p.plan_status], whiteSpace: "nowrap" }}>
+                      {STATUS_LABEL[p.plan_status]}
+                    </TocCell>
+                    <TocCell label="Target" align="right" sx={numCellSx}>{lakhs(p.target_lakhs)}</TocCell>
+                    <TocCell label="Rep Plan" align="right" sx={numCellSx}>
+                      {submitted || lastApproved ? lakhs(p.planned_lakhs) : DASH}
+                      {submitted && p.previous_approved_total_lakhs !== null && (
+                        <Box sx={{ ...noteSx, whiteSpace: "nowrap" }}>was {lakhs(p.previous_approved_total_lakhs)} approved</Box>
+                      )}
+                      {lastApproved && (
+                        <Box sx={{ ...noteSx, whiteSpace: "nowrap" }}>approved, still counts</Box>
+                      )}
+                    </TocCell>
+                    <TocCell label="PO received" align="right" sx={numCellSx}>{lakhs(p.po_received_lakhs)}</TocCell>
+                    <TocCell label="Won (paid)" align="right" sx={numCellSx}>{lakhs(p.won_lakhs)}</TocCell>
+                    <TocCell label="Expected" align="right" sx={numCellSx}>{lakhs(p.expected_lakhs)}</TocCell>
+                    <TocCell label="Likely finish" align="right" sx={numCellSx}>{lakhs(p.likely_finish_lakhs)}</TocCell>
+                    <TocCell label="% of plan" align="right" sx={numCellSx}>{percent(p.percent_of_target)}</TocCell>
+                  </TocRow>
+                );
+              })}
+            </TableOrCards>
           </Box>
           <NoPoDateNote count={data.no_po_date_count} />
 
           {data.zones.length > 0 && (
-            <Box sx={{ overflowX: "auto" }}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={headCellSx}>By zone</TableCell>
-                    <TableCell sx={numHeadSx}>Planned</TableCell>
-                    <TableCell sx={numHeadSx}>Won</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {data.zones.map((z) => (
-                    <TableRow key={z.zone_id ?? "no-zone"}>
-                      <TableCell>{z.zone_name ?? "Not attached to a zone"}</TableCell>
-                      <TableCell sx={numCellSx}>{lakhs(z.planned_lakhs)}</TableCell>
-                      <TableCell sx={numCellSx}>{lakhs(z.won_lakhs)}</TableCell>
-                    </TableRow>
-                  ))}
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 900 }}>{isCompanyWide ? "SBU total" : "Total (your view)"}</TableCell>
-                    <TableCell sx={{ ...numCellSx, fontWeight: 900 }}>{lakhs(data.planned_lakhs)}</TableCell>
-                    <TableCell sx={{ ...numCellSx, fontWeight: 900 }}>{lakhs(data.won_lakhs)}</TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </Box>
+            <PlannedWonTable heading="By zone">
+              {data.zones.map((z) => (
+                <PlannedWonRow key={z.zone_id ?? "no-zone"} name={z.zone_name ?? "Not attached to a zone"} planned={z.planned_lakhs} won={z.won_lakhs} />
+              ))}
+              <PlannedWonRow total name={isCompanyWide ? "SBU total" : "Total (your view)"} planned={data.planned_lakhs} won={data.won_lakhs} />
+            </PlannedWonTable>
           )}
 
-          {data.brands.length > 0 && (
-            <Box sx={{ overflowX: "auto" }}>
-              <BrandTable brands={data.brands} />
-            </Box>
-          )}
+          {data.brands.length > 0 && <BrandTable brands={data.brands} />}
         </Box>
       )}
     </SectionCard>

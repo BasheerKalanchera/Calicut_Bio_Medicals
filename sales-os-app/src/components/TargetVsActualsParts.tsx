@@ -1,6 +1,7 @@
-import { Box, Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material";
+import { Box } from "@mui/material";
+import TableOrCards, { TocCell, TocRow } from "./TableOrCards";
 import type { TargetVsActualSummaryRow } from "../types/targetPlanning";
-import { headCellSx, lakhs, noteSx, numCellSx, numHeadSx, percent, plural } from "../utils/targetVsActuals";
+import { lakhs, noteSx, numCellSx, percent, plural } from "../utils/targetVsActuals";
 
 // Shared by Target vs Actuals' Quarter and Year views.
 
@@ -33,63 +34,32 @@ export function SummaryRows({ heading = "Against target", teamRow, sbuRow, compa
   if (teamRow) rows.push({ key: "team", label: "Your team", row: teamRow, notSet: "Target not set" });
   if (rows.length === 0) return null;
   return (
-    <>
-    {/* On a phone each row is a stacked block, like the person rows below. */}
-    <Box sx={{ display: { xs: "block", sm: "none" } }}>
-      {rows.map(({ key, label, row, notSet }) => {
-        const figures: [string, string][] = [
-          ["Target", row.target_lakhs === null ? notSet : lakhs(row.target_lakhs)],
-          ["Team plans", lakhs(row.planned_lakhs)],
-          ["Plans vs target", percent(plansVsTarget(row))],
-          ["PO received", lakhs(row.po_received_lakhs)],
-          ["Won (paid)", lakhs(row.won_lakhs)],
-          ["Won % of target", percent(row.percent_of_target)],
-        ];
-        return (
-          <Box key={key} sx={{ py: 1, borderBottom: 1, borderColor: "divider" }}>
-            <Box sx={{ fontWeight: 700, mb: 0.5 }}>{label}</Box>
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", columnGap: 2, rowGap: 0.25 }}>
-              {figures.map(([figLabel, value]) => (
-                <Box key={figLabel} sx={{ display: "flex", justifyContent: "space-between", gap: 1, fontSize: "0.8125rem" }}>
-                  <Box component="span" sx={{ color: "text.secondary" }}>{figLabel}</Box>
-                  <Box component="span" sx={{ fontVariantNumeric: "tabular-nums", textAlign: "right" }}>{value}</Box>
-                </Box>
-              ))}
-            </Box>
-          </Box>
-        );
-      })}
+    <Box sx={{ overflowX: "auto" }}>
+      <TableOrCards
+        columns={[
+          { label: heading },
+          { label: "Target", align: "right" },
+          { label: "Team plans", align: "right" },
+          { label: "Plans vs target", align: "right" },
+          { label: "PO received", align: "right" },
+          { label: "Won (paid)", align: "right" },
+          { label: "Won % of target", align: "right" },
+        ]}
+      >
+        {rows.map(({ key, label, row, notSet }) => (
+          <TocRow key={key}>
+            <TocCell title sx={{ fontWeight: 700 }}>{label}</TocCell>
+            <TocCell label="Target" align="right" sx={numCellSx}>
+              {row.target_lakhs === null ? <Box component="span" sx={noteSx}>{notSet}</Box> : lakhs(row.target_lakhs)}
+            </TocCell>
+            <TocCell label="Team plans" align="right" sx={numCellSx}>{lakhs(row.planned_lakhs)}</TocCell>
+            <TocCell label="Plans vs target" align="right" sx={numCellSx}>{percent(plansVsTarget(row))}</TocCell>
+            <TocCell label="PO received" align="right" sx={numCellSx}>{lakhs(row.po_received_lakhs)}</TocCell>
+            <TocCell label="Won (paid)" align="right" sx={numCellSx}>{lakhs(row.won_lakhs)}</TocCell>
+            <TocCell label="Won % of target" align="right" sx={numCellSx}>{percent(row.percent_of_target)}</TocCell>
+          </TocRow>
+        ))}
+      </TableOrCards>
     </Box>
-    <Box sx={{ overflowX: "auto", display: { xs: "none", sm: "block" } }}>
-      <Table size="small">
-        <TableHead>
-          <TableRow>
-            <TableCell sx={headCellSx}>{heading}</TableCell>
-            <TableCell sx={numHeadSx}>Target</TableCell>
-            <TableCell sx={numHeadSx}>Team plans</TableCell>
-            <TableCell sx={numHeadSx}>Plans vs target</TableCell>
-            <TableCell sx={numHeadSx}>PO received</TableCell>
-            <TableCell sx={numHeadSx}>Won (paid)</TableCell>
-            <TableCell sx={numHeadSx}>Won % of target</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {rows.map(({ key, label, row, notSet }) => (
-            <TableRow key={key}>
-              <TableCell sx={{ fontWeight: 700 }}>{label}</TableCell>
-              <TableCell sx={numCellSx}>
-                {row.target_lakhs === null ? <Box component="span" sx={noteSx}>{notSet}</Box> : lakhs(row.target_lakhs)}
-              </TableCell>
-              <TableCell sx={numCellSx}>{lakhs(row.planned_lakhs)}</TableCell>
-              <TableCell sx={numCellSx}>{percent(plansVsTarget(row))}</TableCell>
-              <TableCell sx={numCellSx}>{lakhs(row.po_received_lakhs)}</TableCell>
-              <TableCell sx={numCellSx}>{lakhs(row.won_lakhs)}</TableCell>
-              <TableCell sx={numCellSx}>{percent(row.percent_of_target)}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </Box>
-    </>
   );
 }

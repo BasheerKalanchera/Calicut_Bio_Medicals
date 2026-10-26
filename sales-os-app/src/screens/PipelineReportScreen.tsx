@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Box, MenuItem, TextField } from "@mui/material";
-import { LoadingOrEmpty, MiniBar, StatTile, ZoneTreeNote } from "../components/ReportingUI";
+import { LoadingOrEmpty, MiniBar, SectionCard, StatTile, ZoneTreeNote } from "../components/ReportingUI";
 import { getPipelineSummary } from "../services/reporting";
 import { listStatuses } from "../services/masterData";
 import type { PipelineGroupBy } from "../types/reporting";
@@ -26,8 +26,8 @@ export default function PipelineReportScreen({
   const [groupBy, setGroupBy] = useState<PipelineGroupBy>("product");
 
   // Headline tiles always come from a fixed, Stage-grouped query, independent
-  // of the breakdown dropdown below -- Stage is 1:1 with a deal, so summing
-  // it can never double-count. Product isn't (a deal can carry more than one
+  // of the breakdown dropdown below -- Stage is 1:1 with an Opportunity, so summing
+  // it can never double-count. Product isn't (an Opportunity can carry more than one
   // product), so deriving these from whatever the dropdown shows would
   // misstate the totals the moment "Product" is picked -- see
   // docs/Forecast-By-Product-Implementation-Plan.md's "Bugs found and fixed".
@@ -41,9 +41,9 @@ export default function PipelineReportScreen({
     queryFn: () => getPipelineSummary(groupBy),
   });
 
-  // BR-OP-07: the report counts Active deals only (On Hold excluded), so
+  // BR-OP-07: the report counts Active Opportunities only (On Hold excluded), so
   // every drill carries the Active status too -- otherwise the drilled list
-  // would also show On Hold/Won/Lost deals the bar never counted. Same
+  // would also show On Hold/Won/Lost Opportunities the bar never counted. Same
   // lookup as SalesReportScreen's wonStatusId.
   const { data: statuses = [] } = useQuery({
     queryKey: ["statuses"],
@@ -65,21 +65,20 @@ export default function PipelineReportScreen({
   return (
     <Box sx={{ flex: 1, overflowY: "auto", bgcolor: "background.default", p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
       <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
-        <StatTile label="Active Pipeline Value" value={formatLakhs(totalValue)} sublabel={`${totalCount} active deals`} />
-        <StatTile label="Weighted Forecast" value={formatLakhs(totalWeighted)} sublabel="Active deals, win-probability adjusted" />
+        <StatTile label="Active Pipeline Value" value={formatLakhs(totalValue)} sublabel={`${totalCount} active ${totalCount === 1 ? "Opportunity" : "Opportunities"}`} />
+        <StatTile label="Weighted Forecast" value={formatLakhs(totalWeighted)} sublabel="Active Opportunities, win-probability adjusted" />
       </Box>
 
-      <Box sx={{ bgcolor: "#fff", borderRadius: "1rem", border: "1px solid #f3f4f6", boxShadow: "0 1px 2px rgba(0,0,0,0.05)", p: 2 }}>
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
-          <Box sx={{ fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#6b7280" }}>
-            Pipeline by {GROUP_BY_OPTIONS.find((o) => o.value === groupBy)?.label}
-          </Box>
+      <SectionCard
+        title={`Pipeline by ${GROUP_BY_OPTIONS.find((o) => o.value === groupBy)?.label}`}
+        action={
           <TextField select size="small" value={groupBy} onChange={(e) => setGroupBy(e.target.value as PipelineGroupBy)} sx={{ minWidth: 110 }}>
             {GROUP_BY_OPTIONS.map((o) => (
               <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
             ))}
           </TextField>
-        </Box>
+        }
+      >
 
         <LoadingOrEmpty
           isLoading={breakdownQuery.isLoading}
@@ -93,9 +92,9 @@ export default function PipelineReportScreen({
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
             {rows.map((row) => {
               // The synthetic Trade-Ins/Returns bucket isn't a real product
-              // or brand -- it drills to every deal carrying a Buyback line.
+              // or brand -- it drills to every Opportunity carrying a Buyback line.
               const isTradeIns = (groupBy === "product" || groupBy === "brand") && row.group_id === "trade-in";
-              // Active deals with no products entered yet (BR-OP-07) --
+              // Active Opportunities with no products entered yet (BR-OP-07) --
               // their own bucket on the line-level breakdowns.
               const isNoProducts = (groupBy === "product" || groupBy === "brand") && row.group_id === "no-products";
               const filterKey: keyof Omit<DrillFilter, "label" | "tradeInsOnly" | "noProductsOnly" | "zoneExact" | "statusId" | "expectedCount"> | null =
@@ -130,7 +129,7 @@ export default function PipelineReportScreen({
           </Box>
         )}
         {groupBy === "zone" && rows.length > 0 && <ZoneTreeNote />}
-      </Box>
+      </SectionCard>
     </Box>
   );
 }
