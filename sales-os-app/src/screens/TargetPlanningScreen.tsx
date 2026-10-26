@@ -9,11 +9,6 @@ import {
   TextField,
   MenuItem,
   Chip,
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
   ToggleButton,
   ToggleButtonGroup,
 } from "@mui/material";
@@ -48,6 +43,7 @@ import {
 import type { RosterStatus, TargetPlan, TargetPlanSbu, TargetPlanStatus } from "../types/targetPlanning";
 import type { BrandResponse } from "../types/api-aliases";
 import { asTree } from "../utils/reportingTree";
+import TableOrCards, { TocCell, TocMessage, TocRow } from "../components/TableOrCards";
 
 // Local stopgap type -- masterData.ts's listSbus returns Promise<unknown>
 // today -- see docs/Backlog.md "Type the shared frontend service functions
@@ -76,10 +72,10 @@ const COMPANY_WIDE_ROLES = new Set(["Admin", "General Manager"]);
 // exception, not a hierarchy generalization.
 const NO_PERSONAL_TARGET_ROLES = new Set(["Admin"]);
 
-// On a phone the approval and team tables drop their Hospitals column so
-// the actions and status chips stay inside the card; the count still shows
-// in the row's details (Basheer, 2026-10-24).
-const HIDE_ON_PHONE = { display: { xs: "none", sm: "table-cell" } };
+// Every table on this screen is one card per row on a phone (TableOrCards);
+// hiding the Hospitals column alone still left them too wide (Basheer,
+// 2026-10-25). Cards get less padding on a phone to match.
+const CARD_SX = { bgcolor: "background.paper", borderRadius: 2, p: { xs: 1.5, sm: 2.5 } };
 
 const STATUS_LABEL: Record<TargetPlanStatus, string> = {
   DRAFT: "Draft",
@@ -437,9 +433,9 @@ export default function TargetPlanningScreen({
       </Box>
 
       {/* Scrollable content */}
-      <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0, px: 3, pb: 3, display: "flex", flexDirection: "column", gap: 3 }}>
+      <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0, px: { xs: 1.5, sm: 3 }, pb: 3, display: "flex", flexDirection: "column", gap: 3 }}>
         {showMyTarget && (
-        <Box sx={{ bgcolor: "background.paper", borderRadius: 2, p: 2.5 }}>
+        <Box sx={CARD_SX}>
           <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5 }}>My Plan</Typography>
           {!isAnnual ? (
             <>
@@ -449,41 +445,31 @@ export default function TargetPlanningScreen({
                   Total across SBUs: <strong>{formatLakhs(myPeriodTotal)}</strong>
                 </Typography>
               )}
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>SBU</TableCell>
-                    <TableCell>Amount</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell align="right">Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {myPeriodTargets.map((t) => (
-                    <TableRow key={t.id}>
-                      <TableCell>{t.sbu.name}</TableCell>
-                      <TableCell>
-                        <PlanAmount amount={t.target_amount_lakhs} note={previousApprovedNote(t.status, t.previous_approved_total_lakhs)} />
-                      </TableCell>
-                      <TableCell><StatusWithNote target={t} sbuHasBrands={mySbuHasBrands.has(t.sbu_id)} /></TableCell>
-                      <TableCell align="right">
-                        <Button size="small" onClick={() => openTargetDialog(period, t, t.sbu_id)}>{t.status === "DRAFT" ? "Continue" : "Revise"}</Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {myAvailableSbus.map((sbu) => (
-                    <TableRow key={sbu.id}>
-                      <TableCell>{sbu.name}</TableCell>
-                      <TableCell colSpan={2}>
-                        <Typography color="text.secondary">No plan set for {formatPlanningPeriod(period)} yet.</Typography>
-                      </TableCell>
-                      <TableCell align="right">
-                        <Button size="small" variant="contained" onClick={() => openTargetDialog(period, null, sbu.id)}>Plan</Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <TableOrCards columns={[{ label: "SBU" }, { label: "Amount" }, { label: "Status" }, { label: "Actions", align: "right" }]}>
+                {myPeriodTargets.map((t) => (
+                  <TocRow key={t.id}>
+                    <TocCell title>{t.sbu.name}</TocCell>
+                    <TocCell label="Amount">
+                      <PlanAmount amount={t.target_amount_lakhs} note={previousApprovedNote(t.status, t.previous_approved_total_lakhs)} />
+                    </TocCell>
+                    <TocCell label="Status"><StatusWithNote target={t} sbuHasBrands={mySbuHasBrands.has(t.sbu_id)} /></TocCell>
+                    <TocCell action align="right">
+                      <Button size="small" onClick={() => openTargetDialog(period, t, t.sbu_id)}>{t.status === "DRAFT" ? "Continue" : "Revise"}</Button>
+                    </TocCell>
+                  </TocRow>
+                ))}
+                {myAvailableSbus.map((sbu) => (
+                  <TocRow key={sbu.id}>
+                    <TocCell title>{sbu.name}</TocCell>
+                    <TocCell colSpan={2}>
+                      <Typography color="text.secondary">No plan set for {formatPlanningPeriod(period)} yet.</Typography>
+                    </TocCell>
+                    <TocCell action align="right">
+                      <Button size="small" variant="contained" onClick={() => openTargetDialog(period, null, sbu.id)}>Plan</Button>
+                    </TocCell>
+                  </TocRow>
+                ))}
+              </TableOrCards>
             </>
           ) : (
             <>
@@ -492,45 +478,37 @@ export default function TargetPlanningScreen({
                   Grand Total across SBUs: <strong>{formatLakhs(myAnnualGrandTotal)}</strong>
                 </Typography>
               )}
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>SBU / Quarter</TableCell>
-                    <TableCell>Amount</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell align="right">Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {myAnnualBySbu.map((block) => (
-                    <Fragment key={block.sbu.id}>
-                      <TableRow sx={{ "& td": { fontWeight: 700, borderTop: "2px solid", borderColor: "divider" } }}>
-                        <TableCell>{block.sbu.name} — Annual Total</TableCell>
-                        <TableCell>{formatLakhs(block.total)}</TableCell>
-                        <TableCell />
-                        <TableCell align="right" />
-                      </TableRow>
-                      {yearQuarters.map((q) => {
-                        const t = block.byQuarter[q];
-                        return (
-                          <TableRow key={`${block.sbu.id}-${q}`}>
-                            <TableCell sx={{ pl: 3, color: "text.secondary" }}>{formatPlanningPeriod(q)}</TableCell>
-                            <TableCell>
-                              {t ? <PlanAmount amount={t.target_amount_lakhs} note={previousApprovedNote(t.status, t.previous_approved_total_lakhs)} /> : "—"}
-                            </TableCell>
-                            <TableCell>
-                              {t ? <StatusWithNote target={t} sbuHasBrands={mySbuHasBrands.has(block.sbu.id)} /> : <Typography color="text.secondary" variant="body2">Not set</Typography>}
-                            </TableCell>
-                            <TableCell align="right">
-                              <Button size="small" onClick={() => openTargetDialog(q, t ?? null, block.sbu.id)}>{!t ? "Plan" : t.status === "DRAFT" ? "Continue" : "Revise"}</Button>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </Fragment>
-                  ))}
-                </TableBody>
-              </Table>
+              {/* On a phone each SBU is one card with its quarters inside. */}
+              <TableOrCards columns={[{ label: "SBU / Quarter" }, { label: "Amount" }, { label: "Status" }, { label: "Actions", align: "right" }]}>
+                {myAnnualBySbu.map((block) => (
+                  <TocRow
+                    key={block.sbu.id}
+                    total
+                    subRows={yearQuarters.map((q) => {
+                      const t = block.byQuarter[q];
+                      return (
+                        <TocRow key={`${block.sbu.id}-${q}`}>
+                          <TocCell title sx={{ pl: { sm: 3 }, color: "text.secondary" }}>{formatPlanningPeriod(q)}</TocCell>
+                          <TocCell label="Amount">
+                            {t ? <PlanAmount amount={t.target_amount_lakhs} note={previousApprovedNote(t.status, t.previous_approved_total_lakhs)} /> : "—"}
+                          </TocCell>
+                          <TocCell label="Status">
+                            {t ? <StatusWithNote target={t} sbuHasBrands={mySbuHasBrands.has(block.sbu.id)} /> : <Typography color="text.secondary" variant="body2">Not set</Typography>}
+                          </TocCell>
+                          <TocCell action align="right">
+                            <Button size="small" onClick={() => openTargetDialog(q, t ?? null, block.sbu.id)}>{!t ? "Plan" : t.status === "DRAFT" ? "Continue" : "Revise"}</Button>
+                          </TocCell>
+                        </TocRow>
+                      );
+                    })}
+                  >
+                    <TocCell title>{block.sbu.name} — Annual Total</TocCell>
+                    <TocCell label="Total">{formatLakhs(block.total)}</TocCell>
+                    <TocCell phone={false} />
+                    <TocCell phone={false} align="right" />
+                  </TocRow>
+                ))}
+              </TableOrCards>
             </>
           )}
         </Box>
@@ -543,68 +521,49 @@ export default function TargetPlanningScreen({
         )}
 
         {pendingApproval.length > 0 && (
-          <Box sx={{ bgcolor: "background.paper", borderRadius: 2, p: 2.5 }}>
+          <Box sx={CARD_SX}>
             <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5 }}>Needs Your Approval</Typography>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell padding="checkbox" />
-                  <TableCell>Rep</TableCell>
-                  <TableCell>Period</TableCell>
-                  <TableCell align="right" sx={HIDE_ON_PHONE}>Hospitals</TableCell>
-                  <TableCell>Amount</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {pendingApproval.map((t) => {
-                  const open = expanded.has(t.id);
-                  const wasApproved = t.previous_approved_total_lakhs != null ? Number(t.previous_approved_total_lakhs) : null;
-                  const belowApproved = wasApproved !== null && Number(t.target_amount_lakhs) < wasApproved;
-                  return (
-                    <Fragment key={t.id}>
-                      <TableRow sx={open ? { "& > td": { borderBottom: "none" } } : undefined}>
-                        <TableCell padding="checkbox">
-                          <ExpandToggle open={open} onClick={() => toggleExpanded(t.id)} />
-                        </TableCell>
-                        <TableCell>
-                          {t.user.display_name}
-                          {/* Approval queue only: the note outlives the approval,
-                              so in the team list this tag would never go away. */}
-                          {t.change_note && <Chip label="Revised" variant="outlined" size="small" sx={{ ml: 0.5 }} />}
-                        </TableCell>
-                        <TableCell>{formatPlanningPeriod(t.planning_period)}</TableCell>
-                        <TableCell align="right" sx={HIDE_ON_PHONE}>{hospitalCount(t)}</TableCell>
-                        <TableCell>
-                          <Box component="span" sx={belowApproved ? { color: "warning.main", fontWeight: 700 } : undefined}>
-                            {formatLakhs(Number(t.target_amount_lakhs))}
-                          </Box>
-                          {wasApproved !== null && (
-                            <Typography component="span" variant="body2" sx={{ color: belowApproved ? "warning.main" : "text.secondary" }}>
-                              {" "}(was {formatLakhs(wasApproved)})
-                            </Typography>
-                          )}
-                        </TableCell>
-                        <TableCell align="right">
-                          {/* Stacked on a phone so the column stays narrow. */}
-                          <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: "flex-end", justifyContent: "flex-end" }}>
-                            <Button size="small" color="success" onClick={() => openDecision(t, "APPROVED")}>Approve</Button>
-                            <Button size="small" color="error" onClick={() => openDecision(t, "REJECTED")}>Reject</Button>
-                          </Box>
-                        </TableCell>
-                      </TableRow>
-                      {open && (
-                        <TableRow>
-                          <TableCell colSpan={6}>
-                            <TargetPlanDetails target={t} />
-                          </TableCell>
-                        </TableRow>
+            <TableOrCards
+              columns={[{ toggle: true }, { label: "Rep" }, { label: "Period" }, { label: "Hospitals", align: "right" }, { label: "Amount" }, { label: "Actions", align: "right" }]}
+            >
+              {pendingApproval.map((t) => {
+                const open = expanded.has(t.id);
+                const wasApproved = t.previous_approved_total_lakhs != null ? Number(t.previous_approved_total_lakhs) : null;
+                const belowApproved = wasApproved !== null && Number(t.target_amount_lakhs) < wasApproved;
+                return (
+                  <TocRow key={t.id} detail={open && <TargetPlanDetails target={t} />}>
+                    <TocCell toggle>
+                      <ExpandToggle open={open} onClick={() => toggleExpanded(t.id)} />
+                    </TocCell>
+                    <TocCell title>
+                      {t.user.display_name}
+                      {/* Approval queue only: the note outlives the approval,
+                          so in the team list this tag would never go away. */}
+                      {t.change_note && <Chip label="Revised" variant="outlined" size="small" sx={{ ml: 0.5 }} />}
+                    </TocCell>
+                    <TocCell label="Period">{formatPlanningPeriod(t.planning_period)}</TocCell>
+                    <TocCell label="Hospitals" align="right">{hospitalCount(t)}</TocCell>
+                    <TocCell label="Amount">
+                      <Box component="span" sx={belowApproved ? { color: "warning.main", fontWeight: 700 } : undefined}>
+                        {formatLakhs(Number(t.target_amount_lakhs))}
+                      </Box>
+                      {wasApproved !== null && (
+                        <Typography component="span" variant="body2" sx={{ color: belowApproved ? "warning.main" : "text.secondary" }}>
+                          {" "}(was {formatLakhs(wasApproved)})
+                        </Typography>
                       )}
-                    </Fragment>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                    </TocCell>
+                    {/* Below the lines on a phone: two buttons beside a name don't fit. */}
+                    <TocCell align="right">
+                      <Box sx={{ display: "flex", justifyContent: { xs: "flex-start", sm: "flex-end" }, ml: { xs: -1, sm: 0 } }}>
+                        <Button size="small" color="success" onClick={() => openDecision(t, "APPROVED")}>Approve</Button>
+                        <Button size="small" color="error" onClick={() => openDecision(t, "REJECTED")}>Reject</Button>
+                      </Box>
+                    </TocCell>
+                  </TocRow>
+                );
+              })}
+            </TableOrCards>
           </Box>
         )}
 
@@ -645,7 +604,7 @@ export default function TargetPlanningScreen({
         ))}
 
         {showRollup && (
-          <Box sx={{ bgcolor: "background.paper", borderRadius: 2, p: 2.5 }}>
+          <Box sx={CARD_SX}>
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1, mb: 1.5 }}>
               {/* The SBU target and team targets have their own cards above (D75). */}
               <Typography variant="h6" sx={{ fontWeight: 700 }}>Team Plans</Typography>
@@ -666,80 +625,57 @@ export default function TargetPlanningScreen({
                     )}
                   </Typography>
                 )}
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell padding="checkbox" />
-                      <TableCell>Rep</TableCell>
-                      <TableCell align="right" sx={HIDE_ON_PHONE}>Hospitals</TableCell>
-                      <TableCell>Amount</TableCell>
-                      <TableCell>Status</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {rosterRows.map(({ person: p, depth, managerName }, i, rows) => {
-                      const t = p.plan;
-                      const open = t !== null && expanded.has(t.id);
-                      const note = t && previousApprovedNote(p.plan_status, p.previous_approved_total_lakhs);
-                      // Former members come last; head their group once.
-                      const firstFormer = !p.on_team && (i === 0 || rows[i - 1].person.on_team);
-                      return (
-                        <Fragment key={p.user_id}>
-                          {firstFormer && (
-                            <TableRow>
-                              <TableCell colSpan={5}>
-                                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
-                                  No longer on this team — their plans still count in the total
-                                </Typography>
-                              </TableCell>
-                            </TableRow>
-                          )}
-                          <TableRow sx={open ? { "& > td": { borderBottom: "none" } } : undefined}>
-                            <TableCell padding="checkbox">
-                              {t && <ExpandToggle open={open} onClick={() => toggleExpanded(t.id)} />}
-                            </TableCell>
-                            <TableCell sx={depth > 0 ? { pl: 2 + depth * 2 } : undefined}>
-                              {p.display_name}
-                              {managerName && (
-                                <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
-                                  reports to {managerName}
-                                </Typography>
-                              )}
-                            </TableCell>
-                            <TableCell align="right" sx={HIDE_ON_PHONE}>{t ? hospitalCount(t) : "—"}</TableCell>
-                            <TableCell>
-                              {t ? <PlanAmount amount={t.target_amount_lakhs} note={note} /> : "—"}
-                            </TableCell>
-                            <TableCell>
-                              {t ? <StatusWithNote target={t} sbuHasBrands={rollupSbuHasBrands} /> : <RosterStatusOnly status={p.plan_status} />}
-                            </TableCell>
-                          </TableRow>
-                          {open && t && (
-                            <TableRow>
-                              <TableCell colSpan={5}>
-                                <TargetPlanDetails target={t} />
-                              </TableCell>
-                            </TableRow>
-                          )}
-                        </Fragment>
-                      );
-                    })}
-                    {rosterFailed && !roster && (
-                      <TableRow>
-                        <TableCell colSpan={5}>
-                          <Typography color="error">Couldn't load the team list. Please refresh.</Typography>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                    {roster && roster.people.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={5}>
-                          <Typography color="text.secondary">No one in this team for {formatPlanningPeriod(period)}.</Typography>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
+                {/* On a phone each person's card is pushed in under their manager. */}
+                <TableOrCards columns={[{ toggle: true }, { label: "Rep" }, { label: "Hospitals", align: "right" }, { label: "Amount" }, { label: "Status" }]}>
+                  {rosterRows.map(({ person: p, depth, managerName }, i, rows) => {
+                    const t = p.plan;
+                    const open = t !== null && expanded.has(t.id);
+                    const note = t && previousApprovedNote(p.plan_status, p.previous_approved_total_lakhs);
+                    // Former members come last; head their group once.
+                    const firstFormer = !p.on_team && (i === 0 || rows[i - 1].person.on_team);
+                    return (
+                      <Fragment key={p.user_id}>
+                        {firstFormer && (
+                          <TocMessage>
+                            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
+                              No longer on this team — their plans still count in the total
+                            </Typography>
+                          </TocMessage>
+                        )}
+                        <TocRow indent={depth} detail={open && t && <TargetPlanDetails target={t} />}>
+                          <TocCell toggle>
+                            {t && <ExpandToggle open={open} onClick={() => toggleExpanded(t.id)} />}
+                          </TocCell>
+                          <TocCell title>
+                            {p.display_name}
+                            {managerName && (
+                              <Typography variant="caption" color="text.secondary" sx={{ display: "block", fontWeight: 400 }}>
+                                reports to {managerName}
+                              </Typography>
+                            )}
+                          </TocCell>
+                          <TocCell label="Hospitals" align="right">{t ? hospitalCount(t) : "—"}</TocCell>
+                          <TocCell label="Amount">
+                            {t ? <PlanAmount amount={t.target_amount_lakhs} note={note} /> : "—"}
+                          </TocCell>
+                          <TocCell label="Status">
+                            {t ? <StatusWithNote target={t} sbuHasBrands={rollupSbuHasBrands} /> : <RosterStatusOnly status={p.plan_status} />}
+                          </TocCell>
+                        </TocRow>
+                      </Fragment>
+                    );
+                  })}
+                  {rosterFailed && !roster && (
+                    <TocMessage>
+                      <Typography color="error">Couldn't load the team list. Please refresh.</Typography>
+                    </TocMessage>
+                  )}
+                  {roster && roster.people.length === 0 && (
+                    <TocMessage>
+                      <Typography color="text.secondary">No one in this team for {formatPlanningPeriod(period)}.</Typography>
+                    </TocMessage>
+                  )}
+                </TableOrCards>
               </>
             ) : (
               <>
@@ -747,47 +683,38 @@ export default function TargetPlanningScreen({
                   Total: <strong>{formatLakhs(annualRollupTotal)}</strong> across {teamAnnualList.length} rep
                   {teamAnnualList.length === 1 ? "" : "s"} for {periodLabel}
                 </Typography>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Rep</TableCell>
-                      <TableCell>Amount</TableCell>
-                      <TableCell>Status</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {teamAnnualList.map((p) => (
-                      <Fragment key={p.user.id}>
-                        <TableRow sx={{ "& td": { fontWeight: 700, borderTop: "2px solid", borderColor: "divider" } }}>
-                          <TableCell>{p.user.display_name}</TableCell>
-                          <TableCell>{formatLakhs(p.total)}</TableCell>
-                          <TableCell>Annual Total</TableCell>
-                        </TableRow>
-                        {yearQuarters.map((q) => {
-                          const t = p.byQuarter[q];
-                          return (
-                            <TableRow key={`${p.user.id}-${q}`}>
-                              <TableCell sx={{ pl: 3, color: "text.secondary" }}>{formatPlanningPeriod(q)}</TableCell>
-                              <TableCell>
-                                {t ? <PlanAmount amount={t.target_amount_lakhs} note={previousApprovedNote(t.status, t.previous_approved_total_lakhs)} /> : "—"}
-                              </TableCell>
-                              <TableCell>
-                                {t ? <StatusWithNote target={t} sbuHasBrands={rollupSbuHasBrands} /> : <Typography color="text.secondary" variant="body2">Not set</Typography>}
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </Fragment>
-                    ))}
-                    {teamAnnualList.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={3}>
-                          <Typography color="text.secondary">No plans set for {periodLabel} yet.</Typography>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
+                {/* On a phone each person is one card with their quarters inside. */}
+                <TableOrCards columns={[{ label: "Rep" }, { label: "Amount" }, { label: "Status" }]}>
+                  {teamAnnualList.map((p) => (
+                    <TocRow
+                      key={p.user.id}
+                      total
+                      subRows={yearQuarters.map((q) => {
+                        const t = p.byQuarter[q];
+                        return (
+                          <TocRow key={`${p.user.id}-${q}`}>
+                            <TocCell title sx={{ pl: { sm: 3 }, color: "text.secondary" }}>{formatPlanningPeriod(q)}</TocCell>
+                            <TocCell label="Amount">
+                              {t ? <PlanAmount amount={t.target_amount_lakhs} note={previousApprovedNote(t.status, t.previous_approved_total_lakhs)} /> : "—"}
+                            </TocCell>
+                            <TocCell label="Status">
+                              {t ? <StatusWithNote target={t} sbuHasBrands={rollupSbuHasBrands} /> : <Typography color="text.secondary" variant="body2">Not set</Typography>}
+                            </TocCell>
+                          </TocRow>
+                        );
+                      })}
+                    >
+                      <TocCell title>{p.user.display_name}</TocCell>
+                      <TocCell label="Annual Total">{formatLakhs(p.total)}</TocCell>
+                      <TocCell phone={false}>Annual Total</TocCell>
+                    </TocRow>
+                  ))}
+                  {teamAnnualList.length === 0 && (
+                    <TocMessage>
+                      <Typography color="text.secondary">No plans set for {periodLabel} yet.</Typography>
+                    </TocMessage>
+                  )}
+                </TableOrCards>
               </>
             )}
           </Box>

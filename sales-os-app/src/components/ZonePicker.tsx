@@ -8,6 +8,9 @@ interface ZonePickerProps {
   value: ZoneSearchResult | null;
   onChange: (zone: ZoneSearchResult | null) => void;
   label: string;
+  // Shown inside the box while no zone is picked (e.g. "All Zones" on a
+  // filter); the label then stays above the box.
+  placeholder?: string;
   excludeIds?: string[];
   size?: "small" | "medium";
   fullWidth?: boolean;
@@ -26,6 +29,7 @@ export default function ZonePicker({
   value,
   onChange,
   label,
+  placeholder,
   excludeIds = [],
   size = "small",
   fullWidth = true,
@@ -66,7 +70,15 @@ export default function ZonePicker({
           </Box>
         </Box>
       )}
-      renderInput={(params) => <TextField {...params} label={label} size={size} />}
+      renderInput={(params) => (
+        <TextField
+          {...params}
+          label={label}
+          size={size}
+          placeholder={placeholder}
+          slotProps={placeholder ? { ...params.slotProps, inputLabel: { ...params.slotProps.inputLabel, shrink: true } } : params.slotProps}
+        />
+      )}
       fullWidth={fullWidth}
     />
   );

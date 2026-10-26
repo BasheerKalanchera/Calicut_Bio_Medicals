@@ -27,7 +27,7 @@ export default function SbuTargetBox({ sbuId, period }: { sbuId: string; period:
               ? "Couldn't load the SBU target. Refresh to try again."
               : amount !== null
                 ? (
-                  <Typography component="span" sx={{ fontWeight: 700, fontSize: "1.1rem" }}>
+                  <Typography component="span" variant="lead" sx={{ fontWeight: 700 }}>
                     {formatLakhs(Number(amount))}
                   </Typography>
                 )

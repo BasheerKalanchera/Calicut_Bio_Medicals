@@ -272,7 +272,7 @@ export default function TargetPlanDialog({ sbuId, period, existing, onClose, onS
             sx={{ border: "1px solid", borderColor: "divider", borderRadius: 1.5, p: 1.25, display: "flex", flexDirection: "column", gap: 1 }}
           >
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
-              <Typography sx={{ fontWeight: 700, fontSize: "0.875rem" }}>{r.account.name}</Typography>
+              <Typography variant="body2" sx={{ fontWeight: 700 }}>{r.account.name}</Typography>
               <Typography variant="caption" color="text.secondary">{r.account.zone.name}</Typography>
               <BusinessPotentialChip value={r.account.business_potential} />
               <Box sx={{ flex: 1 }} />
@@ -379,7 +379,7 @@ export default function TargetPlanDialog({ sbuId, period, existing, onClose, onS
             const brand = brands.find((b) => b.id === s.brand_id);
             return (
               <Box key={s.brand_id} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Typography sx={{ flex: 1, fontSize: "0.875rem" }}>{brand?.name ?? s.brand_id}</Typography>
+                <Typography variant="body2" sx={{ flex: 1 }}>{brand?.name ?? s.brand_id}</Typography>
                 <TextField
                   type="number"
                   size="small"

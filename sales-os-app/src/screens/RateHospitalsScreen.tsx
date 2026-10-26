@@ -4,16 +4,15 @@ import {
   Alert,
   Box,
   Button,
+  IconButton,
+  InputAdornment,
   MenuItem,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
   TablePagination,
-  TableRow,
   TextField,
   Typography,
 } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
+import ClearIcon from "@mui/icons-material/Clear";
 import { listAccounts, setBusinessPotential } from "../services/accounts";
 import ZonePicker from "../components/ZonePicker";
 import useDebouncedValue from "../hooks/useDebouncedValue";
@@ -25,6 +24,7 @@ import {
   toBusinessPotential,
   type BusinessPotential,
 } from "../utils/businessPotential";
+import TableOrCards, { TocCell, TocMessage, TocRow } from "../components/TableOrCards";
 
 const PAGE_SIZE = 50;
 
@@ -59,23 +59,43 @@ export default function RateHospitalsScreen({ active }: { active: boolean }) {
   return (
     <Box sx={{ height: "100%", overflow: "hidden", display: "flex", flexDirection: "column" }}>
       {/* Fixed: search + filters — does not scroll */}
-      <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", alignItems: "center", flexShrink: 0, px: 3, pt: 3, pb: 2 }}>
+      {/* On a phone the search takes its own line; Zone and rating share the next. */}
+      <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", alignItems: "center", flexShrink: 0, px: { xs: 1.5, sm: 3 }, pt: 3, pb: 2 }}>
         <TextField
           size="small"
           placeholder="Search hospitals"
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-          sx={{ flex: 1, minWidth: "12rem" }}
+          sx={{ flex: { xs: "1 1 100%", sm: 1 }, minWidth: "12rem" }}
+          slotProps={{
+            htmlInput: { "aria-label": "Search hospitals" },
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+              endAdornment: search ? (
+                <InputAdornment position="end">
+                  <IconButton size="small" aria-label="Clear search" onClick={() => { setSearch(""); setPage(0); }}>
+                    <ClearIcon fontSize="small" />
+                  </IconButton>
+                </InputAdornment>
+              ) : undefined,
+            },
+          }}
         />
-        <Box sx={{ minWidth: { sm: 220 }, flexShrink: 0 }}>
-          <ZonePicker label="All Zones" value={zoneFilter} onChange={(zone) => { setZoneFilter(zone); setPage(0); }} />
+        <Box sx={{ minWidth: { xs: 0, sm: 220 }, flex: { xs: 1, sm: "0 0 auto" } }}>
+          <ZonePicker label="Zone" placeholder="All Zones" value={zoneFilter} onChange={(zone) => { setZoneFilter(zone); setPage(0); }} />
         </Box>
         <TextField
           select
           size="small"
+          label="Rating"
           value={potentialFilter}
           onChange={(e) => { setPotentialFilter(e.target.value as BusinessPotential | ""); setPage(0); }}
-          slotProps={{ select: { displayEmpty: true } }}
+          // "All ratings" is an empty value, so the label is held above the box.
+          slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
           sx={{ minWidth: "10rem" }}
         >
           <MenuItem value="">All ratings</MenuItem>
@@ -86,44 +106,39 @@ export default function RateHospitalsScreen({ active }: { active: boolean }) {
       </Box>
 
       {/* Scrollable list content */}
-      <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0, px: 3, pb: 3, display: "flex", flexDirection: "column", gap: 2 }}>
+      <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0, px: { xs: 1.5, sm: 3 }, pb: 3, display: "flex", flexDirection: "column", gap: 2 }}>
         {isError && (
           <Alert severity="error" action={<Button size="small" onClick={() => refetch()}>Retry</Button>}>
             Failed to load hospitals
           </Alert>
         )}
 
-        <Box sx={{ bgcolor: "background.paper", borderRadius: 2 }}>
-          <Table size="small" stickyHeader>
-            <TableHead>
-              <TableRow>
-                <TableCell>Hospital</TableCell>
-                <TableCell>Zone</TableCell>
-                <TableCell sx={{ width: "10rem" }}>Business Potential</TableCell>
-                <TableCell>Notes (Admin/GM only)</TableCell>
-                <TableCell sx={{ width: "6rem" }} />
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {accounts.map((a) => (
-                <RatingRow key={a.id} account={a} />
-              ))}
-              {!isLoading && accounts.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5}>
-                    <Typography color="text.secondary">
-                      {potentialFilter === "NOT_CLASSIFIED" ? "Every hospital matching these filters is rated." : "No hospitals match these filters."}
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              )}
-              {isLoading && (
-                <TableRow>
-                  <TableCell colSpan={5}><Typography color="text.secondary">Loading...</Typography></TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+        {/* Each hospital is a card on a phone (Frontend standards §6.11 rule 2). */}
+        <Box sx={{ bgcolor: { xs: "transparent", sm: "background.paper" }, borderRadius: 2 }}>
+          <TableOrCards
+            stickyHeader
+            columns={[
+              { label: "Hospital" },
+              { label: "Zone" },
+              { label: "Business Potential", width: "10rem" },
+              { label: "Notes (Admin/GM only)" },
+              { width: "6rem" },
+            ]}
+          >
+            {accounts.map((a) => (
+              <RatingRow key={a.id} account={a} />
+            ))}
+            {!isLoading && accounts.length === 0 && (
+              <TocMessage>
+                <Typography color="text.secondary">
+                  {potentialFilter === "NOT_CLASSIFIED" ? "Every hospital matching these filters is rated." : "No hospitals match these filters."}
+                </Typography>
+              </TocMessage>
+            )}
+            {isLoading && (
+              <TocMessage><Typography color="text.secondary">Loading...</Typography></TocMessage>
+            )}
+          </TableOrCards>
           <TablePagination
             component="div"
             count={total}
@@ -162,10 +177,10 @@ function RatingRow({ account }: { account: AccountListResponse }) {
   const dirty = potential !== savedPotential || trimmedNotes !== savedNotes;
 
   return (
-    <TableRow>
-      <TableCell>{account.name}</TableCell>
-      <TableCell>{account.zone?.name ?? "—"}</TableCell>
-      <TableCell>
+    <TocRow>
+      <TocCell title>{account.name}</TocCell>
+      <TocCell label="Zone">{account.zone?.name ?? "—"}</TocCell>
+      <TocCell field label="Business Potential">
         <TextField
           select
           size="small"
@@ -178,8 +193,8 @@ function RatingRow({ account }: { account: AccountListResponse }) {
             <MenuItem key={p} value={p}>{BUSINESS_POTENTIAL_LABEL[p]}</MenuItem>
           ))}
         </TextField>
-      </TableCell>
-      <TableCell>
+      </TocCell>
+      <TocCell field label="Notes (Admin/GM only)">
         <TextField
           size="small"
           fullWidth
@@ -194,8 +209,8 @@ function RatingRow({ account }: { account: AccountListResponse }) {
         {save.isError && (
           <Typography variant="caption" color="error">Couldn't save — try again.</Typography>
         )}
-      </TableCell>
-      <TableCell>
+      </TocCell>
+      <TocCell action>
         <Button
           size="small"
           variant="contained"
@@ -204,7 +219,7 @@ function RatingRow({ account }: { account: AccountListResponse }) {
         >
           {save.isPending ? "Saving..." : "Save"}
         </Button>
-      </TableCell>
-    </TableRow>
+      </TocCell>
+    </TocRow>
   );
 }

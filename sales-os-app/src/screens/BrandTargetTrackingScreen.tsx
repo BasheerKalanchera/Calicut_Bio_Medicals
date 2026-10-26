@@ -1,4 +1,4 @@
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Alert,
@@ -10,11 +10,6 @@ import {
   IconButton,
   TextField,
   MenuItem,
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
 } from "@mui/material";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
@@ -31,7 +26,8 @@ import {
   setSeasonalPattern,
 } from "../services/targetPlanning";
 import { formatLakhs, formatPlanningPeriod } from "../utils/formatter";
-import type { BrandAnnualTargetRow, SbuSeasonalPattern, SeasonalPattern } from "../types/targetPlanning";
+import type { BrandAnnualTargetRow, BrandRollup, SbuSeasonalPattern, SeasonalPattern } from "../types/targetPlanning";
+import TableOrCards, { TocCell, TocMessage, TocRow } from "../components/TableOrCards";
 
 interface SbuOption { id: string; name: string }
 
@@ -52,10 +48,9 @@ const YEAR_START_MONTHS = [
 ];
 const MONTH_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-// On a phone the brand table drops its own-figure and stretch columns so the
-// "Set target" button stays on screen; both still show in the Set target box
-// (Basheer, 2026-10-22).
-const HIDE_ON_PHONE = { display: { xs: "none", sm: "table-cell" } };
+// On a phone each brand is a card (TableOrCards), and so is each of its
+// quarters: dropping the own-figure and stretch columns alone still left the
+// table wider than its card (Basheer, 2026-10-25).
 
 // The pattern is tied to calendar months, whatever month a brand's year
 // starts in (D41).
@@ -175,6 +170,58 @@ function SeasonalPatternBox({ sbuId, year, saved, onSaved }: { sbuId: string; ye
         </Button>
       </Box>
       {error && <Alert severity="error" sx={{ mt: 1.5 }}>{error}</Alert>}
+    </Box>
+  );
+}
+
+// A brand's quarters, opened under its row: a table on a laptop, one card
+// per quarter on a phone.
+function BrandQuarters({
+  row,
+  rollupFor,
+  onChange,
+}: {
+  row: BrandAnnualTargetRow;
+  rollupFor: (brandId: string, period: string) => BrandRollup | undefined;
+  onChange: (row: BrandAnnualTargetRow, period: string, saved: string | null) => void;
+}) {
+  return (
+    <Box sx={{ pl: { sm: 5 } }}>
+      <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
+        {row.own_pattern
+          ? "Spread by this brand's own seasonal pattern."
+          : row.effective_pattern
+            ? `Spread by the SBU's seasonal pattern for ${row.start_year}.`
+            : `No seasonal pattern for ${row.start_year} yet.`}
+      </Typography>
+      <TableOrCards columns={[{ label: "Quarter" }, { label: "Target" }, { label: "Brands Billing to Cabio" }, { label: "Team committed" }, { label: "Gap" }, {}]}>
+        {row.quarters.map((q) => {
+          const rollup = rollupFor(row.brand_id, q.planning_period);
+          const gap = rollup?.gap ?? null;
+          return (
+            <TocRow key={q.planning_period}>
+              <TocCell title>{formatPlanningPeriod(q.planning_period)}</TocCell>
+              <TocCell label="Target">
+                {q.saved_lakhs !== null ? formatLakhs(Number(q.saved_lakhs)) : <Typography component="span" variant="inherit" color="text.secondary">Not set</Typography>}
+                {/* Kept when the year is worked out again (D71); never removed (D73). */}
+                {q.set_by_hand && (
+                  <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>changed by hand</Typography>
+                )}
+              </TocCell>
+              {/* Shown only, never typed (D54, D68). */}
+              <TocCell label="Brands Billing to Cabio">{q.billing_lakhs !== null ? formatLakhs(Number(q.billing_lakhs)) : "—"}</TocCell>
+              <TocCell label="Team committed">{rollup ? formatLakhs(Number(rollup.committed_total)) : "—"}</TocCell>
+              <TocCell label="Gap" sx={{ color: gap === null ? "text.secondary" : Number(gap) < 0 ? "success.main" : "warning.main" }}>
+                {gap !== null ? formatLakhs(Number(gap)) : "—"}
+              </TocCell>
+              {/* Ended quarters, and those before Oct–Dec 2026, stay locked (D51, D70). */}
+              <TocCell action align="right">
+                {!q.locked && <Button size="small" onClick={() => onChange(row, q.planning_period, q.saved_lakhs)}>Change</Button>}
+              </TocCell>
+            </TocRow>
+          );
+        })}
+      </TableOrCards>
     </Box>
   );
 }
@@ -385,148 +432,38 @@ export default function BrandTargetTrackingScreen() {
               Couldn't load the team's committed totals — the quarter figures are incomplete. Try refreshing.
             </Alert>
           )}
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ width: 40 }} />
-                <TableCell>Brand</TableCell>
-                <TableCell sx={HIDE_ON_PHONE}>Brand's own figure</TableCell>
-                <TableCell sx={HIDE_ON_PHONE}>Stretch</TableCell>
-                <TableCell>Stretched target</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {rows.map((row) => {
-                const open = expanded.has(row.brand_id);
-                const isSet = row.vendor_amount_lakhs !== null;
-                return (
-                  <Fragment key={row.brand_id}>
-                    <TableRow hover>
-                      <TableCell>
-                        <IconButton size="small" onClick={() => toggle(row.brand_id)} aria-expanded={open} aria-label={open ? "Hide quarters" : "Show quarters"}>
-                          {open ? <KeyboardArrowDownIcon fontSize="small" /> : <KeyboardArrowRightIcon fontSize="small" />}
-                        </IconButton>
-                      </TableCell>
-                      <TableCell>
-                        {row.brand_name}
-                        <Typography component="span" color="text.secondary"> · {brandYearLabel(row.year_start_month, row.start_year)}</Typography>
-                        {/* On a phone the two hidden columns show here instead. */}
-                        <Typography variant="caption" color="text.secondary" sx={{ display: { xs: "block", sm: "none" } }}>
-                          {isSet ? `Own figure ${formatLakhs(Number(row.vendor_amount_lakhs))}` : "Own figure not set"}
-                          {row.stretch_pct !== null && ` · Stretch ${Number(row.stretch_pct)}%`}
-                        </Typography>
-                      </TableCell>
-                      <TableCell sx={HIDE_ON_PHONE}>{isSet ? formatLakhs(Number(row.vendor_amount_lakhs)) : <Typography component="span" color="text.secondary">Not set</Typography>}</TableCell>
-                      <TableCell sx={HIDE_ON_PHONE}>{row.stretch_pct !== null ? `${Number(row.stretch_pct)}%` : "—"}</TableCell>
-                      <TableCell sx={{ fontWeight: 700 }}>{row.stretched_lakhs !== null ? formatLakhs(Number(row.stretched_lakhs)) : "—"}</TableCell>
-                      <TableCell align="right">
-                        <Button size="small" sx={{ whiteSpace: "nowrap" }} onClick={() => openEdit(row)}>{isSet ? "Revise" : "Set target"}</Button>
-                      </TableCell>
-                    </TableRow>
-                    {open && (
-                      <TableRow>
-                        <TableCell sx={HIDE_ON_PHONE} />
-                        <TableCell colSpan={5}>
-                          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
-                            {row.own_pattern
-                              ? "Spread by this brand's own seasonal pattern."
-                              : row.effective_pattern
-                                ? `Spread by the SBU's seasonal pattern for ${row.start_year}.`
-                                : `No seasonal pattern for ${row.start_year} yet.`}
-                          </Typography>
-                          {(() => {
-                            const quarters = row.quarters.map((q) => {
-                              const rollup = rollupFor(row.brand_id, q.planning_period);
-                              const gap = rollup?.gap ?? null;
-                              return {
-                                q,
-                                target: (
-                                  <>
-                                    {q.saved_lakhs !== null ? formatLakhs(Number(q.saved_lakhs)) : <Typography component="span" color="text.secondary">Not set</Typography>}
-                                    {/* Kept when the year is worked out again (D71); never removed (D73). */}
-                                    {q.set_by_hand && (
-                                      <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>changed by hand</Typography>
-                                    )}
-                                  </>
-                                ),
-                                // Shown only, never typed (D54, D68).
-                                billing: q.billing_lakhs !== null ? formatLakhs(Number(q.billing_lakhs)) : "—",
-                                committed: rollup ? formatLakhs(Number(rollup.committed_total)) : "—",
-                                gap: gap !== null ? formatLakhs(Number(gap)) : "—",
-                                gapColor: gap === null ? "text.secondary" : Number(gap) < 0 ? "success.main" : "warning.main",
-                                // Ended quarters, and those before Oct–Dec 2026, stay locked (D51, D70).
-                                change: !q.locked && (
-                                  <Button size="small" onClick={() => openQuarterEdit(row, q.planning_period, q.saved_lakhs)}>Change</Button>
-                                ),
-                              };
-                            });
-                            return (
-                              <>
-                                {/* On a phone each quarter is a stacked block, so nothing leaves the card. */}
-                                <Box sx={{ display: { xs: "block", sm: "none" } }}>
-                                  {quarters.map((x) => (
-                                    <Box key={x.q.planning_period} sx={{ py: 1, borderBottom: 1, borderColor: "divider" }}>
-                                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
-                                        <Box sx={{ fontWeight: 700 }}>{formatPlanningPeriod(x.q.planning_period)}</Box>
-                                        {x.change}
-                                      </Box>
-                                      {([
-                                        ["Target", x.target, undefined],
-                                        ["Brands Billing to Cabio", x.billing, undefined],
-                                        ["Team committed", x.committed, undefined],
-                                        ["Gap", x.gap, x.gapColor],
-                                      ] as const).map(([label, value, color]) => (
-                                        <Box key={label} sx={{ display: "flex", justifyContent: "space-between", gap: 1, fontSize: "0.8125rem" }}>
-                                          <Box component="span" sx={{ color: "text.secondary" }}>{label}</Box>
-                                          <Box component="span" sx={{ textAlign: "right", color }}>{value}</Box>
-                                        </Box>
-                                      ))}
-                                    </Box>
-                                  ))}
-                                </Box>
-                                <Table size="small" sx={{ display: { xs: "none", sm: "table" } }}>
-                                  <TableHead>
-                                    <TableRow>
-                                      <TableCell>Quarter</TableCell>
-                                      <TableCell>Target</TableCell>
-                                      <TableCell>Brands Billing to Cabio</TableCell>
-                                      <TableCell>Team committed</TableCell>
-                                      <TableCell>Gap</TableCell>
-                                      <TableCell />
-                                    </TableRow>
-                                  </TableHead>
-                                  <TableBody>
-                                    {quarters.map((x) => (
-                                      <TableRow key={x.q.planning_period}>
-                                        <TableCell>{formatPlanningPeriod(x.q.planning_period)}</TableCell>
-                                        <TableCell>{x.target}</TableCell>
-                                        <TableCell>{x.billing}</TableCell>
-                                        <TableCell>{x.committed}</TableCell>
-                                        <TableCell sx={{ color: x.gapColor }}>{x.gap}</TableCell>
-                                        <TableCell align="right">{x.change}</TableCell>
-                                      </TableRow>
-                                    ))}
-                                  </TableBody>
-                                </Table>
-                              </>
-                            );
-                          })()}
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </Fragment>
-                );
-              })}
-              {targetsQuery.isSuccess && rows.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={6}>
-                    <Typography color="text.secondary">No brands set up for this SBU yet.</Typography>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+          <TableOrCards
+            columns={[{ toggle: true }, { label: "Brand" }, { label: "Brand's own figure" }, { label: "Stretch" }, { label: "Stretched target" }, { label: "Actions", align: "right" }]}
+          >
+            {rows.map((row) => {
+              const open = expanded.has(row.brand_id);
+              const isSet = row.vendor_amount_lakhs !== null;
+              return (
+                <TocRow key={row.brand_id} detail={open && <BrandQuarters row={row} rollupFor={rollupFor} onChange={openQuarterEdit} />}>
+                  <TocCell toggle>
+                    <IconButton size="small" onClick={() => toggle(row.brand_id)} aria-expanded={open} aria-label={open ? "Hide quarters" : "Show quarters"}>
+                      {open ? <KeyboardArrowDownIcon fontSize="small" /> : <KeyboardArrowRightIcon fontSize="small" />}
+                    </IconButton>
+                  </TocCell>
+                  <TocCell title>
+                    {row.brand_name}
+                    <Typography component="span" color="text.secondary" sx={{ fontWeight: 400 }}> · {brandYearLabel(row.year_start_month, row.start_year)}</Typography>
+                  </TocCell>
+                  <TocCell label="Own figure">{isSet ? formatLakhs(Number(row.vendor_amount_lakhs)) : <Typography component="span" variant="inherit" color="text.secondary">Not set</Typography>}</TocCell>
+                  <TocCell label="Stretch">{row.stretch_pct !== null ? `${Number(row.stretch_pct)}%` : "—"}</TocCell>
+                  <TocCell label="Stretched target" sx={{ fontWeight: 700 }}>{row.stretched_lakhs !== null ? formatLakhs(Number(row.stretched_lakhs)) : "—"}</TocCell>
+                  <TocCell action align="right">
+                    <Button size="small" sx={{ whiteSpace: "nowrap" }} onClick={() => openEdit(row)}>{isSet ? "Revise" : "Set target"}</Button>
+                  </TocCell>
+                </TocRow>
+              );
+            })}
+            {targetsQuery.isSuccess && rows.length === 0 && (
+              <TocMessage>
+                <Typography color="text.secondary">No brands set up for this SBU yet.</Typography>
+              </TocMessage>
+            )}
+          </TableOrCards>
         </Box>
       </Box>
 
