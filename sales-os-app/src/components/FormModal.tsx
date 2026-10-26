@@ -8,6 +8,7 @@ import {
   Button,
   Alert,
 } from "@mui/material";
+import useIsPhone from "../hooks/useIsPhone";
 import { SilentModalError } from "../lib/formErrors";
 
 interface FormModalProps {
@@ -51,6 +52,8 @@ export default function FormModal({
   const [submittingSelf, setSubmitting] = useState(false);
   const submitting = submittingSelf || busy;
   const [error, setError] = useState<string | null>(null);
+  // On a phone the pop-up fills the screen (Frontend standards §6.11 rule 3).
+  const phone = useIsPhone();
 
   useEffect(() => {
     if (isOpen) setError(null);
@@ -89,9 +92,10 @@ export default function FormModal({
       open={isOpen}
       onClose={() => { if (!submitting) onClose(); }}
       fullWidth
+      fullScreen={phone}
       maxWidth={false}
       disableEnforceFocus={disableEnforceFocus}
-      slotProps={{ paper: { sx: { maxWidth } } }}
+      slotProps={{ paper: { sx: { maxWidth: phone ? "none" : maxWidth } } }}
     >
       <Box
         component="form"
@@ -107,8 +111,9 @@ export default function FormModal({
         // overflow:hidden here, the whole dialog (title + fields + actions) scrolls
         // as one block instead of just the fields, hiding the header/buttons on a
         // long form. Restoring the flex column + min-height:0 lets DialogContent's
-        // own overflowY:auto (MUI's default) take over as intended.
-        sx={{ display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}
+        // own overflowY:auto (MUI's default) take over as intended. flex:1 fills
+        // a full-screen phone pop-up, so the buttons sit at the bottom.
+        sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, overflow: "hidden" }}
       >
         <DialogTitle component="h3">{title}</DialogTitle>
         {error && (
