@@ -502,6 +502,13 @@ table must fit a phone, not *how*.
   Plan & Chore to plan (Basheer, 2026-10-26); built in Build & Test. Overlaps the
   front-end consistency audit below and `statusColors.ts` — fold them into
   one plan.
+- **Found 26 Oct: Customer 360 → Stakeholders tab doesn't fit a phone.**
+  The "1 Opportunities" button on each stakeholder's card runs past the
+  card's right edge (measured on Dev at 390 px, Al Shifa Hospital
+  Perinthalmanna, Dr Ajmal: content 474 px wide in a 356 px space). Seen
+  while measuring the New Stakeholder pop-up for the MUI plan's commit;
+  that screen isn't in the plan's change, so not fixed there (Basheer,
+  2026-10-26). Fix when the screen is next changed or in the sweep.
 
 ### Front-end consistency audit — parked, undecided (raised 2026-09-30)
 

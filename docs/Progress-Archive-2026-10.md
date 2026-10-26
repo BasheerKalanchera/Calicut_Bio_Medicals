@@ -4850,6 +4850,29 @@ moved to after the restart (Basheer).
   undone, help keeps its NPS line. Open: the 19 saved scores; Neutral vs
   Passive. New Customer help parked (Basheer) for the MUI clean-up plan.
 
+### 2026-10-26 — Build & Test: phone fixes (a)–(c) built and measured on Dev
+- Basheer's go-ahead: build now, UAT move not before 27 Oct (team starts
+  on 25 Oct's UAT build today); urgent bug fixes reported today may ride
+  the same hotfix branch as their own commits. Option A: today's fixes
+  ship as built and are redone under Backlog "MUI good practice on phone,
+  tablet and laptop" (raised today; handed to Plan & Chore).
+- Built: Team Plans rows pushed in by reporting level on a phone; Rate
+  Hospitals search on its own line, Zone + rating on line 2; Brand Target
+  Tracking brand rows as blocks (`STACK_ON_PHONE`). tsc clean, lint 0
+  errors (1 older warning, `BrandTargetTrackingScreen.tsx:185`).
+- Measured on Dev as Haroon (GM) at 390 px in a same-size frame (Chrome
+  window would not resize), every row opened: nothing past any card;
+  Team Plans indents 0 / 16 / 32 px (Haroon → Basheer K, Fazal, Shruthi →
+  Fahad, Rudrappa); one brand on Dev (SonoScape, Imaging 2026). At 1280 px
+  all three unchanged (tables as tables, filters on one line).
+- Rate Hospitals filters (Basheer, 26 Oct, after watching the phone
+  walk-through): search box gets the magnifying glass and a clear ✕ (as
+  Account Management); Zone filter named "Zone" with "All Zones" inside
+  (new optional `placeholder` on `ZonePicker`, other callers unchanged —
+  Account Management checked on Dev); Rating filter named "Rating".
+  Checked against MUI's TextField and Select pages. tsc and lint clean;
+  seen on Dev at 390 px and 1280 px.
+
 ### 2026-10-26 — Plan & Chore: MUI good practice plan and standard
 - Build & Test handed over Backlog "MUI good practice on phone, tablet
   and laptop" (26 Oct). Plan `docs/MUI-Good-Practice-Implementation-Plan.md`
@@ -4885,3 +4908,52 @@ moved to after the restart (Basheer).
   open — copied a stale Backlog line without checking archive and code.
   3–5 are one kind: first explanation not plain enough. No tracker
   change: none touched live data, UAT or lost work, none guard-able.
+
+### 2026-10-26 — Build & Test: MUI good practice, commits 1 and 2 shipped
+- Commit 1 `2e3ddd7` (shared parts, pushed): theme colour set
+  (`colors.ts`, `statusColors.ts`), text styles (e.g. `lead`),
+  `useIsPhone` (below 600 px), `FormModal` full screen on a phone,
+  `TableOrCards`, `scripts/check-mui-standard.js` in `npm run lint`.
+- Commit 2 `64b5fef` (`fix:`, pushed): Target & Coverage Planning (5
+  tables), Rate Hospitals and Brand Target Tracking on `TableOrCards`;
+  `ZonePicker`, `SbuTargetBox`, `TargetPlanDialog` on theme text styles.
+  The untracked `phoneTable.ts` of 25 Oct deleted. The pre-commit check
+  fired on both commits and passed (2 and 6 staged .tsx files).
+- Bug found while measuring: Team Plans cards lost their push-in under
+  each manager on a phone — MUI `Stack spacing` sets every child's
+  margin to 0, overriding the card's `ml`. Fixed with `useFlexGap`
+  (gap, not margins); card left edges 24 / 40 / 56 px by depth.
+- Bug found while measuring: on a short form the full-screen pop-up's
+  buttons sat mid-screen — the form box didn't grow to fill the screen.
+  `flex: 1` on it; buttons now at the bottom (all pop-ups share it).
+- Measured on Dev as Haroon, 26 Oct, in same-width frames: the three
+  screens fit at 390, 768 and 1280 px (cards at 390, tables at 768 and
+  1280); Log Activity, Close Next Action, New Stakeholder, New Customer
+  and Edit Opportunity full screen at 390 px, nothing past the edge
+  (Cancel pressed, nothing saved). Before/after pictures shown to
+  Basheer (the saved code put back temporarily for "before"; laptop
+  identical).
+- Found outside the change: Customer 360 → Stakeholders runs past the
+  edge on a phone (474 px in 356 px) — added to Backlog's MUI entry.
+- Checks: tsc clean; lint 0 errors, 133 warnings (unchanged).
+
+### 2026-10-26 — Build & Test: retro
+- **Corrections from Basheer this session: 9** (from his 38 messages,
+  counted from the transcript): (1) phone fixes built without MUI good
+  practice; (2) first guard idea only checked the commit message, not
+  the screens; (3) over-scoped fix (560 places, a Playwright layout
+  tool) — "We can do this as part of e2e"; (4) Team Plans differed from
+  UAT and I didn't say so first; (5) Rate Hospitals filters had no names
+  and the search no magnifying glass — he found it watching; (6) Zone
+  filter planned per screen instead of fixing the one shared part;
+  (7) "every step of the way you are asking my opinion, without helping
+  me"; (8) Chrome connection failure not explained ("What changed?");
+  (9) before/after pictures left where he couldn't easily open them,
+  then a Desktop copy he didn't need.
+- 1, 5, 6: one kind — phone look fixed without first checking MUI's own
+  way. `check-mui-standard.js` (built today) now stops typed colours,
+  text sizes and old classes; filter names and icons still rest on
+  reading MUI's pages first. 2, 3, 7: one kind — options and big plans
+  instead of a narrow recommendation.
+- Tracker: P100 +1 (seen 9) for 1. None touched live data, UAT or lost
+  work.
