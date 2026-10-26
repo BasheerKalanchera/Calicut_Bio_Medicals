@@ -327,7 +327,13 @@ the last sort key in the Pipeline query.
 Seen in both rounds of the fix 3 screen check (existing behaviour, not
 caused by the fix). Fix: list the zones as soon as the box is opened.
 
-### Wording: "deal" → "Opportunity" across the app and docs — decided, not started (2026-10-07, docs added 2026-10-12, names decided 2026-10-25)
+### Wording: "deal" → "Opportunity" across the app and docs — decided, part done (2026-10-07, docs added 2026-10-12, names decided 2026-10-25)
+
+- **Done (`65ab36a`, 2026-10-27, Part 2 screens plan step 5):** every
+  report bar's count (`ReportingUI.tsx`), Pipeline Report and Insights
+  Dashboard tiles, Sales Report, and "Stagnant Opportunities" menu item,
+  title and empty text. The docs that name the Stagnant screen are not
+  yet updated. The rest below is still open.
 
 The app still says "deal" in about 25 places users can read (Opportunity
 wording rule, CLAUDE.md). Found in the fix 3 screen check ("· 7 deals" on

@@ -18,18 +18,26 @@ session edits this note._
   `51d4fe8`); migration 0064 on Dev = head. No early UAT update for the
   phone fixes (Basheer, 26 Oct, D6): UAT moves after Round 1 E2E.
 - Shared parts and the 3 phone-fix screens shipped 26 Oct: `2e3ddd7`,
-  `64b5fef`, both pushed (archive 26 Oct). Docs uncommitted, for the
-  next docs batch: this note, Progress-Archive 26 Oct (2 entries),
-  Backlog (Customer 360 Stakeholders phone overflow).
+  `64b5fef`, both pushed; docs batch and retro (9 corrections)
+  `94dc11d`, pushed (archive 26 Oct).
 - For Plan & Chore, via Basheer: MUI plan Status line → commits
   `2e3ddd7`, `64b5fef`; D2/D4/D6 changes from this session.
-- Next: Part 2 plan D3 (bell in scope, emoji kept) written into the
-  plan; then the Target vs Actuals card / ReportingUI and the bell.
-- Then (from the plan): Target vs Actuals card / ReportingUI and the
-  bell; then E2E: restart the Dev backend, P7 (read-only Dev check;
-  ask first), P8, I, J, K (1 of 41 done). Post-commit checklist after it.
-- Lesson (21 Oct): bring review lists sorted by what users would
-  notice, screen first.
+- Stricter MUI check `eb1b2c6`, pushed 26 Oct (plain tables, style=,
+  md width, rgba, helper .ts; no table exceptions — Basheer). D3
+  written into the Part 2 screens plan (uncommitted, Plan & Chore's
+  batch). Suggested 2 tweaks to Plan & Chore's new pre-E2E MUI item
+  (hand-built phone switches; measure 768/1280) — via Basheer.
+- SBU Target card (Annual view) onto TableOrCards `dce5d7d`, pushed
+  26 Oct; measured on Dev at 390/768/1280, no overflow.
+- Part 2 screens plan step 5 shipped `65ab36a`, pushed 27 Oct (archive
+  27 Oct). TvA Quarter person table sideways scroll: Basheer says
+  leave it. Plan Status line, "display pieces" rename and Backlog
+  wording entry updated by this session at Basheer's request; the
+  plan doc is untracked and goes in Plan & Chore's batch. Retro 27 Oct
+  (5 corrections, P101) in the archive.
+- Next: the bell (step 6), kept by Basheer 27 Oct (🔔 emoji stays, D3); E2E: restart the Dev backend, P7 (read-only
+  Dev check; ask first), P8, I, J, K (1 of 41 done). Post-commit after.
+- Lesson (21 Oct): review lists sorted by what users notice, screen first.
 
 ## From Plan & Chore (added 25 Oct at Basheer's request, `393beee`)
 - My Work: D18–D22 decided (Weekly Follow-up plan); D18 = build it
