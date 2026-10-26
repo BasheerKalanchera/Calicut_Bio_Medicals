@@ -151,9 +151,40 @@ My Work, which is about to be built, follows the new rules from the start.
 3. **My Work** is built to §6.11 (D14), whenever its turn comes.
 4. **Round 1 review (Plan & Chore with Build & Test).** Screenshots of
    the D9 screens at three widths; ranked findings shown to Basheer.
-   Scope and time shown before it starts.
+   Scope and time shown before it starts. **Done 2026-10-26** (Plan &
+   Chore; code reading plus 21 screenshots on Dev, archive 26 Oct).
+   **Before screenshots:** `C:\Users\Basheer\Desktop\cabio\MUI-Round1-Before\`
+   — 21 files named `<number>-<screen>-<width>.png` (e.g.
+   `03-Opportunity-Detail-768.png`); kept out of git because they show
+   customer names. Taken logged in as Basheer, inside a frame of exact
+   width (390 / 768 / 1280); screens at all three widths, pop-ups at 390.
+   Customer 360 is "Al Shifa Hospital Perinthalmanna", Opportunity
+   Detail is its "ICU Monitor"; Daily Activity Report shows the empty
+   day (no Dev activity on 14 or 23 Oct).
 5. **Round 1 fixes (Build & Test), by Sun 1 Nov.** One screen per
-   commit; one combined E2E for round 1 at the end (D15).
+   commit; one combined E2E for round 1 at the end (D15). Findings from
+   step 4, most noticeable first:
+   1. **Customer 360 → Stakeholders tab, phone:** the stakeholder card
+      is 473 px wide in 354 px; its Edit button is off the screen
+      (Backlog "Customer 360 Stakeholders phone overflow").
+   2. **Daily Activity Report:** the date and team-member filters have
+      no name above them (§6.11 rule 7;
+      `DailyActivityReportScreen.tsx:153–172`).
+   3. **Account Management:** the zone filter is named "All Zones";
+      should be "Zone" above with "All Zones" inside, as Rate Hospitals
+      does (rule 7; `CustomerDirectoryScreen.tsx:148`).
+   4. **Log Activity pop-up:** the contact box has no name.
+   5. **Colours and text sizes typed into each screen** — 440 lines in
+      7 files (check report mode, 26 Oct): Opportunity Detail 179,
+      Customer 360 165, Account Management 27, Daily Activity Report
+      24, Close Next Action 23, Log Activity 12, Next Actions 10.
+   Nothing else runs past the screen edge at any width; all five
+   pop-ups fill the phone; the tab rows on Customer 360 and Opportunity
+   Detail scroll sideways by design.
+   **After the fixes:** Build & Test takes the same 21 pictures (same
+   records, names and widths) into `…\Desktop\cabio\MUI-Round1-After\`
+   and builds a before-and-after comparison page for Basheer, one row
+   per picture.
 6. **Other screens** — cleaned up when next changed (D10, D13); no
    separate round.
 

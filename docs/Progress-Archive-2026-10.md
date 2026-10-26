@@ -4996,3 +4996,49 @@ moved to after the restart (Basheer).
   instead of a narrow recommendation.
 - Tracker: P100 +1 (seen 9) for 1. None touched live data, UAT or lost
   work.
+
+### 2026-10-26 — Plan & Chore: MUI round 1 review — code reading (plan step 4)
+- Scope (D9): 9 screens/pop-ups. Check report mode (26 Oct): 440 lines
+  below standard in 7 files — Opportunity Detail 179, Customer 360 165,
+  Account Management 27, Daily Activity Report 24, Close Next Action 23,
+  Log Activity 12, Next Actions 10; New Customer 0. App-wide 46 files /
+  1,046 lines.
+- Rules the check can't see (§6.11): every pop-up with fields already
+  uses `FormModal` (rule 3); no tables in round 1 files — lists are
+  already cards (rule 2); Account Management search has 🔍 and ✕.
+- Misses (rule 7): Account Management zone filter shows "All Zones" as
+  its name, no "Zone" above (`CustomerDirectoryScreen.tsx:148`; Rate
+  Hospitals already does `label="Zone"` + `placeholder="All Zones"`);
+  Daily Activity Report's date and team-member filters have no name
+  above (`DailyActivityReportScreen.tsx:153–172`).
+- Screenshots at 390 / 768 / 1280: Basheer takes them (saves tokens),
+  Claude reviews.
+- Before screenshots (Basheer asked Claude to take them): 21 images,
+  Dev, logged in as Basheer, app shown in a frame of exact width (Chrome
+  window is maximised), saved to `Desktop\cabio\MUI-Round1-Before\`
+  (not in git — may show customer names). Read only; every pop-up closed
+  with Cancel. Measured overflow at each width (elements wider than the
+  screen): only real one is Customer 360 → Stakeholders tab on a phone
+  — the stakeholder card is 473 px in 354 px, its Edit button off-screen
+  (already Backlog "Customer 360 Stakeholders phone overflow"). Tab bars
+  on Customer 360 and Opportunity Detail scroll sideways by design.
+  Pop-ups all fill the phone. Daily Activity Report showed no activity
+  for 14 and 23 Oct on Dev, so its pictures show the empty state.
+  Small extra: label style differs inside pop-ups — Zone, Parent
+  Customer (New Customer) and Designation, Email, Phone (New
+  Stakeholder) show their name inside the box; Payer Behavior, Customer
+  Type, Sentiment show it above. Log Activity's contact box has no name.
+
+
+### 2026-10-26 — Plan & Chore: retro
+- **Corrections from Basheer this session: 6** (counted from his
+  messages): (1) help draft said "hospital" — a customer is not just a
+  hospital; (2) help draft said "form" — too technical; (3) "Why this
+  line…?" — unclear From-New-Opportunity line in the help draft; (4) "I
+  didn't understand this" — BR-ACC-03 explained in jargon; (5) "What is
+  this docs are still not committed comment all about?" — unclear status
+  line; (6) "has the session too long already?" — restart suggested after
+  the push without checking the 2-hour / 25-turn rule.
+- No tracker change: none touched live data, UAT or lost work, none
+  guard-stoppable. Guards worked 3 times: "deal" in a commit message,
+  missing matrix row, Build & Test's staged files caught before commit.

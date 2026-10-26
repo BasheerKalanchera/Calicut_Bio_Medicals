@@ -11,8 +11,10 @@ session edits this note._
 - `docs/MUI-Good-Practice-Implementation-Plan.md` (Approved, D1–D17;
   history in the archive 26 Oct). Step 1 done and pushed (`de10903`);
   Build & Test shipped step 2 (`2e3ddd7`, `64b5fef`). Lighter review
-  first, most-used phone screens (Basheer). **Next:** round 1 review
-  (plan step 4).
+  first, most-used phone screens (Basheer). Round 1 review done 26 Oct
+  (plan step 4: findings and before-pictures folder written into step
+  5). **Next:** Basheer passes step 5 to Build & Test (fixes by Sun 1
+  Nov, then before-and-after page).
 
 ## After the UAT move (25 Oct, details in the archive)
 
@@ -46,7 +48,8 @@ session edits this note._
   Oct). New Stakeholder agreed 26 Oct (10 of 30) + manual A2 step —
   archive 26 Oct; committed `de10903`. New Customer agreed 26 Oct (11
   of 30; all 8 pop-ups done), manual A2 line, BR-ACC-03 fix, wording
-  sweeps one pass (Basheer tells Build & Test) — not committed. **Next:** one pass over the 10 earlier entries for the word
+  sweeps one pass (Basheer tells Build & Test) — committed and pushed
+  `8c853d4` (with the MUI pre-E2E review item). **Next:** one pass over the 10 earlier entries for the word
   rules (help plan section 7 format notes), then the next screen.
 
 ## Harness Engineering
