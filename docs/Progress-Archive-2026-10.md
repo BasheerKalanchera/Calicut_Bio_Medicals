@@ -4823,3 +4823,52 @@ moved to after the restart (Basheer).
   fixed code column for Lead Sources, rules compare the code
   ("REPEAT_ORDER", "REFERRAL", "CONFERENCE"), the name becomes an
   editable label.
+
+### 2026-10-26 — Plan & Chore: UAT backup; manual card names on hold; New Stakeholder help
+
+- UAT backup: `cabio_uat_2026-10-26_0651.dump` (758,518 bytes, 535 TOC
+  entries); pruned `cabio_uat_2026-10-11_0537.dump`, 14 kept.
+- UAT User Manual "SBU Target & Plans" fix (D75): four edits proposed
+  (lines 267, 274, 325, 507). On hold — Basheer: Annual Target Part 2 is
+  changing these screens; redo from the screen after it lands. Found:
+  Team Plans is for Admin, GM, SBU and Area Managers only (reps don't see
+  it); the handover's "everyone" was wrong.
+- New Stakeholder pop-up help agreed (help plan section 7, 10 of 30),
+  with a line that the app doesn't stop duplicate contacts; no manager
+  box; manual A2 gets "Add a contact at a hospital" (Basheer: all three
+  recommendations).
+- NPS Score range: Basheer asked for the industry practice (Backlog "NPS
+  field range enforcement…"); answered in chat.
+- NPS/Sentiment UAT check (read-only, one rolled-back transaction, Admin
+  RLS context; Basheer's go-ahead): 466 contacts at 404 of 701
+  hospitals; NPS Score on 19 (17 Arun Adarsh, 2 Fazal), Sentiment on 142
+  (12 people, Fahad 74). Basheer guessed "not used at all" — true for the
+  score, not for Sentiment. Findings and the open choice in Backlog "NPS
+  field range enforcement…".
+- Basheer prefers Sentiment only, NPS Score removed, but needs customer
+  buy-in first: recorded in Backlog only; BR-ACC-01 and ADR-007 edits
+  undone, help keeps its NPS line. Open: the 19 saved scores; Neutral vs
+  Passive. New Customer help parked (Basheer) for the MUI clean-up plan.
+
+### 2026-10-26 — Plan & Chore: MUI good practice plan and standard
+- Build & Test handed over Backlog "MUI good practice on phone, tablet
+  and laptop" (26 Oct). Plan `docs/MUI-Good-Practice-Implementation-Plan.md`
+  written and approved the same day, D1–D17 all Basheer's: lighter
+  review; round 1 = screens from the 11 Oct UAT usage analysis, done by
+  Sun 1 Nov; other screens cleaned when next changed; any changed screen
+  file must follow the whole standard, urgent bug fixes exempt to 1 Nov;
+  phone below 600 px (MUI `sm`; Google's width classes: 99.96 % of
+  upright phones under 600, read 26 Oct); full-screen forms on a phone;
+  colours and zone filter in, duplicate edit forms out; My Work built
+  to the standard; one combined E2E for round 1.
+- Frontend standards §6.11 written (Basheer approved the wording after
+  an outside review: theme shorthand colours, icon sizes, confirmations
+  stay floating, which rules lint checks); §6.6 rule 10 shortened.
+- D17: Build & Test builds the check and the four shared parts (colour
+  set, text styles, full-screen pop-up, table-or-cards) today and moves
+  its three uncommitted phone-fix screens onto them before that commit
+  (changes Option A). Write-up passed by Basheer.
+- Corrections: Basheer asked twice for a plainer explanation (the
+  600-pixel question, the "four pieces"); and said I "keep updating"
+  Build & Test's note — this session never edited it (checked the
+  transcript: no edits), but my reply about it confused him.

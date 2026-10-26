@@ -7,24 +7,24 @@ session edits this note._
 
 - Forecast plan (untracked, other session): not in commits; at review, line 110 → BR-FIN-09.
 
-## UAT move — approved 2026-10-24, move early Sun 25 Oct
+## MUI clean-up plan — started 26 Oct (current task)
 
-- Move done 25 Oct; after-move work in the archive (25 Oct, "after the
-  UAT move"). Both 25 Oct reports approved and moved out of drafts.
-  Scripts committed in `5992936`; docs batch `b294865`; both pushed.
-  Checks paused to 1 Nov: then run both scripts on UAT (ask first).
-- After the move: Duplicate hospitals step 19 on UAT; Audit Trail plan
-  step 5 cautions.
+- Handed over by Build & Test (Basheer, 26 Oct): plan Backlog "MUI good
+  practice on phone, tablet and laptop" (standard, commit-time check,
+  screen review); fold in "Front-end consistency audit" and
+  `statusColors.ts`. Also its "Filters and search boxes" bullet (shared
+  zone filter style; Basheer, 26 Oct). Lighter review first, most-used
+  phone screens (Basheer, 26 Oct). Plan written 26 Oct
+  (`docs/MUI-Good-Practice-Implementation-Plan.md`, Approved, D1–D17
+  Basheer; build order redone to match). Step 1 done 26 Oct: Frontend
+  standards §6.11 + rule 10 shortened. D17 Basheer: Build & Test builds
+  step 2 + the 3 phone-fix screens before their commit; write-up given
+  to Basheer to pass on. Not committed (docs batch).
 
-## My Work E2E test plan — drafted 2026-10-25
+## After the UAT move (25 Oct, details in the archive)
 
-- D18 (build straight after Annual Target Part 2 E2E) in the Weekly
-  Follow-up plan. Test plan `docs/Weekly-Follow-up-Daily-Hub-Manual-E2E-Test-Plan.md`
-  drafted from Dev data (scratchpad session c1568b11). D19–D22 decided
-  (first on menu; N or more, BR-OP-20 reworded; count-only next-action
-  cards; owner-only lists) and in the test plan; archive 25 Oct. Not
-  committed: docs batch at the next pause (show first). Basheer to tell
-  Build & Test about D18–D22.
+- Checks paused to 1 Nov: then run both scripts on UAT (ask first).
+  Duplicate hospitals step 19 on UAT; Audit Trail plan step 5 cautions.
 
 ## User Manual and help catch-up
 
@@ -47,10 +47,12 @@ session edits this note._
   this change?, First activity (help plan D16: 8 pop-ups, 30 pages) —
   archive 25 Oct; committed and pushed in `c5870d2`. Basheer to tell Build & Test
   about D14 and D16. New Opportunity, Edit Opportunity agreed 25 Oct;
-  Backlog decisions, Reference Data D5 — archive 25 Oct. Not committed.
-  Every reply here closes with "Help wording: N of 30 (P %)", counted
-  from section 7's "agreed" headings (Basheer, 25 Oct). **Next:** docs
-  batch commit (show first), then New Stakeholder pop-up help.
+  Backlog decisions, Reference Data D5 — archive 25 Oct; committed and
+  pushed in `393beee`. Every reply here closes with "Help wording: N of
+  30 (P %)", counted from section 7's "agreed" headings (Basheer, 25
+  Oct). New Stakeholder agreed 26 Oct (10 of 30) + manual A2 step —
+  archive 26 Oct; not committed (docs batch). **Next (parked 26 Oct for
+  the MUI plan):** New Customer pop-up help.
 
 ## Harness Engineering
 
@@ -61,10 +63,12 @@ session edits this note._
 ## Chores
 
 - From Build & Test (archive 23 Oct, Annual Target plan D75; Basheer
-  yes): UAT User Manual still says "SBU Target & Plans" (lines 206, 213,
-  264, 446). That card is now three: "SBU Target" (Admin, GM, SBU
-  Managers), "Team Targets", "Team Plans" (everyone), each in the
-  Quarterly and Annual views. Fix once D75 is committed.
+  yes): UAT User Manual still says "SBU Target & Plans" (lines 267, 274,
+  325, 507). That card is now three: "SBU Target" (Admin, GM, SBU
+  Managers), "Team Targets", "Team Plans" (Admin, GM, SBU and Area
+  Managers; not reps). 4 edits proposed 26 Oct; **on hold** (Basheer, 26
+  Oct) until Annual Target Part 2 changes these screens — then re-read
+  the screen and redo.
 - Delete Dev test data from Duplicate hospitals Part A (five "zz Test
   duplicate guard…" hospitals, "zz Test contact") and "kims" (Rudrappa,
   Dev role check 25 Oct); read-only check first.

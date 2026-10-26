@@ -747,3 +747,50 @@ removes the approval.
 Sources (2026-10-25): `OpportunityDetailScreen.tsx:217, 1515–1567,
 1624–1635, 1871–2090`; `opportunity/service.py:371`;
 `opportunity/validators.py:161`.
+
+### New Stakeholder pop-up (`popup_newStakeholder`, key name settled at build) — agreed 2026-10-26 (Basheer)
+
+Manual checked: Part B "A hospital's page (Customer 360)" Stakeholders
+tab — covered; Part A had no step, so "Add a contact at a hospital" was
+added to A2 (Basheer, 2026-10-26). Manager box: none. The app doesn't
+stop duplicate contacts; the help says so (Basheer, 2026-10-26).
+
+**Title:** New Stakeholder — Help
+
+**What this form is for**
+Adds a contact at this hospital — a doctor, a purchase officer, a
+biomedical engineer — so you can link them to the hospital's
+Opportunities and keep a note of how they feel about Cabio.
+
+**Who they are**
+- **Name** is the only field you must fill in.
+- **Designation** is their role, e.g. "Chief Radiologist".
+- Check the **Stakeholders** list first — the app doesn't stop you
+  adding the same person twice.
+
+**How to reach them**
+- **Email** must be a proper email address, or left blank.
+- **Phone**: their mobile number.
+- Tick **Different WhatsApp number?** only if they use another number
+  for WhatsApp. Left unticked, their phone number is saved as their
+  WhatsApp number too.
+
+**How they feel about Cabio**
+- **NPS Score**: a whole number from -100 to 100.
+- **Sentiment**: Promoter, Neutral or Detractor.
+- Both are optional; fill them in later with **Edit**.
+
+(Removing NPS Score is proposed, pending customer buy-in — Backlog "NPS
+field range enforcement…"; drop the NPS line if it goes.)
+
+**After you press Create**
+- The contact appears on the **Stakeholders** tab.
+- To connect them to an Opportunity, open the Opportunity →
+  **Stakeholders** tab → **+ Link**.
+- A contact can't be deleted; to correct a mistake, use **Edit** on the
+  contact.
+
+Sources (2026-10-26): `Customer360Screen.tsx:981–1006, 1267–1291`;
+`account/stakeholder_schemas.py:7–14`; `account/stakeholder_router.py`
+(no delete); `account/stakeholder_service.py:27–47` (no duplicate
+check); `OpportunityDetailScreen.tsx:861, 970`.

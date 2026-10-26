@@ -431,6 +431,75 @@ add or edit with a missing parent would also go unlogged.
   'DELETE'` in a small migration (0060) that redefines the function. Touches
   Dev first; could ride with the combined UAT move.
 
+### MUI good practice on phone, tablet and laptop — standard, review step, screen audit — decided, not started (2026-10-26)
+
+Basheer, 2026-10-26: the phone fixes of 22–26 Oct fit the screen but don't
+follow MUI's own way of doing it. Each table row is turned into a block by
+hand-written CSS (`src/theme/phoneTable.ts`: header hidden, column names
+printed from `data-label`, cells floated), cells are hidden with named
+classes (`phone-hidden`, `phone-chevron`) although
+`docs/Frontend-Implementation-Standards.md` §6.4 says style only through
+`sx`, and the CSS reaches into MUI's internal class names. MUI's way is to
+detect a phone (`useMediaQuery`) and show a list or cards there; no file in
+the app uses it today (grep, 2026-10-26). Rule 10 (§6.6) says *that* a
+table must fit a phone, not *how*.
+- **Decided:** (1) write the MUI standard into the frontend standards and
+  enforce it for every new screen from then on; (2) a review step before
+  the commit of any change to how a screen looks, enforcing the phone
+  layout check — today the measured phone check runs only before a
+  feature's E2E (`cabio-e2e-testing`), so small UX fixes committed outside
+  an E2E skip it. Basheer, 2026-10-26: the review step must be an
+  automatic check that does the review itself, like the lint and the
+  test suite — not a line in the commit message. Shape: (a) code rules
+  added to the existing commit-time lint (`.githooks/pre-commit` → `npm
+  run lint`), with today's breaches listed as a baseline so only new code
+  is held to them (proposed); (b) no separate automatic browser test —
+  the phone, tablet and laptop check is done in E2E testing (Basheer,
+  2026-10-26); (c) what a machine can't judge — a review against the
+  standard, and Basheer looking at the screenshots (proposed); (3) Option A: the 25–26 Oct phone fixes for Target &
+  Coverage Planning and Rate Hospitals go to UAT as built (they fit at
+  390 px) and are redone to the new standard in the audit.
+- **Laptop and tablet too (Basheer's concern, 2026-10-26).** A first code
+  scan (grep, 2026-10-26, `sales-os-app/src`, .tsx files) suggests the
+  laptop view has drifted as well: 562 lines with a hard-coded hex colour
+  across 35 files — 64 distinct colours, mostly the same few greys
+  repeated (`#9ca3af` 125 times, `#f3f4f6` 111) (§6.5 and §6.7 say colours come from the theme; see also
+  `statusColors.ts` below), 406 lines with a hand-set font size instead of
+  the theme's text styles, pop-up forms that stay a floating box with a
+  32 px dimmed margin on a phone (326 px wide at 390 px; `FormModal.tsx`
+  caps them at 28rem and never switches to full screen — MUI's guidance
+  for long forms on a phone; read from the code, not yet seen on a
+  phone), and 2 files still using `className`. Counts
+  are pattern matches, not reviewed findings.
+- **Filters and search boxes (Basheer, 2026-10-26):** every filter has a
+  visible name above it (MUI: "Select always needs an accessible name");
+  an "All …" choice shows inside the box, not as the name; a search box
+  starts with a magnifying glass and gets an ✕ once typed in. Done on
+  Rate Hospitals 26 Oct (`ZonePicker` gained a `placeholder`). Proposed
+  for the plan: a built-in filter style on the shared zone box (name
+  "Zone", "All Zones" inside) so zone filters change in one place; its 3
+  filter uses switch to it (Account Management, Pipeline, Rate
+  Hospitals), its 5 form uses (Add/Edit Hospital, Territory Map, User
+  Directory ×2) stay as they are. Account Management and Pipeline are
+  fixed when next changed or in the sweep, not now (Basheer, 2026-10-26).
+- **Planned 2026-10-26:** `docs/MUI-Good-Practice-Implementation-Plan.md`
+  (all decisions Basheer's, D1–D17). It supersedes this entry where they
+  differ: no baseline — any changed screen file must follow the whole
+  standard (D10); the three phone-fix screens are redone on the new
+  shared parts before their commit, not shipped as built (D17); standard
+  written as Frontend standards §6.11 on 26 Oct. The order below is
+  superseded too.
+- **Proposed order (superseded):** yardstick section in the frontend
+  standards (phone, tablet and laptop) → Basheer approves → one shared
+  table-on-laptop, cards-on-phone building block → screen-by-screen review
+  of 22 screens and 30 shared components (counted 2026-10-26) with
+  screenshots at phone, tablet and laptop width, findings sorted by what
+  users would notice → fixes in batches, one screen at a time. The review
+  is an expensive job: scope and time shown before it starts. Handed to
+  Plan & Chore to plan (Basheer, 2026-10-26); built in Build & Test. Overlaps the
+  front-end consistency audit below and `statusColors.ts` — fold them into
+  one plan.
+
 ### Front-end consistency audit — parked, undecided (raised 2026-09-30)
 
 The 2026-09-30 deal-edit bug came from duplicated screen code: the deal
@@ -456,6 +525,9 @@ maintainability once handed to the customer's IT team.
   Opportunity now opens the one create form (`a76b02d`, `86dd1a3`); the
   rule is in `docs/Frontend-Implementation-Standards.md` §6.2. Still open:
   the edit side and other objects' forms.
+- **Kept separate from the MUI clean-up** (Basheer, 2026-10-26): it is
+  about how the code is organised, not how screens look
+  (`docs/MUI-Good-Practice-Implementation-Plan.md` D6).
 
 ### Backend dependencies: finish the SQLAlchemy cap follow-ups (found 2026-09-27)
 
@@ -2005,11 +2077,29 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   accounts with no parent/children.
 - **NPS field range enforcement + product dropdown label consistency (two-fix commit).**
   Surfaced during `Customer360Screen.tsx` Commit B E2E verification (2026-07-06).
-  (1) NPS Score on Stakeholders has no range constraint today — free-number input.
-  Standard NPS survey input is 0–10 per respondent; the -100 to +100 range is an
-  aggregate metric, not a per-person score. Backend `nps_score` is already
-  constrained `ge=-100, le=100` — the frontend-only 0–10 clamp idea needs
-  revisiting/a decision before any fix is executed, not a ready-to-build task.
+  (1) NPS Score on Stakeholders. Standard NPS (Bain & Company): each person
+  answers 0–10 (9–10 Promoter, 7–8 Passive, 0–6 Detractor); -100 to +100 is a
+  group's figure (% Promoters − % Detractors), never one person's. The app
+  takes -100 to 100 per contact (form limits, `stakeholder_schemas.py:13`,
+  DB check `stakeholder_nps_score_check`) and Sentiment is picked by hand,
+  separately, with "Neutral" for the standard "Passive".
+  **UAT usage, read-only query 2026-10-26** (Plan & Chore, Basheer's
+  request): 466 contacts at 404 of 701 hospitals. NPS Score set on 19
+  (17 by Arun Adarsh, 2 by Fazal; values 20–90, used like a 0–100
+  satisfaction mark — 50 is both Neutral and Promoter, 40 is Promoter).
+  Sentiment set on 142 (Neutral 82, Promoter 56, Detractor 4), by 12
+  people (Fahad 74). So Sentiment is in real use; the score barely is.
+  Shown only on Customer 360 → Stakeholders; no report reads either.
+  **Basheer's preference 2026-10-26:** keep Sentiment only; remove the
+  NPS Score. **Not decided — needs customer buy-in first** (Basheer);
+  BR-ACC-01 and ADR-007 stay unchanged until then. Also open: what
+  happens to the 19 saved scores (hide them, or delete them with a
+  database change), and "Neutral" vs "Passive" (signed requirement 5.2
+  says "Promoter / Neutral / Detractor"). Once agreed: update BR-ACC-01,
+  ADR-007, the New Stakeholder help (help plan section 7), the UAT User
+  Manual (A2 "Add a contact", Part B Customer 360), physical-data-model,
+  Business-Rule-Implementation-Matrix BR-ACC-01 and Regression-Test-Plan
+  NPS lines.
   ~~(2) Opportunity item-picker renders `{p.name}` only; Installed Base dropdowns
   render `{p.name} — {p.model_number}`. One-line fix in `Customer360Screen.tsx`
   line ~928 (still present as of `1bc4678`).~~ — **INVESTIGATED AND DROPPED,
@@ -2054,7 +2144,8 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   `Customer360Screen.tsx`. Basheer's call: fix once, holistically, in the
   theme (`src/theme/index.ts`'s `MuiOutlinedInput`/`MuiInputBase` override)
   rather than per-file. Grep `size="small"` across migrated files first.
-- `statusColors.ts` — create as one pass after Tailwind migration; consolidates
+- `statusColors.ts` — now in `docs/MUI-Good-Practice-Implementation-Plan.md`
+  (D6, step 4). Original note: create as one pass after Tailwind migration; consolidates
   ~11 files; resolve emerald-50-vs-100 (and any other weight inconsistencies) at
   that time from complete view.
 - **Type the shared frontend service functions properly.** `listUsers`

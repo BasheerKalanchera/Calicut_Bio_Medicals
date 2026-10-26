@@ -253,7 +253,7 @@ Things that behave differently from a native element or from older MUI docs/exam
 7. **Circular back button: `IconButton` + `ArrowBackIcon` (not a chevron).** `ArrowBackIcon` is the platform-standard back affordance and reads correctly on mobile without a label; a chevron reads as collapse/previous, not navigate-back. Currently inlined in `OpportunityDetailScreen.tsx` (`sx={{ width: 40, height: 40, color: "#4b5563", "&:hover": { bgcolor: "#e5e7eb" } }}`, icon `sx={{ fontSize: 20 }}`) — but this identical control appears on all four 360/detail screens (Customer, Product, Opportunity, Project), which per §6.7's logic makes it an app-wide convention, not a per-file style choice. Extracting it into a shared `BackButton` component is banked (see `docs/Backlog.md`) rather than built now — inline it identically until then; do not re-derive the styling per file once it exists.
 8. **Tailwind responsive prefixes (`sm:hidden`, `hidden sm:block`) become `sx`'s breakpoint-object syntax**, e.g. `sx={{ display: { xs: "none", sm: "block" } }}` — not a media-query string. First needed in `DemoApp.tsx` (Sign Out label/icon swap, the "Sales OS" header title). For a one-off custom breakpoint that isn't one of MUI's standard values (e.g. the 896px width `DemoApp.tsx`'s sidebar centers under, matching the app shell's `max-w-4xl`/56rem), fall back to a literal `"@media (min-width:896px)": { ... }` key inside `sx` instead of `theme.breakpoints`.
 9. **An outlined field with a label needs room above it at the top of a scrolling area.** The label sits on the field's top border, about half of it above the box. When the field is the first thing inside a container that scrolls (`overflowY: "auto"`) or hides overflow, and that container has no top padding, the top of the label is cut off. Give the field `mt: 1` (or give the container top padding). Found 2026-10-24 on Target & Coverage Planning's SBU picker, which Admin and GM see first (`TargetPlanningScreen.tsx`, Annual Target E2E step C7).
-10. **A table on a card must fit a phone screen.** A table with five or more columns pushes its right-hand columns (action buttons, status chips) past the card's edge on a phone. On a phone, hide the less important columns with `sx={{ display: { xs: "none", sm: "table-cell" } }}` on both the header and the body cell — only ones whose value is still reachable elsewhere, e.g. in the row's expanded details; stack two action buttons with `flexDirection: { xs: "column", sm: "row" }` rather than side by side; and let several chips in one cell wrap (`display: "flex", flexWrap: "wrap", gap: 0.5`). Details opened under a row show on a phone as stacked blocks, one per item, not a wide table (`TargetPlanDetails.tsx`). A table too wide for any of this (many figure columns per row) becomes, on a phone only, one stacked block per row — the figures as label/amount pairs, details opening under the block (`TargetVsActualsSection.tsx` person rows). This is a phone app (PWA): every screen is built to fit a phone from the start, not fixed afterwards. Each plan says how each screen it adds or changes looks on a phone ("On a phone" in the plan template), Claude checks each one at phone width before handing the build over (`cabio-e2e-testing` skill), and every E2E test plan has a `[Complex: phone layout]` step per screen (refused on save without one). Found seven times in four days (22–25 Oct 2026), the last four also on 25 Oct: Brand Target Tracking's opened row at Annual Target E2E step P6 (`19c2593`), Target & Coverage Planning's Team Plans still too wide on UAT, Rate Hospitals' table (found by a code scan the same evening), and Brand Target Tracking's brand row itself — the P6 fix covered only the opened quarters and was not measured across the whole card. When stacking rows on a phone, keep any indent that shows who reports to whom. Earlier finds: Brand Target Tracking's "Set target" (`c2f025d`, 2026-10-23), Target & Coverage Planning's Needs Your Approval and Team Plans cards, and Insights Dashboard Target vs Actuals' person rows (both 2026-10-24, Annual Target E2E sections F–G).
+10. **A table on a card must fit a phone screen.** How: §6.11 (tables become cards through the shared table-or-cards component; the hand-written stacking CSS in `src/theme/phoneTable.ts` is retired, 2026-10-26). This is a phone app (PWA): every screen is built to fit a phone from the start, not fixed afterwards. Each plan says how each screen it adds or changes looks on a phone ("On a phone" in the plan template), Claude checks each one at phone width before handing the build over (`cabio-e2e-testing` skill), and every E2E test plan has a `[Complex: phone layout]` step per screen (refused on save without one). Found seven times in four days (22–25 Oct 2026), the last four also on 25 Oct: Brand Target Tracking's opened row at Annual Target E2E step P6 (`19c2593`), Target & Coverage Planning's Team Plans still too wide on UAT, Rate Hospitals' table (found by a code scan the same evening), and Brand Target Tracking's brand row itself — the P6 fix covered only the opened quarters and was not measured across the whole card. When stacking rows on a phone, keep any indent that shows who reports to whom. Earlier finds: Brand Target Tracking's "Set target" (`c2f025d`, 2026-10-23), Target & Coverage Planning's Needs Your Approval and Team Plans cards, and Insights Dashboard Target vs Actuals' person rows (both 2026-10-24, Annual Target E2E sections F–G).
 
 ### 6.7 Theme is the source of truth for visual defaults
 
@@ -319,6 +319,37 @@ Target", "Team Targets" and "Team Plans" cards, Annual Target Planning
 D75, 2026-10-23.) Code identifiers (`target_plan`,
 `target_amount_lakhs`) are not renamed. Origin:
 `docs/Rep-Plan-Wording-Implementation-Plan.md`.
+
+### 6.11 Phone, tablet and laptop — the MUI way (decided 2026-10-26)
+
+Applies to every commit that changes a screen, from 2026-10-26; the whole
+changed file must follow it, not just the changed lines. Rules a machine
+can spot are enforced by `npm run lint`; the rest are checked at the
+pre-E2E code review; layout is checked in E2E. Urgent bug fixes are
+exempt until 1 Nov 2026. Origin:
+`docs/MUI-Good-Practice-Implementation-Plan.md`.
+
+1. **Widths.** Phone is below 600 px (`theme.breakpoints.down("sm")`, or
+   `xs` in `sx`) — Google's Material Design width classes put 99.96 % of
+   upright phones under 600; anything wider uses the laptop layout. Each
+   changed screen is checked at 390, 768 and 1280 px.
+2. **Tables on a phone become cards.** Use the shared table-or-cards
+   component; never reshape a table with CSS (no `display: block` on
+   rows, `data-label`, hiding classes, or MUI internal class names).
+3. **Pop-up forms always use `FormModal`**, which fills the screen on a
+   phone. A separate `Dialog` is only for a short confirmation, message
+   or list, and stays a floating box on a phone.
+4. **Colours come from the theme**: `theme.palette`, `statusColors.ts`,
+   or theme shorthands in `sx` (`"text.secondary"`, `"divider"`,
+   `"background.paper"`). Never hex in a screen.
+5. **Text and icon sizes come from the theme.** Text uses Typography
+   `variant`, never a typed `fontSize`; icons use
+   `fontSize="small" | "medium" | "inherit"`.
+6. **Styling goes through `sx` only**; no `className`.
+7. **Filters and search boxes.** Every filter has its name above it
+   ("Zone"), with "All …" inside the box (`displayEmpty`, §6.6 item 1).
+   A search box starts with a magnifying glass and gets an ✕ clear
+   button once typed in.
 
 ---
 

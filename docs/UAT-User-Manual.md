@@ -76,6 +76,16 @@ and the six reports.
 - If you have no territory yet, the form doesn't open; ask your manager
   to set one up.
 
+### Add a contact at a hospital
+1. Open the hospital → **Stakeholders** → **+ Add**.
+2. Fill **Name** (the only required field); add Designation, Email,
+   Phone, and NPS Score and Sentiment if you know them. Tick **Different
+   WhatsApp number?** only if it isn't their phone number.
+3. **Create**. To link the contact to an Opportunity: open the
+   Opportunity → **Stakeholders** → **+ Link**.
+- Check the list first: the app doesn't stop you adding the same person
+  twice. A contact can't be deleted; use **Edit** to correct it.
+
 ### Create an Opportunity
 Every way of creating an Opportunity opens the same **New Opportunity**
 form: **+ Lead** in the top bar, **+ Add** on a hospital's Opportunities
