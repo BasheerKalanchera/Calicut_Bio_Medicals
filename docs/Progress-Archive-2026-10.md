@@ -5167,3 +5167,37 @@ moved to after the restart (Basheer).
      actually created" — took the blame for both plans without checking.
 - No tracker change: none touched live data, UAT or lost work, none
   guard-stoppable; Basheer: no new rules.
+
+### 2026-10-27 (evening) — Build & Test: Part 2 screens step 6 (bell) shipped `5b5ad0c`
+- Notification bell to the MUI standard, one file
+  (`NotificationBell.tsx`); MUI check 11 breaches → 0. Pushed 27 Oct.
+- Before/after on Dev as Haroon (app in a same-page frame of exact width;
+  Chrome window maximised): phone 390 list 320 px with gaps 16 / 54 →
+  358 px, 16 / 16; tablet 768 and laptop 1280 unchanged (320 px). No
+  sideways scroll at any width. Bold kept (heading and 2 unread 800, 6
+  read 500). Sizes to nearest theme size: 12.8→13, 11.2→11, emoji
+  17.6→18 px; heading line 21→20 px (body2's own line height — shown
+  to Basheer, who went ahead). Pictures in the session scratchpad (not in git; show
+  customer names).
+- Basheer spotted the red dot floating above the bell (there before this
+  step too): the dot pins to the emoji's line box, 27 px tall for an
+  18 px bell. Fixed in the same commit: emoji `lineHeight: 1` (dot down
+  4.5 px), then the dot `right: 3` onto the bell's shoulder (Basheer
+  asked for the nudge). Measured the same at 390 and 1280.
+- Checks: 1388 backend tests pass, tsc clean, lint 0 errors (133 old
+  warnings).
+- Basheer started the Dev servers himself (5174); a stray 5173 screen
+  server from this session's own start attempt was closed with his yes.
+
+### 2026-10-27 (evening) — Build & Test retro
+- Corrections from Basheer this session: 4
+  1. "We have to take the before change screenshots first, right?" —
+     plan had after-pictures only.
+  2. "Let me start the backend and frontend on dev for you." — started
+     the Dev servers without asking.
+  3. Stopped my check on the stray 5173 server and pointed me to his
+     5174 app — kept digging instead of doing the pictures.
+  4. "Why is the red dot not on the notification bell?" — measured and
+     photographed the bell at three widths and missed it.
+- No tracker change: none touched live data, UAT or lost work, none
+  guard-stoppable.
