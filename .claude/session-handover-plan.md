@@ -13,7 +13,7 @@ session edits this note._
   Build & Test shipped step 2 (`2e3ddd7`, `64b5fef`). Lighter review
   first, most-used phone screens (Basheer). Round 1 review done 26 Oct
   (plan step 4: findings and before-pictures folder written into step
-  5). **Next:** Basheer passes step 5 to Build & Test (fixes by Sun 1
+  5) — committed and pushed `10010f2`. **Next:** Basheer passes step 5 to Build & Test (fixes by Sun 1
   Nov, then before-and-after page).
 
 ## After the UAT move (25 Oct, details in the archive)
