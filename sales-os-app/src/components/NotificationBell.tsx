@@ -4,6 +4,7 @@ import { Badge, Box, IconButton, List, ListItemButton, ListItemText, Popover, Ty
 import { getUnreadCount, listNotifications, markNotificationRead } from "../services/notifications";
 import type { NotificationResponse } from "../types/api-aliases";
 import { describeNotification } from "../utils/notificationDescribe";
+import { shadows } from "../theme/shadows";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-IN", {
@@ -134,10 +135,12 @@ export default function NotificationBell({
       <IconButton
         onClick={(e) => setAnchorEl(e.currentTarget)}
         aria-label="Notifications"
-        sx={{ width: 40, height: 40, flexShrink: 0, borderRadius: "0.75rem", bgcolor: "#f9fafb", color: "#4b5563", "&:hover": { bgcolor: "#f3f4f6" }, boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}
+        sx={{ width: 40, height: 40, flexShrink: 0, borderRadius: "0.75rem", bgcolor: "gray.50", color: "gray.600", "&:hover": { bgcolor: "gray.100" }, boxShadow: shadows.sm }}
       >
-        <Badge variant="dot" color="error" invisible={unreadCount === 0}>
-          <Box component="span" sx={{ fontSize: "1.1rem" }}>🔔</Box>
+        {/* right: 3 — the bell is drawn narrower than its emoji box, so the dot moves in onto it */}
+        <Badge variant="dot" color="error" invisible={unreadCount === 0} slotProps={{ badge: { sx: { right: 3 } } }}>
+          {/* lineHeight 1: the box is the bell's own height, so the dot sits on the bell, not above it */}
+          <Box component="span" sx={{ typography: "lead", lineHeight: 1 }}>🔔</Box>
         </Badge>
       </IconButton>
 
@@ -148,12 +151,13 @@ export default function NotificationBell({
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
         transformOrigin={{ vertical: "top", horizontal: "right" }}
       >
-        <Box sx={{ width: 320, maxHeight: 420, overflowY: "auto" }}>
-          <Typography sx={{ px: 2, py: 1.5, fontWeight: 800, fontSize: "0.875rem", borderBottom: "1px solid #f3f4f6" }}>
+        {/* Phone: the screen's width less the Popover's 16px edge margin each side */}
+        <Box sx={{ width: { xs: "calc(100vw - 32px)", sm: 320 }, maxHeight: 420, overflowY: "auto" }}>
+          <Typography sx={{ px: 2, py: 1.5, typography: "body2", fontWeight: 800, borderBottom: 1, borderColor: "gray.100" }}>
             Notifications
           </Typography>
           {notifications.length === 0 ? (
-            <Typography sx={{ px: 2, py: 3, fontSize: "0.8rem", color: "#9ca3af", textAlign: "center" }}>
+            <Typography sx={{ px: 2, py: 3, typography: "body3", color: "gray.400", textAlign: "center" }}>
               Nothing yet.
             </Typography>
           ) : (
@@ -164,8 +168,9 @@ export default function NotificationBell({
                   onClick={() => handleSelect(n)}
                   sx={{
                     alignItems: "flex-start",
-                    borderBottom: "1px solid #f9fafb",
-                    bgcolor: n.read_at ? "transparent" : "#eff6ff",
+                    borderBottom: 1,
+                    borderColor: "gray.50",
+                    bgcolor: n.read_at ? "transparent" : "blue.50",
                   }}
                 >
                   <ListItemText
@@ -178,9 +183,9 @@ export default function NotificationBell({
                       </>
                     }
                     slotProps={{
-                      primary: { sx: { fontSize: "0.8rem", fontWeight: n.read_at ? 500 : 800 } },
+                      primary: { sx: { typography: "body3", fontWeight: n.read_at ? 500 : 800 } },
                       secondary: {
-                        sx: { fontSize: "0.7rem", color: n.is_urgent && !n.read_at ? "#dc2626" : "#9ca3af" },
+                        sx: { typography: "caption2", color: n.is_urgent && !n.read_at ? "red.600" : "gray.400" },
                       },
                     }}
                   />
