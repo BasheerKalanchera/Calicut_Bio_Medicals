@@ -5,7 +5,9 @@ items go to Progress-Archive; unstarted work goes to Backlog. Build & Test
 keeps its own note: `.claude/session-handover-build.md`. Only the Plan & Chore
 session edits this note._
 
-- Forecast plan (untracked, other session): not in commits; at review, line 110 → BR-FIN-09.
+- Forecast plan (untracked, written by Antigravity — Basheer 27 Oct): commit it, and by which session? Open. At review, line 110 → BR-FIN-09.
+- Part 2 screens plan (Build & Test's, 26 Oct) committed here `8e1476f`, Approved; not pushed.
+- UAT backup 27 Oct done: `cabio_uat_2026-10-27_1759.dump`; Basheer copies to Google Drive.
 ## MUI clean-up plan — started 26 Oct (current task)
 
 - `docs/MUI-Good-Practice-Implementation-Plan.md` (Approved, D1–D17;
