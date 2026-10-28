@@ -81,22 +81,28 @@ _CONTACT_ACTIVITY_TYPES = ("VISIT", "CALL", "MEETING", "EMAIL")
 _HIGH_PRIORITY_STAGE_THRESHOLD = 30
 
 
-def _days_since_last_contact():
+def _days_since_last_contact(owner_id: uuid.UUID | None = None):
     """(last_contact_date, days_since) for BR-OP-20, shared by the Stagnant
     Deals report and My Work so the two never disagree (D6c/D23 of
     docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md). Callers
-    outer-join the returned subquery on Opportunity.id."""
+    outer-join the returned subquery on Opportunity.id. `owner_id` narrows
+    the scan to that person's Opportunities (My Work shows one person)."""
     last_contact_subq = (
         select(Activity.opportunity_id, func.max(Activity.activity_date).label("last_activity_date"))
         .where(Activity.opportunity_id.is_not(None))
         .where(Activity.activity_type.in_(_CONTACT_ACTIVITY_TYPES))
         .group_by(Activity.opportunity_id)
-        .subquery()
     )
+    if owner_id is not None:
+        last_contact_subq = last_contact_subq.where(
+            Activity.opportunity_id.in_(select(Opportunity.id).where(Opportunity.owner_id == owner_id))
+        )
+    last_contact_subq = last_contact_subq.subquery()
     # No contact logged yet -- created_at is the only signal of "since when
     # has nobody touched this" (BR-OP-20 "No activity yet").
     last_contact_date = func.coalesce(last_contact_subq.c.last_activity_date, Opportunity.created_at)
-    days_since = func.extract("day", func.now() - last_contact_date)
+    # Never below 0: a visit logged with a future date must not show "-3 days".
+    days_since = func.greatest(0, func.extract("day", func.now() - last_contact_date))
     return last_contact_subq, last_contact_date, days_since
 
 
@@ -385,10 +391,11 @@ class ReportingRepository:
         into its lists. Empty when `user_id` is outside the viewer's team."""
         value_subq = (
             select(OpportunityItem.opportunity_id, func.sum(_NET_VALUE).label("value_lakhs"))
+            .where(OpportunityItem.opportunity_id.in_(select(Opportunity.id).where(Opportunity.owner_id == user_id)))
             .group_by(OpportunityItem.opportunity_id)
             .subquery()
         )
-        last_contact_subq, last_contact_date, days_since = _days_since_last_contact()
+        last_contact_subq, last_contact_date, days_since = _days_since_last_contact(user_id)
         is_high_priority = or_(
             OpportunityStage.display_order > _HIGH_PRIORITY_STAGE_THRESHOLD,
             Opportunity.high_priority_manual,

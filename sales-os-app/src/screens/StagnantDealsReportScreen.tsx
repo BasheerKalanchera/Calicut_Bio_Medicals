@@ -10,6 +10,8 @@ import { shadows } from "../theme/shadows";
 // 30, the same as My Work (Weekly Follow-up plan D6c, D25). BR-OP-06 is
 // time in a stage, not this.
 const DEFAULT_THRESHOLD_DAYS = 30;
+// The server refuses more than ten years (threshold_days le=3650).
+const MAX_THRESHOLD_DAYS = 3650;
 
 export default function StagnantDealsReportScreen({
   onSelectOpportunity,
@@ -20,7 +22,7 @@ export default function StagnantDealsReportScreen({
   // A blank or zero box keeps showing the last good number's list.
   const typed = /^\d+$/.test(thresholdText) ? Number.parseInt(thresholdText, 10) : 0;
   const [thresholdDays, setThresholdDays] = useState(DEFAULT_THRESHOLD_DAYS);
-  if (typed >= 1 && typed !== thresholdDays) setThresholdDays(typed);
+  if (typed >= 1 && typed <= MAX_THRESHOLD_DAYS && typed !== thresholdDays) setThresholdDays(typed);
 
   const query = useQuery({
     queryKey: ["reporting", "stagnant-deals", thresholdDays],

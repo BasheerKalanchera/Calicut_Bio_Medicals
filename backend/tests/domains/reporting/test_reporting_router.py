@@ -91,6 +91,17 @@ class TestWeeklyFollowupEndpoint:
         assert response.status_code == 422
         mock_service.weekly_followup.assert_not_called()
 
+    def test_idle_days_above_ten_years_rejected(self, client):
+        mock_service = MagicMock(spec=ReportingService)
+        _setup(mock_service)
+        try:
+            response = client.get("/api/v1/reporting/weekly-followup?idle_days=3651")
+        finally:
+            app.dependency_overrides.clear()
+
+        assert response.status_code == 422
+        mock_service.weekly_followup.assert_not_called()
+
     def test_bad_user_id_rejected(self, client):
         mock_service = MagicMock(spec=ReportingService)
         _setup(mock_service)

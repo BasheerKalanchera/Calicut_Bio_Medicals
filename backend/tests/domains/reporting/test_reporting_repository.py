@@ -268,6 +268,21 @@ class TestWeeklyFollowupOpportunities:
         assert "'BUYBACK'" in sql
         assert "LEFT OUTER JOIN" in sql
 
+    def test_value_and_last_contact_only_read_the_persons_opportunities(self):
+        # Both lookups narrow to the viewed person inside their own scan,
+        # not after grouping every Opportunity's items and activities.
+        target = uuid.uuid4()
+        sql = _run("weekly_followup_opportunities", _make_current_user("Admin"), target)
+        owner = f"opportunity.owner_id = '{_uuid_literal(target)}'"
+        narrowed = f"IN (SELECT opportunity.id \nFROM opportunity \nWHERE {owner})"
+        assert f"opportunity_item.opportunity_id {narrowed}" in sql
+        assert f"activity.opportunity_id {narrowed}" in sql
+
+    def test_days_since_contact_never_negative(self):
+        # A visit logged with a future date must not give "-3 days".
+        sql = _run("weekly_followup_opportunities", _make_current_user("Admin"), uuid.uuid4())
+        assert "greatest(0, EXTRACT(day FROM" in sql
+
     def test_sales_staff_cannot_see_someone_else(self):
         # A rep picking another person still only matches their own rows,
         # so the lists come back empty.

@@ -23,6 +23,8 @@ import type {
 
 // D6: opens at 30 days, and back to 30 each time the screen is opened.
 const DEFAULT_IDLE_DAYS = 30;
+// The server refuses more than ten years (idle_days le=3650).
+const MAX_IDLE_DAYS = 3650;
 // D3: the "70 %+ only" tick box.
 const HIGH_CHANCE = 70;
 // Who may look at someone else's My Work (D1: "Me" or one rep, no team view).
@@ -60,11 +62,11 @@ export default function MyWorkScreen({ isActive, onSelectAccount, onSelectOpport
     }
   }
 
-  // A blank, zero or non-whole-number box ("30.9", "1e3") keeps showing the
-  // last good number's lists.
+  // A blank, zero, non-whole-number ("30.9", "1e3") or over-ten-years box
+  // keeps showing the last good number's lists.
   const typed = /^\d+$/.test(idleText) ? Number.parseInt(idleText, 10) : 0;
   const [idleDays, setIdleDays] = useState(DEFAULT_IDLE_DAYS);
-  if (typed >= 1 && typed !== idleDays) setIdleDays(typed);
+  if (typed >= 1 && typed <= MAX_IDLE_DAYS && typed !== idleDays) setIdleDays(typed);
 
   const { data: team = [] } = useQuery({
     queryKey: ["users", "scoped"],

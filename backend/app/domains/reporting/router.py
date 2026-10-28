@@ -49,7 +49,7 @@ def get_pipeline_summary(
 
 @router.get("/stagnant-deals")
 def get_stagnant_deals(
-    threshold_days: int = Query(180, ge=1),
+    threshold_days: int = Query(180, ge=1, le=3650),
     sbu_id: uuid.UUID | None = Query(None),
     zone_id: uuid.UUID | None = Query(None),
     user_id: uuid.UUID | None = Query(None),
@@ -94,7 +94,7 @@ def get_overdue_actions(
 @router.get("/weekly-followup")
 def get_weekly_followup(
     user_id: uuid.UUID | None = Query(None, description="Whose My Work; defaults to the viewer"),
-    idle_days: int = Query(30, ge=1),
+    idle_days: int = Query(30, ge=1, le=3650),
     current_user: UserProfile = Depends(get_current_user),
     service: ReportingService = Depends(_get_service),
 ) -> APIResponse[WeeklyFollowupResponse]:
