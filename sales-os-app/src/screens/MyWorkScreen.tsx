@@ -48,16 +48,21 @@ export default function MyWorkScreen({ isActive, onSelectAccount, onSelectOpport
   const [closing, setClosing] = useState<ReminderResponse | null>(null);
   const [logFor, setLogFor] = useState<{ accountId: string; opportunityId?: string } | null>(null);
 
-  // D6: back to the default whenever the screen is left (state adjusted
-  // during render, same as InsightsDashboardScreen).
+  // D6: everything back to its default whenever the screen is left (state
+  // adjusted during render, same as InsightsDashboardScreen).
   const [wasActive, setWasActive] = useState(isActive);
   if (isActive !== wasActive) {
     setWasActive(isActive);
-    if (!isActive) setIdleText(String(DEFAULT_IDLE_DAYS));
+    if (!isActive) {
+      setIdleText(String(DEFAULT_IDLE_DAYS));
+      setHighChanceOnly(false);
+      setUserId("");
+    }
   }
 
-  // A blank or zero box keeps showing the last good number's lists.
-  const typed = Number.parseInt(idleText, 10);
+  // A blank, zero or non-whole-number box ("30.9", "1e3") keeps showing the
+  // last good number's lists.
+  const typed = /^\d+$/.test(idleText) ? Number.parseInt(idleText, 10) : 0;
   const [idleDays, setIdleDays] = useState(DEFAULT_IDLE_DAYS);
   if (typed >= 1 && typed !== idleDays) setIdleDays(typed);
 
@@ -72,12 +77,15 @@ export default function MyWorkScreen({ isActive, onSelectAccount, onSelectOpport
     queryKey: ["reporting", "weekly-followup", userId, idleDays],
     queryFn: () => getWeeklyFollowup(idleDays, userId || undefined),
     placeholderData: keepPreviousData,
+    // Always mounted (DemoApp), so only fetch while the screen is open.
+    enabled: isActive,
   });
   const data = query.data;
 
   // D15: closing a next action records a visit or call as if it happened,
-  // so someone else's lists are view-only.
-  const canAct = !userId;
+  // so someone else's lists are view-only. Not while the previous person's
+  // lists are still on screen (keepPreviousData) after switching back to Me.
+  const canAct = !userId && !query.isPlaceholderData;
 
   function refresh() {
     queryClient.invalidateQueries({ queryKey: ["reporting", "weekly-followup"] });

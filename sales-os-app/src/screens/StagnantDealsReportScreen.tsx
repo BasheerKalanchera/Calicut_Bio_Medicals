@@ -18,7 +18,7 @@ export default function StagnantDealsReportScreen({
 }) {
   const [thresholdText, setThresholdText] = useState(String(DEFAULT_THRESHOLD_DAYS));
   // A blank or zero box keeps showing the last good number's list.
-  const typed = Number.parseInt(thresholdText, 10);
+  const typed = /^\d+$/.test(thresholdText) ? Number.parseInt(thresholdText, 10) : 0;
   const [thresholdDays, setThresholdDays] = useState(DEFAULT_THRESHOLD_DAYS);
   if (typed >= 1 && typed !== thresholdDays) setThresholdDays(typed);
 
