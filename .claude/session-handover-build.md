@@ -13,7 +13,30 @@ session edits this note._
   hotfix-branch route (`docs/Deployment-Topology.md` "Fix to UAT ahead
   of a full promotion").
 
-## Now: Part 2 step 7 E2E (Annual Target plan step 7)
+## Now: My Work E2E (Weekly Follow-up plan, steps 2–5) — before Part 2
+- Basheer put it ahead of Part 2 (28 Oct). Merged into main by the Build
+  session (`b704b56`); no migration. Pre-E2E checks run 28 Oct on `b704b56`:
+  pytest 1429, ruff, tsc, lint all clean; `/code-review` medium gave 9 points.
+- Review fixes committed and pushed as `048c741` (28 Oct): one person's
+  lists read only that person's Opportunities; days since contact floored
+  at 0; days boxes capped at 3650 (My Work + Stagnant). Backend 1432 pass.
+  Not fixed (Basheer): India-time on My Work — browser time is the app
+  convention (`formatter.ts:20`), reverted. Left as is: picker cap of 100,
+  client-side 70 %+ total, hand-typed contact types (→ Plan & Chore: activity-type
+  table with flags), unscoped-user_id returns empty 200.
+- G1 passed 28 Oct (390/768/1280 px, as Fazal; both My Work and the
+  Stagnant report). Found on the way: Stagnant report returned 500 (date
+  with a time vs plain-date field, from `d7a0e6f`). Fixed and pushed as
+  `4deb68c` (1434 pass, ruff clean, Dev API 200 at 30/90/180 days);
+  fix re-read, no problems. Test run: 1 of 49 (G1).
+- Next: P1 (Dev backend already reloaded it), P3/P4 (exact labels from
+  code; re-run the 25 Oct data checks, announced first), then A–F; other
+  users' sign-ins need Basheer. Test plan: `docs/Weekly-Follow-up-Daily-Hub-Manual-E2E-Test-Plan.md`.
+  Ask Basheer before browser checks. Layout problems go to Build as fixes.
+- Idea raised by Basheer: widen Backlog "Front-end consistency audit" into a
+  convention audit (expensive job — show scope/cost first).
+
+## Paused: Part 2 step 7 E2E (Annual Target plan step 7)
 - Part 2 screens plan steps 1–6 shipped; step 6 (bell) `5b5ad0c`,
   pushed 27 Oct (archive 27 Oct evening). Migration 0064 on Dev = head.
 - UAT moves after this E2E (Basheer, 26 Oct, D6).
@@ -23,7 +46,8 @@ session edits this note._
   After-push checkpoint for `e33f35c` done 28 Oct (session start).
 - E2E PAUSED 28 Oct (Basheer) until Plan & Chore fixes the test plan
   (`docs/Annual-Target-Planning-Manual-E2E-Test-Plan.md`, committed and
-  pushed 28 Oct as `111c399`: section L added, K10 reworded, P7/P8 recorded, I1–I7 recorded,
+  pushed 28 Oct as `111c399`; findings and retro (6 corrections) in
+  Progress-Archive, pushed as `e131fe2`: section L added, K10 reworded, P7/P8 recorded, I1–I7 recorded,
   I2–I5 and I7 reworded). Run so far: 11 of 52 (P6–P8, I1–I7); I8
   open (upcoming year shows no SBU/Company row — design silent; the
   plan says to keep or show "Target not set"). Mismatches handed to

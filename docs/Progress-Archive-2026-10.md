@@ -5399,6 +5399,65 @@ moved to after the restart (Basheer).
 - Note: I moved Basheer's browser tab one year too far (FY 2028-29) and
   brought it back.
 
+### 2026-10-28 — Build & Test: My Work E2E, section G (layout) and a Stagnant Opportunities error
+- Pre-E2E fixes committed and pushed as `048c741` (one person's lists
+  read only that person's Opportunities; days since contact floored at 0;
+  days boxes capped at 3650). Basheer's call: no India-time conversion on
+  My Work — browser time is the app convention (`formatter.ts:20`); the
+  `inIst` helper was reverted before the commit.
+- G1 as Fazal, My Work, measured inside a frame of 390, 768 and 1280 px
+  (the test browser window is maximised at 1920 px and can't be resized,
+  so a frame of each width stood in): 390 px — rows are cards, "Showing"
+  and "Not visited for (days)" have their names above them, no element
+  wider than the page; 768 and 1280 px — rows are tables, nothing wider
+  than the page. Pass for My Work. Not seen: a planned-hospital row
+  (Fazal's card is empty until section F approves a plan).
+- FINDING (not from `048c741`): Stagnant Opportunities returns an error
+  for any threshold that has at least one row ("Couldn't load stagnant
+  Opportunities."; API 500 on `stagnant-deals`). Read-only Dev repro as
+  Fazal (`stagnant_repro.py`, scratchpad): the query gives 14 rows at 30
+  days; `StagnantDealRow.last_activity_date` is typed `date` but the
+  query hands back a date with a time, which pydantic refuses
+  (`date_from_datetime_inexact`). Both the field and the query come from
+  `d7a0e6f` (11 Sep), unchanged by My Work; why the report worked before
+  is not established (guess: earlier data had no rows past the old 90/180
+  choices). Blocks section G's Stagnant half and section E.
+- Basheer: UAT shows the report fine and suspected my India-time revert.
+  Checked: UAT's own code (`8b2ec8a`) run read-only against Dev data as
+  Fazal fails the same way (14 of 14 rows at 30 days, 2 of 2 at 90, 0
+  rows at 180) — so the revert is not the cause, and the same code works
+  on UAT only if its data differs (not checked; UAT is not touched
+  without asking). The revert only undid the My Work helper in
+  `formatter.ts`; it never touched this report.
+- Fix (uncommitted): `StagnantDealRow` turns the timestamp into its
+  India calendar day before the date check (`reporting/schemas.py`), plus
+  `tests/domains/reporting/test_reporting_schemas.py` (2 tests). Full
+  backend pytest 1434 pass before the test file's lint fix; ruff clean,
+  reporting tests 117 pass after. Dev API as Fazal: 200 at 30/90/180 days
+  with 14/2/0 rows, dates like 2026-07-28.
+- G1 Stagnant half, as Fazal: 390 px — cards, "Not visited for (days)"
+  name above its box, no row wider than the page (names are cut with "…"
+  inside their card by design); 768 and 1280 px — cards, nothing past the
+  page width. G1 passes, both halves.
+- Fix committed and pushed as `4deb68c`; re-read afterwards, no problems.
+
+#### Retro — Build & Test, 28 Oct (counted from Basheer's 24 messages)
+- **Corrections from Basheer this session: 5** — (1) asked me to explain
+  the review's "smaller points" in plain words; (2) "where is lakhs
+  coming from?" — I put a money unit on a probability total; (3) India-time
+  helper on My Work undone (browser time is the app convention); (4) his
+  question "why not use the browser time like all the other screens" was
+  answered as a different question first; (5) I called the Stagnant 500
+  "already there" — he said UAT works and suspected my revert; UAT's own
+  code on Dev data fails the same way, so the revert was not the cause.
+- Not counted: his complaint about repeated missed conventions (MUI,
+  activity-type table, time zones); the convention-audit proposal is open
+  with him.
+- No tracker line: nothing touched live data, UAT or lost work. Guard
+  candidate if he wants it: reporting tests that run every report's rows
+  through its response model (the Stagnant 500 got past tests that only
+  checked query text; added for that report only).
+
 ### 2026-10-28 — Plan & Chore: Target vs Actuals redesign, Activity Type table plan
 - Morning: reviewed the Annual Target E2E test plan from section I
   against the code at Build & Test's request. Basheer judged Part 2
