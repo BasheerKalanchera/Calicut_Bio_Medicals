@@ -16,6 +16,9 @@ Moved here word for word from CLAUDE.md on 2026-10-08
 - Applies however small or pattern-mirroring the change — follow the full sequence
   (code-review → written E2E plan → test → commit → checklist) by default, without
   being asked. *(2026-09-22)*
+- If feature or fix code lands after the pre-E2E review, including
+  mid-E2E, review those changes before the next E2E step. The small-fixes
+  batch is exempt. *(2026-10-28)*
 - If correctness depends on a DB trigger, generated column, or other server-side
   write the ORM doesn't re-read, add "did a real save actually complete" as an
   explicit review item — static review can't see a stale in-memory object.

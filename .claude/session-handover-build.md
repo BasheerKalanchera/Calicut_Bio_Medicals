@@ -17,9 +17,14 @@ session edits this note._
 - Part 2 screens plan steps 1–6 shipped; step 6 (bell) `5b5ad0c`,
   pushed 27 Oct (archive 27 Oct evening). Migration 0064 on Dev = head.
 - UAT moves after this E2E (Basheer, 26 Oct, D6).
+- 28 Oct: pre-E2E review of the 6 commits since 25 Oct (10 points).
+  Fixes 1, 2 (A), 3, 4, 6, 7, 9 committed `e33f35c` (pushed 28 Oct);
+  fix 5 closed, no change (Basheer). Archive entry written.
+  Next: post-commit skill for `e33f35c`, then E2E.
 - Next: E2E — P7 (read-only Dev check; ask first), P8, I, J, K (1 of
   41 done), plus the phone/tablet/laptop step per screen. Load
-  `cabio-e2e-testing` first. Dev servers: Basheer runs them (5174).
+  `cabio-e2e-testing` first. Dev servers: Basheer runs them (app on
+  5173 as of 28 Oct).
   Post-commit checklist and Part 2's UAT move after.
 - Lesson (21 Oct): review lists sorted by what users notice, screen first.
 

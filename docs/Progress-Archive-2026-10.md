@@ -5201,3 +5201,41 @@ moved to after the restart (Basheer).
      photographed the bell at three widths and missed it.
 - No tracker change: none touched live data, UAT or lost work, none
   guard-stoppable.
+
+### 2026-10-28 — Build & Test: Part 2 pre-E2E review of the late commits
+- Why: six commits (`19c2593`, `2e3ddd7`, `64b5fef`, `dce5d7d`, `65ab36a`,
+  `5b5ad0c`) landed after the 25 Oct pre-E2E review, mid-E2E, and none was
+  reviewed — no rule asked for it. New checklist line (Basheer's words) in
+  `cabio-e2e-testing`; origin in Process-Rules-History 2026-10-28.
+- 10 points found. Fixed in `e33f35c` (pushed 28 Oct):
+  1 Target vs Actuals "SBU total" figures bold on a phone; 2 every shared
+  table on a laptop lights a row under the mouse and pushes team members in
+  24 px (Basheer chose A; Team Plans was 16 px); 3 a table opened inside a
+  phone card shows lines, not cards in a card; 4 Team Targets (both views)
+  and the opened plan's hospitals moved onto the shared table part (were
+  hand-built phone versions, rule 2); 6 MUI check catches per-width text
+  sizes and no longer reads `image/*` as a comment; 7 TableOrCards row
+  styles merged; 9 bell list width no longer a typed `calc` (same 358 px
+  at 390, 320 px tablet/laptop).
+- Not changed: 5 step 5 left lines slightly shorter (side menu rows 47.5 →
+  41.7 px on a laptop, calculated old vs measured now; titles, tiles,
+  "+ Lead" 1–4 px) — Basheer kept the theme's spacing (a menu-only setting
+  would be a one-off outside the theme). 8 the screen header copied 13
+  times → Backlog, MUI sweep. 10 `stagnantDeals` name → with the Opportunity
+  wording sweep.
+- Checked on Dev as Haroon at 390/768/1280 (390 inside a same-origin
+  frame — the window wouldn't shrink): nothing runs past a card; tsc and
+  lint 0 errors. Dev app was on 5173 today (no 5174 server running).
+
+### 2026-10-28 — Build & Test retro
+- Corrections from Basheer this session: 6
+  1. "Have we done the pre-e2e code-review step?" — the 6 late commits
+     had not been reviewed.
+  2. Points 8 and 9 not explained plainly; he asked.
+  3. "Why not fix it now itself?" — I proposed putting off fix 9.
+  4. Bell look and fix 2 not explained plainly; he asked.
+  5. Fix 5 not explained plainly; he asked.
+  6. "That will be deviation from the MUI standards right?" — my menu
+     spacing recommendation went against the standard's idea; withdrawn.
+- Tracker: P102 new (1) for correction 1, guard-stoppable. The rest
+  are counted only.
