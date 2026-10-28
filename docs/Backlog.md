@@ -567,6 +567,35 @@ maintainability once handed to the customer's IT team.
   about how the code is organised, not how screens look
   (`docs/MUI-Good-Practice-Implementation-Plan.md` D6).
 
+### Code and UI checks — minimal-effort trial (Basheer, 2026-10-28)
+
+Raised after three missed conventions in one day (MUI, activity types,
+time zones). Aim: find repeated code and hard-typed lists with free tools,
+not a project of its own. **Cap: about one working day in all; if it grows,
+stop and ask.** Show scope first (expensive-job rule); read-only until then.
+- **Step 1, read-only trial (a couple of hours, estimate not counted):**
+  `jscpd` (repeated code, both languages), `knip` (unused code, frontend),
+  `vulture` (unused code, backend). Plus a search of the code for reference
+  data typed in as fixed lists (stages, statuses, activity types, zones,
+  SBUs, hold reasons) against what the Dev tables hold. One ranked report
+  for Basheer; nothing fixed in this step.
+- **Step 2, guards only for what hurts:** each tool's count today is the
+  baseline; the check fails on *new* problems only. Old ones are fixed when
+  a screen is next touched (as the sweep entries above). Cheapest first:
+  ESLint complexity and `jsx-a11y` (labels, contrast) are switched on in the
+  existing ESLint config; ruff already runs on the backend.
+- **UI, kept small:** `jsx-a11y` first; then one Playwright check that
+  opens a few key screens at 390, 768 and 1280 px and fails on sideways
+  overflow (the by-hand section G measurement). Needs a test sign-in and
+  steady Dev data — the real cost. Storybook only later, if the customer's
+  IT team will maintain the UI.
+- **Not covered:** none of these judge whether a design is good, and none
+  knows Cabio's own lists; the reference-data search is what catches an
+  activity-type slip. A rule like "each filter has its name above it"
+  needs its own small check, like `check-mui-standard.js`.
+- Overlaps "Front-end consistency audit" above and the screen-header
+  sweep item; fold into one plan if it goes ahead.
+
 ### Backend dependencies: finish the SQLAlchemy cap follow-ups (found 2026-09-27)
 
 The `<2.1` cap is in `backend/pyproject.toml` on `main` (`0ffe00c`,

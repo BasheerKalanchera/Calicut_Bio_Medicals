@@ -9,7 +9,8 @@ session edits this note._
 
 ## Annual Target Part 2 — Target vs Actuals redesign (paused 28 Oct)
 
-- D82–D86 decided 28 Oct; plan updated (step 5a). Mock-up
+- D82–D86 decided 28 Oct; plan updated (step 5a), pushed `5552e20`
+  with the Activity Type plan, archive entry and retro. Mock-up
   https://claude.ai/artifact/XR3ftVbahPshwicQ9Vxsd5.
 - **Next (29 Oct):** finalise with Basheer; hand step 5a to a build
   session; rewrite E2E section I (plus I8, I9, I11, K5) once Build &
@@ -59,6 +60,8 @@ session edits this note._
 - Weekly review due 2026-10-28, not yet run (asked, unanswered); Basheer
   wants a thorough analysis of corrections (tracker "For the next
   review"). Doc tidy-up also due 28 Oct, unanswered.
+- Code and UI checks trial (Basheer, 28 Oct, via Build & Test): Backlog
+  "Code and UI checks — minimal-effort trial". Cap one day; show scope first.
 
 ## Chores
 
