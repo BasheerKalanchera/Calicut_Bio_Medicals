@@ -11,6 +11,7 @@ from app.domains.audit.models import AuditLog
 from app.domains.opportunity.models import Opportunity, OpportunityItem
 from app.domains.organization.models import UserProfile, UserZone
 from app.domains.organization.repository import TEAM_SCOPE_BUILDERS, UNRESTRICTED_ROLES
+from app.domains.planning.models import TargetPlan, TargetPlanAccount
 from app.domains.product.models import Product
 from app.domains.reference.models import SBU, Brand, HoldReason, OpportunityStage, OpportunityStatus, Zone
 
@@ -437,6 +438,51 @@ class ReportingRepository:
         stmt = self._apply_owner_scope(stmt, current_user, user_id)
         stmt = stmt.order_by(*_REMINDER_ORDER)
         return list(self.db.scalars(stmt).unique().all())
+
+    def weekly_followup_planned_hospitals(
+        self, current_user: UserProfile, user_id: uuid.UUID, planning_period: str
+    ) -> list[Row]:
+        """My Work "My hospitals this quarter" (step 5): each hospital on
+        `user_id`'s APPROVED plan for `planning_period`, with that person's own
+        latest visit/call/meeting/email there (D27, D28) and the earliest open
+        next action assigned to them there (D29). Activities logged on one of
+        the hospital's Opportunities count too: every such activity carries
+        the hospital's account_id (chk_activity_account_required). A person on
+        two plans in one quarter (one per SBU) can list a hospital twice; the
+        service folds those. Empty when `user_id` is outside the viewer's team."""
+        last_visit_subq = (
+            select(Activity.account_id, func.max(Activity.activity_date).label("last_visit_date"))
+            .where(Activity.user_id == user_id)
+            .where(Activity.account_id.is_not(None))
+            .where(Activity.activity_type.in_(_CONTACT_ACTIVITY_TYPES))
+            .group_by(Activity.account_id)
+            .subquery()
+        )
+        next_action_subq = (
+            select(Activity.account_id, func.min(Reminder.due_date).label("next_action_due"))
+            .join(Reminder, Reminder.activity_id == Activity.id)
+            .where(Reminder.assigned_to_user_id == user_id, Reminder.is_completed == False)  # noqa: E712
+            .where(Activity.account_id.is_not(None))
+            .group_by(Activity.account_id)
+            .subquery()
+        )
+        stmt = (
+            select(
+                Account.id.label("account_id"),
+                Account.name.label("account_name"),
+                last_visit_subq.c.last_visit_date.label("last_visit_date"),
+                next_action_subq.c.next_action_due.label("next_action_due"),
+            )
+            .select_from(TargetPlanAccount)
+            .join(TargetPlan, TargetPlanAccount.target_plan_id == TargetPlan.id)
+            .join(UserProfile, TargetPlan.user_id == UserProfile.id)
+            .join(Account, TargetPlanAccount.account_id == Account.id)
+            .outerjoin(last_visit_subq, last_visit_subq.c.account_id == Account.id)
+            .outerjoin(next_action_subq, next_action_subq.c.account_id == Account.id)
+            .where(TargetPlan.status == "APPROVED", TargetPlan.planning_period == planning_period)
+        )
+        stmt = self._apply_owner_scope(stmt, current_user, user_id)
+        return list(self.db.execute(stmt).all())
 
     def product_performance(
         self,

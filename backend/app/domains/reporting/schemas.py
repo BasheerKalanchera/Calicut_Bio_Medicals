@@ -114,6 +114,23 @@ class WeeklyFollowupNextActionList(BaseModel):
     rows: list[ReminderResponse]
 
 
+class WeeklyFollowupHospitalRow(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    account_id: uuid.UUID
+    account_name: str
+    # The viewed person's own latest visit/call/meeting/email at the hospital,
+    # or None if never (D27, D28); timestamps, as on the Opportunity rows.
+    last_visit_date: datetime | None
+    # Earliest open next action assigned to them there, Opportunities' included (D29).
+    next_action_due: datetime | None
+
+
+class WeeklyFollowupHospitalList(BaseModel):
+    count: int
+    rows: list[WeeklyFollowupHospitalRow]
+
+
 class WeeklyFollowupResponse(BaseModel):
     """My Work (Weekly Follow-up, signed requirement 11.1) for one person.
     docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md"""
@@ -127,6 +144,9 @@ class WeeklyFollowupResponse(BaseModel):
     not_visited: WeeklyFollowupOpportunityList
     overdue_next_actions: WeeklyFollowupNextActionList
     next_actions_this_week: WeeklyFollowupNextActionList
+    # Step 5: the hospitals on their approved plan for the quarter `today` falls in.
+    planning_period: str
+    planned_hospitals: WeeklyFollowupHospitalList
 
 
 ProductPerformanceGroupBy = Literal["product", "brand", "sbu"]

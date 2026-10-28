@@ -244,10 +244,18 @@ def _action(due: datetime, **overrides):
     return SimpleNamespace(**row)
 
 
-def _followup(opps=(), actions=(), user=None, today=_WED, **kwargs):
+def _hospital(name="Baby Memorial Hospital", last_visit=None, next_action=None, account_id=None):
+    return SimpleNamespace(
+        account_id=account_id or uuid.uuid4(), account_name=name, last_visit_date=last_visit,
+        next_action_due=next_action,
+    )
+
+
+def _followup(opps=(), actions=(), user=None, today=_WED, hospitals=(), **kwargs):
     mock_repo = MagicMock(spec=ReportingRepository)
     mock_repo.weekly_followup_opportunities.return_value = list(opps)
     mock_repo.weekly_followup_next_actions.return_value = list(actions)
+    mock_repo.weekly_followup_planned_hospitals.return_value = list(hospitals)
     service = ReportingService(repository=mock_repo)
     result = service.weekly_followup(user or _make_current_user("Sales Staff"), today=today, **kwargs)
     return result, mock_repo
@@ -351,3 +359,45 @@ class TestWeeklyFollowup:
         assert row.activity.account.name == "Baby Memorial Hospital"
         assert row.activity.opportunity.name == "SonoScape P40"
         assert row.assigned_to_user.display_name == "Rep One"
+
+
+class TestWeeklyFollowupPlannedHospitals:
+    def test_asks_for_the_quarter_today_falls_in(self):
+        user = _make_current_user("Sales Staff")
+        result, repo = _followup(user=user)  # Wed 28 Oct 2026 = FY 2026-27 Q3
+        assert result.planning_period == "2026-Q3"
+        repo.weekly_followup_planned_hospitals.assert_called_once_with(user, user.id, "2026-Q3")
+
+    def test_manager_picks_one_rep(self):
+        manager, rep_id = _make_current_user("Area Manager"), uuid.uuid4()
+        _, repo = _followup(user=manager, user_id=rep_id)
+        repo.weekly_followup_planned_hospitals.assert_called_once_with(manager, rep_id, "2026-Q3")
+
+    def test_never_visited_first_then_longest_since_visit(self):
+        recent = _hospital("Aster Medcity", last_visit=datetime(2026, 10, 25, 10, tzinfo=UTC))
+        older = _hospital("Baby Memorial Hospital", last_visit=datetime(2026, 9, 2, 10, tzinfo=UTC))
+        never = _hospital("Meitra Hospital")
+        result, _ = _followup(hospitals=[recent, older, never])
+        assert [r.account_name for r in result.planned_hospitals.rows] == [
+            "Meitra Hospital", "Baby Memorial Hospital", "Aster Medcity",
+        ]
+        assert result.planned_hospitals.count == 3
+
+    def test_same_hospital_on_two_plans_listed_once(self):
+        # A rep on an Imaging and a Critical Care plan can plan the same hospital in both.
+        shared_id = uuid.uuid4()
+        first = _hospital(account_id=shared_id, last_visit=datetime(2026, 10, 20, 10, tzinfo=UTC))
+        second = _hospital(account_id=shared_id, last_visit=datetime(2026, 10, 20, 10, tzinfo=UTC))
+        result, _ = _followup(hospitals=[first, second])
+        assert result.planned_hospitals.count == 1
+
+    def test_next_action_due_passes_through(self):
+        due = datetime(2026, 10, 30, 9, tzinfo=IST)
+        result, _ = _followup(hospitals=[_hospital(next_action=due)])
+        assert result.planned_hospitals.rows[0].next_action_due == due
+        assert result.planned_hospitals.rows[0].last_visit_date is None
+
+    def test_no_plan_gives_an_empty_list(self):
+        result, _ = _followup()
+        assert result.planned_hospitals.count == 0
+        assert result.planned_hospitals.rows == []

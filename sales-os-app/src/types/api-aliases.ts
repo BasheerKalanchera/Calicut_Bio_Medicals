@@ -49,3 +49,4 @@ export type MarketingLeadCommentResponse = components["schemas"]["MarketingLeadC
 export type WeeklyFollowupResponse = components["schemas"]["WeeklyFollowupResponse"];
 export type WeeklyFollowupOpportunityRow = components["schemas"]["WeeklyFollowupOpportunityRow"];
 export type WeeklyFollowupOpportunityList = components["schemas"]["WeeklyFollowupOpportunityList"];
+export type WeeklyFollowupHospitalList = components["schemas"]["WeeklyFollowupHospitalList"];

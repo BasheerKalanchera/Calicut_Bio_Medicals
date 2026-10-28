@@ -3,7 +3,7 @@ from datetime import date, datetime, timedelta
 from decimal import Decimal
 from zoneinfo import ZoneInfo
 
-from app.core.periods import ist_midnight, today_ist
+from app.core.periods import ist_midnight, quarter_of, today_ist
 from app.domains.activity.schemas import ReminderResponse
 from app.domains.organization.models import UserProfile
 from app.domains.organization.repository import TEAM_SCOPE_BUILDERS, UNRESTRICTED_ROLES
@@ -27,6 +27,8 @@ from app.domains.reporting.schemas import (
     SalesSummaryRow,
     StagnantDealRow,
     StagnantDealsResponse,
+    WeeklyFollowupHospitalList,
+    WeeklyFollowupHospitalRow,
     WeeklyFollowupNextActionList,
     WeeklyFollowupOpportunityList,
     WeeklyFollowupOpportunityRow,
@@ -319,6 +321,19 @@ class ReportingService:
         overdue = [a for a in actions if a.due_date <= end_of_today]
         this_week = [a for a in actions if a.due_date > end_of_today]
 
+        # Step 5. Folded by hospital: a person on two plans this quarter (one
+        # per SBU) can have the same hospital on both. Never-visited first,
+        # then longest since the last visit -- who to go and see.
+        planning_period = quarter_of(today)
+        hospitals = {
+            r.account_id: WeeklyFollowupHospitalRow.model_validate(r)
+            for r in self.repository.weekly_followup_planned_hospitals(current_user, target_id, planning_period)
+        }.values()
+        hospital_rows = sorted(
+            hospitals,
+            key=lambda h: (h.last_visit_date is not None, h.last_visit_date or datetime.min, h.account_name),
+        )
+
         return WeeklyFollowupResponse(
             user_id=target_id,
             idle_days=idle_days,
@@ -329,6 +344,8 @@ class ReportingService:
             not_visited=_opportunity_list(not_visited),
             overdue_next_actions=WeeklyFollowupNextActionList(count=len(overdue), rows=overdue),
             next_actions_this_week=WeeklyFollowupNextActionList(count=len(this_week), rows=this_week),
+            planning_period=planning_period,
+            planned_hospitals=WeeklyFollowupHospitalList(count=len(hospital_rows), rows=hospital_rows),
         )
 
     def product_performance(

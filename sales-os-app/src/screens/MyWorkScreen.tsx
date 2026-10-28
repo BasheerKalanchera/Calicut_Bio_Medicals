@@ -11,7 +11,12 @@ import { getWeeklyFollowup } from "../services/reporting";
 import { listUsers } from "../services/masterData";
 import { formatLakhs } from "../utils/formatter";
 import { statusColors } from "../theme/statusColors";
-import type { ReminderResponse, WeeklyFollowupOpportunityList, WeeklyFollowupOpportunityRow } from "../types/api-aliases";
+import type {
+  ReminderResponse,
+  WeeklyFollowupHospitalList,
+  WeeklyFollowupOpportunityList,
+  WeeklyFollowupOpportunityRow,
+} from "../types/api-aliases";
 
 // My Work -- the formal name is Weekly Follow-up (signed requirement 11.1);
 // docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md.
@@ -181,6 +186,14 @@ export default function MyWorkScreen({ isActive, onSelectAccount, onSelectOpport
               onSelectOpportunity={onSelectOpportunity}
               onDone={setClosing}
             />
+            <HospitalSection
+              list={data.planned_hospitals}
+              planningPeriod={data.planning_period}
+              today={data.today}
+              canAct={canAct}
+              onSelectAccount={onSelectAccount}
+              onLog={(accountId) => setLogFor({ accountId })}
+            />
           </Box>
         )}
       </Box>
@@ -288,6 +301,67 @@ function OpportunitySection({
               )}
             </TocRow>
           ))}
+        </TableOrCards>
+      )}
+    </SectionCard>
+  );
+}
+
+function HospitalSection({
+  list,
+  planningPeriod,
+  today,
+  canAct,
+  onSelectAccount,
+  onLog,
+}: {
+  list: WeeklyFollowupHospitalList;
+  planningPeriod: string;
+  today: string;
+  canAct: boolean;
+  onSelectAccount: (account: Selected) => void;
+  onLog: (accountId: string) => void;
+}) {
+  // "My hospitals this quarter": the hospitals on the approved plan, never
+  // visited first. Last visit is this person's own (D27, D28); next action is
+  // their earliest open one at the hospital (D29).
+  return (
+    <SectionCard title={sectionTitle(`My hospitals this quarter (${planningPeriod})`, list.count)}>
+      {list.rows.length === 0 ? (
+        <Box sx={{ color: "text.secondary", typography: "body2", fontStyle: "italic" }}>
+          No approved hospital plan for this quarter.
+        </Box>
+      ) : (
+        <TableOrCards
+          columns={[
+            { label: "Hospital" },
+            { label: "Last visit", align: "right" },
+            { label: "Next action due", align: "right" },
+            ...(canAct ? [{ label: "", align: "right" as const }] : []),
+          ]}
+        >
+          {list.rows.map((r) => {
+            const daysAgo = r.last_visit_date ? dayjs(today).diff(dayjs(r.last_visit_date).format("YYYY-MM-DD"), "day") : null;
+            const daysLate = r.next_action_due ? dayjs(today).diff(dayjs(r.next_action_due).format("YYYY-MM-DD"), "day") : null;
+            return (
+              <TocRow key={r.account_id}>
+                <TocCell title>
+                  <NameLink onClick={() => onSelectAccount({ id: r.account_id, name: r.account_name })}>{r.account_name}</NameLink>
+                </TocCell>
+                <TocCell label="Last visit" align="right">
+                  {daysAgo === null ? "Never" : `${dayjs(r.last_visit_date).format("D MMM")} · ${daysAgo} ${daysAgo === 1 ? "day" : "days"} ago`}
+                </TocCell>
+                <TocCell label="Next action due" align="right">
+                  {daysLate === null ? "—" : daysLate > 0 ? <DaysBadge days={daysLate} overdue /> : dayjs(r.next_action_due).format(daysLate === 0 ? "[Today] h:mm A" : "ddd D MMM")}
+                </TocCell>
+                {canAct && (
+                  <TocCell action align="right">
+                    <Button size="small" variant="outlined" onClick={() => onLog(r.account_id)}>Log Activity</Button>
+                  </TocCell>
+                )}
+              </TocRow>
+            );
+          })}
         </TableOrCards>
       )}
     </SectionCard>

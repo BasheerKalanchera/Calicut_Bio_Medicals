@@ -130,9 +130,9 @@ export default function DemoApp() {
   // Lazy initializer -- AuthGate only mounts DemoApp once auth has resolved,
   // so userProfile is already populated at first render here; reading it
   // once up front avoids a flash of the wrong starting view before a later
-  // effect could correct it. Everyone else opens on Account Management, not Pipeline (Weekly Follow-up
-  // plan D9a, Haroon via Basheer 2026-10-12).
-  const [view, setView] = useState(() => (isMarketingUser ? "marketingLeads" : "customers"));
+  // effect could correct it. Everyone else opens on My Work, not Pipeline or
+  // Account Management (Weekly Follow-up plan D9a/D9b).
+  const [view, setView] = useState(() => (isMarketingUser ? "marketingLeads" : "myWork"));
   // The plan a bell click asked to open; nonce re-mounts Target & Coverage
   // Planning even when the same plan is clicked twice.
   const [targetPlanFocus, setTargetPlanFocus] = useState<{ period: string; sbuId: string; planId: string; nonce: number } | null>(null);

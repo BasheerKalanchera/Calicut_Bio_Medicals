@@ -6259,6 +6259,27 @@ export interface components {
          * @enum {string}
          */
         VisitFrequency: "WEEKLY" | "BI_WEEKLY" | "MONTHLY" | "QUARTERLY" | "AS_NEEDED";
+        /** WeeklyFollowupHospitalList */
+        WeeklyFollowupHospitalList: {
+            /** Count */
+            count: number;
+            /** Rows */
+            rows: components["schemas"]["WeeklyFollowupHospitalRow"][];
+        };
+        /** WeeklyFollowupHospitalRow */
+        WeeklyFollowupHospitalRow: {
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Account Name */
+            account_name: string;
+            /** Last Visit Date */
+            last_visit_date: string | null;
+            /** Next Action Due */
+            next_action_due: string | null;
+        };
         /** WeeklyFollowupNextActionList */
         WeeklyFollowupNextActionList: {
             /** Count */
@@ -6346,6 +6367,9 @@ export interface components {
             not_visited: components["schemas"]["WeeklyFollowupOpportunityList"];
             overdue_next_actions: components["schemas"]["WeeklyFollowupNextActionList"];
             next_actions_this_week: components["schemas"]["WeeklyFollowupNextActionList"];
+            /** Planning Period */
+            planning_period: string;
+            planned_hospitals: components["schemas"]["WeeklyFollowupHospitalList"];
         };
         /** WorkspaceAccount */
         WorkspaceAccount: {

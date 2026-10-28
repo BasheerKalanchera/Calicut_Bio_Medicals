@@ -311,6 +311,46 @@ class TestWeeklyFollowupNextActions:
         assert _uuid_literal(current_user.id) in sql
 
 
+class TestWeeklyFollowupPlannedHospitals:
+    def test_approved_plan_for_the_quarter_only(self):
+        sql = _run("weekly_followup_planned_hospitals", _make_current_user("Admin"), uuid.uuid4(), "2026-Q3")
+        assert "target_plan.status = 'APPROVED'" in sql
+        assert "target_plan.planning_period = '2026-Q3'" in sql
+
+    def test_scoped_on_the_plan_owner(self):
+        target = uuid.uuid4()
+        sql = _run("weekly_followup_planned_hospitals", _make_current_user("Admin"), target, "2026-Q3")
+        assert "JOIN user_profile ON target_plan.user_id = user_profile.id" in sql
+        assert f"user_profile.id = '{_uuid_literal(target)}'" in sql
+
+    def test_last_visit_is_their_own_contact_activities_on_the_hospital(self):
+        # D27/D28: visits, calls, meetings, emails -- not Notes -- and only by
+        # the viewed person, whether logged on the hospital or on one of its
+        # Opportunities (both carry the hospital's account_id).
+        target = uuid.uuid4()
+        sql = _run("weekly_followup_planned_hospitals", _make_current_user("Admin"), target, "2026-Q3")
+        assert "activity.activity_type IN ('VISIT', 'CALL', 'MEETING', 'EMAIL')" in sql
+        assert f"activity.user_id = '{_uuid_literal(target)}'" in sql
+        assert "max(activity.activity_date)" in sql
+
+    def test_next_action_is_their_earliest_open_one_on_the_hospital(self):
+        # D29
+        target = uuid.uuid4()
+        sql = _run("weekly_followup_planned_hospitals", _make_current_user("Admin"), target, "2026-Q3")
+        assert "min(reminder.due_date)" in sql
+        assert "reminder.is_completed = false" in sql
+        assert f"reminder.assigned_to_user_id = '{_uuid_literal(target)}'" in sql
+
+    def test_hospital_with_no_activity_still_listed(self):
+        sql = _run("weekly_followup_planned_hospitals", _make_current_user("Admin"), uuid.uuid4(), "2026-Q3")
+        assert sql.count("LEFT OUTER JOIN") >= 2
+
+    def test_sales_staff_cannot_see_someone_else(self):
+        current_user = _make_current_user("Sales Staff")
+        sql = _run("weekly_followup_planned_hospitals", current_user, uuid.uuid4(), "2026-Q3")
+        assert f"user_profile.id = '{_uuid_literal(current_user.id)}'" in sql
+
+
 class TestProductPerformance:
     def test_admin_is_unrestricted(self):
         sql = _run("product_performance", _make_current_user("Admin"), "product")
