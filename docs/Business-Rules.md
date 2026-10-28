@@ -330,7 +330,7 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 ### BR-OP-16: Closing Date Passed (2026-09-29)
 * **Rule:** An Active opportunity whose Expected Closure Date is before today (India time) is flagged "Closing date passed".
 * **Effect:** Flag only — it never blocks saving, stage moves or closing. The owner either closes the Opportunity (Won/Lost) or enters a realistic new date; managers use the flag to raise it with the owner.
-* **Where shown:** the Plan vs Actuals Tracking section of the Insights Dashboard; later, a section of the Weekly Follow-up Report ("My Work"), which lists it only for the Opportunity's owner, since only the owner can change the date or close it (Basheer, 2026-10-21; `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md` D16).
+* **Where shown:** the Plan vs Actuals Tracking section of the Insights Dashboard; and the "Closing date passed" section of My Work (built 2026-10-28 on the Build branch, reaches Dev at the merge), which lists it only for the Opportunity's owner, since only the owner can change the date or close it (Basheer, 2026-10-21; `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md` D16).
 * **Forecast effect:** in Plan vs Actuals Tracking, a flagged Opportunity counts in the current quarter's Expected, not in the past quarter its date points to.
 * **Rationale:** Basheer, 2026-09-29, after comparing Salesforce, Dynamics and Zoho: none blocks on a past closing date; common practice is to flag it and have the manager follow up. Salesforce's default of quietly dropping such Opportunities from forward-looking reports is what this avoids.
 * **Enforcement:** built for Plan vs Actuals Tracking (`cc4eb91`, split-aware `2e2e4c0`); manual E2E passed 2026-10-13 — `docs/Plan-vs-Actuals-Tracking-Implementation-Plan.md`. On UAT 2026-10-25.
@@ -360,16 +360,16 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Rationale:** Cabio leadership via Basheer, 2026-10-09. On UAT 24 open Leads had a chance above 50 % and 8 more exactly 50 % (Expected Closure Dates report, 9 Oct), inflating the weighted forecast with no date to plan cash flow against. Leadership chases the existing ones with that report until this ships.
 * **Enforcement:** built on Dev 2026-10-15 — see `docs/Business-Rule-Implementation-Matrix.md` and `docs/Win-Probability-Rule-and-One-Create-Form-Implementation-Plan.md`. On UAT 2026-10-25.
 
-### BR-OP-20: Not Visited (agreed 2026-10-14, not built)
+### BR-OP-20: Not Visited (agreed 2026-10-14, built 2026-10-28 on the Build branch)
 * **Rule:** An Active Opportunity appears on the "Not visited" list when nobody has logged a visit, call, meeting or email on it for N days or more (Basheer, 2026-10-25; was "more than N"). The person viewing types N; the screen opens at 30 each time (Basheer, 2026-10-11). On Hold, Stalled, Won and Lost Opportunities are not listed (Basheer, 2026-10-14).
 * **What counts:** visits, calls, meetings and emails only. Notes, Manager Notes, Relationship Support and Sales Development activities (BR-ACT-09) don't reset the count (Basheer, 2026-10-12), so a Note written for a stage change (BR-OP-22) doesn't hide an Opportunity nobody has visited.
 * **No activity yet:** days are counted from the date the Opportunity was created.
 * **Effect:** a list only. Nothing on the Opportunity changes — status, forecast and notifications stay as they are.
 * **Exit:** logging a visit, call, meeting or email on it takes it off the list.
-* **Who sees what:** a rep sees their own; a manager sees their team's (same scoping as the existing reports).
-* **Where shown:** Weekly Follow-up ("My Work") and the Stagnant Deals report, which use this same measure (Basheer, 2026-10-14).
+* **Who sees what:** a rep sees their own. On My Work a manager sees their own or picks one person from their team, never the whole team at once (Basheer, 2026-10-28); the Stagnant Deals report shows a manager their whole team (same scoping as the other reports).
+* **Where shown:** Weekly Follow-up ("My Work") and the Stagnant Deals report, which use this same measure (Basheer, 2026-10-14). On the Stagnant Deals report the viewer types the number of days, starting at 30 (Basheer, 2026-10-28, plan D25).
 * **Not the same as BR-OP-06:** that rule is about time spent in one stage; this one is about nobody visiting.
-* **Enforcement:** not built yet — see `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md` (D6, D6a, D6c). The Stagnant Deals report today counts every activity type and includes On Hold Opportunities, until that plan changes it.
+* **Enforcement:** built on the Build branch (`42bd5f8` data and Stagnant Deals report, `8d4bdac` My Work screen), reaching Dev at the merge; manual E2E pending — see `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md` (D6, D6a, D6c, D23, D25).
 
 ### BR-OP-21: A New Opportunity Starts With an Activity (agreed 2026-10-12, built 2026-10-16)
 * **Rule:** An Opportunity cannot be saved without its first activity (the conversation that made it an Opportunity), entered in the same step. A call, visit or similar also sets a next action, as BR-ACT-04 already requires, so the Opportunity starts with both. Applies to every way an Opportunity is created, including converting a marketing lead.

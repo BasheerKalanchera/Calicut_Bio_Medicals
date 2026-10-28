@@ -16,7 +16,8 @@ The navigation sidebar (L1904 – L1966) is structured into logical sections:
 | **Sales Planning** | Target & Coverage Planning *(renamed from "Target Planning" 2026-09-28; now under Sales Execution in `DemoApp.tsx`)* | `targetPlanning` | All users for their own plan (not Admin); approval queue and team roll-up for managers, Admin/GM | 🎯 |
 | | ~~Coverage Planning~~ | — | Replaced by Hospital-wise planning (2026-09) — coverage is part of Target & Coverage Planning | — |
 | **Administration** | Rate Hospitals *(2026-09)* | `rateHospitals` | Admin / GM only | ⭐ |
-| **Sales Execution** | Account Management | `customers` / `projects` | All users | 🏥 |
+| **Sales Execution** | My Work *(2026-10-28, Build branch)* | `myWork` | All users except Marketing Users; first item; a manager, GM or Admin can pick one person from their team | 🗓️ |
+| | Account Management | `customers` / `projects` | All users | 🏥 |
 | | Opportunities | `pipeline` / `manager` | All users | 📊 |
 | | Next Actions | `reminders` | All users | ✅ |
 | **Performance** | Insights Dashboard | `insights` | All users | 💡 |

@@ -3,8 +3,9 @@
 
 **Covers:** `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md`, steps
 2–5 (step 1 passed its Dev check 2026-10-19 and is on UAT).
-**Built:** not yet built (D18: straight after the Annual Target Planning
-Part 2 E2E).
+**Built:** steps 2 and 4 on branch `worktree-build` (`42bd5f8`,
+`8d4bdac`), merged after the Annual Target Planning Part 2 E2E (D18);
+step 5 (section F) not yet built.
 **Where:** Dev.
 
 **Written ahead of the build.** The screen doesn't exist yet, so its
@@ -29,7 +30,7 @@ session scratchpad (session c1568b11): `mywork_e2e_data_out.txt`,
 
 - **Who sees:** a rep sees only their own: Fahad (Sales Staff, Imaging) — 6 Active Opportunities, no open next actions. Managers' teams, by the rule the reports already use (D1): Fazal (Area Manager, Imaging) — Fahad; Shruthi (Area Manager, Imaging) — Rudrappa; Arun Adarsh (Area Manager, Critical Care) — Vivek; Nishad K V (Area Manager, Critical Care) — nobody; Basheer K (SBU Manager, Imaging) — Fahad, Fazal, Rudrappa, Shruthi; Haroon Sidheeq and Abdul Latheef P — everyone. Hide-check: Basheer K must not see Nishad K V's "Test demo lead" (Aster MIMS Calicut) or anything of Arun Adarsh, Nishad K V or Vivek; Fahad must not see Fazal's "New oppotunity fast track" (Aster DM).
 - **Who can approve:** Vivek's Oct–Dec 2026 plan (PENDING_APPROVAL; KIMS Hospital Trivandrum 51, Test hospital 2 10, Test hospital 3 5 Lakhs) — his manager Arun Adarsh (section F). Nothing on My Work itself is approved.
-- **Who can save:** the "Done" and "Log Activity" buttons: the viewer on their own rows only; a manager viewing a rep or "My team" gets no buttons on others' rows (D15).
+- **Who can save:** the "Done" and "Log Activity" buttons: the viewer on their own rows only; a manager viewing a rep gets no buttons on that rep's rows (D15; no "My team" view, D1).
 - **Existing values:** Fahad (25 Oct) — High priority or 70 %+: 5, ₹78 Lakhs; Closing date passed: 1, ₹20 Lakhs; Not visited in 30+ days: 6, ₹95 Lakhs; Overdue next actions: 0; Due this week: 0. Fazal (25 Oct) — 2, ₹24; 2, ₹24; 8, ₹139; overdue 2. Shared: "New USG m/c" (aster medicity), owner Fazal, Basheer K 50 %, closing date 15 Sep passed. On Hold: "Imaging department refresh" (Baby Memorial Hospital, Basheer K), "New ICU Monitor deal" (Aster DM, Nishad K V). No approved Oct–Dec plan has hospitals yet.
 
 Button labels, messages and the order of checks are taken from the code,
@@ -87,7 +88,7 @@ test creates has its hospital fixed in this plan, never "any hospital".
 ## B — The lists, as a rep (Fahad)
 
 1. [Simple] "High priority or 70 %+". **Expected (25 Oct):** 5, ₹78 Lakhs: "New Fastrack deal direct to Order" (Al Shifa Hospital Perinthalmanna) Order 90 % ₹30; "Test fast track deal from customer 360" (Al Shifa Hospital Perinthalmanna) Negotiation 70 % ₹5; "Now fastack lead" (Aster MIMS Calicut) Negotiation 70 % ₹20; "Test one more direct Opportunity" (EMS Hospital) Negotiation 70 % ₹3; "Test Gate override oppotunity (renamed for TC-19/22)" (Maulana) Negotiation 70 % ₹20. Not "USG M/c - Test Aug 18" (Aster MIMS Calicut) — Demo, 35 %. —
-2. [Simple] Each row shows Opportunity, hospital, owner, stage, chance, value (D3). **Expected:** all six columns on every row, owner "Fahad". —
+2. [Simple] Each row shows Opportunity, hospital, stage, chance, value and days since visit, with "Log Activity" (D3). **Expected:** all columns on every row; no owner column, since the screen shows one person's rows. —
 3. [Simple] Tick "70 %+ only". **Expected:** still the same 5 (all are 70 % or more). Untick. —
 4. [Simple] "Closing date passed". **Expected (25 Oct):** 1, ₹20 Lakhs: "Test Gate override oppotunity (renamed for TC-19/22)" (Maulana), closing date 3 Sep, 52 days overdue. —
 5. [Simple] "Not visited in 30+ days", box shows 30. **Expected (25 Oct):** 6, ₹95 Lakhs — all six of Fahad's Opportunities: idle 59, 59, 56, 67, 59, 59 days. —
@@ -105,14 +106,13 @@ test creates has its hospital fixed in this plan, never "any hospital".
 
 ## D — Manager views and hide-checks
 
-1. [Simple] Sign in as Fazal, open My Work. **Expected:** opens on "Showing: Me"; the switch offers "Me", "My team" and "Fahad" only — not Rudrappa, Vivek or any Critical Care person. —
+1. [Simple] Sign in as Fazal, open My Work. **Expected:** opens on "Showing: Me"; the switch offers "Me" and "Fahad" only (no "My team", D1) — not Rudrappa, Vivek or any Critical Care person. —
 2. [Simple] As Fazal, "Me". **Expected (25 Oct):** "High priority or 70 %+" 2, ₹24 Lakhs; "Closing date passed" 2, ₹24 Lakhs: "New oppotunity fast track" (Aster DM) 1 Oct and "New USG m/c" (aster medicity) 15 Sep; "Not visited" 8, ₹139 Lakhs; "Overdue next actions" 2. Buttons on every row. —
-3. [Complex: two people's rows compared on one screen] As Fazal, "My team". **Expected:** Fazal's rows plus Fahad's (after C): "High priority or 70 %+" 7, ₹102 Lakhs; "Closing date passed" 3, ₹44 Lakhs; "Not visited" 12, ₹197 Lakhs; "Due this week" 1 ("zz E2E MyWork C2 follow-up"). "Done" and "Log Activity" only on Fazal's own rows; Fahad's rows have none (D15). —
-4. [Simple] As Fazal, pick "Fahad". **Expected:** exactly the lists Fahad saw at the end of C, with no buttons on any row (D15). —
-5. [Simple] Sign in as Basheer K, "Me". **Expected:** "Closing date passed" does not list "New USG m/c" (aster medicity) — Basheer K holds 50 % but Fazal owns it (D16); nor is it on "High priority or 70 %+" or "Not visited" (D22). "High priority or 70 %+" lists "New Cath Lab Equipment" (Aster MIMS Calicut), Lead, 75 % (raised by hand). —
-6. [Simple] Hide-check as Basheer K. **Expected:** the switch offers "Me", "My team", Fahad, Fazal, Rudrappa, Shruthi — not Arun Adarsh, Nishad K V or Vivek; in "My team", Nishad K V's "Test demo lead" (Aster MIMS Calicut) appears nowhere. —
-7. [Simple] As Basheer K, "Me": "Not visited" doesn't list the On Hold "Imaging department refresh" (Baby Memorial Hospital) (D6). —
-8. [Simple] Sign in as Nishad K V, "Me". **Expected:** "High priority or 70 %+" 1, ₹2.50 Lakhs: "Test demo lead" (Aster MIMS Calicut), Clinical Evaluation, 55 %. Tick "70 %+ only": 0. Untick: back to 1. The On Hold "New ICU Monitor deal" (Aster DM) appears nowhere. —
+3. [Simple] As Fazal, pick "Fahad". **Expected:** exactly the lists Fahad saw at the end of C ("Due this week" 1, "zz E2E MyWork C2 follow-up"), with no "Done" or "Log Activity" button on any row (D15). Switch back to "Me": the buttons are back. —
+4. [Simple] Sign in as Basheer K, "Me". **Expected:** "Closing date passed" does not list "New USG m/c" (aster medicity) — Basheer K holds 50 % but Fazal owns it (D16); nor is it on "High priority or 70 %+" or "Not visited" (D22). "High priority or 70 %+" lists "New Cath Lab Equipment" (Aster MIMS Calicut), Lead, 75 % (raised by hand). —
+5. [Simple] Hide-check as Basheer K. **Expected:** the switch offers "Me", Fahad, Fazal, Rudrappa, Shruthi — not Arun Adarsh, Nishad K V or Vivek; Nishad K V's "Test demo lead" (Aster MIMS Calicut) appears under none of the people he can pick. —
+6. [Simple] As Basheer K, "Me": "Not visited" doesn't list the On Hold "Imaging department refresh" (Baby Memorial Hospital) (D6). —
+7. [Simple] Sign in as Nishad K V, "Me". **Expected:** "High priority or 70 %+" 1, ₹2.50 Lakhs: "Test demo lead" (Aster MIMS Calicut), Clinical Evaluation, 55 %. Tick "70 %+ only": 0. Untick: back to 1. The On Hold "New ICU Monitor deal" (Aster DM) appears nowhere. —
 
 ## E — Stagnant Deals report changes (D6c)
 
@@ -128,3 +128,7 @@ test creates has its hospital fixed in this plan, never "any hospital".
 4. [Simple] As Fahad. **Expected:** "My hospitals this quarter" empty (no approved plan); no hospital of Vivek's shown. —
 5. [Simple] Sign out and sign in as Fahad. **Expected:** the app opens on My Work (D9b). —
 6. [Simple] Sign in as Marketing User. **Expected:** the app opens on Marketing Leads, not My Work, and the menu has no "My Work" (D19). —
+
+## G — Phone, tablet and laptop layout
+
+1. [Complex: phone layout] As Fazal, My Work and the Stagnant Deals box at 390 px, then 768 and 1280 px. **Expected:** at 390 px each row is a card, the five sections and their counts fit the width with no sideways scroll (no element wider than its card), the top bar wraps, and "Log Activity" and "Done" are reachable; at 768 and 1280 px the rows are a table. The "Not visited for (days)" box and the "Showing" switch each have their name above them (MUI standard rule 7). —

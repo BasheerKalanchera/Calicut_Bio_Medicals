@@ -25,7 +25,7 @@ Every choice this plan depends on, one line each. Claude's suggestions end
 in `— proposed`; once Basheer answers, change the ending to
 `— Basheer, YYYY-MM-DD`.
 
-- D1. One screen design for everyone, opening on the viewer's own work. A rep sees only their own, with no picker. A manager also opens on their own work and gets a "Showing: Me ▾" switch with "My team" (everyone under them together) and each rep by name; picking a rep shows that rep's My Work exactly as the rep sees it. "Team" follows the existing reports: Area Manager — reps in their zones; SBU Manager — their SBU; Admin and General Manager — everyone — Basheer, 2026-10-14
+- D1. One screen design for everyone, opening on the viewer's own work. A rep sees only their own, with no picker. A manager also opens on their own work and gets a "Showing: Me ▾" switch with "My team" (everyone under them together) and each rep by name; picking a rep shows that rep's My Work exactly as the rep sees it. "Team" follows the existing reports: Area Manager — reps in their zones; SBU Manager — their SBU; Admin and General Manager — everyone — Basheer, 2026-10-14. Changed 2026-10-28 (Basheer): no "My team" combined view — the desk is for the person's own work first, and a combined view is clutter. The switch offers "Me" and each rep by name, one at a time, view-only (D15); a manager uses it to review one person's My Work. This also settles whether "My team" would include the manager's own items (no team total exists)
 - D2. Formal screen name "Weekly Follow-up", matching signed requirement 11.1, so the scorecard row maps to it directly. Menu label "My Work" (chosen from the shortlist My Work / My Dashboard / My Hub / My Follow-up); "Insights Dashboard" keeps its name — Basheer, 2026-10-11
 - D3. Four sections: (1) "High priority or 70 %+": Opportunities that are high priority (BR-OP-15) or at 70 % chance or more, with a "70 %+ only" tick box that covers PRD §5.8's separate "probability ≥70%" list; (2) closing date passed (BR-OP-16); (3) "Not visited in N+ days" (BR-OP-20, D6); (4) overdue next actions. The PRD's two lists are merged because they almost fully overlap: every stage past Demo is high priority, and the starting chance is 70 % from Negotiation on (Seed-Data.sql); only early-stage Opportunities raised to 70 %+ by hand, and Clinical Evaluation at 55 %, fall outside the overlap. An Opportunity appears in every section it qualifies for; each card shows its own count and ₹ total (next-action cards count only, D21), never a grand total across cards (it would count the same rupees twice). Each row shows Opportunity, hospital, owner, stage, chance, value, and days overdue or idle — Basheer, 2026-10-14
 - D3a. Plain names on screen: never "Stagnant" or "Stalled" in what reps see; each list says what it is ("High priority or 70 %+", "Closing date passed", "Not visited in 30+ days" with the number following what the user types, "Overdue next actions"). The existing Stagnant Deals report keeps its name for now; renaming it is a separate later decision — Basheer, 2026-10-14
@@ -45,7 +45,7 @@ in `— proposed`; once Basheer answers, change the ending to
 - D12. Which open next action the Log Activity form offers is whatever the Next-Action Rules plan builds; this plan adds no choice of its own (don't build it twice) — Basheer, 2026-10-14
 - D13. Step 3 keeps its place with reduced scope. The Next-Action Rules plan is built before this one, so showing and closing the rep's open next action in the Log Activity form (its step 1, Version C, BR-ACT-11) and the pre-fill (its D10) already exist when My Work is built; step 3 uses them and builds nothing of its own. My Work lists next actions (overdue, due this week) and its "Done" and "Log Activity" buttons open those forms. This plan's E2E tests step 3 from My Work itself (closing and logging through My Work's buttons, the lists updating afterwards); the forms' own rules are tested in the Next-Action Rules E2E plan — Basheer, 2026-10-14
 - D14. Sequencing: step 1 first (independent, small; built and checked on Dev 2026-10-19, `508ff42`); steps 2–4 after the Annual Target Planning Part 1 E2E (Target vs Actuals and the Opportunity chance + create-form plan, named here before, have both passed theirs); step 5 built on Dev straight after step 4, using Dev's hospital-wise planning; it goes to UAT (with the landing switch, D9b) only in a move where hospital-wise planning is already on UAT or goes in the same move, so the list is never empty for lack of plans — Basheer, 2026-10-21
-- D15. When a manager views a rep's My Work (or "My team"), the "Done" and "Log Activity" buttons show only on the manager's own rows; the rep's rows are view-only, because closing a next action records a visit or call as if it happened — Basheer, 2026-10-21
+- D15. When a manager views a rep's My Work ("My team" dropped 2026-10-28, D1), the "Done" and "Log Activity" buttons show only on the manager's own rows; the rep's rows are view-only, because closing a next action records a visit or call as if it happened — Basheer, 2026-10-21
 - D16. "Closing date passed" lists only the Opportunities the person owns, since only the owner can change the date or close it; shared Opportunities are not repeated for each participant (unlike Target vs Actuals, which counts shares) — Basheer, 2026-10-21
 - D17. "Overdue" means due by the end of today (India time), the same cut as the Insights "Overdue Actions" count; "Due this week" then shows only those due after today — Basheer, 2026-10-21
 - D14a. Step 1 goes to UAT with the next full UAT move, not on its own (screen-only, no database change) — Basheer, 2026-10-21
@@ -53,7 +53,11 @@ in `— proposed`; once Basheer answers, change the ending to
 - D19. "My Work" is the first item on the menu, at the top of Sales Execution above Account Management, not under Reports. Marketing Users keep their own one-item menu and don't get it — Basheer, 2026-10-25
 - D20. "Not visited in N+ days" means N days or more: an Opportunity idle exactly 30 days is on the 30+ list, matching the label and the existing Stagnant Deals report; BR-OP-20 reworded from "more than N" — Basheer, 2026-10-25
 - D21. The two next-action cards ("Overdue next actions", "Next actions due this week") show a count only, no ₹ total, because many next actions are on a hospital with no Opportunity value; the three Opportunity cards keep count and ₹ total (narrows D3) — Basheer, 2026-10-25
-- D22. All three Opportunity lists ("High priority or 70 %+", "Closing date passed", "Not visited") list only Opportunities the person owns; a split partner doesn't see a shared one there, so it isn't counted twice in "My team" (extends D16) — Basheer, 2026-10-25
+- D22. All three Opportunity lists ("High priority or 70 %+", "Closing date passed", "Not visited") list only Opportunities the person owns; a split partner doesn't see a shared one there, so it isn't counted twice in "My team" (extends D16) — Basheer, 2026-10-25. "My team" dropped 2026-10-28 (D1); owner-only still holds
+- D23. The Stagnant Deals report's server side moves to the "Not visited" measure (D6c) in step 2, sharing one calculation with My Work so the two never disagree; its type-any-number box comes with step 4's screen work. Once merged, Stagnant Deals lists more Opportunities than before, since Notes no longer reset the count — Basheer, 2026-10-28
+- D24. My Work makes one combined request for all five lists, not several calls to the existing reports: the existing next-action reports give only a count per person, and one request keeps the cards' counts consistent (settles section 6's open alternative) — Basheer, 2026-10-28
+- D25. The Stagnant Deals report's type-any-number box (D6c) opens at 30 days, the same as My Work, instead of today's 180 — Basheer, 2026-10-28
+- D26. My Work's two next-action lists come back in the same full form the Next Actions screen uses, so "Done" opens the existing close form with everything it needs and no second request (changes step 2's next-action rows) — Basheer, 2026-10-28
 
 ## 1. In plain terms
 
@@ -75,7 +79,8 @@ This plan makes the rep's day start from one desk instead of a search box:
   visited in N+ days" (the user picks N, e.g. 30 or 60), and overdue next
   actions, plus next actions due this week. Each section has a card with
   its count and ₹ total. A rep can close a next action or log a visit
-  straight from it. A manager sees the same screen for their team.
+  straight from it. A manager can also open one rep's desk, view-only,
+  to review it with them (D1).
 - **Two different warnings, kept apart:** "Not visited" (nobody has
   logged a visit or call for a while; fixed by visiting and logging it) is
   on the desk now. "Stuck in stage" (an Opportunity sitting in one stage
@@ -234,9 +239,8 @@ Completed from the code, 2026-10-21:
   `user_id`, `idle_days` default 30), reusing the scoping and
   queries behind `/reporting/stagnant-deals` and `/reporting/overdue-actions`
   and the BR-OP-15 `is_high_priority` expression in
-  `opportunity/repository.py:263`. Alternative to decide in review: the
-  screen calls the existing endpoints plus small new ones, instead of one
-  combined request.
+  `opportunity/repository.py:263`. One combined request (D24); `user_id`
+  picks whose desk, defaulting to the viewer — no team-wide mode (D1).
 - **Step 3 (reduced, D13):** the `LogActivityModal` reminder lookup and
   close-in-the-same-save are the Next-Action Rules plan's step 1, and the
   pre-fill its D10 (its technical addendum). Nothing added here.

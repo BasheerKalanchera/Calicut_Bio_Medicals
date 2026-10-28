@@ -5201,3 +5201,26 @@ moved to after the restart (Basheer).
      photographed the bell at three widths and missed it.
 - No tracker change: none touched live data, UAT or lost work, none
   guard-stoppable.
+
+### 2026-10-28 — My Work (Weekly Follow-up plan) steps 2 and 4 built on the Build branch
+- Step 2 `42bd5f8`: `GET /reporting/weekly-followup` returns one person's
+  five lists in one request (D24); the Stagnant Deals report moved to the
+  "Not visited" measure (D23): Active only, only visits, calls, meetings
+  and emails reset the count. No "My team" view (D1): a manager picks
+  "Me" or one rep (D15, D22 changed with it).
+- Step 4 `8d4bdac`: `MyWorkScreen.tsx`, first on the Sales Execution menu
+  (not for Marketing Users, D19). Basheer's answers: the Stagnant box
+  opens at 30 (D25); next actions come back in the Next Actions screen's
+  full shape so "Done" opens the existing close form with no second
+  request (D26). The Stagnant box is now a type-any-number box.
+- Differences from the plan, told to Basheer: no owner column (one
+  person's rows); the sbu/zone filters from the plan addendum left out;
+  the "70 %+ only" tick box sits in the top bar, not inside a section.
+- Checks: 1417 backend tests pass, ruff clean, tsc and lint 0 errors
+  (133 old warnings). Not seen in a browser (no browser or E2E in the
+  Build session); the layout check at 390, 768 and 1280 px is section G of
+  the E2E test plan.
+- Docs updated on the branch: E2E test plan (no "My team", no owner
+  column, new layout step), BR-OP-16 and BR-OP-20, UI-Inventory.
+  Still to do: user manual and in-app help (merge-time catch-up,
+  `docs/User-Manual-And-Help-Catchup-Implementation-Plan.md`).
