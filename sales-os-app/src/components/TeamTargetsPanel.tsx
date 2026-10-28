@@ -1,6 +1,7 @@
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Alert, Box, Button, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography } from "@mui/material";
+import { Alert, Box, Button, TextField, Typography } from "@mui/material";
+import TableOrCards, { TocCell, TocRow } from "./TableOrCards";
 import { getTeamTargets, removePersonTarget, setPersonTarget } from "../services/targetPlanning";
 import { formatLakhs, formatPlanningPeriod } from "../utils/formatter";
 
@@ -90,6 +91,7 @@ export default function TeamTargetsPanel({ sbuId, period, isCompanyWide }: { sbu
   const total = Number(data.reports_total_lakhs);
   const compareTo = data.compare_to_lakhs === null ? null : Number(data.compare_to_lakhs);
   const compareLabel = isCompanyWide ? "the SBU target" : "your own target";
+  const showYourTarget = !isCompanyWide && compareTo !== null;
   const anySet = data.reports.some((r) => r.target_lakhs !== null);
   // Before anyone has a target, say the target hasn't been handed down yet
   // rather than warning that it's short (Basheer, 2026-10-22).
@@ -114,26 +116,19 @@ export default function TeamTargetsPanel({ sbuId, period, isCompanyWide }: { sbu
           ? `Divide the SBU target for ${formatPlanningPeriod(period)} among the people at the top of this SBU.`
           : `Divide your target for ${formatPlanningPeriod(period)} among the people who report to you.`}
       </Typography>
-      <Table size="small">
-        <TableHead>
-          <TableRow>
-            <TableCell>Person</TableCell>
-            <TableCell>Target</TableCell>
-            <TableCell align="right">Actions</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
+      {/* On a phone each person is a card: name, target, buttons. */}
+      <TableOrCards columns={[{ label: "Person" }, { label: "Target" }, { label: "Actions", align: "right" }]}>
           {data.reports.map((r) => {
             const isEditing = editing?.userId === r.user_id;
             return (
-              <TableRow key={r.user_id}>
-                <TableCell>
+              <TocRow key={r.user_id}>
+                <TocCell title>
                   {r.display_name}
                   {r.role_name && (
-                    <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>{r.role_name}</Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: "block", fontWeight: 400 }}>{r.role_name}</Typography>
                   )}
-                </TableCell>
-                <TableCell>
+                </TocCell>
+                <TocCell label="Target" field={isEditing}>
                   {isEditing ? (
                     <TextField
                       size="small"
@@ -150,10 +145,10 @@ export default function TeamTargetsPanel({ sbuId, period, isCompanyWide }: { sbu
                   ) : r.target_lakhs !== null ? (
                     formatLakhs(Number(r.target_lakhs))
                   ) : (
-                    <Typography component="span" color="text.secondary">Not set</Typography>
+                    <Typography component="span" variant="body2" color="text.secondary">Not set</Typography>
                   )}
-                </TableCell>
-                <TableCell align="right">
+                </TocCell>
+                <TocCell action align="right">
                   {isEditing ? (
                     <>
                       <Button size="small" variant="contained" onClick={handleSave} disabled={!canSave || saving}>
@@ -179,20 +174,21 @@ export default function TeamTargetsPanel({ sbuId, period, isCompanyWide }: { sbu
                       )}
                     </>
                   )}
-                </TableCell>
-              </TableRow>
+                </TocCell>
+              </TocRow>
             );
           })}
-          <TableRow>
-            <TableCell sx={{ fontWeight: 700 }}>Total</TableCell>
-            <TableCell sx={{ fontWeight: 700 }}>{formatLakhs(total)}</TableCell>
-            <TableCell align="right" sx={{ color: "text.secondary" }}>
-              {/* Admin/GM: the SBU Target card above already shows it (D75). */}
-              {!isCompanyWide && compareTo !== null && `Your target: ${formatLakhs(compareTo)}`}
-            </TableCell>
-          </TableRow>
-        </TableBody>
-      </Table>
+          <TocRow total>
+            <TocCell title>Total</TocCell>
+            <TocCell label="Total">{formatLakhs(total)}</TocCell>
+            {/* Admin/GM: the SBU Target card above already shows it (D75). */}
+            <TocCell align="right" phone={showYourTarget} sx={{ color: "text.secondary" }}>
+              {showYourTarget && (
+                <Box component="span" sx={{ fontWeight: 400 }}>Your target: {formatLakhs(compareTo!)}</Box>
+              )}
+            </TocCell>
+          </TocRow>
+      </TableOrCards>
       {notPassedOn && <Alert severity="info" sx={{ mt: 1.5 }}>{notPassedOn}</Alert>}
       {warning && <Alert severity="warning" sx={{ mt: 1.5 }}>{warning}</Alert>}
       {error && <Alert severity="error" sx={{ mt: 1.5 }}>{error}</Alert>}
@@ -249,42 +245,37 @@ export function AnnualTeamTargetsCard({ sbuId, quarters, yearLabel, isCompanyWid
       <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
         Each person's quarterly targets for {yearLabel}. Switch to Quarterly to change a target.
       </Typography>
-      <Table size="small">
-        <TableHead>
-          <TableRow>
-            <TableCell>Person / Quarter</TableCell>
-            <TableCell>Target</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
+      {/* On a phone each person is one card with their quarters inside. */}
+      <TableOrCards columns={[{ label: "Person / Quarter" }, { label: "Target" }]}>
           {Array.from(people.entries()).map(([userId, p]) => {
             const year = yearOf(p.byQuarter);
             return (
-              <Fragment key={userId}>
-                <TableRow sx={{ "& td": { fontWeight: 700, borderTop: "2px solid", borderColor: "divider" } }}>
-                  <TableCell>
-                    {p.name} — Annual Total
-                    {p.role && (
-                      <Typography variant="caption" color="text.secondary" sx={{ display: "block", fontWeight: 400 }}>{p.role}</Typography>
-                    )}
-                  </TableCell>
-                  <TableCell>{year !== null ? formatLakhs(year) : notSet}</TableCell>
-                </TableRow>
-                {quarters.map((q) => {
+              <TocRow
+                key={userId}
+                total
+                subRows={quarters.map((q) => {
                   const v = p.byQuarter[q];
                   return (
-                    <TableRow key={`${userId}-${q}`}>
-                      <TableCell sx={{ pl: 3, color: "text.secondary" }}>{formatPlanningPeriod(q)}</TableCell>
-                      <TableCell>{v != null ? formatLakhs(v) : notSet}</TableCell>
-                    </TableRow>
+                    <TocRow key={`${userId}-${q}`}>
+                      <TocCell title sx={{ pl: { sm: 3 }, color: "text.secondary", fontWeight: 400 }}>{formatPlanningPeriod(q)}</TocCell>
+                      <TocCell label="Target">{v != null ? formatLakhs(v) : notSet}</TocCell>
+                    </TocRow>
                   );
                 })}
-              </Fragment>
+              >
+                <TocCell title>
+                  {p.name} — Annual Total
+                  {p.role && (
+                    <Typography variant="caption" color="text.secondary" sx={{ display: "block", fontWeight: 400 }}>{p.role}</Typography>
+                  )}
+                </TocCell>
+                <TocCell label="Year">{year !== null ? formatLakhs(year) : notSet}</TocCell>
+              </TocRow>
             );
           })}
-          <TableRow sx={{ "& td": { fontWeight: 700, borderTop: "2px solid", borderColor: "divider" } }}>
-            <TableCell>Team total for {yearLabel}</TableCell>
-            <TableCell>
+          <TocRow total>
+            <TocCell title>Team total for {yearLabel}</TocCell>
+            <TocCell label="Total">
               {formatLakhs(teamYear)}
               {/* Admin/GM: the SBU Target card above already shows the year (D75). */}
               {!isCompanyWide && (
@@ -293,10 +284,9 @@ export function AnnualTeamTargetsCard({ sbuId, quarters, yearLabel, isCompanyWid
                   {compareYear !== null ? formatLakhs(compareYear) : "not set yet"}
                 </Typography>
               )}
-            </TableCell>
-          </TableRow>
-        </TableBody>
-      </Table>
+            </TocCell>
+          </TocRow>
+      </TableOrCards>
     </Box>
   );
 }

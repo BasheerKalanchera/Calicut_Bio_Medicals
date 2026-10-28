@@ -17,10 +17,22 @@ session edits this note._
 - Part 2 screens plan steps 1–6 shipped; step 6 (bell) `5b5ad0c`,
   pushed 27 Oct (archive 27 Oct evening). Migration 0064 on Dev = head.
 - UAT moves after this E2E (Basheer, 26 Oct, D6).
-- Next: E2E — P7 (read-only Dev check; ask first), P8, I, J, K (1 of
-  41 done), plus the phone/tablet/laptop step per screen. Load
-  `cabio-e2e-testing` first. Dev servers: Basheer runs them (5174).
-  Post-commit checklist and Part 2's UAT move after.
+- 28 Oct: pre-E2E review of the 6 commits since 25 Oct (10 points).
+  Fixes 1, 2 (A), 3, 4, 6, 7, 9 committed `e33f35c` (pushed 28 Oct);
+  fix 5 closed, no change (Basheer). Archive entry written.
+  After-push checkpoint for `e33f35c` done 28 Oct (session start).
+- E2E PAUSED 28 Oct (Basheer) until Plan & Chore fixes the test plan
+  (`docs/Annual-Target-Planning-Manual-E2E-Test-Plan.md`, committed and
+  pushed 28 Oct as `111c399`: section L added, K10 reworded, P7/P8 recorded, I1–I7 recorded,
+  I2–I5 and I7 reworded). Run so far: 11 of 52 (P6–P8, I1–I7); I8
+  open (upcoming year shows no SBU/Company row — design silent; the
+  plan says to keep or show "Target not set"). Mismatches handed to
+  Plan & Chore: I2–I5, I7 wording, I8 design gap, line 100 stale
+  Basheer K figure, I4 has no per-quarter Team plans line.
+- Resume at I9 (as Fazal, Basheer signs in), then J, K (1 of 10 done),
+  L. Load `cabio-e2e-testing` first. Dev servers: Basheer runs them
+  (app on 5173 as of 28 Oct). Re-read the plan before resuming — it
+  will have changed. Post-commit checklist and Part 2's UAT move after.
 - Lesson (21 Oct): review lists sorted by what users notice, screen first.
 
 ## From Plan & Chore (added 25 Oct at Basheer's request, `393beee`)

@@ -172,10 +172,38 @@ remove the mark, D73).
   Note each tester's unread bell count. Name one hospital in Fahad's area
   and one in Imaging for Haroon. Name one Opportunity notification
   (Haroon), one lead notification (Nishad K V) and one comment
-  notification (Basheer K), each Opportunity with its hospital. —
+  notification (Basheer K), each Opportunity with its hospital. — Done,
+  2026-10-28 (Claude, read-only Dev query as each of the 10 testers, RLS
+  settings verified; Basheer approved). Totals, managers and plans match
+  22 Oct. Unread bell: Abdul Latheef P 1, Haroon 2, Basheer K 1, Fazal 0,
+  Shruthi 2, Arun Adarsh 1, Nishad K V 2, Fahad 5, Rudrappa 1, Vivek 2.
+  Hospital (Fahad's area; Haroon sees all): "new customer" (Mangalore) —
+  the only one not in any Oct–Dec 2026 plan. Opportunity (Haroon):
+  "New USG m/c" (aster medicity), unread. Lead (Nishad K V): comment on a
+  converted lead, Aster DM, unread, 10 Oct. Comment (Basheer K): call
+  activity on "Test Aug 18 opportunity" (Aster DM), read, 10 Sep. Basheer K
+  has no person target, as expected: Part 1 left it unset on purpose (no
+  one reported to him; section C step 10, section G).
 - P8. [Complex: before-record] As Haroon, Target vs Actuals, Quarter view,
   Imaging and Critical Care, Oct–Dec 2026 and Jan–Mar 2027: note every
-  target, Team plans and Won (paid) figure. —
+  target, Team plans and Won (paid) figure. — Done, 2026-10-28 (Claude,
+  read only, as Haroon, Dev). **Imaging Oct–Dec 2026:** SBU target ₹280.0L,
+  Team plans ₹65.0L (23 %), PO ₹16.0L, Won ₹34.0L (12 % of target; 52 % of
+  plans), Expected ₹75.8L, Likely finish ₹109.8L; Company target ₹465.0L,
+  plans ₹181.0L, Won ₹34.0L; people: Basheer K ₹55.0L pending (was ₹20.0L),
+  Fazal target ₹160.0L, Fahad ₹140.0L, Shruthi ₹120.0L, Rudrappa ₹100.0L /
+  plan ₹10.0L approved; SonoScape planned ₹65.0L, won ₹34.0L. **Imaging
+  Jan–Mar 2027:** SBU target not set; Team plans ₹0.0L; Won ₹0.0L; Company
+  "Waits for every SBU's target", plans ₹70.0L. **Critical Care Oct–Dec
+  2026:** SBU target ₹185.0L, Team plans ₹116.0L (63 %), PO and Won ₹0.0L;
+  people: Arun Adarsh ₹100.0L / plan ₹50.0L approved, Vivek ₹90.0L / plan
+  ₹66.0L pending (was ₹60.0L), Nishad K V ₹85.0L not started; brands
+  Aeonmed ₹10.0L, EDAN ₹45.0L, ELECTROSCIENCE ₹31.0L, Magnamed ₹25.0L,
+  Maquet ₹5.0L, Won ₹0.0L. **Critical Care Jan–Mar 2027:** SBU target
+  ₹10.0L, Team plans ₹70.0L (700 %), Won ₹0.0L; Arun Adarsh ₹30.0L pending,
+  Vivek ₹30.0L (rejected, approved still counts), Nishad K V ₹10.0L
+  pending; EDAN ₹40.0L. Year view (I) must give the same Oct–Dec and
+  Jan–Mar figures.
 
 ## A — Brand Target Tracking by calendar year (D23–D25, D39–D43, D46, D46a, D48, D50)
 
@@ -408,35 +436,45 @@ Basheer K (D57). Shruthi goes back to Haroon in G7.
    "Quarter" box → "Year". **Expected:** "FY 2026-27" between the arrows;
    the note under it starts "This year · as of …" and says "counted from
    Oct–Dec 2026, when this year's targets start"; the quarter-by-quarter
-   table reads Apr–Jun 2026 … Jan–Mar 2027, never "2026-Q1". —
+   table reads Apr–Jun 2026 … Jan–Mar 2027, never "2026-Q1". — Pass, 2026-10-28 (Basheer)
 2. [Complex: running totals against P8] Imaging. **Expected:** Apr–Jun and
    Jul–Sep 2026 read "No target that quarter, so not counted" (D66);
    Oct–Dec 2026 is marked "This quarter", Jan–Mar 2027 "Upcoming".
    Oct–Dec 2026: target ₹280 L, Won = P8's
-   Oct–Dec. Jan–Mar 2027: target still ₹280 L (no Jan–Mar target), Won =
-   P8's Oct–Dec + Jan–Mar. —
+   Oct–Dec. Jan–Mar 2027: target still ₹280 L (no Jan–Mar target); Won reads "—" for Jan–Mar,
+   because that quarter hasn't started. — Pass, 2026-10-28 (Claude, read only, as Haroon, Dev). Year view, FY 2026-27, Imaging: Apr–Jun and Jul–Sep 2026 "No target that quarter, so not counted"; Oct–Dec 2026 "This quarter", target ₹280.0L, Won ₹34.0L (12 %) = P8; Jan–Mar 2027 "Upcoming", target "Not set", target so far ₹280.0L. Difference from the wording: Won and Won so far for the upcoming Jan–Mar quarter read "—", not P8's sum — by design (service.py:1296 gives none for a quarter still to come; schema comment "None for a quarter still to come"). Plan wording fixed (Basheer, 2026-10-28)
 3. [Complex: running totals against P8] Critical Care. **Expected:** target
-   ₹185 L at Oct–Dec, ₹195 L at Jan–Mar (₹185 L + Medion's ₹10 L); Won as
-   in 2. —
-4. [Complex: Year view against Quarter view] For target, Team plans and
-   Won, in both SBUs: the Jan–Mar figure minus the Oct–Dec figure = P8's
-   Jan–Mar Quarter view figure (D22). —
+   ₹185 L at Oct–Dec, ₹195 L at Jan–Mar (₹185 L + Medion's ₹10 L); Won reads
+   "—" for Jan–Mar, because that quarter hasn't started. — Pass, 2026-10-28 (Claude, read only, as Haroon, Dev). Critical Care: Oct–Dec 2026 "This quarter", target ₹185.0L, Won ₹0.0L; Jan–Mar 2027 "Upcoming", target ₹10.0L, target so far ₹195.0L; Won "—" for the upcoming quarter (same wording point as I2)
+4. [Complex: Year view against Quarter view] For target and Team plans,
+   in both SBUs: the Jan–Mar figure minus the Oct–Dec figure = P8's
+   Jan–Mar Quarter view figure (D22). Target comes from "Target so far" in
+   the quarter-by-quarter table; Team plans from each person's opened row
+   ("Rep Plan so far"), added up at each quarter. Won reads "—" for
+   Jan–Mar, because that quarter hasn't started, so there is nothing to
+   subtract (P8's Jan–Mar Won is ₹0.0L in both SBUs). — Pass, 2026-10-28 (Claude, read only, as Haroon, Dev, every person row opened). Target: Imaging ₹280.0L at both quarters (difference ₹0, P8 "not set"); Critical Care ₹185.0L → ₹195.0L (difference ₹10.0L = P8). Team plans (people rows added up): Imaging ₹65.0L → ₹65.0L (difference ₹0 = P8's ₹0.0L; Basheer K ₹55.0L and Rudrappa ₹10.0L at both quarters); Critical Care ₹116.0L (Arun Adarsh 50, Vivek 66) → ₹186.0L (Arun Adarsh 80, Vivek 96, Nishad K V 10), difference ₹70.0L = P8. Won "—" at Jan–Mar in every row, as reworded
 5. [Complex: person rows, D78] Critical Care rows, columns "Year's
    target" / "Plan for year". **Expected:** Vivek ₹90 L / ₹96 L (the rejected ₹45 L
    counts as its last approved ₹30 L); Arun Adarsh ₹100 L / ₹80 L;
    Nishad K V ₹85 L / ₹10 L. Opening each row (the arrow, "Show
    details") shows "Target so far" / "Rep Plan so far" by quarter:
    Vivek ₹90 L / ₹66 L by Oct–Dec, ₹90 L / ₹96 L by Jan–Mar; Arun Adarsh
-   ₹100 L / ₹50 L, then ₹100 L / ₹80 L; Nishad K V ₹85 L / none, then
-   ₹85 L / ₹10 L. —
+   ₹100 L / ₹50 L, then ₹100 L / ₹80 L; Nishad K V ₹85 L / ₹0 L, then
+   ₹85 L / ₹10 L. — Pass, 2026-10-28 (Claude, read only, as Haroon, Dev). Row figures ("Year's target" / "Plan for year"): Vivek ₹90.0L / ₹96.0L, Arun Adarsh ₹100.0L / ₹80.0L, Nishad K V ₹85.0L / ₹10.0L; Haroon — / ₹0.0L. Opened rows as expected; Nishad K V's Oct–Dec "Rep Plan so far" reads ₹0.0L (plan said "none"; reworded, Basheer 2026-10-28)
 6. [Simple] **Expected:** the Jul–Sep 2026 plans (Haroon ₹80 L and ₹120 L,
-   Vivek ₹65 L) are in no FY 2026-27 total (D66). —
-7. [Simple] Company row. **Expected:** ₹465 L at Oct–Dec, ₹475 L at
-   Jan–Mar. —
+   Vivek ₹65 L) are in no FY 2026-27 total (D66). — Pass, 2026-10-28 (Basheer; Claude had read the totals: Critical Care ₹116.0L, Imaging ₹65.0L, Haroon ₹0.0L in both)
+7. [Simple] Company row. **Expected:** one row, not one per quarter.
+   Target ₹465 L (Imaging ₹280 L + Critical Care ₹185 L), Team plans
+   ₹181 L, PO ₹16 L, Won ₹34 L, as in P8's Oct–Dec Company row. — Pass,
+   2026-10-28 (Claude, read only, as Haroon, Dev): Year view Company row
+   ₹465.0L / ₹181.0L (39 %) / PO ₹16.0L / Won ₹34.0L (7 %), same under
+   Imaging and Critical Care. Reworded (Basheer, 2026-10-28): the old
+   wording expected ₹475 L at Jan–Mar, but the Year view has one Company
+   row, not one per quarter
 8. [Simple] Move to FY 2027-28. **Expected:** counts from April (D31);
    Apr–Jun 2027 plans Arun Adarsh ₹30 L, Nishad K V ₹10 L, Vivek ₹30 L;
    targets "Not set" in the quarter-by-quarter table and "Target not set"
-   in the SBU row; nothing from FY 2026-27 carried over. —
+   in the SBU row; nothing from FY 2026-27 carried over. — Open, 2026-10-28 (Basheer and Claude, Critical Care, Dev): plans Arun Adarsh ₹30.0L, Vivek ₹30.0L, Nishad K V ₹10.0L; every quarter's Target "Not set", other columns "—"; every person's Year's target "—", nothing carried over. No SBU or Company row appears in FY 2027-28 (code builds them only from counted quarters, service.py:1232–1235; the design doesn't say what an upcoming year shows). Left open until Plan & Chore decides: keep as is (proposed wording: "no SBU or Company row in an upcoming year") or show an SBU row "Target not set" (Basheer, 2026-10-28)
 9. [Complex: team row as an Area Manager] As Fazal, Year view.
    **Expected:** "Your team" against ₹160 L at both quarters; Fahad's row
    shows target ₹140 L; no SBU or Company row. —
@@ -540,10 +578,58 @@ P7.
 9. [Simple] Hide-check: as Basheer K and as Fazal, no Brand Target
    Tracking in the menu; "Brands Billing to Cabio" nowhere. —
 10. [Complex: phone layout] Phone width, as Haroon, Brand Target
-    Tracking, 2026, Critical Care. **Expected:** under each brand's name
-    a line "Own figure … · Stretch …%" (e.g. Maquet "Own figure ₹100.0L ·
-    Stretch 0%"); opening Medion shows each quarter as its own block
-    (Target, Brands Billing to Cabio, Team committed, Gap), with "Change"
-    beside Oct–Dec 2026 and Jan–Mar 2027; nothing runs past the card's
-    edge. On a computer the quarters stay a table. (Found by Basheer at
-    P6, 2026-10-25.) —
+    Tracking, 2026, Critical Care. **Expected:** each brand is a card
+    titled with its name and year (e.g. "Maquet · Jan–Dec 2026", "Medion ·
+    Apr 2026–Mar 2027"), with lines "Own figure: ₹100.0L", "Stretch: 0%",
+    "Stretched target: …" and a "Revise" (or "Set target") button; opening
+    Medion shows each quarter as its own block (Target, Brands Billing to
+    Cabio, Team committed, Gap), with "Change" beside Oct–Dec 2026 and
+    Jan–Mar 2027; nothing runs past the card's edge. On a laptop the
+    brands and quarters stay tables. (Found by Basheer at P6, 2026-10-25;
+    re-worded 2026-10-28 for the MUI card layout, read from
+    `BrandTargetTrackingScreen.tsx`.) —
+
+## L — Phone, tablet and laptop look of the redone screens (Part 2 screens plan D5, D7)
+
+Claude drives these; each is measured at 390, 768 and 1280 px (any
+element inside a card with `scrollWidth > clientWidth` runs past it). No
+step saves anything. Screen names and wording read from the code on
+2026-10-28; the Part 2 screens plan (D3) lists what is in scope.
+
+1. [Complex: all three widths] Target & Coverage Planning, as Haroon: SBU
+   Target box, Team Targets (quarter and annual), Team Plans.
+   **Expected:** on a phone each person is a card, pushed in under their
+   manager; on tablet and laptop tables, with the row under the mouse lit
+   on a laptop. —
+2. [Complex: phone] Open a plan from Team Plans. **Expected:** its
+   hospitals show as lines inside the person's card, not cards inside a
+   card. —
+3. [Complex: pop-ups, all widths] Open the plan pop-up and the
+   approve/reject pop-up (no save). **Expected:** each fills the phone
+   screen; the laptop shows a normal pop-up. —
+4. [Complex: all three widths] Rate Hospitals. **Expected:** on a phone
+   the search is on its own line with 🔍 and an ✕ once typed in, "Zone"
+   and "Rating" are on line 2, and each hospital is a card with its notes
+   and Save. —
+5. [Complex: all three widths] The zone picker in Rate Hospitals, in
+   Opportunity Pipeline's filter, in Customer Directory's filter and in
+   the Add Hospital pop-up (no save). **Expected:** the same look
+   everywhere, name above and "All Zones" inside the filters. —
+6. [Complex: pop-ups, all widths] Brand Target Tracking: the "Revise"
+   pop-up and a quarter's "Change" pop-up (no save). **Expected:** full
+   screen on a phone. —
+7. [Complex: all three widths] Target vs Actuals card, Quarter view then
+   Year view. **Expected:** each person is a card on a phone; the "SBU
+   total" card is bold on a phone. —
+8. [Complex: all three widths] The five report screens that share the
+   report display pieces — On Hold, Pipeline Report, Product Performance,
+   Sales Report, Stagnant Opportunities — and Insights Dashboard.
+   **Expected:** each looks right, nothing past the edge. —
+9. [Simple] **Expected:** the side menu entry and page title read
+   "Stagnant Opportunities"; no "deal" on the Sales Report, Pipeline
+   Report, Stagnant Opportunities or Insights Dashboard (D11). —
+10. [Complex: all three widths] The notification bell. **Expected:** on a
+    phone the list is 358 px wide at 390 with even 16 px edges; 320 px on
+    tablet and laptop; the red dot sits on the bell's top-right corner. —
+11. [Complex: a pop-up from outside these screens] Customer 360's edit
+    hospital pop-up (no save). **Expected:** full screen on a phone. —

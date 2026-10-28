@@ -4,10 +4,11 @@
 answered). Step 1 (D9a, D10) built ahead of the approval, 2026-10-19
 (`508ff42`; Basheer: not part of My Work itself); commit and Dev check in
 Progress-Archive. Steps 2, 4 and 5 built 2026-10-28 on branch
-`worktree-build` (`42bd5f8`, `8d4bdac`, `d4a8df4`; review fixes `8c0e0c9`),
-merged after the Annual Target Planning Part 2 E2E (D18; the Part 1 E2E
-that D14 waited for passed 2026-10-24); step 3 has nothing of its own
-(D13). Still to do: user manual and in-app help (merge-time catch-up). E2E test plan written 2026-10-25
+`worktree-build` (`42bd5f8`, `8d4bdac`, `d4a8df4`; review fixes `8c0e0c9`)
+and merged into `main` the same day on Basheer's go, with the Annual Target
+Planning Part 2 E2E paused (D18; the Part 1 E2E that D14 waited for passed
+2026-10-24); step 3 has nothing of its own (D13). Still to do: user manual
+and in-app help (merge-time catch-up); this plan's E2E not yet run. E2E test plan written 2026-10-25
 (`docs/Weekly-Follow-up-Daily-Hub-Manual-E2E-Test-Plan.md`, 33 steps per
 `393beee`'s message).
 **Traceability rows:** 11.1 Weekly Follow-up Report (Not started). Also
@@ -51,7 +52,7 @@ in `— proposed`; once Basheer answers, change the ending to
 - D16. "Closing date passed" lists only the Opportunities the person owns, since only the owner can change the date or close it; shared Opportunities are not repeated for each participant (unlike Target vs Actuals, which counts shares) — Basheer, 2026-10-21
 - D17. "Overdue" means due by the end of today (India time), the same cut as the Insights "Overdue Actions" count; "Due this week" then shows only those due after today — Basheer, 2026-10-21
 - D14a. Step 1 goes to UAT with the next full UAT move, not on its own (screen-only, no database change) — Basheer, 2026-10-21
-- D18. Steps 2–5 are built immediately after the Annual Target Planning Part 2 E2E is done, ahead of other new features; changes D14's "after the Part 1 E2E" — Basheer, 2026-10-25
+- D18. Steps 2–5 are built immediately after the Annual Target Planning Part 2 E2E is done, ahead of other new features; changes D14's "after the Part 1 E2E" — Basheer, 2026-10-25. Changed 2026-10-28 (Basheer): steps 2 and 4 are built in the parallel `/build` session while Build & Test runs the Part 2 E2E (they touch none of its screens), and reach `main` at the one merge after that E2E; step 5 still follows step 4. Changed again 2026-10-28 (Basheer): the Part 2 E2E is paused, so steps 2, 4 and 5 are merged into `main` now and Build & Test runs this plan's E2E first
 - D19. "My Work" is the first item on the menu, at the top of Sales Execution above Account Management, not under Reports. Marketing Users keep their own one-item menu and don't get it — Basheer, 2026-10-25
 - D20. "Not visited in N+ days" means N days or more: an Opportunity idle exactly 30 days is on the 30+ list, matching the label and the existing Stagnant Deals report; BR-OP-20 reworded from "more than N" — Basheer, 2026-10-25
 - D21. The two next-action cards ("Overdue next actions", "Next actions due this week") show a count only, no ₹ total, because many next actions are on a hospital with no Opportunity value; the three Opportunity cards keep count and ₹ total (narrows D3) — Basheer, 2026-10-25

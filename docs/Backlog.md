@@ -522,6 +522,12 @@ table must fit a phone, not *how*.
   Plan & Chore to plan (Basheer, 2026-10-26); built in Build & Test. Overlaps the
   front-end consistency audit below and `statusColors.ts` — fold them into
   one plan.
+- **Found 28 Oct (Part 2 pre-E2E review): one shared screen header.**
+  The white strip at the top of each screen with its name (size, bold,
+  colour, line under it) is written out 13 times in `DemoApp.tsx`
+  (grep count, 28 Oct; the h2 with `typography: "h5", fontWeight: 800`).
+  A small shared header part would hold it once, so a later style change
+  can't miss a copy. No change for users. For the sweep (Basheer, 28 Oct).
 - **Found 26 Oct: Customer 360 → Stakeholders tab doesn't fit a phone.**
   The "1 Opportunities" button on each stakeholder's card runs past the
   card's right edge (measured on Dev at 390 px, Al Shifa Hospital

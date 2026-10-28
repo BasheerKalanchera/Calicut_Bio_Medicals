@@ -1,5 +1,6 @@
-import { Alert, Box, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
+import { Alert, Box, Typography } from "@mui/material";
 import BusinessPotentialChip from "./BusinessPotentialChip";
+import TableOrCards, { TocCell, TocRow } from "./TableOrCards";
 import type { TargetPlan } from "../types/targetPlanning";
 import { VISIT_FREQUENCY_LABEL } from "../utils/visitFrequency";
 
@@ -47,67 +48,37 @@ export default function TargetPlanDetails({ target }: { target: TargetPlan }) {
           No hospitals on this plan — it was set before hospital-wise planning.
         </Typography>
       ) : (
-        <>
-        {/* On a phone each hospital is a stacked block, so nothing needs a
-            sideways scroll inside the card (Basheer, 2026-10-24). */}
-        <Box sx={{ display: { xs: "block", sm: "none" } }}>
+        /* On a phone the opened plan is inside the person's card, so each
+           hospital is a line in that card (TableOrCards nests them). */
+        <Box sx={{ overflowX: "auto" }}>
+        <TableOrCards
+          columns={[
+            { label: "Hospital" },
+            { label: "Zone" },
+            { label: "Potential" },
+            { label: "Visits" },
+            { label: "Amount", align: "right" },
+            { label: "Objective" },
+          ]}
+        >
           {accounts.map((a) => (
-            <Box key={a.id} sx={{ py: 1, borderBottom: 1, borderColor: "divider" }}>
-              <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1 }}>
-                <Typography variant="body2" sx={{ fontWeight: 600 }}>{a.account.name}</Typography>
-                <Typography variant="body2" sx={{ whiteSpace: "nowrap" }}>{lakhs2(a.planned_amount_lakhs)}</Typography>
-              </Box>
-              <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 0.5, mt: 0.5 }}>
-                <Typography variant="caption" color="text.secondary">{a.account.zone.name} ·</Typography>
-                <BusinessPotentialChip value={a.account.business_potential} />
-                <Typography variant="caption" color="text.secondary">
-                  · {VISIT_FREQUENCY_LABEL[a.visit_frequency] ?? a.visit_frequency}
-                </Typography>
-              </Box>
-              <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
-                {a.strategic_objective || "—"}
-              </Typography>
-            </Box>
+            <TocRow key={a.id}>
+              <TocCell title>{a.account.name}</TocCell>
+              <TocCell label="Zone">{a.account.zone.name}</TocCell>
+              <TocCell label="Potential"><BusinessPotentialChip value={a.account.business_potential} /></TocCell>
+              <TocCell label="Visits">{VISIT_FREQUENCY_LABEL[a.visit_frequency] ?? a.visit_frequency}</TocCell>
+              {/* The amount sits right of the name on a phone. */}
+              <TocCell action align="right">{lakhs2(a.planned_amount_lakhs)}</TocCell>
+              <TocCell label="Objective" sx={{ color: "text.secondary" }}>{a.strategic_objective || "—"}</TocCell>
+            </TocRow>
           ))}
-          <Box sx={{ display: "flex", justifyContent: "space-between", pt: 1 }}>
-            <Typography variant="body2" sx={{ fontWeight: 700 }}>
-              {accounts.length} hospital{accounts.length === 1 ? "" : "s"}
-            </Typography>
-            <Typography variant="body2" sx={{ fontWeight: 700 }}>{lakhs2(target.target_amount_lakhs)}</Typography>
-          </Box>
+          <TocRow total>
+            <TocCell title colSpan={4}>{accounts.length} hospital{accounts.length === 1 ? "" : "s"}</TocCell>
+            <TocCell action align="right">{lakhs2(target.target_amount_lakhs)}</TocCell>
+            <TocCell phone={false} />
+          </TocRow>
+        </TableOrCards>
         </Box>
-        <Box sx={{ overflowX: "auto", display: { xs: "none", sm: "block" } }}>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Hospital</TableCell>
-                <TableCell>Zone</TableCell>
-                <TableCell>Potential</TableCell>
-                <TableCell>Visits</TableCell>
-                <TableCell align="right">Amount</TableCell>
-                <TableCell>Objective</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {accounts.map((a) => (
-                <TableRow key={a.id}>
-                  <TableCell>{a.account.name}</TableCell>
-                  <TableCell>{a.account.zone.name}</TableCell>
-                  <TableCell><BusinessPotentialChip value={a.account.business_potential} /></TableCell>
-                  <TableCell>{VISIT_FREQUENCY_LABEL[a.visit_frequency] ?? a.visit_frequency}</TableCell>
-                  <TableCell align="right">{lakhs2(a.planned_amount_lakhs)}</TableCell>
-                  <TableCell sx={{ color: "text.secondary" }}>{a.strategic_objective || "—"}</TableCell>
-                </TableRow>
-              ))}
-              <TableRow sx={{ "& td": { fontWeight: 700 } }}>
-                <TableCell colSpan={4}>{accounts.length} hospital{accounts.length === 1 ? "" : "s"}</TableCell>
-                <TableCell align="right">{lakhs2(target.target_amount_lakhs)}</TableCell>
-                <TableCell />
-              </TableRow>
-            </TableBody>
-          </Table>
-        </Box>
-        </>
       )}
 
       {target.brand_splits.length > 0 && (

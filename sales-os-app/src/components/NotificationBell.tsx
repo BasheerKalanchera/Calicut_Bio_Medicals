@@ -150,9 +150,11 @@ export default function NotificationBell({
         onClose={() => setAnchorEl(null)}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
         transformOrigin={{ vertical: "top", horizontal: "right" }}
+        // Phone: the list takes the Popover's full width; the Popover keeps
+        // its own edge margin each side.
+        slotProps={{ paper: { sx: { width: { xs: "100%", sm: "auto" } } } }}
       >
-        {/* Phone: the screen's width less the Popover's 16px edge margin each side */}
-        <Box sx={{ width: { xs: "calc(100vw - 32px)", sm: 320 }, maxHeight: 420, overflowY: "auto" }}>
+        <Box sx={{ width: { xs: "100%", sm: 320 }, maxHeight: 420, overflowY: "auto" }}>
           <Typography sx={{ px: 2, py: 1.5, typography: "body2", fontWeight: 800, borderBottom: 1, borderColor: "gray.100" }}>
             Notifications
           </Typography>
