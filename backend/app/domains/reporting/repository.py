@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.domains.account.models import Account
 from app.domains.activity.models import Activity, Reminder
+from app.domains.activity.repository import _REMINDER_ORDER, _reminder_display_options
 from app.domains.audit.models import AuditLog
 from app.domains.opportunity.models import Opportunity, OpportunityItem
 from app.domains.organization.models import UserProfile, UserZone
@@ -422,33 +423,20 @@ class ReportingRepository:
 
     def weekly_followup_next_actions(
         self, current_user: UserProfile, user_id: uuid.UUID, due_by: datetime
-    ) -> list[Row]:
+    ) -> list[Reminder]:
         """My Work: open next actions assigned to `user_id`, due by `due_by`
-        (overdue ones included), soonest first. Hospital and Opportunity come
-        from the activity that created the next action; outer joins, since a
-        Sales Development activity has no hospital (BR-ACT-09)."""
+        (overdue ones included), in the Next Actions screen's order. Loaded
+        the same way as that screen's list, so each row is a full
+        ReminderResponse the close form can take as-is (D26)."""
         stmt = (
-            select(
-                Reminder.id.label("reminder_id"),
-                Reminder.reminder_text.label("reminder_text"),
-                Reminder.due_date.label("due_date"),
-                Account.id.label("account_id"),
-                Account.name.label("account_name"),
-                Opportunity.id.label("opportunity_id"),
-                Opportunity.name.label("opportunity_name"),
-                UserProfile.id.label("assigned_to_user_id"),
-                UserProfile.display_name.label("assigned_to_name"),
-            )
-            .select_from(Reminder)
+            select(Reminder)
+            .options(*_reminder_display_options(include_completed=False))
             .join(UserProfile, Reminder.assigned_to_user_id == UserProfile.id)
-            .join(Activity, Reminder.activity_id == Activity.id)
-            .outerjoin(Account, Activity.account_id == Account.id)
-            .outerjoin(Opportunity, Activity.opportunity_id == Opportunity.id)
             .where(Reminder.is_completed == False, Reminder.due_date <= due_by)  # noqa: E712
         )
         stmt = self._apply_owner_scope(stmt, current_user, user_id)
-        stmt = stmt.order_by(Reminder.due_date.asc(), Reminder.created_at.asc(), Reminder.id.asc())
-        return list(self.db.execute(stmt).all())
+        stmt = stmt.order_by(*_REMINDER_ORDER)
+        return list(self.db.scalars(stmt).unique().all())
 
     def product_performance(
         self,

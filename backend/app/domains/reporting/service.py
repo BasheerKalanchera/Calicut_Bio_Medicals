@@ -4,6 +4,7 @@ from decimal import Decimal
 from zoneinfo import ZoneInfo
 
 from app.core.periods import ist_midnight, today_ist
+from app.domains.activity.schemas import ReminderResponse
 from app.domains.organization.models import UserProfile
 from app.domains.organization.repository import TEAM_SCOPE_BUILDERS, UNRESTRICTED_ROLES
 from app.domains.reporting.repository import ReportingRepository
@@ -27,7 +28,6 @@ from app.domains.reporting.schemas import (
     StagnantDealRow,
     StagnantDealsResponse,
     WeeklyFollowupNextActionList,
-    WeeklyFollowupNextActionRow,
     WeeklyFollowupOpportunityList,
     WeeklyFollowupOpportunityRow,
     WeeklyFollowupResponse,
@@ -313,7 +313,7 @@ class ReportingService:
         )
 
         actions = [
-            WeeklyFollowupNextActionRow.model_validate(r)
+            ReminderResponse.model_validate(r)
             for r in self.repository.weekly_followup_next_actions(current_user, target_id, end_of_week)
         ]
         overdue = [a for a in actions if a.due_date <= end_of_today]

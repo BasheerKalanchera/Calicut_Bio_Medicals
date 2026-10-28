@@ -5,6 +5,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
+from app.domains.activity.schemas import ReminderResponse
+
 PipelineGroupBy = Literal["stage", "rep", "sbu", "zone", "product", "brand"]
 
 
@@ -104,25 +106,12 @@ class WeeklyFollowupOpportunityList(BaseModel):
     rows: list[WeeklyFollowupOpportunityRow]
 
 
-class WeeklyFollowupNextActionRow(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    reminder_id: uuid.UUID
-    reminder_text: str
-    due_date: datetime
-    account_id: uuid.UUID | None
-    account_name: str | None
-    opportunity_id: uuid.UUID | None
-    opportunity_name: str | None
-    assigned_to_user_id: uuid.UUID
-    assigned_to_name: str
-
-
 class WeeklyFollowupNextActionList(BaseModel):
     # Count only, no rupee total -- many next actions sit on a hospital with
-    # no Opportunity value (D21).
+    # no Opportunity value (D21). Rows are the Next Actions screen's own
+    # shape, so "Done" opens the close form with them directly (D26).
     count: int
-    rows: list[WeeklyFollowupNextActionRow]
+    rows: list[ReminderResponse]
 
 
 class WeeklyFollowupResponse(BaseModel):

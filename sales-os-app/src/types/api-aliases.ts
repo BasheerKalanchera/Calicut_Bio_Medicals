@@ -46,3 +46,6 @@ export type MarketingLeadCreate = components["schemas"]["MarketingLeadCreate"];
 export type MarketingLeadDiscard = components["schemas"]["MarketingLeadDiscard"];
 export type MarketingLeadReassign = components["schemas"]["MarketingLeadReassign"];
 export type MarketingLeadCommentResponse = components["schemas"]["MarketingLeadCommentResponse"];
+export type WeeklyFollowupResponse = components["schemas"]["WeeklyFollowupResponse"];
+export type WeeklyFollowupOpportunityRow = components["schemas"]["WeeklyFollowupOpportunityRow"];
+export type WeeklyFollowupOpportunityList = components["schemas"]["WeeklyFollowupOpportunityList"];

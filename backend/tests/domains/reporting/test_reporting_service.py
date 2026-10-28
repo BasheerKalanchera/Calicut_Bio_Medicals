@@ -229,10 +229,16 @@ def _opp(**overrides):
 
 
 def _action(due: datetime, **overrides):
+    # A Reminder as the Next Actions screen loads it (D26: same shape).
+    rep = SimpleNamespace(id=uuid.uuid4(), display_name="Rep One")
+    activity = SimpleNamespace(
+        id=uuid.uuid4(), activity_type="CALL", activity_date=due, notes=None, outcome_notes=None,
+        account=None, opportunity=None, user=rep, created_by_user=None,
+    )
     row = dict(
-        reminder_id=uuid.uuid4(), reminder_text="Call the radiologist", due_date=due,
-        account_id=None, account_name=None, opportunity_id=None, opportunity_name=None,
-        assigned_to_user_id=uuid.uuid4(), assigned_to_name="Rep One",
+        id=uuid.uuid4(), activity_id=activity.id, assigned_to_user_id=rep.id, due_date=due,
+        reminder_text="Call the radiologist", is_completed=False, created_at=due, updated_at=due,
+        assigned_to_user=rep, activity=activity, closing_activity=None,
     )
     row.update(overrides)
     return SimpleNamespace(**row)
@@ -328,8 +334,20 @@ class TestWeeklyFollowup:
         tomorrow = _action(datetime(2026, 10, 29, 0, 0, tzinfo=IST))
         sunday = _action(datetime(2026, 11, 1, 18, tzinfo=IST))
         result, _ = _followup(actions=[last_week, late_today, tomorrow, sunday])
-        overdue_ids = [a.reminder_id for a in result.overdue_next_actions.rows]
-        week_ids = [a.reminder_id for a in result.next_actions_this_week.rows]
-        assert overdue_ids == [last_week.reminder_id, late_today.reminder_id]
-        assert week_ids == [tomorrow.reminder_id, sunday.reminder_id]
+        overdue_ids = [a.id for a in result.overdue_next_actions.rows]
+        week_ids = [a.id for a in result.next_actions_this_week.rows]
+        assert overdue_ids == [last_week.id, late_today.id]
+        assert week_ids == [tomorrow.id, sunday.id]
         assert result.overdue_next_actions.count == result.next_actions_this_week.count == 2
+
+    def test_next_actions_carry_the_close_forms_details(self):
+        # D26: the close form needs the creating activity's hospital and
+        # Opportunity, and the assignee.
+        action = _action(datetime(2026, 10, 27, 9, tzinfo=IST))
+        action.activity.account = SimpleNamespace(id=uuid.uuid4(), name="Baby Memorial Hospital")
+        action.activity.opportunity = SimpleNamespace(id=uuid.uuid4(), name="SonoScape P40")
+        result, _ = _followup(actions=[action])
+        row = result.overdue_next_actions.rows[0]
+        assert row.activity.account.name == "Baby Memorial Hospital"
+        assert row.activity.opportunity.name == "SonoScape P40"
+        assert row.assigned_to_user.display_name == "Rep One"

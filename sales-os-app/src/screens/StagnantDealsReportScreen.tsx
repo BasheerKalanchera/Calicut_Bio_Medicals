@@ -1,25 +1,26 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Box, MenuItem, TextField } from "@mui/material";
+import { Box, TextField } from "@mui/material";
 import { LoadingOrEmpty } from "../components/ReportingUI";
 import { getStagnantDeals } from "../services/reporting";
 import { statusColors } from "../theme/statusColors";
 import { shadows } from "../theme/shadows";
 
-// BR-OP-06 says 180 days, PRD says ~90 -- shipped as parameter options
-// rather than picking one (Insights-Dashboard-Implementation-Plan.md,
-// Open questions §2).
-const STAGNANT_THRESHOLD_OPTIONS = [
-  { value: 90, label: "90+ days" },
-  { value: 180, label: "180+ days" },
-];
+// BR-OP-20 "Not visited": the user types any number of days, starting at
+// 30, the same as My Work (Weekly Follow-up plan D6c, D25). BR-OP-06 is
+// time in a stage, not this.
+const DEFAULT_THRESHOLD_DAYS = 30;
 
 export default function StagnantDealsReportScreen({
   onSelectOpportunity,
 }: {
   onSelectOpportunity?: (opportunity: { id: string; name: string }) => void;
 }) {
-  const [thresholdDays, setThresholdDays] = useState(180);
+  const [thresholdText, setThresholdText] = useState(String(DEFAULT_THRESHOLD_DAYS));
+  // A blank or zero box keeps showing the last good number's list.
+  const typed = Number.parseInt(thresholdText, 10);
+  const [thresholdDays, setThresholdDays] = useState(DEFAULT_THRESHOLD_DAYS);
+  if (typed >= 1 && typed !== thresholdDays) setThresholdDays(typed);
 
   const query = useQuery({
     queryKey: ["reporting", "stagnant-deals", thresholdDays],
@@ -32,16 +33,14 @@ export default function StagnantDealsReportScreen({
     <Box sx={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", bgcolor: "background.default" }}>
       <Box sx={{ px: 2, pt: 2, pb: 1, bgcolor: "background.default", flexShrink: 0 }}>
         <TextField
-          select
           size="small"
-          value={thresholdDays}
-          onChange={(e) => setThresholdDays(Number(e.target.value))}
-          sx={{ minWidth: 140 }}
-        >
-          {STAGNANT_THRESHOLD_OPTIONS.map((o) => (
-            <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
-          ))}
-        </TextField>
+          type="number"
+          label="Not visited for (days)"
+          value={thresholdText}
+          onChange={(e) => setThresholdText(e.target.value)}
+          slotProps={{ htmlInput: { min: 1 }, inputLabel: { shrink: true } }}
+          sx={{ width: 170, mt: 1 }}
+        />
       </Box>
 
       <Box sx={{ flex: 1, overflowY: "auto", px: 2, pb: 2, pt: 1 }}>

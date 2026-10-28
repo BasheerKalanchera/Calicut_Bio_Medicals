@@ -16,6 +16,7 @@ import { HELP_CONTENT } from "./utils/helpContent";
 import OpportunityPipelineScreen from "./screens/OpportunityPipelineScreen";
 import OpportunityDetailScreen from "./screens/OpportunityDetailScreen";
 import NextActionsScreen from "./screens/NextActionsScreen";
+import MyWorkScreen from "./screens/MyWorkScreen";
 import LoginRemindersDialog from "./components/LoginRemindersDialog";
 import NotificationBell from "./components/NotificationBell";
 import UrgentNotificationDialog from "./components/UrgentNotificationDialog";
@@ -50,6 +51,9 @@ const DEFAULT_COLLAPSED_NAV_SECTIONS: Record<string, boolean> = { REPORTS: true,
 const CATALOG_NAV_ITEM = { id: "catalog", label: "Product Catalog", icon: "📦" };
 
 const SALES_EXECUTION_ITEMS = [
+  // Weekly Follow-up plan D19: first on the menu. Marketing Users have
+  // their own menu (MARKETING_NAV_SECTIONS) and don't get it.
+  { id: "myWork",        label: "My Work",            icon: "🗓️" },
   { id: "customers",     label: "Account Management", icon: "🏥" },
   { id: "opportunities", label: "Pipeline",           icon: "📈" },
   { id: "marketingLeadQueue", label: "Marketing Lead Queue", icon: "📥" },
@@ -827,6 +831,20 @@ export default function DemoApp() {
               it must not fire just because this stays mounted in the background. */}
           <Box sx={{ flex: 1, overflow: "hidden", display: view === "marketingLeadQueue" ? "flex" : "none", flexDirection: "column" }}>
             <MarketingLeadReviewQueueScreen active={view === "marketingLeadQueue"} />
+          </Box>
+
+          {/* My Work (Weekly Follow-up) — always mounted, hidden when not active */}
+          <Box sx={{ flex: 1, overflow: "hidden", display: view === "myWork" ? "flex" : "none", flexDirection: "column" }}>
+            <Box sx={{ px: 2, py: 1.5, bgcolor: "background.paper", borderBottom: 1, borderColor: "gray.100", flexShrink: 0 }}>
+              <Typography component="h2" sx={{ typography: "h5", fontWeight: 800, color: "gray.800", letterSpacing: "-0.025em" }}>
+                My Work
+              </Typography>
+            </Box>
+            <MyWorkScreen
+              isActive={view === "myWork"}
+              onSelectAccount={handleSelectAccount}
+              onSelectOpportunity={handleSelectOpportunity}
+            />
           </Box>
 
           {/* Next Actions — always mounted, hidden when not active */}

@@ -6264,37 +6264,7 @@ export interface components {
             /** Count */
             count: number;
             /** Rows */
-            rows: components["schemas"]["WeeklyFollowupNextActionRow"][];
-        };
-        /** WeeklyFollowupNextActionRow */
-        WeeklyFollowupNextActionRow: {
-            /**
-             * Reminder Id
-             * Format: uuid
-             */
-            reminder_id: string;
-            /** Reminder Text */
-            reminder_text: string;
-            /**
-             * Due Date
-             * Format: date-time
-             */
-            due_date: string;
-            /** Account Id */
-            account_id: string | null;
-            /** Account Name */
-            account_name: string | null;
-            /** Opportunity Id */
-            opportunity_id: string | null;
-            /** Opportunity Name */
-            opportunity_name: string | null;
-            /**
-             * Assigned To User Id
-             * Format: uuid
-             */
-            assigned_to_user_id: string;
-            /** Assigned To Name */
-            assigned_to_name: string;
+            rows: components["schemas"]["ReminderResponse"][];
         };
         /** WeeklyFollowupOpportunityList */
         WeeklyFollowupOpportunityList: {

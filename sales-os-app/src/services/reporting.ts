@@ -13,6 +13,16 @@ import type {
   SalesSummaryResponse,
   StagnantDealsResponse,
 } from "../types/reporting";
+import type { WeeklyFollowupResponse } from "../types/api-aliases";
+
+// My Work (docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md): one
+// person's five lists in one request (D24). userId left out = the viewer.
+export async function getWeeklyFollowup(idleDays: number, userId?: string): Promise<WeeklyFollowupResponse> {
+  const r = await api.get("/reporting/weekly-followup", {
+    params: { idle_days: idleDays, ...(userId && { user_id: userId }) },
+  });
+  return r.data.data;
+}
 
 export async function getPipelineSummary(
   groupBy: PipelineGroupBy,

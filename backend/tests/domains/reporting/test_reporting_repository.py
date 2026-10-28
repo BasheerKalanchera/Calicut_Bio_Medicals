@@ -276,28 +276,37 @@ class TestWeeklyFollowupOpportunities:
         assert f"user_profile.id = '{_uuid_literal(current_user.id)}'" in sql
 
 
+def _run_next_actions(current_user: MagicMock, *args) -> str:
+    # This one loads whole Reminder rows (D26), through db.scalars.
+    mock_db = MagicMock()
+    mock_db.scalars.return_value.unique.return_value.all.return_value = []
+    ReportingRepository(mock_db).weekly_followup_next_actions(current_user, *args)
+    return _compiled(mock_db.scalars.call_args.args[0])
+
+
 class TestWeeklyFollowupNextActions:
-    def test_open_and_due_by_cutoff_soonest_first(self):
-        sql = _run("weekly_followup_next_actions", _make_current_user("Admin"), uuid.uuid4(), END_OF_TODAY)
+    def test_open_and_due_by_cutoff_in_next_actions_order(self):
+        sql = _run_next_actions(_make_current_user("Admin"), uuid.uuid4(), END_OF_TODAY)
         assert "reminder.is_completed = false" in sql
         assert "reminder.due_date <=" in sql
-        assert "ORDER BY reminder.due_date ASC" in sql
+        assert "ORDER BY reminder.due_date ASC, reminder.created_at ASC, reminder.id ASC" in sql
 
     def test_scoped_on_assignee(self):
         target = uuid.uuid4()
-        sql = _run("weekly_followup_next_actions", _make_current_user("Admin"), target, END_OF_TODAY)
+        sql = _run_next_actions(_make_current_user("Admin"), target, END_OF_TODAY)
         assert "JOIN user_profile ON reminder.assigned_to_user_id = user_profile.id" in sql
         assert f"user_profile.id = '{_uuid_literal(target)}'" in sql
 
     def test_hospital_and_opportunity_are_optional(self):
-        # A Sales Development activity has no hospital (BR-ACT-09).
-        sql = _run("weekly_followup_next_actions", _make_current_user("Admin"), uuid.uuid4(), END_OF_TODAY)
+        # A Sales Development activity has no hospital (BR-ACT-09), so the
+        # close form's details load through outer joins.
+        sql = _run_next_actions(_make_current_user("Admin"), uuid.uuid4(), END_OF_TODAY)
         assert "LEFT OUTER JOIN account" in sql
         assert "LEFT OUTER JOIN opportunity" in sql
 
     def test_area_manager_scoped_to_team_and_self(self):
         current_user = _make_current_user("Area Manager")
-        sql = _run("weekly_followup_next_actions", current_user, uuid.uuid4(), END_OF_TODAY)
+        sql = _run_next_actions(current_user, uuid.uuid4(), END_OF_TODAY)
         assert "user_zone" in sql
         assert _uuid_literal(current_user.id) in sql
 
