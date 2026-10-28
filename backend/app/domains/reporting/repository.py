@@ -69,6 +69,35 @@ _LINE_GROUP_COLUMNS = {
 }
 
 
+# BR-OP-20: only these count as someone having visited -- a Note written for
+# a stage change (BR-OP-22) or a Sales Development activity must not reset
+# the "Not visited" clock (Basheer, 2026-10-12).
+_CONTACT_ACTIVITY_TYPES = ("VISIT", "CALL", "MEETING", "EMAIL")
+
+# BR-OP-15: mirrors opportunity/schemas.py's _HIGH_PRIORITY_STAGE_THRESHOLD --
+# a separate local constant per that module's own convention.
+_HIGH_PRIORITY_STAGE_THRESHOLD = 30
+
+
+def _days_since_last_contact():
+    """(last_contact_date, days_since) for BR-OP-20, shared by the Stagnant
+    Deals report and My Work so the two never disagree (D6c/D23 of
+    docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md). Callers
+    outer-join the returned subquery on Opportunity.id."""
+    last_contact_subq = (
+        select(Activity.opportunity_id, func.max(Activity.activity_date).label("last_activity_date"))
+        .where(Activity.opportunity_id.is_not(None))
+        .where(Activity.activity_type.in_(_CONTACT_ACTIVITY_TYPES))
+        .group_by(Activity.opportunity_id)
+        .subquery()
+    )
+    # No contact logged yet -- created_at is the only signal of "since when
+    # has nobody touched this" (BR-OP-20 "No activity yet").
+    last_contact_date = func.coalesce(last_contact_subq.c.last_activity_date, Opportunity.created_at)
+    days_since = func.extract("day", func.now() - last_contact_date)
+    return last_contact_subq, last_contact_date, days_since
+
+
 def _group_columns(group_by: str):
     return _LINE_GROUP_COLUMNS.get(group_by) or _GROUP_BY_COLUMNS[group_by]
 
@@ -254,16 +283,7 @@ class ReportingRepository:
         zone_id: uuid.UUID | None = None,
         user_id: uuid.UUID | None = None,
     ) -> list[Row]:
-        last_activity_subq = (
-            select(Activity.opportunity_id, func.max(Activity.activity_date).label("last_activity_date"))
-            .where(Activity.opportunity_id.is_not(None))
-            .group_by(Activity.opportunity_id)
-            .subquery()
-        )
-        # No activity logged yet -- created_at is the only signal of "since when
-        # has nobody touched this," same fallback the plan doc specifies.
-        last_activity_date = func.coalesce(last_activity_subq.c.last_activity_date, Opportunity.created_at)
-        days_stagnant = func.extract("day", func.now() - last_activity_date)
+        last_activity_subq, last_activity_date, days_stagnant = _days_since_last_contact()
 
         stmt = (
             select(
@@ -281,7 +301,8 @@ class ReportingRepository:
             .join(UserProfile, Opportunity.owner_id == UserProfile.id)
             .join(Account, Opportunity.account_id == Account.id)
             .outerjoin(last_activity_subq, last_activity_subq.c.opportunity_id == Opportunity.id)
-            .where(OpportunityStatus.is_terminal == False)  # noqa: E712
+            # BR-OP-20: Active only -- On Hold and Stalled aren't listed (D6c).
+            .where(OpportunityStatus.status_code == "ACTIVE")
             .where(days_stagnant >= threshold_days)
         )
         stmt = self._apply_owner_scope(stmt, current_user, user_id)
@@ -354,6 +375,79 @@ class ReportingRepository:
         if zone_id is not None:
             stmt = stmt.where(UserProfile.id.in_(select(UserZone.user_id).where(UserZone.zone_id == zone_id)))
         stmt = stmt.order_by(func.count(Reminder.id).desc())
+        return list(self.db.execute(stmt).all())
+
+    def weekly_followup_opportunities(self, current_user: UserProfile, user_id: uuid.UUID) -> list[Row]:
+        """My Work: every ACTIVE Opportunity `user_id` owns (D16/D22 -- owner
+        only, no split partners), with what the service needs to sort each
+        into its lists. Empty when `user_id` is outside the viewer's team."""
+        value_subq = (
+            select(OpportunityItem.opportunity_id, func.sum(_NET_VALUE).label("value_lakhs"))
+            .group_by(OpportunityItem.opportunity_id)
+            .subquery()
+        )
+        last_contact_subq, last_contact_date, days_since = _days_since_last_contact()
+        is_high_priority = or_(
+            OpportunityStage.display_order > _HIGH_PRIORITY_STAGE_THRESHOLD,
+            Opportunity.high_priority_manual,
+        )
+        stmt = (
+            select(
+                Opportunity.id.label("opportunity_id"),
+                Opportunity.name.label("opportunity_name"),
+                Account.id.label("account_id"),
+                Account.name.label("account_name"),
+                UserProfile.id.label("owner_id"),
+                UserProfile.display_name.label("owner_name"),
+                OpportunityStage.stage_name.label("stage_name"),
+                Opportunity.win_probability.label("win_probability"),
+                # No line items yet still lists it, at 0 value (as the Pipeline Report).
+                func.coalesce(value_subq.c.value_lakhs, 0).label("value_lakhs"),
+                is_high_priority.label("is_high_priority"),
+                Opportunity.expected_closure_date.label("expected_closure_date"),
+                last_contact_date.label("last_contact_date"),
+                days_since.label("days_since_contact"),
+            )
+            .select_from(Opportunity)
+            .join(OpportunityStatus, Opportunity.status_id == OpportunityStatus.id)
+            .join(OpportunityStage, Opportunity.stage_id == OpportunityStage.id)
+            .join(UserProfile, Opportunity.owner_id == UserProfile.id)
+            .join(Account, Opportunity.account_id == Account.id)
+            .outerjoin(value_subq, value_subq.c.opportunity_id == Opportunity.id)
+            .outerjoin(last_contact_subq, last_contact_subq.c.opportunity_id == Opportunity.id)
+            .where(OpportunityStatus.status_code == "ACTIVE")
+        )
+        stmt = self._apply_owner_scope(stmt, current_user, user_id)
+        return list(self.db.execute(stmt).all())
+
+    def weekly_followup_next_actions(
+        self, current_user: UserProfile, user_id: uuid.UUID, due_by: datetime
+    ) -> list[Row]:
+        """My Work: open next actions assigned to `user_id`, due by `due_by`
+        (overdue ones included), soonest first. Hospital and Opportunity come
+        from the activity that created the next action; outer joins, since a
+        Sales Development activity has no hospital (BR-ACT-09)."""
+        stmt = (
+            select(
+                Reminder.id.label("reminder_id"),
+                Reminder.reminder_text.label("reminder_text"),
+                Reminder.due_date.label("due_date"),
+                Account.id.label("account_id"),
+                Account.name.label("account_name"),
+                Opportunity.id.label("opportunity_id"),
+                Opportunity.name.label("opportunity_name"),
+                UserProfile.id.label("assigned_to_user_id"),
+                UserProfile.display_name.label("assigned_to_name"),
+            )
+            .select_from(Reminder)
+            .join(UserProfile, Reminder.assigned_to_user_id == UserProfile.id)
+            .join(Activity, Reminder.activity_id == Activity.id)
+            .outerjoin(Account, Activity.account_id == Account.id)
+            .outerjoin(Opportunity, Activity.opportunity_id == Opportunity.id)
+            .where(Reminder.is_completed == False, Reminder.due_date <= due_by)  # noqa: E712
+        )
+        stmt = self._apply_owner_scope(stmt, current_user, user_id)
+        stmt = stmt.order_by(Reminder.due_date.asc(), Reminder.created_at.asc(), Reminder.id.asc())
         return list(self.db.execute(stmt).all())
 
     def product_performance(

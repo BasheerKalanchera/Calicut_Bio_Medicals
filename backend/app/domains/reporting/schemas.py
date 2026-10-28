@@ -1,5 +1,5 @@
 import uuid
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Literal
 
@@ -74,6 +74,70 @@ class OverdueActionRow(BaseModel):
 class OverdueActionsResponse(BaseModel):
     rows: list[OverdueActionRow]
     total_overdue: int
+
+
+class WeeklyFollowupOpportunityRow(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    opportunity_id: uuid.UUID
+    opportunity_name: str
+    account_id: uuid.UUID
+    account_name: str
+    owner_id: uuid.UUID
+    owner_name: str
+    stage_name: str
+    win_probability: Decimal
+    value_lakhs: Decimal
+    is_high_priority: bool
+    expected_closure_date: date | None
+    # A timestamp (activity_date / created_at), not a date -- pydantic refuses
+    # a datetime with a time part into a `date` field.
+    last_contact_date: datetime
+    days_since_contact: int
+    # "Closing date passed" only: whole days since the expected closing date.
+    days_past_closing: int | None = None
+
+
+class WeeklyFollowupOpportunityList(BaseModel):
+    count: int
+    value_lakhs: Decimal
+    rows: list[WeeklyFollowupOpportunityRow]
+
+
+class WeeklyFollowupNextActionRow(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    reminder_id: uuid.UUID
+    reminder_text: str
+    due_date: datetime
+    account_id: uuid.UUID | None
+    account_name: str | None
+    opportunity_id: uuid.UUID | None
+    opportunity_name: str | None
+    assigned_to_user_id: uuid.UUID
+    assigned_to_name: str
+
+
+class WeeklyFollowupNextActionList(BaseModel):
+    # Count only, no rupee total -- many next actions sit on a hospital with
+    # no Opportunity value (D21).
+    count: int
+    rows: list[WeeklyFollowupNextActionRow]
+
+
+class WeeklyFollowupResponse(BaseModel):
+    """My Work (Weekly Follow-up, signed requirement 11.1) for one person.
+    docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md"""
+
+    user_id: uuid.UUID
+    idle_days: int
+    today: date
+    week_end: date
+    high_priority: WeeklyFollowupOpportunityList
+    closing_date_passed: WeeklyFollowupOpportunityList
+    not_visited: WeeklyFollowupOpportunityList
+    overdue_next_actions: WeeklyFollowupNextActionList
+    next_actions_this_week: WeeklyFollowupNextActionList
 
 
 ProductPerformanceGroupBy = Literal["product", "brand", "sbu"]

@@ -181,9 +181,15 @@ class TestStagnantDeals:
         sql = _run("stagnant_deals", _make_current_user("Admin"))
         assert "180" in sql
 
-    def test_terminal_opportunities_excluded(self):
+    def test_active_only(self):
+        # BR-OP-20 / D6c: On Hold and Stalled are no longer listed.
         sql = _run("stagnant_deals", _make_current_user("Admin"))
-        assert "opportunity_status.is_terminal" in sql
+        assert "opportunity_status.status_code = 'ACTIVE'" in sql
+
+    def test_only_visits_calls_meetings_emails_count(self):
+        # D6d: a Note (e.g. for a stage change) must not reset the clock.
+        sql = _run("stagnant_deals", _make_current_user("Admin"))
+        assert "activity.activity_type IN ('VISIT', 'CALL', 'MEETING', 'EMAIL')" in sql
 
     def test_falls_back_to_created_at_when_no_activity(self):
         sql = _run("stagnant_deals", _make_current_user("Admin"))
@@ -231,6 +237,68 @@ class TestOverdueActions:
     def test_area_manager_scoped_to_team_and_self(self):
         current_user = _make_current_user("Area Manager")
         sql = _run("overdue_actions", current_user, END_OF_TODAY)
+        assert _uuid_literal(current_user.id) in sql
+
+
+class TestWeeklyFollowupOpportunities:
+    def test_active_and_owner_only(self):
+        # D16/D22: owner only -- split partners don't get a shared one.
+        sql = _run("weekly_followup_opportunities", _make_current_user("Admin"), uuid.uuid4())
+        assert "opportunity_status.status_code = 'ACTIVE'" in sql
+        assert "JOIN user_profile ON opportunity.owner_id = user_profile.id" in sql
+        assert "split" not in sql.lower()
+
+    def test_target_person_filtered(self):
+        target = uuid.uuid4()
+        sql = _run("weekly_followup_opportunities", _make_current_user("Admin"), target)
+        assert f"user_profile.id = '{_uuid_literal(target)}'" in sql
+
+    def test_high_priority_is_br_op_15(self):
+        sql = _run("weekly_followup_opportunities", _make_current_user("Admin"), uuid.uuid4())
+        assert "opportunity_stage.display_order > 30" in sql
+        assert "opportunity.high_priority_manual" in sql
+
+    def test_last_contact_uses_contact_types_with_created_at_fallback(self):
+        sql = _run("weekly_followup_opportunities", _make_current_user("Admin"), uuid.uuid4())
+        assert "activity.activity_type IN ('VISIT', 'CALL', 'MEETING', 'EMAIL')" in sql
+        assert "opportunity.created_at" in sql
+
+    def test_value_nets_buybacks_and_keeps_no_item_opportunities(self):
+        sql = _run("weekly_followup_opportunities", _make_current_user("Admin"), uuid.uuid4())
+        assert "'BUYBACK'" in sql
+        assert "LEFT OUTER JOIN" in sql
+
+    def test_sales_staff_cannot_see_someone_else(self):
+        # A rep picking another person still only matches their own rows,
+        # so the lists come back empty.
+        current_user = _make_current_user("Sales Staff")
+        sql = _run("weekly_followup_opportunities", current_user, uuid.uuid4())
+        assert f"user_profile.id = '{_uuid_literal(current_user.id)}'" in sql
+
+
+class TestWeeklyFollowupNextActions:
+    def test_open_and_due_by_cutoff_soonest_first(self):
+        sql = _run("weekly_followup_next_actions", _make_current_user("Admin"), uuid.uuid4(), END_OF_TODAY)
+        assert "reminder.is_completed = false" in sql
+        assert "reminder.due_date <=" in sql
+        assert "ORDER BY reminder.due_date ASC" in sql
+
+    def test_scoped_on_assignee(self):
+        target = uuid.uuid4()
+        sql = _run("weekly_followup_next_actions", _make_current_user("Admin"), target, END_OF_TODAY)
+        assert "JOIN user_profile ON reminder.assigned_to_user_id = user_profile.id" in sql
+        assert f"user_profile.id = '{_uuid_literal(target)}'" in sql
+
+    def test_hospital_and_opportunity_are_optional(self):
+        # A Sales Development activity has no hospital (BR-ACT-09).
+        sql = _run("weekly_followup_next_actions", _make_current_user("Admin"), uuid.uuid4(), END_OF_TODAY)
+        assert "LEFT OUTER JOIN account" in sql
+        assert "LEFT OUTER JOIN opportunity" in sql
+
+    def test_area_manager_scoped_to_team_and_self(self):
+        current_user = _make_current_user("Area Manager")
+        sql = _run("weekly_followup_next_actions", current_user, uuid.uuid4(), END_OF_TODAY)
+        assert "user_zone" in sql
         assert _uuid_literal(current_user.id) in sql
 
 

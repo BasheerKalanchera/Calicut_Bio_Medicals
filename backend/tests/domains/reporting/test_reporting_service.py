@@ -9,10 +9,12 @@ not a 403, just nothing to add.
 """
 
 import uuid
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
+from app.core.periods import IST
 from app.domains.organization.models import UserProfile
 from app.domains.reporting.repository import ReportingRepository
 from app.domains.reporting.service import ReportingService
@@ -207,3 +209,127 @@ class TestZoneTree:
             (0, "Kerala", 1, Decimal("4")),
             (1, "North Kerala", 1, Decimal("4")),
         ]
+
+
+# --- My Work (docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md) ---
+
+_WED = date(2026, 10, 28)  # a Wednesday; its week ends Sunday 1 Nov
+
+
+def _opp(**overrides):
+    row = dict(
+        opportunity_id=uuid.uuid4(), opportunity_name="SonoScape P60", account_id=uuid.uuid4(),
+        account_name="Baby Memorial Hospital", owner_id=uuid.uuid4(), owner_name="Rep One",
+        stage_name="Demo", win_probability=Decimal(40), value_lakhs=Decimal(10), is_high_priority=False,
+        expected_closure_date=None, last_contact_date=datetime(2026, 10, 20, 10, tzinfo=UTC),
+        days_since_contact=8,
+    )
+    row.update(overrides)
+    return SimpleNamespace(**row)
+
+
+def _action(due: datetime, **overrides):
+    row = dict(
+        reminder_id=uuid.uuid4(), reminder_text="Call the radiologist", due_date=due,
+        account_id=None, account_name=None, opportunity_id=None, opportunity_name=None,
+        assigned_to_user_id=uuid.uuid4(), assigned_to_name="Rep One",
+    )
+    row.update(overrides)
+    return SimpleNamespace(**row)
+
+
+def _followup(opps=(), actions=(), user=None, today=_WED, **kwargs):
+    mock_repo = MagicMock(spec=ReportingRepository)
+    mock_repo.weekly_followup_opportunities.return_value = list(opps)
+    mock_repo.weekly_followup_next_actions.return_value = list(actions)
+    service = ReportingService(repository=mock_repo)
+    result = service.weekly_followup(user or _make_current_user("Sales Staff"), today=today, **kwargs)
+    return result, mock_repo
+
+
+class TestWeeklyFollowup:
+    def test_defaults_to_viewer(self):
+        user = _make_current_user("Sales Staff")
+        result, repo = _followup(user=user)
+        assert result.user_id == user.id
+        repo.weekly_followup_opportunities.assert_called_once_with(user, user.id)
+
+    def test_manager_picks_one_rep(self):
+        manager, rep_id = _make_current_user("Area Manager"), uuid.uuid4()
+        result, repo = _followup(user=manager, user_id=rep_id)
+        assert result.user_id == rep_id
+        repo.weekly_followup_opportunities.assert_called_once_with(manager, rep_id)
+
+    def test_week_runs_to_sunday_end_india_time(self):
+        result, repo = _followup()
+        assert result.week_end == date(2026, 11, 1)
+        due_by = repo.weekly_followup_next_actions.call_args.args[2]
+        assert due_by == datetime(2026, 11, 1, 23, 59, 59, 999999, tzinfo=IST)
+
+    def test_sunday_is_its_own_week_end(self):
+        result, _ = _followup(today=date(2026, 11, 1))
+        assert result.week_end == date(2026, 11, 1)
+
+    def test_high_priority_or_70_percent(self):
+        flagged = _opp(is_high_priority=True, win_probability=Decimal(30))
+        likely = _opp(win_probability=Decimal(70))
+        neither = _opp(win_probability=Decimal(69))
+        result, _ = _followup([flagged, likely, neither])
+        # Highest chance first.
+        assert [r.opportunity_id for r in result.high_priority.rows] == [likely.opportunity_id, flagged.opportunity_id]
+
+    def test_high_priority_ties_broken_by_value(self):
+        small = _opp(win_probability=Decimal(80), value_lakhs=Decimal(5))
+        big = _opp(win_probability=Decimal(80), value_lakhs=Decimal(50))
+        result, _ = _followup([small, big])
+        assert [r.opportunity_id for r in result.high_priority.rows] == [big.opportunity_id, small.opportunity_id]
+
+    def test_closing_date_passed_strictly_before_today_oldest_first(self):
+        due_today = _opp(expected_closure_date=_WED)
+        recent = _opp(expected_closure_date=date(2026, 10, 20))
+        old = _opp(expected_closure_date=date(2026, 9, 1))
+        no_date = _opp(expected_closure_date=None)
+        result, _ = _followup([due_today, recent, old, no_date])
+        rows = result.closing_date_passed.rows
+        assert [r.opportunity_id for r in rows] == [old.opportunity_id, recent.opportunity_id]
+        assert [r.days_past_closing for r in rows] == [57, 8]
+
+    def test_not_visited_n_days_or_more_most_idle_first(self):
+        exactly = _opp(days_since_contact=30)
+        longer = _opp(days_since_contact=95)
+        short = _opp(days_since_contact=29)
+        result, _ = _followup([exactly, longer, short])
+        assert [r.opportunity_id for r in result.not_visited.rows] == [longer.opportunity_id, exactly.opportunity_id]
+        assert result.idle_days == 30
+
+    def test_idle_days_changes_the_cut(self):
+        result, _ = _followup([_opp(days_since_contact=10)], idle_days=7)
+        assert result.not_visited.count == 1
+
+    def test_one_opportunity_can_sit_in_several_lists(self):
+        opp = _opp(win_probability=Decimal(90), expected_closure_date=date(2026, 10, 1), days_since_contact=60)
+        result, _ = _followup([opp])
+        assert result.high_priority.count == result.closing_date_passed.count == result.not_visited.count == 1
+
+    def test_each_list_has_its_own_count_and_value(self):
+        result, _ = _followup([
+            _opp(win_probability=Decimal(75), value_lakhs=Decimal("12.50")),
+            _opp(win_probability=Decimal(90), value_lakhs=Decimal("-2.00")),
+            _opp(),
+        ])
+        assert result.high_priority.count == 2
+        assert result.high_priority.value_lakhs == Decimal("10.50")
+        assert result.not_visited.count == 0
+        assert result.not_visited.value_lakhs == Decimal(0)
+
+    def test_next_actions_split_at_end_of_today_india_time(self):
+        last_week = _action(datetime(2026, 10, 21, 9, tzinfo=IST))
+        late_today = _action(datetime(2026, 10, 28, 23, 30, tzinfo=IST))
+        tomorrow = _action(datetime(2026, 10, 29, 0, 0, tzinfo=IST))
+        sunday = _action(datetime(2026, 11, 1, 18, tzinfo=IST))
+        result, _ = _followup(actions=[last_week, late_today, tomorrow, sunday])
+        overdue_ids = [a.reminder_id for a in result.overdue_next_actions.rows]
+        week_ids = [a.reminder_id for a in result.next_actions_this_week.rows]
+        assert overdue_ids == [last_week.reminder_id, late_today.reminder_id]
+        assert week_ids == [tomorrow.reminder_id, sunday.reminder_id]
+        assert result.overdue_next_actions.count == result.next_actions_this_week.count == 2

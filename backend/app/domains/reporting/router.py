@@ -22,6 +22,7 @@ from app.domains.reporting.schemas import (
     SalesHeadline,
     SalesSummaryResponse,
     StagnantDealsResponse,
+    WeeklyFollowupResponse,
 )
 from app.domains.reporting.service import ReportingService
 
@@ -88,6 +89,16 @@ def get_overdue_actions(
     service: ReportingService = Depends(_get_service),
 ) -> APIResponse[OverdueActionsResponse]:
     return APIResponse(data=service.overdue_actions(current_user, sbu_id=sbu_id, zone_id=zone_id, user_id=user_id))
+
+
+@router.get("/weekly-followup")
+def get_weekly_followup(
+    user_id: uuid.UUID | None = Query(None, description="Whose My Work; defaults to the viewer"),
+    idle_days: int = Query(30, ge=1),
+    current_user: UserProfile = Depends(get_current_user),
+    service: ReportingService = Depends(_get_service),
+) -> APIResponse[WeeklyFollowupResponse]:
+    return APIResponse(data=service.weekly_followup(current_user, user_id=user_id, idle_days=idle_days))
 
 
 @router.get("/product-performance")

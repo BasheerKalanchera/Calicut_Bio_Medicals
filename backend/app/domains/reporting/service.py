@@ -3,6 +3,7 @@ from datetime import date, datetime, timedelta
 from decimal import Decimal
 from zoneinfo import ZoneInfo
 
+from app.core.periods import ist_midnight, today_ist
 from app.domains.organization.models import UserProfile
 from app.domains.organization.repository import TEAM_SCOPE_BUILDERS, UNRESTRICTED_ROLES
 from app.domains.reporting.repository import ReportingRepository
@@ -25,9 +26,25 @@ from app.domains.reporting.schemas import (
     SalesSummaryRow,
     StagnantDealRow,
     StagnantDealsResponse,
+    WeeklyFollowupNextActionList,
+    WeeklyFollowupNextActionRow,
+    WeeklyFollowupOpportunityList,
+    WeeklyFollowupOpportunityRow,
+    WeeklyFollowupResponse,
 )
 
 _IST = ZoneInfo("Asia/Kolkata")
+
+# My Work's "High priority or 70 %+" list (D3).
+_HIGH_CHANCE = Decimal(70)
+
+
+def _opportunity_list(rows: list[WeeklyFollowupOpportunityRow]) -> WeeklyFollowupOpportunityList:
+    # Each card's own count and rupee total; never a grand total across
+    # cards, which would count the same Opportunity more than once (D3).
+    return WeeklyFollowupOpportunityList(
+        count=len(rows), value_lakhs=sum((r.value_lakhs for r in rows), Decimal(0)), rows=rows
+    )
 
 
 def _has_team_to_roll_up(current_user: UserProfile) -> bool:
@@ -250,6 +267,69 @@ class ReportingService:
         )
         parsed = [OverdueActionRow.model_validate(r) for r in rows]
         return OverdueActionsResponse(rows=parsed, total_overdue=sum(r.overdue_count for r in parsed))
+
+    def weekly_followup(
+        self,
+        current_user: UserProfile,
+        *,
+        user_id: uuid.UUID | None = None,
+        idle_days: int = 30,
+        today: date | None = None,
+    ) -> WeeklyFollowupResponse:
+        """My Work for one person -- the viewer, or (for a manager) one rep
+        picked by name; there is no team-wide view (D1, Basheer 2026-10-28).
+        A rep outside the viewer's team gets empty lists, not a 403, same as
+        the other reports' user filter."""
+        target_id = user_id or current_user.id
+        today = today or today_ist()
+        # D7: the week is Monday-Sunday, India time. D17: overdue means due by
+        # the end of today, so "this week" holds only what is due after today.
+        week_end = today + timedelta(days=6 - today.weekday())
+        end_of_today = ist_midnight(today + timedelta(days=1)) - timedelta(microseconds=1)
+        end_of_week = ist_midnight(week_end + timedelta(days=1)) - timedelta(microseconds=1)
+
+        opportunities = [
+            WeeklyFollowupOpportunityRow.model_validate(r)
+            for r in self.repository.weekly_followup_opportunities(current_user, target_id)
+        ]
+        # D3: high priority (BR-OP-15) or 70 %+ chance; the screen's
+        # "70 %+ only" tick box filters on win_probability.
+        high_priority = sorted(
+            (o for o in opportunities if o.is_high_priority or o.win_probability >= _HIGH_CHANCE),
+            key=lambda o: (-o.win_probability, -o.value_lakhs),
+        )
+        closing_date_passed = sorted(
+            (
+                o.model_copy(update={"days_past_closing": (today - o.expected_closure_date).days})
+                for o in opportunities
+                if o.expected_closure_date is not None and o.expected_closure_date < today
+            ),
+            key=lambda o: o.expected_closure_date,
+        )
+        # BR-OP-20: N days or more (D20).
+        not_visited = sorted(
+            (o for o in opportunities if o.days_since_contact >= idle_days),
+            key=lambda o: -o.days_since_contact,
+        )
+
+        actions = [
+            WeeklyFollowupNextActionRow.model_validate(r)
+            for r in self.repository.weekly_followup_next_actions(current_user, target_id, end_of_week)
+        ]
+        overdue = [a for a in actions if a.due_date <= end_of_today]
+        this_week = [a for a in actions if a.due_date > end_of_today]
+
+        return WeeklyFollowupResponse(
+            user_id=target_id,
+            idle_days=idle_days,
+            today=today,
+            week_end=week_end,
+            high_priority=_opportunity_list(high_priority),
+            closing_date_passed=_opportunity_list(closing_date_passed),
+            not_visited=_opportunity_list(not_visited),
+            overdue_next_actions=WeeklyFollowupNextActionList(count=len(overdue), rows=overdue),
+            next_actions_this_week=WeeklyFollowupNextActionList(count=len(this_week), rows=this_week),
+        )
 
     def product_performance(
         self,

@@ -1220,6 +1220,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/reporting/weekly-followup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Weekly Followup */
+        get: operations["get_weekly_followup_api_v1_reporting_weekly_followup_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/reporting/product-performance": {
         parameters: {
             query?: never;
@@ -2490,6 +2507,20 @@ export interface components {
              */
             message: string;
             data: components["schemas"]["UserMeResponse"];
+        };
+        /** APIResponse[WeeklyFollowupResponse] */
+        APIResponse_WeeklyFollowupResponse_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["WeeklyFollowupResponse"];
         };
         /** APIResponse[WorkspaceResponse] */
         APIResponse_WorkspaceResponse_: {
@@ -6228,6 +6259,124 @@ export interface components {
          * @enum {string}
          */
         VisitFrequency: "WEEKLY" | "BI_WEEKLY" | "MONTHLY" | "QUARTERLY" | "AS_NEEDED";
+        /** WeeklyFollowupNextActionList */
+        WeeklyFollowupNextActionList: {
+            /** Count */
+            count: number;
+            /** Rows */
+            rows: components["schemas"]["WeeklyFollowupNextActionRow"][];
+        };
+        /** WeeklyFollowupNextActionRow */
+        WeeklyFollowupNextActionRow: {
+            /**
+             * Reminder Id
+             * Format: uuid
+             */
+            reminder_id: string;
+            /** Reminder Text */
+            reminder_text: string;
+            /**
+             * Due Date
+             * Format: date-time
+             */
+            due_date: string;
+            /** Account Id */
+            account_id: string | null;
+            /** Account Name */
+            account_name: string | null;
+            /** Opportunity Id */
+            opportunity_id: string | null;
+            /** Opportunity Name */
+            opportunity_name: string | null;
+            /**
+             * Assigned To User Id
+             * Format: uuid
+             */
+            assigned_to_user_id: string;
+            /** Assigned To Name */
+            assigned_to_name: string;
+        };
+        /** WeeklyFollowupOpportunityList */
+        WeeklyFollowupOpportunityList: {
+            /** Count */
+            count: number;
+            /** Value Lakhs */
+            value_lakhs: string;
+            /** Rows */
+            rows: components["schemas"]["WeeklyFollowupOpportunityRow"][];
+        };
+        /** WeeklyFollowupOpportunityRow */
+        WeeklyFollowupOpportunityRow: {
+            /**
+             * Opportunity Id
+             * Format: uuid
+             */
+            opportunity_id: string;
+            /** Opportunity Name */
+            opportunity_name: string;
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Account Name */
+            account_name: string;
+            /**
+             * Owner Id
+             * Format: uuid
+             */
+            owner_id: string;
+            /** Owner Name */
+            owner_name: string;
+            /** Stage Name */
+            stage_name: string;
+            /** Win Probability */
+            win_probability: string;
+            /** Value Lakhs */
+            value_lakhs: string;
+            /** Is High Priority */
+            is_high_priority: boolean;
+            /** Expected Closure Date */
+            expected_closure_date: string | null;
+            /**
+             * Last Contact Date
+             * Format: date-time
+             */
+            last_contact_date: string;
+            /** Days Since Contact */
+            days_since_contact: number;
+            /** Days Past Closing */
+            days_past_closing?: number | null;
+        };
+        /**
+         * WeeklyFollowupResponse
+         * @description My Work (Weekly Follow-up, signed requirement 11.1) for one person.
+         *     docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md
+         */
+        WeeklyFollowupResponse: {
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /** Idle Days */
+            idle_days: number;
+            /**
+             * Today
+             * Format: date
+             */
+            today: string;
+            /**
+             * Week End
+             * Format: date
+             */
+            week_end: string;
+            high_priority: components["schemas"]["WeeklyFollowupOpportunityList"];
+            closing_date_passed: components["schemas"]["WeeklyFollowupOpportunityList"];
+            not_visited: components["schemas"]["WeeklyFollowupOpportunityList"];
+            overdue_next_actions: components["schemas"]["WeeklyFollowupNextActionList"];
+            next_actions_this_week: components["schemas"]["WeeklyFollowupNextActionList"];
+        };
         /** WorkspaceAccount */
         WorkspaceAccount: {
             /**
@@ -9712,6 +9861,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["APIResponse_OverdueActionsResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_weekly_followup_api_v1_reporting_weekly_followup_get: {
+        parameters: {
+            query?: {
+                /** @description Whose My Work; defaults to the viewer */
+                user_id?: string | null;
+                idle_days?: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_WeeklyFollowupResponse_"];
                 };
             };
             /** @description Validation Error */
