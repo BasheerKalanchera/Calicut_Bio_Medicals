@@ -5202,6 +5202,48 @@ moved to after the restart (Basheer).
 - No tracker change: none touched live data, UAT or lost work, none
   guard-stoppable.
 
+### 2026-10-28 — Plan & Chore: UAT backup
+- UAT backup done: `cabio_uat_2026-10-28_0647.dump` (782,797 bytes,
+  535 entries on the read-back check); 13 Oct copy pruned, 14 kept.
+  Basheer copies it to Google Drive.
+- Early UAT data-quality check (Basheer asked; 3 days into the week given
+  after the next-action rules went live 25 Oct): no next action planned
+  62 → 60 (both Fahad's); fresh activities without one 2 → 2 (same old
+  two, none new); vague notes 59 → 63 (4 new since go-live, Vivek and
+  Nishad K V, "Done"/"Dine"/"Planed tuesday" — the rules don't cover note
+  quality). Run log line 2026-10-28 07:38; closure report not run (Basheer).
+- One-off read-only UAT query (scratchpad script, Basheer's yes): overdue
+  open next actions 464 at go-live → 470 today. 40 old overdue closed
+  (Haroon 12, Fazal 8, Fahad 7, Vivek 7, Nishad K V 6), 46 newly overdue.
+  Eight reps closed none of their old ones: Ravi Kumar (82 overdue today),
+  Dhanushma 77, Arun Adarsh 55, Gopika pv 51, Rudrappa Deevatagi 49,
+  Om Hiremath 38, Naeem 37, Shruthi 33. All closings since go-live went
+  through a closing activity.
+- Basheer asked whether the eight are on an old app version. No: BR-ACT-11
+  is checked on the server (activity/service.py:164), and all eight logged
+  on 27 Oct. Second read-only UAT query (Basheer's yes): of their 46
+  activities since go-live, 42 were hospital-level (no Opportunity), which
+  BR-ACT-11 doesn't cover; of their 422 overdue next actions, 376 are
+  hospital-level, 46 on Opportunities (Arun Adarsh 26, Naeem 12). Gap
+  shown to Basheer the same turn with a proposed rule change.
+- Basheer said yes to extending BR-ACT-11 to hospitals (D1): plan
+  `docs/Hospital-Next-Action-Rule-Implementation-Plan.md`, Draft, D2–D5
+  proposed. Reading the code found that closing several next actions
+  together (`_others_to_close`) refuses hospital-level ones, so it is in
+  the plan.
+- Basheer's idea, refreshing a summary when a next action is closed: parked
+  for Phase 2 with the Engagement History plan (Basheer); written into its
+  section 4.
+- Retro, Plan & Chore 28 Oct. **Corrections from Basheer this session: 3**
+  — (1) "Weekly follow up is the My Work screen right?" (formal plan name
+  used, not the menu label); (2) "What you mean by improvement is only on
+  the next-action side?" ("improving" for 2 of 62, both Fahad's); (3)
+  "What about closing open next actions?" (first report left out the
+  overdue ones). Not a correction: an archive edit typed inline as a
+  Python script fed through a heredoc was not refused by the shell guard
+  (a typed `python -c` write was refused minutes later). P77 +1, guard gap
+  noted for the weekly review.
+
 ### 2026-10-28 — Build & Test: Part 2 pre-E2E review of the late commits
 - Why: six commits (`19c2593`, `2e3ddd7`, `64b5fef`, `dce5d7d`, `65ab36a`,
   `5b5ad0c`) landed after the 25 Oct pre-E2E review, mid-E2E, and none was

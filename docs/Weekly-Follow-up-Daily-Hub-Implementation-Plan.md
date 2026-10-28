@@ -3,8 +3,9 @@
 **Status:** Step 1 on UAT 2026-10-25 (`8b2ec8a`). Approved 2026-10-21 (Basheer; every line in Decisions
 answered). Step 1 (D9a, D10) built ahead of the approval, 2026-10-19
 (`508ff42`; Basheer: not part of My Work itself); commit and Dev check in
-Progress-Archive. Steps 2–5 not started: built straight after the Annual
-Target Planning Part 2 E2E (D18; the Part 1 E2E that D14 waited for
+Progress-Archive. Steps 2–5 not started: steps 2 and 4 built in `/build`
+during the Annual Target Planning Part 2 E2E (D18, changed 2026-10-28;
+the Part 1 E2E that D14 waited for
 passed 2026-10-24). E2E test plan written 2026-10-25
 (`docs/Weekly-Follow-up-Daily-Hub-Manual-E2E-Test-Plan.md`, 33 steps per
 `393beee`'s message).
@@ -49,7 +50,7 @@ in `— proposed`; once Basheer answers, change the ending to
 - D16. "Closing date passed" lists only the Opportunities the person owns, since only the owner can change the date or close it; shared Opportunities are not repeated for each participant (unlike Target vs Actuals, which counts shares) — Basheer, 2026-10-21
 - D17. "Overdue" means due by the end of today (India time), the same cut as the Insights "Overdue Actions" count; "Due this week" then shows only those due after today — Basheer, 2026-10-21
 - D14a. Step 1 goes to UAT with the next full UAT move, not on its own (screen-only, no database change) — Basheer, 2026-10-21
-- D18. Steps 2–5 are built immediately after the Annual Target Planning Part 2 E2E is done, ahead of other new features; changes D14's "after the Part 1 E2E" — Basheer, 2026-10-25
+- D18. Steps 2–5 are built immediately after the Annual Target Planning Part 2 E2E is done, ahead of other new features; changes D14's "after the Part 1 E2E" — Basheer, 2026-10-25. Changed 2026-10-28 (Basheer): steps 2 and 4 are built in the parallel `/build` session while Build & Test runs the Part 2 E2E (they touch none of its screens), and reach `main` at the one merge after that E2E; step 5 still follows step 4
 - D19. "My Work" is the first item on the menu, at the top of Sales Execution above Account Management, not under Reports. Marketing Users keep their own one-item menu and don't get it — Basheer, 2026-10-25
 - D20. "Not visited in N+ days" means N days or more: an Opportunity idle exactly 30 days is on the 30+ list, matching the label and the existing Stagnant Deals report; BR-OP-20 reworded from "more than N" — Basheer, 2026-10-25
 - D21. The two next-action cards ("Overdue next actions", "Next actions due this week") show a count only, no ₹ total, because many next actions are on a hospital with no Opportunity value; the three Opportunity cards keep count and ₹ total (narrows D3) — Basheer, 2026-10-25

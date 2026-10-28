@@ -94,6 +94,13 @@ at 79 accounts) and returns the result. A manual "Refresh" control on the
 tab forces regeneration for a rep about to walk into a meeting who doesn't
 want to wait for the weekly run.
 
+**Idea for Phase 2 (Basheer, 2026-10-28, parked with this plan):** also
+refresh an Opportunity's summary, and its hospital's, at the moment a
+closing activity closes a next action, so the summary builds up promise
+by promise. Not yet decided against the two triggers here. Becomes more
+useful once hospital-level next actions must be closed too
+(`docs/Hospital-Next-Action-Rule-Implementation-Plan.md`).
+
 **Weekly batch:** a Render Cron Job — the same hosting platform the
 backend already runs on (`docs/Deployment-Topology.md`: Render Web
 Service, Starter tier), so this is a new service on infrastructure already
