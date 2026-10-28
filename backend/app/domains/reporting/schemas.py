@@ -2,10 +2,13 @@ import uuid
 from datetime import date, datetime
 from decimal import Decimal
 from typing import Literal
+from zoneinfo import ZoneInfo
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 
 from app.domains.activity.schemas import ReminderResponse
+
+_IST = ZoneInfo("Asia/Kolkata")
 
 PipelineGroupBy = Literal["stage", "rep", "sbu", "zone", "product", "brand"]
 
@@ -44,6 +47,15 @@ class StagnantDealRow(BaseModel):
     stage_name: str
     last_activity_date: date | None
     days_stagnant: int
+
+    # The query hands back a timestamp (last contact, or created_at when there
+    # is none); a `date` field refuses one that isn't exactly midnight.
+    @field_validator("last_activity_date", mode="before")
+    @classmethod
+    def _to_ist_day(cls, value):
+        if isinstance(value, datetime):
+            return value.astimezone(_IST).date()
+        return value
 
 
 class StagnantDealsResponse(BaseModel):
