@@ -8,6 +8,12 @@
 Annual Target Planning Part 2 E2E (D18).
 **Where:** Dev.
 
+**Read first (Build session, 28 Oct):** nobody has seen My Work in a
+browser. The Build session has no browser, so the usual phone-width check
+before handover was not done. Do section G (phone 390 px, tablet 768 px,
+laptop 1280 px) before the other sections. A layout problem found there
+goes back to the Build session as a fix, not a test failure.
+
 **Written ahead of the build.** The screen doesn't exist yet, so its
 labels below come from the plan (D2, D3, D3a, D4). Before the run, Build &
 Test replaces each with the exact words in the built code (P3), as the
@@ -131,4 +137,6 @@ test creates has its hospital fixed in this plan, never "any hospital".
 
 ## G — Phone, tablet and laptop layout
 
-1. [Complex: phone layout] As Fazal, My Work and the Stagnant Deals box at 390 px, then 768 and 1280 px. **Expected:** at 390 px each row is a card, the five sections and their counts fit the width with no sideways scroll (no element wider than its card), the top bar wraps, and "Log Activity" and "Done" are reachable; at 768 and 1280 px the rows are a table. The "Not visited for (days)" box and the "Showing" switch each have their name above them (MUI standard rule 7). —
+Run this first: the screen has not been seen in a browser yet (see "Read first" at the top).
+
+1. [Complex: phone layout] As Fazal, My Work and the Stagnant Deals box at 390 px, then 768 and 1280 px. **Expected:** at 390 px each row is a card, the six sections (including "My hospitals this quarter") and their counts fit the width with no sideways scroll (no element wider than its card), the top bar wraps, and "Log Activity" and "Done" are reachable; at 768 and 1280 px the rows are a table. The "Not visited for (days)" box and the "Showing" switch each have their name above them (MUI standard rule 7). —

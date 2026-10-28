@@ -47,9 +47,16 @@ the build branch, and reaches `main` at the merge (Basheer, 2026-10-17)._
   3 real findings + number-box check fixed in `8c0e0c9`, pushed (buttons
   hidden while old lists show, full reset on leaving, fetch only when open,
   whole-number box incl. Stagnant report). Rest judged not bugs.
-- Step 5 docs batch (plan D27–D29 + Status, UI-Inventory, E2E plan section
-  F wording, Progress-Archive entry + retro) committed and pushed
-  2026-10-28. Next: user manual and in-app help (merge-time catch-up); merge
-  only on Basheer's go after the Part 2 E2E.
+- Step 5 docs batch committed and pushed `a9caa15` (2026-10-28).
+- **Merge (Basheer's go 2026-10-28, Part 2 E2E paused; D18 changed):** main's
+  6 commits brought into the branch as `e47f6de` (clashes only in
+  Progress-Archive and the plan, both sides kept), pushed. After it: 1429
+  backend tests pass, ruff clean, tsc clean, lint 0 errors, `api.ts` regen
+  identical. Next: fast-forward `main` to the branch head and push (step
+  out with ExitWorktree "keep"). No migration, nothing to apply to Dev.
+- After the merge: Build & Test runs this plan's E2E; the test plan opens
+  with a "Read first" note (section G, phone/tablet/laptop, first). Still
+  to do: user manual and in-app help (merge-time catch-up, own change on
+  `main`).
 - No migration in steps 2, 4 or 5 (read-only). Migration number last
   chosen: none.
