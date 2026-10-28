@@ -1,6 +1,7 @@
 # Hospital-Level Open Next Action Rule — Implementation Plan
 
-**Status:** Draft, 2026-10-28.
+**Status:** Approved 2026-10-28 (Basheer), D1–D5. Not built; E2E test
+plan written 2026-10-28 (`docs/Hospital-Next-Action-Rule-Manual-E2E-Test-Plan.md`).
 **Traceability rows:** Activity logging / Next Actions rows (unchanged in
 what they cover; this tightens BR-ACT-11).
 **Design / discussion:** `docs/Next-Action-Rules-Implementation-Plan.md`
@@ -15,20 +16,25 @@ the gap).
   they can't log a fresh customer-facing activity on that hospital
   without an Opportunity; they close the next action instead, in the same
   Log Activity form — Basheer, 2026-10-28
-- D2. "On a hospital, not tied to an Opportunity" means the next action's
-  own activity has this hospital and no Opportunity (a Project on it
-  doesn't change that) — proposed
-- D3. Logging on an Opportunity at that hospital is not blocked by a
-  hospital-level next action, and the reverse also holds; each level only
-  blocks itself — proposed
+- D2. Projects are their own level (Basheer, 2026-10-28: "Hospital and
+  project level activities are separate"). The rule covers three levels,
+  each blocking only itself: an Opportunity; a Project, for activities
+  logged on it without an Opportunity; and a hospital, for activities with
+  neither. Project-level open next actions are cleared the same way as
+  hospital ones (D4) — Basheer, 2026-10-28 (first proposal counted
+  Project ones as hospital-level)
+- D3. Each level blocks only itself, as in D2. An open next action on an
+  Opportunity doesn't stop a hospital-level or Project-level log at the
+  same hospital, and an open one at hospital or Project level doesn't
+  stop logging on an Opportunity — Basheer, 2026-10-28
 - D4. The existing overdue hospital-level next actions are not
   bulk-closed; each blocks at the rep's next visit to that hospital, so
-  they are cleared visit by visit — proposed
+  they are cleared visit by visit — Basheer, 2026-10-28
 - D5. Everything else is the same as the Opportunity rule: only the
   person's own next actions count; the same exempt types; several open
   ones show as a tick list (D22 of the Opportunity plan); a visit that
   produced a new Opportunity still closes a hospital-level next action
-  with no follow-up (D3 of that plan) — proposed
+  with no follow-up (D3 of that plan) — Basheer, 2026-10-28
 
 ## Figures and sources
 
@@ -37,6 +43,9 @@ the gap).
   hospital-level; Rudrappa 10 hospital visits, 49 overdue, all
   hospital-level — UAT read-only query, 2026-10-28
   (`docs/Progress-Archive-2026-10.md`)
+- Open next actions by level: hospital 753 (389 overdue), Opportunity 147
+  (80), Project 2 (1, both Nishad K V's); 11 Project-level activities
+  ever — UAT read-only query, 2026-10-28 10:24 IST
 - Rule live on UAT since 2026-10-25 08:15 IST — Progress-Archive 25 Oct
 - BR-ACT-11 "Unchanged: activities with no Opportunity" —
   `docs/Business-Rules.md` BR-ACT-11
@@ -53,6 +62,10 @@ hospital. If you choose a hospital, leave the Opportunity as "None —
 hospital-level", and you still have an open next action of your own
 there, the form shows it and asks you to close it, saying what happened,
 instead of logging a new one. Closing it is what records the visit.
+
+The same applies on a Project's screen: an open next action of your own
+on that Project must be closed before you log there again. Each level
+(Opportunity, Project, hospital) only blocks itself (D2, D3).
 
 Old overdue next actions are not cleared in one go. Each one comes up the
 next time that rep logs at that hospital. So a rep with 49 overdue (like
@@ -79,7 +92,9 @@ the Opportunity box does. There is no new screen or pop-up.
    close form.
 2. **Log Activity form** — the warning box and the switch to the close
    form, for hospital-level logging. One commit.
-3. **E2E on Dev** — a new section in the Next-Action Rules E2E test plan.
+3. **E2E on Dev** — its own test plan,
+   `docs/Hospital-Next-Action-Rule-Manual-E2E-Test-Plan.md` (separate
+   file — Basheer, 2026-10-28).
    Then Business-Rules BR-ACT-11 is updated, and the UAT move follows with
    its own approval.
 
@@ -107,17 +122,21 @@ Logging an activity, and closing a next action, are the two ways in.
 - `docs/Business-Rules.md` BR-ACT-11: remove "activities with no
   Opportunity" from "Unchanged"; add the hospital case (after E2E).
 - User Manual and Log Activity help wording: one line each.
-- Next-Action Rules E2E test plan: new section.
+- E2E test plan: `docs/Hospital-Next-Action-Rule-Manual-E2E-Test-Plan.md`
+  (written 2026-10-28).
 
 ## 6. Technical addendum
 
 - `backend/app/domains/activity/service.py:164`: add a second check when
   `data.opportunity_id` is empty and `data.account_id` is set.
 - `backend/app/domains/activity/repository.py`: add
-  `has_open_for_user_on_account_level(account_id, user_id)`. It uses the
-  same join as `has_open_for_user_on_opportunity`, with
-  `Activity.account_id == account_id` and `Activity.opportunity_id IS
-  NULL`.
+  `has_open_for_user_on_account_level(account_id, user_id)` and
+  `has_open_for_user_on_project(project_id, user_id)` (D2). Both use the
+  same join as `has_open_for_user_on_opportunity`. Hospital level is
+  `Activity.account_id == account_id`, `opportunity_id IS NULL`,
+  `project_id IS NULL`; Project level is `Activity.project_id ==
+  project_id`, `opportunity_id IS NULL`. The Project screen's Log Activity
+  passes `projectId` (`DemoApp.tsx:964`).
 - `router.py`: add `GET /accounts/{account_id}/reminders?hospital_level=true`,
   shaped like `/opportunities/{id}/reminders`.
 - `sales-os-app/src/components/LogActivityModal.tsx:156`: change

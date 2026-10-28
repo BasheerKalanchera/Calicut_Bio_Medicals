@@ -9,9 +9,11 @@ session edits this note._
 
 ## Hospital next-action rule — 28 Oct (current task)
 
-- `docs/Hospital-Next-Action-Rule-Implementation-Plan.md` (Draft): D1
-  Basheer yes; **Next:** his answers on D2–D5 (asked 28 Oct, all
-  recommended yes), then Approved and handed to a build session.
+- `docs/Hospital-Next-Action-Rule-Implementation-Plan.md` Approved 28
+  Oct (D1–D5 Basheer). E2E test plan written 28 Oct as its own file,
+  `docs/Hospital-Next-Action-Rule-Manual-E2E-Test-Plan.md` (separate
+  file — Basheer yes). **Next:** a build session builds it. Both
+  uncommitted (next docs batch).
 - My Work D18 changed 28 Oct: steps 2 and 4 go in `/build` during the
   Part 2 E2E. Basheer tells Build & Test (don't edit their note).
 

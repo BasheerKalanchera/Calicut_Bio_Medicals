@@ -5243,6 +5243,27 @@ moved to after the restart (Basheer).
   Python script fed through a heredoc was not refused by the shell guard
   (a typed `python -c` write was refused minutes later). P77 +1, guard gap
   noted for the weekly review.
+- Hospital rule plan: D4, D5 Basheer's yes; D2 changed after Basheer said
+  Project and hospital activities are separate (three levels, each
+  blocking only itself), D2 and D3 then approved. Doc tidy-up skipped
+  today; Harness review later today (Basheer).
+- Read-only UAT count, open next actions by level (Basheer's yes, 28 Oct
+  10:24 IST): hospital 753 open (389 overdue), Opportunity 147 (80),
+  Project 2 (1), total 902 (470; matches the morning's 470). Both Project
+  ones are Nishad K V's (Koottanad new hospital, Venniyur new project);
+  11 activities ever logged at Project level with no Opportunity.
+- Hospital rule plan Approved (D1–D5). E2E test plan written ahead of
+  the build as its own file (Basheer's yes),
+  `docs/Hospital-Next-Action-Rule-Manual-E2E-Test-Plan.md`: 19 steps in
+  sections A–F plus 4 pre-flight checks. Records from three read-only Dev checks
+  (28 Oct 10:30 IST, as Haroon, RLS verified, rolled back).
+- Retro (second part of the session, since `4f92fe5`). **Corrections
+  from Basheer: 2** — D2 counted Project-level next actions as
+  hospital-level ("Hospital and project level activities are separate
+  right?"); D3's "the same works in reverse" was unclear and had to be
+  explained again. Self-caught: the test plan was summarised as 29
+  steps from a hand count; a tool count gives 19 + 4 pre-flight,
+  corrected before the commit. No tracker change.
 
 ### 2026-10-28 — Build & Test: Part 2 pre-E2E review of the late commits
 - Why: six commits (`19c2593`, `2e3ddd7`, `64b5fef`, `dce5d7d`, `65ab36a`,
