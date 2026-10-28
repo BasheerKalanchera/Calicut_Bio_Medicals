@@ -7,13 +7,25 @@ session edits this note._
 
 - Forecast plan (untracked, written by Antigravity — Basheer 27 Oct): commit it, and by which session? Open. At review, line 110 → BR-FIN-09.
 
-## Hospital next-action rule — 28 Oct (current task)
+## Annual Target Part 2 — Target vs Actuals redesign (paused 28 Oct)
 
-- `docs/Hospital-Next-Action-Rule-Implementation-Plan.md` Approved 28
-  Oct (D1–D5 Basheer). E2E test plan written 28 Oct as its own file,
-  `docs/Hospital-Next-Action-Rule-Manual-E2E-Test-Plan.md` (separate
-  file — Basheer yes). **Next:** a build session builds it. Both
-  uncommitted (next docs batch).
+- D82–D86 decided 28 Oct; plan updated (step 5a). Mock-up
+  https://claude.ai/artifact/XR3ftVbahPshwicQ9Vxsd5.
+- **Next (29 Oct):** finalise with Basheer; hand step 5a to a build
+  session; rewrite E2E section I (plus I8, I9, I11, K5) once Build &
+  Test pauses that file. No new questions on the agreed design.
+
+## Activity Type table plan — Draft 28 Oct
+
+- `docs/Activity-Type-Table-Implementation-Plan.md`; D4, D7, D8, D9
+  fallback, D10, D11, D12 proposed (one yes asked 28 Oct, unanswered).
+  **Next:** Basheer answers; then Approved and handed to a build session.
+
+## Hospital next-action rule — 28 Oct
+
+- Plan (Approved, D1–D5) and its E2E test plan pushed `eec66c2`.
+  **Next:** a build session builds it; before or after My Work steps
+  2 and 4 in `/build` is Basheer's call, asked 28 Oct.
 - My Work D18 changed 28 Oct: steps 2 and 4 go in `/build` during the
   Part 2 E2E. Basheer tells Build & Test (don't edit their note).
 
@@ -37,16 +49,10 @@ session edits this note._
 
 ## In-app help (help plan step 3a) — in progress 2026-10-22
 
-- Step 3b (help editor) is Build & Test's plan,
-  `docs/In-App-Help-Editor-Implementation-Plan.md` (Approved 22 Oct,
-  pushed `4aadacc`); history in the archive 22–26 Oct.
-- Help wording screen by screen into the help plan's section 7, each
-  opening with "What this page is for" (Basheer). 11 of 30 agreed (all 8
-  pop-ups done), last pushed `8c853d4`. Every reply here closes with
-  "Help wording: N of 30 (P %)", counted from section 7's "agreed"
-  headings (Basheer, 25 Oct). **Next:** one pass over the 10 earlier
-  entries for the word rules (section 7 format notes), then the next
-  screen.
+- Step 3b (help editor) is Build & Test's plan (`4aadacc`).
+- Help wording into the help plan's section 7: 11 of 30 agreed (`8c853d4`).
+  Every reply closes with "Help wording: N of 30 (P %)" (Basheer, 25 Oct).
+  **Next:** word-rules pass over the 10 earlier entries, then next screen.
 
 ## Harness Engineering
 

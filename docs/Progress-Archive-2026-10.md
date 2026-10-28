@@ -5398,3 +5398,48 @@ moved to after the restart (Basheer).
   stoppable; no live data or UAT touched, every Dev check read-only).
 - Note: I moved Basheer's browser tab one year too far (FY 2028-29) and
   brought it back.
+
+### 2026-10-28 — Plan & Chore: Target vs Actuals redesign, Activity Type table plan
+- Morning: reviewed the Annual Target E2E test plan from section I
+  against the code at Build & Test's request. Basheer judged Part 2
+  under-planned ("the build has built it in a half baked manner") and
+  asked to review the plan before fixing code or the test plan.
+- Marketing lead sources: they are `lead_source` rows with
+  `is_marketing_source = true` (`MarketingLeadCreateModal.tsx:97`); no
+  separate table, no add screen (`master_data.py` is GET only). Basheer
+  added one on Dev by hand; checked at his request.
+- Target vs Actuals redesign (Annual Target plan): D82 (a simple
+  dashboard with minimal information — Basheer), D83–D86 decided: simple
+  Year and Quarter views, names open a person's own screen (Planned and
+  Won by hospital and brand), the late-Opportunity count moves to the
+  managers' Overdue tab, which opens that person's My Work. Mock-up
+  https://claude.ai/artifact/XR3ftVbahPshwicQ9Vxsd5 (version 16). D85a
+  and D85b were raised after the design was agreed and withdrawn at
+  Basheer's objection. Plan updated (status, plain terms, build step 5a,
+  sections 3–6); finalise with Basheer 29 Oct.
+- Activity Type table: code search found 11 places that list activity
+  types (server 5, database 1, screens 3, scripts 2). New plan
+  `docs/Activity-Type-Table-Implementation-Plan.md`, Draft. Basheer: one
+  table, today's 13 types and answers unchanged, the answer columns, icons
+  and colours in one shared app function, Admin/GM add and rename types
+  on the Reference Data screen (reversing the same day's "developer
+  only"). D6 withdrawn (not a decision). Proposed: D4, D7, D8, D9's
+  fallback icon, D10 (vendor pipeline script left as is), D11, D12.
+  `docs/Reference-Data-Management-Screen-Implementation-Plan.md` gets an
+  "Update 2026-10-28" note.
+- Retro, Plan & Chore 28 Oct. **Corrections from Basheer this session:
+  12** (counted from his 34 messages) — (1) Quarter mock-up dropped its
+  details, wrongly said to live elsewhere; (2) click-through to a
+  person's screen instead of my rows that open in place; (3) a "closing
+  date passed" list and a zones/brands screen nobody asked for; (4)
+  claimed managers can't see a rep's late Opportunities (My Work's rep
+  picker can); (5) D85a/D85b raised after agreement; (6) activity-type
+  explanation too technical; (7) problem explained, solution not; (8)
+  "Needs a hospital" unclear; (9) Opportunity column left out; (10)
+  D6/D8/D10 unclear, plus "developer only" reversed; (11) D6 wasn't a
+  decision, vendor report and icons unexplained; (12) "new types stay a
+  developer job" overruled. Basheer: "We are not doing good in designing
+  and planning today." Pattern: additions not asked for (3, 5) and
+  technical-first explanations (6–11). No tracker line (none
+  guard-stoppable; no live data or UAT touched); the pattern goes to the
+  weekly Harness Engineering review, still due.

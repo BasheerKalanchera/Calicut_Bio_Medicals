@@ -9,6 +9,14 @@ gone — Hospital-wise planning uses a **fixed list of five** visit
 frequencies instead (Basheer's choice 2), and Coverage Planning itself was
 replaced (`docs/Hospital-Wise-Target-Planning-Implementation-Plan.md`). The
 other tables' need is unchanged.
+**Update 2026-10-28 (Basheer):** activity types join this screen once
+`docs/Activity-Type-Table-Implementation-Plan.md` has built their table
+(its D5). Admin/GM can add a new type, setting its yes/no answers (counts
+as a visit, needs a next action, hospital must be chosen, Opportunity
+must be chosen / optional / not offered, Outcome/Learning must be filled
+in), and rename a type. Changing an existing type's answers stays off the
+screen (that plan's D12, proposed), for the same reason as Opportunity
+stages below. Icons and colours stay in the app.
 
 ## Context
 
