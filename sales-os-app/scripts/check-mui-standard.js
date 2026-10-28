@@ -38,7 +38,8 @@ const isChecked = (f) =>
 
 const RULES = [
   { name: "typed colour", pattern: /#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?(?:[0-9a-fA-F]{2})?\b|\brgba?\(/ },
-  { name: "typed text size", pattern: /\bfontSize\s*[:=]\s*\{?\s*(?:["'`][^"'`]*\d|\d)|\bfontSize\s*=\s*\{?\s*["'`]large/ },
+  // Also a size per screen width: fontSize: { xs: "0.75rem", sm: 14 }.
+  { name: "typed text size", pattern: /\bfontSize\s*[:=]\s*\{?\s*(?:["'`][^"'`]*\d|\d)|\bfontSize\s*:\s*\{[^}]*?\b\w+\s*:\s*(?:["'`][^"'`]*\d|\d)|\bfontSize\s*=\s*\{?\s*["'`]large/ },
   { name: "className", pattern: /\bclassName\s*=/ },
   { name: "style prop", pattern: /\bstyle\s*=\s*\{/ },
   { name: "tablet width as phone", pattern: /\bbreakpoints\.(?:down|up|between|only)\(\s*["'`]md/ },
@@ -75,6 +76,24 @@ function readStaged(relPath) {
   }
 }
 
+// Where `token` first appears outside a quoted string, or -1 -- so text like
+// accept="image/*" isn't taken for the start of a comment.
+function indexOutsideStrings(line, token) {
+  let quote = null;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (quote) {
+      if (ch === "\\") i++;
+      else if (ch === quote) quote = null;
+    } else if (ch === '"' || ch === "'" || ch === "`") {
+      quote = ch;
+    } else if (line.startsWith(token, i)) {
+      return i;
+    }
+  }
+  return -1;
+}
+
 function breaches(text) {
   const found = [];
   let inBlockComment = false;
@@ -86,14 +105,24 @@ function breaches(text) {
       line = line.slice(end + 2);
       inBlockComment = false;
     }
-    line = line.replace(/\/\*.*?\*\//g, "");
-    const open = line.indexOf("/*");
-    if (open !== -1) {
-      inBlockComment = true;
-      line = line.slice(0, open);
+    // Each comment start outside a string: a whole /* … */ is cut out, an
+    // unclosed one runs to later lines.
+    for (let open = indexOutsideStrings(line, "/*"); open !== -1; open = indexOutsideStrings(line, "/*")) {
+      const end = line.indexOf("*/", open + 2);
+      if (end === -1) {
+        inBlockComment = true;
+        line = line.slice(0, open);
+        break;
+      }
+      line = line.slice(0, open) + line.slice(end + 2);
     }
-    const lineComment = line.search(/(^|[^:])\/\//);
-    if (lineComment !== -1) line = line.slice(0, lineComment + 1);
+    // "//" after a colon is a web address in JSX text, not a comment.
+    let lineComment = indexOutsideStrings(line, "//");
+    while (lineComment > 0 && line[lineComment - 1] === ":") {
+      const next = indexOutsideStrings(line.slice(lineComment + 2), "//");
+      lineComment = next === -1 ? -1 : lineComment + 2 + next;
+    }
+    if (lineComment !== -1) line = line.slice(0, lineComment);
     for (const rule of RULES) {
       if (rule.pattern.test(line)) found.push({ lineNo: i + 1, rule: rule.name, line: raw.trim() });
     }

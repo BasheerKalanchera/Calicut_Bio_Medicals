@@ -52,6 +52,10 @@ interface TocContextValue {
 
 const TocContext = createContext<TocContextValue>({ phone: false, columnCount: 1, nested: false });
 
+// True inside a phone card, so a table in a row's opened detail shows its
+// rows as lines in that card, not as cards inside the card.
+const InCardContext = createContext(false);
+
 export default function TableOrCards({
   columns,
   children,
@@ -62,14 +66,15 @@ export default function TableOrCards({
   stickyHeader?: boolean;
 }) {
   const phone = useIsPhone();
-  const value = { phone, columnCount: columns.length, nested: false };
+  const inCard = useContext(InCardContext);
+  const value = { phone, columnCount: columns.length, nested: phone && inCard };
 
   if (phone) {
     return (
       <TocContext.Provider value={value}>
         {/* gap, not Stack's spacing: spacing zeroes each card's margin and
             so would undo a row's push-in. */}
-        <Stack useFlexGap spacing={1}>{children}</Stack>
+        <Stack useFlexGap spacing={inCard ? 0 : 1}>{children}</Stack>
       </TocContext.Provider>
     );
   }
@@ -108,42 +113,51 @@ export function TocRow({
   subRows?: ReactNode;
 }) {
   const ctx = useContext(TocContext);
+  const row = { indent, total };
 
   if (!ctx.phone) {
+    // One "& > td" object: two spreads with the same key would drop the first.
     const rowSx: SxProps<Theme> = {
-      ...(total && { "& > td": { fontWeight: 700, borderTop: "2px solid", borderColor: "divider" } }),
-      ...(detail && { "& > td": { borderBottom: "none" } }),
+      "& > td": {
+        ...(total && { fontWeight: 700, borderTop: "2px solid", borderColor: "divider" }),
+        ...(detail && { borderBottom: "none" }),
+      },
     };
     return (
-      <TocIndentContext.Provider value={indent}>
-        <TableRow sx={rowSx}>{children}</TableRow>
+      <TocRowContext.Provider value={row}>
+        {/* Every table: a row lights up under the mouse (fix 2, Basheer 28 Oct). */}
+        <TableRow hover={!total} sx={rowSx}>{children}</TableRow>
         {detail && (
           <TableRow>
             <TableCell colSpan={ctx.columnCount}>{detail}</TableCell>
           </TableRow>
         )}
         {subRows}
-      </TocIndentContext.Provider>
+      </TocRowContext.Provider>
     );
   }
 
   const content = (
-    <Box
-      sx={{
-        display: "grid",
-        gridTemplateColumns: "auto minmax(0, 1fr) auto",
-        rowGap: 0.5,
-        alignItems: "center",
-      }}
-    >
-      {children}
-      {detail && <Box sx={{ gridColumn: "1 / -1", mt: 1 }}>{detail}</Box>}
-      {subRows && (
-        <Box sx={{ gridColumn: "1 / -1" }}>
-          <TocContext.Provider value={{ ...ctx, nested: true }}>{subRows}</TocContext.Provider>
+    <TocRowContext.Provider value={row}>
+      <InCardContext.Provider value={true}>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: "auto minmax(0, 1fr) auto",
+            rowGap: 0.5,
+            alignItems: "center",
+          }}
+        >
+          {children}
+          {detail && <Box sx={{ gridColumn: "1 / -1", mt: 1 }}>{detail}</Box>}
+          {subRows && (
+            <Box sx={{ gridColumn: "1 / -1" }}>
+              <TocContext.Provider value={{ ...ctx, nested: true }}>{subRows}</TocContext.Provider>
+            </Box>
+          )}
         </Box>
-      )}
-    </Box>
+      </InCardContext.Provider>
+    </TocRowContext.Provider>
   );
 
   if (ctx.nested) {
@@ -156,8 +170,9 @@ export function TocRow({
   );
 }
 
-// The row's depth, for the title cell's push-in on a laptop.
-const TocIndentContext = createContext(0);
+// The row's depth (the title cell's push-in on a laptop) and whether it is a
+// total (bold figures on a phone too, so it doesn't read as one more row).
+const TocRowContext = createContext({ indent: 0, total: false });
 
 export function TocCell({
   children,
@@ -191,7 +206,7 @@ export function TocCell({
   sx?: SxProps<Theme>;
 }) {
   const ctx = useContext(TocContext);
-  const indent = useContext(TocIndentContext);
+  const { indent, total } = useContext(TocRowContext);
 
   if (!ctx.phone) {
     return (
@@ -199,7 +214,7 @@ export function TocCell({
         align={align}
         colSpan={colSpan}
         padding={toggle ? "checkbox" : undefined}
-        sx={[title && indent > 0 ? { pl: 2 + indent * 2 } : {}, ...(Array.isArray(sx) ? sx : [sx])]}
+        sx={[title && indent > 0 ? { pl: 2 + indent * 3 } : {}, ...(Array.isArray(sx) ? sx : [sx])]}
       >
         {children}
       </TableCell>
@@ -219,7 +234,7 @@ export function TocCell({
   }
   if (action) {
     return (
-      <Box sx={{ gridColumn: 3, gridRow: 1, display: "flex", justifyContent: "flex-end", ml: 1 }}>{children}</Box>
+      <Box sx={{ gridColumn: 3, gridRow: 1, display: "flex", justifyContent: "flex-end", ml: 1, ...(total && { fontWeight: 700 }) }}>{children}</Box>
     );
   }
   if (field) {
@@ -233,7 +248,7 @@ export function TocCell({
   return (
     <Box sx={[{ gridColumn: "2 / -1", display: "flex", flexWrap: "wrap", columnGap: 0.5, alignItems: "baseline", typography: "body2" }, ...(Array.isArray(sx) ? sx : [sx])]}>
       {label && <Typography variant="body2" color="text.secondary" component="span">{label}:</Typography>}
-      <Box component="span" sx={{ minWidth: 0, overflowWrap: "anywhere" }}>{children}</Box>
+      <Box component="span" sx={{ minWidth: 0, overflowWrap: "anywhere", ...(total && { fontWeight: 700 }) }}>{children}</Box>
     </Box>
   );
 }
