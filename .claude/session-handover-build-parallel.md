@@ -32,9 +32,24 @@ the build branch, and reaches `main` at the merge (Basheer, 2026-10-17)._
   clean, tsc and lint 0 errors. Owner column left out (one person's
   lists). Not seen in a browser (E2E after the merge). Plan edits
   (D1/D15/D22–D26) and this note are uncommitted: next docs batch.
-- Docs batch written, uncommitted (awaiting Basheer's yes): plan
-  D1/D15/D22–D26, E2E test plan (no "My team", no owner column, new
-  layout step G), BR-OP-16/20, UI-Inventory, Progress-Archive entry. Still
-  to do: user manual and in-app help (merge-time catch-up).
-- No migration in step 2 (read-only request). Migration number last
+- Docs batch committed `416b9aa`, pushed: plan D1/D15/D22–D26, E2E test
+  plan (no "My team", no owner column, new layout step G), BR-OP-16/20 and
+  the matrix, UI-Inventory, Progress-Archive entry. Next: nothing to build
+  until the Annual Target Planning Part 2 E2E ends and Basheer says go;
+  then the merge. Still to do before it: user manual and in-app help
+  (merge-time catch-up), the pre-E2E `/code-review`.
+- **Step 5 (hospitals card + landing):** Basheer 2026-10-28 settled the
+  three questions (D27–D29, in the plan, uncommitted). Built and committed
+  `d4a8df4`, pushed: sixth My Work card "My hospitals this quarter", opens
+  on My Work for all but Marketing Users; 1429 backend tests pass, ruff
+  clean, tsc and lint 0 errors. Not seen in a browser.
+- Pre-E2E `/code-review` (medium) on `42bd5f8^..d4a8df4` done 2026-10-28:
+  3 real findings + number-box check fixed in `8c0e0c9`, pushed (buttons
+  hidden while old lists show, full reset on leaving, fetch only when open,
+  whole-number box incl. Stagnant report). Rest judged not bugs.
+- Step 5 docs batch (plan D27–D29 + Status, UI-Inventory, E2E plan section
+  F wording, Progress-Archive entry + retro) committed and pushed
+  2026-10-28. Next: user manual and in-app help (merge-time catch-up); merge
+  only on Basheer's go after the Part 2 E2E.
+- No migration in steps 2, 4 or 5 (read-only). Migration number last
   chosen: none.

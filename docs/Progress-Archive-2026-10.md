@@ -5224,3 +5224,35 @@ moved to after the restart (Basheer).
   column, new layout step), BR-OP-16 and BR-OP-20, UI-Inventory.
   Still to do: user manual and in-app help (merge-time catch-up,
   `docs/User-Manual-And-Help-Catchup-Implementation-Plan.md`).
+
+### 2026-10-28 — My Work (Weekly Follow-up plan) step 5 built, code review done, on the Build branch
+- Step 5 `d4a8df4`: sixth My Work card "My hospitals this quarter" — the
+  hospitals on the viewed person's APPROVED plan for the quarter today
+  falls in (`quarter_of`), no migration. Basheer's answers (D27–D29):
+  "last visit" counts only visits, calls, meetings and emails (not Notes)
+  and only the viewed person's own, whether logged on the hospital or on
+  one of its Opportunities; "next action due" is their earliest open next
+  action at the hospital, Opportunity ones included. Never-visited
+  hospitals first. A hospital on two plans in one quarter (one per SBU) is
+  listed once. Everyone except Marketing Users now opens on My Work (D9b).
+- Pre-E2E `/code-review` (medium, `42bd5f8^..d4a8df4`): 9 findings, 3 real
+  and fixed in `8c0e0c9` — after a manager switched back to "Me" the
+  previous rep's rows briefly had live "Done"/"Log Activity" buttons
+  (D15); leaving the screen reset only the days box, not the rep picker
+  and "70 %+ only" tick (D6); the always-mounted screen fetched on every
+  login including Marketing Users. Also whole-number-only "Not visited for"
+  and Stagnant boxes ("30.9" and "1e3" were read as 30 and 1). Not changed:
+  duplicate-hospital fold (rows identical, test covers it), whole 24-hour
+  day counts (same measure as the Stagnant report, D23), browser-time-zone
+  date formatting (same as the Next Actions screen), reuse of the activity
+  domain's private loader names (deliberate, D26).
+- Checks: 1429 backend tests pass (12 new), ruff clean, tsc and lint 0
+  errors (133 old warnings). Not seen in a browser; E2E section F updated
+  to the built wording.
+- Still to do: user manual and in-app help (merge-time catch-up); merge
+  only on Basheer's go after the Annual Target Planning Part 2 E2E.
+- Retro (Build session, 28 Oct). Corrections from Basheer this session: 1
+  — "I didn't understand these questions": the three step-5 design
+  questions went out as short labels without a real example and a
+  recommendation (CLAUDE.md, 2026-09-30); re-explained, he answered. No
+  tracker change: no live data, UAT or lost work, and no guard could stop it.

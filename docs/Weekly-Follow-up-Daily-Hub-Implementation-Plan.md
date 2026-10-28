@@ -3,9 +3,11 @@
 **Status:** Step 1 on UAT 2026-10-25 (`8b2ec8a`). Approved 2026-10-21 (Basheer; every line in Decisions
 answered). Step 1 (D9a, D10) built ahead of the approval, 2026-10-19
 (`508ff42`; Basheer: not part of My Work itself); commit and Dev check in
-Progress-Archive. Steps 2–5 not started: built straight after the Annual
-Target Planning Part 2 E2E (D18; the Part 1 E2E that D14 waited for
-passed 2026-10-24). E2E test plan written 2026-10-25
+Progress-Archive. Steps 2, 4 and 5 built 2026-10-28 on branch
+`worktree-build` (`42bd5f8`, `8d4bdac`, `d4a8df4`; review fixes `8c0e0c9`),
+merged after the Annual Target Planning Part 2 E2E (D18; the Part 1 E2E
+that D14 waited for passed 2026-10-24); step 3 has nothing of its own
+(D13). Still to do: user manual and in-app help (merge-time catch-up). E2E test plan written 2026-10-25
 (`docs/Weekly-Follow-up-Daily-Hub-Manual-E2E-Test-Plan.md`, 33 steps per
 `393beee`'s message).
 **Traceability rows:** 11.1 Weekly Follow-up Report (Not started). Also
@@ -58,6 +60,9 @@ in `— proposed`; once Basheer answers, change the ending to
 - D24. My Work makes one combined request for all five lists, not several calls to the existing reports: the existing next-action reports give only a count per person, and one request keeps the cards' counts consistent (settles section 6's open alternative) — Basheer, 2026-10-28
 - D25. The Stagnant Deals report's type-any-number box (D6c) opens at 30 days, the same as My Work, instead of today's 180 — Basheer, 2026-10-28
 - D26. My Work's two next-action lists come back in the same full form the Next Actions screen uses, so "Done" opens the existing close form with everything it needs and no second request (changes step 2's next-action rows) — Basheer, 2026-10-28
+- D27. In "My hospitals this quarter" (step 5), a hospital's "last visit" counts only visits, calls, meetings and emails (the same as "Not visited", D6d), not Notes — Basheer, 2026-10-28
+- D28. "Last visit" is the viewed person's own latest such activity at that hospital, whether logged on the hospital or on one of its Opportunities; other people's visits to the same hospital aren't shown — Basheer, 2026-10-28
+- D29. A hospital's "next action due" is the earliest open next action assigned to the viewed person at that hospital, including those tied to its Opportunities — Basheer, 2026-10-28
 
 ## 1. In plain terms
 

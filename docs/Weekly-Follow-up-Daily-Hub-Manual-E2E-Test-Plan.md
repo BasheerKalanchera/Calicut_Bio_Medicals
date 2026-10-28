@@ -3,9 +3,9 @@
 
 **Covers:** `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md`, steps
 2–5 (step 1 passed its Dev check 2026-10-19 and is on UAT).
-**Built:** steps 2 and 4 on branch `worktree-build` (`42bd5f8`,
-`8d4bdac`), merged after the Annual Target Planning Part 2 E2E (D18);
-step 5 (section F) not yet built.
+**Built:** steps 2, 4 and 5 on branch `worktree-build` (`42bd5f8`,
+`8d4bdac`, `d4a8df4`; code-review fixes `8c0e0c9`), merged after the
+Annual Target Planning Part 2 E2E (D18).
 **Where:** Dev.
 
 **Written ahead of the build.** The screen doesn't exist yet, so its
@@ -122,10 +122,10 @@ test creates has its hospital fixed in this plan, never "any hospital".
 
 ## F — My hospitals this quarter and landing on My Work (step 5)
 
-1. [Simple] Sign in as Vivek, open My Work. **Expected:** "My hospitals this quarter" empty (his Oct–Dec 2026 plan isn't approved yet). —
+1. [Simple] Sign in as Vivek, open My Work. **Expected:** the last card, "My hospitals this quarter (2026-Q3) · 0", says "No approved hospital plan for this quarter." (his Oct–Dec 2026 plan isn't approved yet). —
 2. [Complex: save to Dev, cross-role] As Arun Adarsh, approve Vivek's Oct–Dec 2026 plan on the Target Planning screen (Basheer clicks, Claude watches). **Expected:** status Approved. —
-3. [Simple] As Vivek, My Work. **Expected:** "My hospitals this quarter": KIMS Hospital Trivandrum, Test hospital 2, Test hospital 3, each with its last visit (or none) and next action due (values from P4). —
-4. [Simple] As Fahad. **Expected:** "My hospitals this quarter" empty (no approved plan); no hospital of Vivek's shown. —
+3. [Simple] As Vivek, My Work. **Expected:** "My hospitals this quarter (2026-Q3) · 3": KIMS Hospital Trivandrum, Test hospital 2, Test hospital 3. "Last visit" shows "Never" or a date with "N days ago", counting only Vivek's own visits, calls, meetings and emails (D27, D28; Notes and other people's visits don't); "Next action due" shows "—" or his earliest open next action there, Opportunity ones included (D29). Never-visited hospitals come first (values from P4). —
+4. [Simple] As Fahad. **Expected:** the card says "No approved hospital plan for this quarter."; no hospital of Vivek's shown. —
 5. [Simple] Sign out and sign in as Fahad. **Expected:** the app opens on My Work (D9b). —
 6. [Simple] Sign in as Marketing User. **Expected:** the app opens on Marketing Leads, not My Work, and the menu has no "My Work" (D19). —
 
