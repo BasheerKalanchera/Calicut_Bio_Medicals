@@ -22,8 +22,8 @@ session edits this note._
   fix 5 closed, no change (Basheer). Archive entry written.
   After-push checkpoint for `e33f35c` done 28 Oct (session start).
 - E2E PAUSED 28 Oct (Basheer) until Plan & Chore fixes the test plan
-  (`docs/Annual-Target-Planning-Manual-E2E-Test-Plan.md`, in the 28 Oct
-  docs batch: section L added, K10 reworded, P7/P8 recorded, I1–I7 recorded,
+  (`docs/Annual-Target-Planning-Manual-E2E-Test-Plan.md`, committed and
+  pushed 28 Oct as `111c399`: section L added, K10 reworded, P7/P8 recorded, I1–I7 recorded,
   I2–I5 and I7 reworded). Run so far: 11 of 52 (P6–P8, I1–I7); I8
   open (upcoming year shows no SBU/Company row — design silent; the
   plan says to keep or show "Target not set"). Mismatches handed to

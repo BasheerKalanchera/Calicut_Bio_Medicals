@@ -5302,3 +5302,44 @@ moved to after the restart (Basheer).
      spacing recommendation went against the standard's idea; withdrawn.
 - Tracker: P102 new (1) for correction 1, guard-stoppable. The rest
   are counted only.
+
+### 2026-10-28 — Part 2 E2E started, paused at I8 (11 of 52)
+- Test plan (`111c399`): new section L (phone, tablet and laptop look
+  per screen), K10 reworded to the card layout, P7 and P8 recorded
+  (read-only Dev), I1–I7 run, I8 observed and left open. Run: 11 of 52.
+- Plan-versus-screen mismatches found, for Plan & Chore: I2–I4 expected
+  Won for the upcoming Jan–Mar to be a sum — it reads "—" by design
+  (`service.py:1296`); I7 expected ₹475 L at Jan–Mar — the Year view has
+  one Company row, no per-quarter figure; I5 "none" is ₹0 L; I4 has no
+  per-quarter Team plans line (added up from the opened person rows);
+  line 100 still says Basheer K ₹120 L (his person target is unset on
+  purpose, Part 1). I2–I5 and I7 reworded with Basheer's yes.
+- I8 design gap: FY 2027-28 (upcoming year) shows no SBU or Company
+  row — they are built only from counted quarters
+  (`service.py:1232–1235`); the design is silent. Keep as is, or show an
+  SBU row "Target not set"? Basheer sent the plan to Plan & Chore for a
+  full review; E2E stopped until it is fixed. Resume at I9 (as Fazal).
+
+### 2026-10-28 — Build & Test retro, Part 2 E2E run
+- Corrections from Basheer this session: 6 (counted from his 31 messages
+  in the transcript; the session ran about 3 h 30 min)
+  1. "Correct your P7 note" — I called Basheer K's missing person target
+     an open problem; Part 1 left it unset on purpose.
+  2. "How did the number of test cases go from 40 to 102?" — I quoted
+     step totals (98, 109) counted over the whole file, Part 1's
+     finished steps included; Part 2's is 52.
+  3. "Where are you getting the 186 figure from on the screen?" — my own
+     sum of person rows, spoken of as a screen figure.
+  4. "What are we testing right now? … not making sense" — steps given
+     one by one without the plain-language context first.
+  5. "How can the Company row change from 465 to 475?" — an I7
+     expectation repeated from the plan without checking the screen.
+  6. "Check the implementation plan. That is our design, right?" — I
+     called the missing SBU row "by design" from the code alone; the
+     design doc is silent.
+- Pattern: 3 and 5 are one slip (a figure or expectation repeated
+  without checking it against the screen); 4 is plain-language-first not
+  applied to test steps. Counted only, no tracker line (nothing guard-
+  stoppable; no live data or UAT touched, every Dev check read-only).
+- Note: I moved Basheer's browser tab one year too far (FY 2028-29) and
+  brought it back.
