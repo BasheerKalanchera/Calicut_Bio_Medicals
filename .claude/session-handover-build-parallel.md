@@ -30,8 +30,8 @@ the build branch, and reaches `main` at the merge (Basheer, 2026-10-17)._
   finish a dash. Year person % = won ÷ target so far. Year names stay
   plain text (links "later if required").
 - **Step 3 done (29 Oct).** Small fix `161fb15` (unused `headCellSx`
-  removed); the docs batch below is the commit right after it on
-  `worktree-build`, both pushed. Business-Rules
+  removed) and docs batch `2fcd8fc`, both pushed to `origin/worktree-build`
+  (not merged to `main`). Business-Rules
   (BR-OP-16 Where shown + Forecast effect, new Year view line under
   BR-PL-12), rule matrix (BR-OP-16, BR-FIN-09 rows), a "replaced in part"
   note in the Plan-vs-Actuals-Tracking plan. Checks green: pytest 1441,
