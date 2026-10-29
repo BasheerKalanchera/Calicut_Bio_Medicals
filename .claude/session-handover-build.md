@@ -16,18 +16,18 @@ session edits this note._
 ## Now: My Work E2E (Weekly Follow-up plan, steps 2–5) — before Part 2
 - Merged `b704b56`; review fixes `048c741`, Stagnant 500 fix `4deb68c`
   (pushed 28 Oct). Archive 28 and 29 Oct has the detail.
-- 29 Oct: tabs + Summary (D30–D33, My hospitals first) built in
-  `MyWorkScreen.tsx` + `StatTile` onClick; tsc + lint clean; Basheer saw
-  it on Dev ("looks very good"). Test plan reworded, section H added
-  (45 steps; G1 open for Basheer at 390/768/1280 on the reordered tabs).
-  Committed and pushed as `c7977f2` (29 Oct; scorecard --check OK).
-  Browser-check rule, archive entry and retro (3 corrections) in the
-  29 Oct docs commit, pushed.
-- Basheer passed Plan & Chore a note (29 Oct): Annual Target test plan
-  line 594 still says Claude measures the phone layout.
-- Next: G1 (Basheer), P1–P5, then A–F, H. Browser checks
-  only for steps that can't be judged by eye (rule 29 Oct). Test run:
-  0 of 45. Test plan: `docs/Weekly-Follow-up-Daily-Hub-Manual-E2E-Test-Plan.md`.
+- 29 Oct: tabs + Summary `c7977f2`; small-tab/Summary-look fixes (D34–D41,
+  Next actions small tabs, taller pinned tabs, emoji icons, Rep dropdown on
+  Stagnant Opportunities) committed and pushed as `676a05d` (tsc, lint,
+  MUI check clean; own diff read, not the formal /code-review).
+- E2E finished 29 Oct: every step Pass (55 of 55, my count). Red "N days
+  overdue" hospital badge not exercised (no overdue next action on Dev).
+- Docs UNCOMMITTED: plan (D38–D41, Status line), test plan (results),
+  Progress-Archive-2026-10 entry, this note. One docs commit awaits
+  Basheer's approval (shown first).
+- Retro written in the archive entry (5 corrections), in the same docs
+  batch. Next: the Plan & Chore build order (Basheer decides): Part 2 E2E resumes at I9 (paused),
+  or the Target vs Actuals redesign plan.
 - Idea raised by Basheer: widen Backlog "Front-end consistency audit" into a
   convention audit (expensive job — show scope/cost first).
 

@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Box, TextField } from "@mui/material";
+import { Box, MenuItem, TextField } from "@mui/material";
 import { LoadingOrEmpty } from "../components/ReportingUI";
+import { listUsers } from "../services/masterData";
 import { getStagnantDeals } from "../services/reporting";
 import { statusColors } from "../theme/statusColors";
 import { shadows } from "../theme/shadows";
@@ -24,16 +25,40 @@ export default function StagnantDealsReportScreen({
   const [thresholdDays, setThresholdDays] = useState(DEFAULT_THRESHOLD_DAYS);
   if (typed >= 1 && typed <= MAX_THRESHOLD_DAYS && typed !== thresholdDays) setThresholdDays(typed);
 
+  // Rep filter: the people this user may see (same list as My Work's
+  // "Showing"). The server applies the same visibility rules to user_id.
+  const [userId, setUserId] = useState("");
+  const { data: reps = [] } = useQuery({
+    queryKey: ["users", "scoped"],
+    queryFn: () => listUsers("scoped"),
+  });
+
   const query = useQuery({
-    queryKey: ["reporting", "stagnant-deals", thresholdDays],
-    queryFn: () => getStagnantDeals(thresholdDays),
+    queryKey: ["reporting", "stagnant-deals", thresholdDays, userId],
+    queryFn: () => getStagnantDeals(thresholdDays, userId ? { user_id: userId } : {}),
   });
 
   const rows = query.data?.rows ?? [];
 
   return (
     <Box sx={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", bgcolor: "background.default" }}>
-      <Box sx={{ px: 2, pt: 2, pb: 1, bgcolor: "background.default", flexShrink: 0 }}>
+      <Box sx={{ px: 2, pt: 2, pb: 1, bgcolor: "background.default", flexShrink: 0, display: "flex", flexWrap: "wrap", gap: 2 }}>
+        {reps.length > 1 && (
+          <TextField
+            select
+            size="small"
+            label="Rep"
+            value={userId}
+            onChange={(e) => setUserId(e.target.value)}
+            slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+            sx={{ minWidth: 200, mt: 1 }}
+          >
+            <MenuItem value="">All reps</MenuItem>
+            {reps.map((u) => (
+              <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>
+            ))}
+          </TextField>
+        )}
         <TextField
           size="small"
           type="number"
