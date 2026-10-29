@@ -64,6 +64,10 @@ in `— proposed`; once Basheer answers, change the ending to
 - D27. In "My hospitals this quarter" (step 5), a hospital's "last visit" counts only visits, calls, meetings and emails (the same as "Not visited", D6d), not Notes — Basheer, 2026-10-28
 - D28. "Last visit" is the viewed person's own latest such activity at that hospital, whether logged on the hospital or on one of its Opportunities; other people's visits to the same hospital aren't shown — Basheer, 2026-10-28
 - D29. A hospital's "next action due" is the earliest open next action assigned to the viewed person at that hospital, including those tied to its Opportunities — Basheer, 2026-10-28
+- D30. My Work shows one tab at a time instead of six lists one under the other (the user had to scroll to reach the bottom ones): four tabs — Summary, My hospitals, Opportunities (the three Opportunity lists), Next actions (the two next-action lists) — in the same pill style as Insights. Three grouped tabs chosen over one tab per list; My hospitals first, on both the tab row and the Summary tab — Basheer, 2026-10-29
+- D31. The "Not visited for (days)" box and the "70 %+ only" tick move into the Opportunities tab, since each changes only a list there; the managers' "Showing" switch stays above the tabs, as it changes every tab — Basheer, 2026-10-29
+- D32. The Summary tab has one box per list, under the three tab headings in tab order (D30): for My hospitals the number of hospitals on the plan, how many were never visited (no visit, call, meeting or email, D27) and how many have an overdue next action (D29); each Opportunity list's count and ₹ total; each next-action list's count only (D21). The boxes follow the days box, the tick and "Showing"; no grand total across boxes (D3) — Basheer, 2026-10-29
+- D33. My Work always opens on the Summary tab, and goes back to it whenever the screen is left (like D6). Clicking a Summary box opens that list's tab and jumps to that list — Basheer, 2026-10-29
 
 ## 1. In plain terms
 

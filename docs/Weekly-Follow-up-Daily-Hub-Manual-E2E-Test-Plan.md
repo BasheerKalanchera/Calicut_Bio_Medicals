@@ -8,11 +8,12 @@
 Annual Target Planning Part 2 E2E (D18).
 **Where:** Dev.
 
-**Read first (Build session, 28 Oct):** nobody has seen My Work in a
-browser. The Build session has no browser, so the usual phone-width check
-before handover was not done. Do section G (phone 390 px, tablet 768 px,
-laptop 1280 px) before the other sections. A layout problem found there
-goes back to the Build session as a fix, not a test failure.
+**Read first (Build & Test, 29 Oct):** before the run, My Work moved from
+six lists one under the other to four tabs — Summary, My hospitals,
+Opportunities, Next actions — with a Summary box per list that opens its
+list (D30–D33). Steps below say which tab each list is on; section H
+tests the tabs and the Summary. Section G was passed on the old layout
+(28 Oct) and is run again on the tabs.
 
 **Written ahead of the build.** The screen doesn't exist yet, so its
 labels below come from the plan (D2, D3, D3a, D4). Before the run, Build &
@@ -65,11 +66,16 @@ not the design doc (for this screen, from the built code at P3).
   only on own rows, landing screen — plan D2, D3, D3a, D4, D6, D7, D9b,
   D15, D16, D17; first on the menu, N days or more, count-only
   next-action cards, owner-only lists — D19–D22 (Basheer, 2026-10-25).
+- Tabs, their order, the Summary boxes and where the days box and tick sit
+  — D30–D33 (Basheer, 2026-10-29); tab and box labels from
+  `MyWorkScreen.tsx`.
 - "zz E2E MyWork …" texts — made-up test data.
 
 **Tags:** every step starts with `[Simple]` (one click/type/verify-a-value,
-Basheer runs it) or `[Complex: <reason>]` (Claude drives: layout shift,
-multi-step, cross-screen/cross-role, or a genuine visual check). Saves to
+Basheer runs it) or `[Complex: <reason>]` (layout shift, multi-step,
+cross-screen/cross-role, or a genuine visual check). Basheer runs Complex
+steps too, from exact instructions; Claude uses the browser only when a
+step can't be judged by eye (Basheer, 2026-10-29). Saves to
 Dev are "Basheer clicks, Claude watches"; Claude reads the record back in
 the app.
 
@@ -88,22 +94,27 @@ test creates has its hospital fixed in this plan, never "any hospital".
 ## A — Menu and first look (Fahad)
 
 1. [Simple] Sign in as Fahad. Open the menu. **Expected:** "My Work" is the first item, above Account Management; not under Reports (D19). —
-2. [Simple] Open My Work. **Expected:** the four sections "High priority or 70 %+", "Closing date passed", "Not visited in 30+ days", "Overdue next actions", plus "Next actions due this week"; the three Opportunity cards show count and ₹ total, the two next-action cards a count only (D21); no grand total across cards. —
+2. [Simple] Open My Work. **Expected:** it opens on the Summary tab (D33). Under "My hospitals": "My hospitals this quarter (2026-Q3)". Under "Opportunities": "High priority or 70 %+", "Closing date passed", "Not visited in 30+ days", each with count and ₹ total. Under "Next actions": "Overdue next actions", "Next actions due this week", count only (D21). No grand total across boxes (D32). —
 3. [Simple] Hide-check. **Expected:** no "Showing:" switch (Fahad is a rep); Fazal's "New oppotunity fast track" (Aster DM) appears nowhere. —
 
 ## B — The lists, as a rep (Fahad)
 
-1. [Simple] "High priority or 70 %+". **Expected (25 Oct):** 5, ₹78 Lakhs: "New Fastrack deal direct to Order" (Al Shifa Hospital Perinthalmanna) Order 90 % ₹30; "Test fast track deal from customer 360" (Al Shifa Hospital Perinthalmanna) Negotiation 70 % ₹5; "Now fastack lead" (Aster MIMS Calicut) Negotiation 70 % ₹20; "Test one more direct Opportunity" (EMS Hospital) Negotiation 70 % ₹3; "Test Gate override oppotunity (renamed for TC-19/22)" (Maulana) Negotiation 70 % ₹20. Not "USG M/c - Test Aug 18" (Aster MIMS Calicut) — Demo, 35 %. —
+Steps 1–8 are on the Opportunities tab; step 9 on the Next actions tab.
+
+1. [Simple] Open the Opportunities tab. "High priority or 70 %+". **Expected (25 Oct):** 5, ₹78 Lakhs: "New Fastrack deal direct to Order" (Al Shifa Hospital Perinthalmanna) Order 90 % ₹30; "Test fast track deal from customer 360" (Al Shifa Hospital Perinthalmanna) Negotiation 70 % ₹5; "Now fastack lead" (Aster MIMS Calicut) Negotiation 70 % ₹20; "Test one more direct Opportunity" (EMS Hospital) Negotiation 70 % ₹3; "Test Gate override oppotunity (renamed for TC-19/22)" (Maulana) Negotiation 70 % ₹20. Not "USG M/c - Test Aug 18" (Aster MIMS Calicut) — Demo, 35 %. —
 2. [Simple] Each row shows Opportunity, hospital, stage, chance, value and days since visit, with "Log Activity" (D3). **Expected:** all columns on every row; no owner column, since the screen shows one person's rows. —
 3. [Simple] Tick "70 %+ only". **Expected:** still the same 5 (all are 70 % or more). Untick. —
 4. [Simple] "Closing date passed". **Expected (25 Oct):** 1, ₹20 Lakhs: "Test Gate override oppotunity (renamed for TC-19/22)" (Maulana), closing date 3 Sep, 52 days overdue. —
 5. [Simple] "Not visited in 30+ days", box shows 30. **Expected (25 Oct):** 6, ₹95 Lakhs — all six of Fahad's Opportunities: idle 59, 59, 56, 67, 59, 59 days. —
 6. [Simple] Type the idle-day count of "Now fastack lead" (Aster MIMS Calicut) (56 on 25 Oct). **Expected:** it stays on the list (N days or more, D20); typing one more drops it. —
 7. [Simple] Type 60. **Expected (25 Oct):** 1, ₹17 Lakhs: "USG M/c - Test Aug 18" (Aster MIMS Calicut), 67 days. —
-8. [Simple] Open another screen, come back to My Work. **Expected:** the box shows 30 again and the list is back to 6 (D6). —
-9. [Simple] "Overdue next actions" and "Next actions due this week". **Expected:** both empty, with the empty-list message from the code, and no ₹ total on either card (D21). —
+8. [Simple] Open another screen, come back to My Work. **Expected:** it opens on Summary (D33); on the Opportunities tab the box shows 30 again and the list is back to 6 (D6). —
+9. [Simple] Next actions tab: "Overdue next actions" and "Next actions due this week". **Expected:** both say "Nothing here.", with no ₹ total on either (D21). —
 
 ## C — Acting from My Work (Fahad; Basheer clicks, Claude watches)
+
+After each save, read the counts on the Summary tab; open the list's tab
+only to see which rows moved.
 
 1. [Complex: save to Dev, then three lists checked] On "USG M/c - Test Aug 18" (Aster MIMS Calicut) in "Not visited", click "Log Activity". Log a Note "zz E2E MyWork C1 note", next action "zz E2E MyWork C1 due today", due today. **Expected:** form opens with the Opportunity filled in; after saving, "Overdue next actions" 1 (due today counts as overdue, D17), "Due this week" still empty, and the Opportunity is still in "Not visited" (a Note doesn't count, D6d). —
 2. [Complex: save to Dev, then three lists checked] On "zz E2E MyWork C1 due today", click "Done". Close it as a Call "zz E2E MyWork C2 call", follow-up "zz E2E MyWork C2 follow-up" due tomorrow. **Expected:** the existing close form with its pre-fill (D8); after saving, "Overdue next actions" empty, "Due this week" 1 (the follow-up), "Not visited" 5, ₹78 Lakhs ("USG M/c - Test Aug 18" (Aster MIMS Calicut) gone). —
@@ -128,15 +139,23 @@ test creates has its hospital fixed in this plan, never "any hospital".
 
 ## F — My hospitals this quarter and landing on My Work (step 5)
 
-1. [Simple] Sign in as Vivek, open My Work. **Expected:** the last card, "My hospitals this quarter (2026-Q3) · 0", says "No approved hospital plan for this quarter." (his Oct–Dec 2026 plan isn't approved yet). —
+1. [Simple] Sign in as Vivek, open My Work. **Expected:** the Summary's hospital box reads 0 and "No approved hospital plan for this quarter."; the My hospitals tab, "My hospitals this quarter (2026-Q3) · 0", says the same (his Oct–Dec 2026 plan isn't approved yet). —
 2. [Complex: save to Dev, cross-role] As Arun Adarsh, approve Vivek's Oct–Dec 2026 plan on the Target Planning screen (Basheer clicks, Claude watches). **Expected:** status Approved. —
-3. [Simple] As Vivek, My Work. **Expected:** "My hospitals this quarter (2026-Q3) · 3": KIMS Hospital Trivandrum, Test hospital 2, Test hospital 3. "Last visit" shows "Never" or a date with "N days ago", counting only Vivek's own visits, calls, meetings and emails (D27, D28; Notes and other people's visits don't); "Next action due" shows "—" or his earliest open next action there, Opportunity ones included (D29). Never-visited hospitals come first (values from P4). —
-4. [Simple] As Fahad. **Expected:** the card says "No approved hospital plan for this quarter."; no hospital of Vivek's shown. —
-5. [Simple] Sign out and sign in as Fahad. **Expected:** the app opens on My Work (D9b). —
+3. [Simple] As Vivek, My Work, My hospitals tab. **Expected:** "My hospitals this quarter (2026-Q3) · 3": KIMS Hospital Trivandrum, Test hospital 2, Test hospital 3. "Last visit" shows "Never" or a date with "N days ago", counting only Vivek's own visits, calls, meetings and emails (D27, D28; Notes and other people's visits don't); "Next action due" shows "—" or his earliest open next action there, Opportunity ones included (D29). Never-visited hospitals come first (values from P4). —
+4. [Simple] As Fahad, My hospitals tab. **Expected:** "No approved hospital plan for this quarter."; no hospital of Vivek's shown. —
+5. [Simple] Sign out and sign in as Fahad. **Expected:** the app opens on My Work, Summary tab (D9b, D33). —
 6. [Simple] Sign in as Marketing User. **Expected:** the app opens on Marketing Leads, not My Work, and the menu has no "My Work" (D19). —
 
 ## G — Phone, tablet and laptop layout
 
-Run this first: the screen has not been seen in a browser yet (see "Read first" at the top).
+1. [Complex: phone layout] As Fazal, My Work (every tab) and the Stagnant Deals box at 390 px, then 768 and 1280 px. **Expected:** at 390 px the tab row scrolls sideways with the open tab brought to the middle; the Summary boxes wrap and fit the width; on the list tabs each row is a card, with no sideways scroll of the page and nothing wider than its card; "Log Activity" and "Done" are reachable; at 768 and 1280 px the rows are a table. The "Not visited for (days)" box (Opportunities tab) and the "Showing" switch (above the tabs) each have their name above them (MUI standard rule 7). — 28 Oct: Pass on the old six-list layout (Claude, as Fazal, measured; Progress-Archive 28 Oct). 29 Oct: Basheer looked at the tabs layout — "looks very good"; asked for My hospitals first, done. Still open: Basheer to confirm 390, 768 and 1280 px on the reordered tabs.
 
-1. [Complex: phone layout] As Fazal, My Work and the Stagnant Deals box at 390 px, then 768 and 1280 px. **Expected:** at 390 px each row is a card, the six sections (including "My hospitals this quarter") and their counts fit the width with no sideways scroll (no element wider than its card), the top bar wraps, and "Log Activity" and "Done" are reachable; at 768 and 1280 px the rows are a table. The "Not visited for (days)" box and the "Showing" switch each have their name above them (MUI standard rule 7). —
+## H — Tabs and Summary (D30–D33)
+
+1. [Simple] As Fahad, open My Work. **Expected:** tabs in order Summary, My hospitals, Opportunities, Next actions, with Summary open; Summary headings in the same order. Each box's figure equals the count (and ₹ total) at the top of its list on the other tabs. —
+2. [Simple] On Summary, click "Closing date passed". **Expected:** the Opportunities tab opens at the "Closing date passed" list, not at "High priority or 70 %+" above it. Back to Summary, click "Next actions due this week": the Next actions tab opens at that list. Back to Summary, click the hospital box: the My hospitals tab opens. —
+3. [Simple] The days box and the "70 %+ only" tick appear on the Opportunities tab only; no other tab shows them. —
+4. [Simple] On Opportunities, type 60, then open Summary. **Expected:** the box reads "Not visited in 60+ days" with the same count as the list. Tick "70 %+ only", open Summary: the first Opportunities box reads "70 %+ chance". —
+5. [Simple] Leave My Work and come back. **Expected:** Summary open; on Opportunities the box shows 30 and the tick is off (D6, D33). —
+6. [Simple] As Fazal, pick "Fahad" in "Showing" (above the tabs). **Expected:** the Summary boxes change to Fahad's figures; the Opportunities and Next actions tabs show his rows with no buttons (D15). —
+7. [Simple] As Vivek after F2, Summary. **Expected:** hospital box "3" and "N never visited · N overdue next action", where N never visited = rows saying "Never" under "Last visit" on the My hospitals tab, and N overdue = rows with a red "N days" badge under "Next action due". —

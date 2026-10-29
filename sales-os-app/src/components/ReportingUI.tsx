@@ -1,4 +1,4 @@
-import { Alert, Box, Button } from "@mui/material";
+import { Alert, Box, Button, ButtonBase } from "@mui/material";
 import { shadows } from "../theme/shadows";
 
 // dataviz skill: a single-series magnitude comparison -- one sequential hue,
@@ -96,10 +96,15 @@ export function MiniBar({
   );
 }
 
-export function StatTile({ label, value, sublabel }: { label: string; value: string; sublabel?: string }) {
+// With onClick the tile is a button (keyboard and focus included), e.g. My
+// Work's Summary boxes that open their list (Weekly Follow-up plan D33).
+export function StatTile({ label, value, sublabel, onClick }: { label: string; value: string; sublabel?: string; onClick?: () => void }) {
   return (
     <Box
+      component={onClick ? ButtonBase : "div"}
+      onClick={onClick}
       sx={{
+        ...(onClick && { display: "block", textAlign: "left", font: "inherit", transition: "border-color 0.2s", "&:hover": { borderColor: "blue.300" } }),
         flex: 1,
         minWidth: 160,
         bgcolor: "background.paper",
