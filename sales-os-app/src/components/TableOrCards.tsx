@@ -100,6 +100,7 @@ export function TocRow({
   children,
   indent = 0,
   total = false,
+  shaded = false,
   detail,
   subRows,
 }: {
@@ -108,6 +109,8 @@ export function TocRow({
   indent?: number;
   // A total line (bold, rule above it on a laptop).
   total?: boolean;
+  // A summary line (Company, SBU): light grey ground, on a laptop and a phone.
+  shaded?: boolean;
   // Opened detail under the row; a falsy value shows nothing.
   detail?: ReactNode;
   subRows?: ReactNode;
@@ -118,6 +121,7 @@ export function TocRow({
   if (!ctx.phone) {
     // One "& > td" object: two spreads with the same key would drop the first.
     const rowSx: SxProps<Theme> = {
+      ...(shaded && { bgcolor: "gray.50" }),
       "& > td": {
         ...(total && { fontWeight: 700, borderTop: "2px solid", borderColor: "divider" }),
         ...(detail && { borderBottom: "none" }),
@@ -164,7 +168,7 @@ export function TocRow({
     return <Box sx={{ borderTop: 1, borderColor: "divider", pt: 0.75, mt: 0.75 }}>{content}</Box>;
   }
   return (
-    <Card variant="outlined" sx={{ ml: indent * 2 }}>
+    <Card variant="outlined" sx={{ ml: indent * 2, ...(shaded && { bgcolor: "gray.50" }) }}>
       <CardContent sx={{ p: 1.5, "&:last-child": { pb: 1.5 } }}>{content}</CardContent>
     </Card>
   );

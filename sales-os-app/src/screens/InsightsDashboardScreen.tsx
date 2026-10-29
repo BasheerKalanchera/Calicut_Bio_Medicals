@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Box, Button, MenuItem, TextField } from "@mui/material";
+import { Box, Button, ButtonBase, MenuItem, TextField } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
 import dayjs from "dayjs";
 import { LoadingOrEmpty, MiniBar, SectionCard, StatTile, ZoneTreeNote } from "../components/ReportingUI";
 import TargetVsActualsSection from "../components/TargetVsActualsSection";
 import { useAuth } from "../contexts/AuthContext";
 import { getActivityLevels, getOverdueActions, getPipelineSummary } from "../services/reporting";
-import type { PipelineGroupBy } from "../types/reporting";
+import type { MyWorkRequest, PipelineGroupBy } from "../types/reporting";
 import { formatLakhs } from "../utils/formatter";
 import { shadows } from "../theme/shadows";
 import { statusColors } from "../theme/statusColors";
@@ -39,16 +39,34 @@ const TABS: { id: TabId; label: string; managerOnly: boolean }[] = [
   { id: "target", label: "Target vs Actuals", managerOnly: false },
   { id: "pipeline", label: "Pipeline", managerOnly: false },
   { id: "activity", label: "Team Activity", managerOnly: true },
-  { id: "overdue", label: "Overdue Actions", managerOnly: true },
+  { id: "overdue", label: "Overdue", managerOnly: true },
 ];
 
 interface Props {
   // DemoApp keeps this screen mounted while hidden; used to reset to the
   // first tab so the screen always opens on Target vs Actuals.
   isActive: boolean;
+  // Overdue tab (Redesign D5/D11): opens My Work at one person's list.
+  onOpenMyWork: (request: Omit<MyWorkRequest, "nonce">) => void;
 }
 
-export default function InsightsDashboardScreen({ isActive }: Props) {
+// A red mark that opens My Work when there is something to see; grey and
+// inert at zero (D11).
+function OverdueMark({ count, text, label, onOpen }: { count: number; text: string; label: string; onOpen: () => void }) {
+  const sx = { typography: "caption", fontWeight: 900, px: 1, py: 0.25, borderRadius: "0.375rem" } as const;
+  if (count === 0) return <Box sx={{ ...sx, bgcolor: "gray.100", color: "gray.400" }}>{text}</Box>;
+  return (
+    <ButtonBase
+      onClick={onOpen}
+      aria-label={label}
+      sx={{ ...sx, bgcolor: statusColors.overdue.bg, color: statusColors.overdue.text, "&:hover": { textDecoration: "underline" } }}
+    >
+      {text}
+    </ButtonBase>
+  );
+}
+
+export default function InsightsDashboardScreen({ isActive, onOpenMyWork }: Props) {
   const { userProfile } = useAuth();
   const isManagerTier = MANAGER_TIER_ROLES.has((userProfile as { role_name?: string } | null)?.role_name ?? "");
   const tabs = TABS.filter((t) => isManagerTier || !t.managerOnly);
@@ -246,32 +264,36 @@ export default function InsightsDashboardScreen({ isActive }: Props) {
         )}
 
         {isManagerTier && activeTab === "overdue" && (
-          <SectionCard title={`Overdue Actions${overdueQuery.data ? ` — ${overdueQuery.data.total_overdue} total` : ""}`}>
+          <SectionCard title={`Overdue${overdueQuery.data ? ` — ${overdueQuery.data.total_overdue} overdue next actions` : ""}`}>
             <LoadingOrEmpty
               isLoading={overdueQuery.isLoading}
               isError={overdueQuery.isError}
               isEmpty={overdueRows.length === 0}
-              emptyText="Nobody on the team has overdue actions."
-              errorText="Couldn't load overdue actions."
+              emptyText="Nobody on the team has overdue next actions or Opportunities past their closing date."
+              errorText="Couldn't load overdue items."
               onRetry={() => overdueQuery.refetch()}
             />
             {overdueRows.length > 0 && (
               <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
                 {overdueRows.map((row) => (
-                  <Box key={row.user_id} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", py: 0.5 }}>
+                  <Box
+                    key={row.user_id}
+                    sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1, py: 0.5 }}
+                  >
                     <Box sx={{ typography: "body3", fontWeight: 600, color: "text.primary" }}>{row.display_name}</Box>
-                    <Box
-                      sx={{
-                        typography: "caption",
-                        fontWeight: 900,
-                        px: 1,
-                        py: 0.25,
-                        borderRadius: "0.375rem",
-                        bgcolor: row.overdue_count > 0 ? statusColors.overdue.bg : "gray.100",
-                        color: row.overdue_count > 0 ? statusColors.overdue.text : "gray.400",
-                      }}
-                    >
-                      {row.overdue_count} overdue
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                      <OverdueMark
+                        count={row.overdue_count}
+                        text={`${row.overdue_count} overdue`}
+                        label={`${row.display_name}: ${row.overdue_count} overdue next actions`}
+                        onOpen={() => onOpenMyWork({ userId: row.user_id, tabId: "next-actions", listId: "overdue" })}
+                      />
+                      <OverdueMark
+                        count={row.past_closing_count}
+                        text={`Past closing date ${row.past_closing_count} · ${formatLakhs(parseFloat(row.past_closing_value_lakhs))}`}
+                        label={`${row.display_name}: ${row.past_closing_count} Opportunities past their closing date`}
+                        onOpen={() => onOpenMyWork({ userId: row.user_id, tabId: "opportunities", listId: "closing-date-passed" })}
+                      />
                     </Box>
                   </Box>
                 ))}

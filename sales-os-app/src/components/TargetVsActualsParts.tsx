@@ -1,7 +1,6 @@
+import type { ReactNode } from "react";
 import { Box } from "@mui/material";
-import TableOrCards, { TocCell, TocRow } from "./TableOrCards";
-import type { TargetVsActualSummaryRow } from "../types/targetPlanning";
-import { lakhs, noteSx, numCellSx, percent, plural } from "../utils/targetVsActuals";
+import { DASH, noteSx, percent, plural } from "../utils/targetVsActuals";
 
 // Shared by Target vs Actuals' Quarter and Year views.
 
@@ -15,51 +14,39 @@ export function NoPoDateNote({ count }: { count: number }) {
   );
 }
 
-// Team plans (bottom-up) as a share of the target (top-down); a dash until
-// a target is set.
-function plansVsTarget(row: TargetVsActualSummaryRow): string | null {
-  const target = row.target_lakhs === null ? 0 : parseFloat(row.target_lakhs);
-  return target > 0 ? String((parseFloat(row.planned_lakhs) / target) * 100) : null;
+// The boxes at the top: `columns` across on a tablet or laptop, two to a row
+// on a phone (D10); a `wide` one takes the phone's full row.
+export function TileGrid({ columns, children }: { columns: number; children: ReactNode }) {
+  return (
+    <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: `repeat(${columns}, minmax(0, 1fr))` } }}>
+      {children}
+    </Box>
+  );
 }
 
-// The team row (Area Manager: against their own target), SBU row (SBU
-// Manager and above: against the SBU target, its brands' total) and company
-// row (Admin/GM: against every SBU's target) -- Annual Target Planning D49.
-export function SummaryRows({ heading = "Against target", teamRow, sbuRow, companyRow }: { heading?: string; teamRow: TargetVsActualSummaryRow | null; sbuRow: TargetVsActualSummaryRow | null; companyRow: TargetVsActualSummaryRow | null }) {
-  // Widest first, so the narrowest row sits just above the person rows it
-  // sums (Basheer, 2026-10-24).
-  const rows: { key: string; label: string; row: TargetVsActualSummaryRow; notSet: string }[] = [];
-  if (companyRow) rows.push({ key: "company", label: "Company", row: companyRow, notSet: "Waits for every SBU's target" });
-  if (sbuRow) rows.push({ key: "sbu", label: "SBU", row: sbuRow, notSet: "Target not set" });
-  if (teamRow) rows.push({ key: "team", label: "Your team", row: teamRow, notSet: "Target not set" });
-  if (rows.length === 0) return null;
+export function TileCell({ wide = false, children }: { wide?: boolean; children: ReactNode }) {
+  return <Box sx={{ display: "flex", minWidth: 0, ...(wide && { gridColumn: { xs: "1 / -1", sm: "auto" } }) }}>{children}</Box>;
+}
+
+const barWidth = (v: string | null): string => `${v === null ? 0 : Math.max(0, Math.min(100, parseFloat(v)))}%`;
+
+// Won (dark) and, where there is one, Likely finish (light) as a share of
+// the same base as the % beside it; `basis` says which ("of plan", "of
+// target") so the two aren't confused. A dash when there is nothing to compare with.
+export function WonBar({ wonPct, likelyPct, basis }: { wonPct: string | null; likelyPct?: string | null; basis?: string }) {
+  if (wonPct === null) return <Box component="span" sx={{ color: "text.secondary" }}>{DASH}</Box>;
   return (
-    <Box sx={{ overflowX: "auto" }}>
-      <TableOrCards
-        columns={[
-          { label: heading },
-          { label: "Target", align: "right" },
-          { label: "Team plans", align: "right" },
-          { label: "Plans vs target", align: "right" },
-          { label: "PO received", align: "right" },
-          { label: "Won (paid)", align: "right" },
-          { label: "Won % of target", align: "right" },
-        ]}
-      >
-        {rows.map(({ key, label, row, notSet }) => (
-          <TocRow key={key}>
-            <TocCell title sx={{ fontWeight: 700 }}>{label}</TocCell>
-            <TocCell label="Target" align="right" sx={numCellSx}>
-              {row.target_lakhs === null ? <Box component="span" sx={noteSx}>{notSet}</Box> : lakhs(row.target_lakhs)}
-            </TocCell>
-            <TocCell label="Team plans" align="right" sx={numCellSx}>{lakhs(row.planned_lakhs)}</TocCell>
-            <TocCell label="Plans vs target" align="right" sx={numCellSx}>{percent(plansVsTarget(row))}</TocCell>
-            <TocCell label="PO received" align="right" sx={numCellSx}>{lakhs(row.po_received_lakhs)}</TocCell>
-            <TocCell label="Won (paid)" align="right" sx={numCellSx}>{lakhs(row.won_lakhs)}</TocCell>
-            <TocCell label="Won % of target" align="right" sx={numCellSx}>{percent(row.percent_of_target)}</TocCell>
-          </TocRow>
-        ))}
-      </TableOrCards>
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 140, flex: 1 }}>
+      <Box sx={{ position: "relative", flex: 1, height: 8, borderRadius: "4px", bgcolor: "gray.200", overflow: "hidden" }}>
+        {likelyPct != null && (
+          <Box sx={{ position: "absolute", inset: 0, width: barWidth(likelyPct), bgcolor: "report.bar", opacity: 0.35 }} />
+        )}
+        <Box sx={{ position: "absolute", inset: 0, width: barWidth(wonPct), bgcolor: "report.bar" }} />
+      </Box>
+      <Box sx={{ minWidth: 44, textAlign: "right", fontVariantNumeric: "tabular-nums", fontWeight: 700 }}>
+        {percent(wonPct)}
+        {basis && <Box component="span" sx={{ display: "block", ...noteSx, fontWeight: 400, whiteSpace: "nowrap" }}>{basis}</Box>}
+      </Box>
     </Box>
   );
 }

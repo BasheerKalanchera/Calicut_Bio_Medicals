@@ -1,4 +1,5 @@
 import { formatLakhs } from "./formatter";
+import type { TargetVsActualSummaryRow } from "../types/targetPlanning";
 
 // Shared by Target vs Actuals' Quarter and Year views.
 
@@ -12,6 +13,51 @@ export function lakhs(v: string | null): string {
 export function percent(v: string | null): string {
   return v === null ? DASH : `${parseFloat(v).toFixed(0)}%`;
 }
+// a as a percent of b, as the server sends percents (a string); null when b
+// is missing or zero.
+export function ratio(a: string | null, b: string | null): string | null {
+  if (a === null || b === null) return null;
+  const base = parseFloat(b);
+  return base > 0 ? String((parseFloat(a) / base) * 100) : null;
+}
+
+// The Company row (Admin/GM: against every SBU's target), SBU row (SBU
+// Manager and above: against the SBU target, its brands' total) and team row
+// (Area Manager: against their own target) -- Annual Target Planning D49.
+// Widest first, so the narrowest row sits just above the person rows it sums
+// (Basheer, 2026-10-24).
+export interface SummaryLine {
+  key: string;
+  label: string;
+  row: TargetVsActualSummaryRow;
+  // Shown in place of a target that isn't set yet.
+  notSet: string;
+}
+
+export function summaryLines(
+  companyRow: TargetVsActualSummaryRow | null,
+  sbuRow: TargetVsActualSummaryRow | null,
+  teamRow: TargetVsActualSummaryRow | null,
+): SummaryLine[] {
+  const lines: SummaryLine[] = [];
+  if (companyRow) lines.push({ key: "company", label: "Company", row: companyRow, notSet: "Waits for every SBU's target" });
+  if (sbuRow) lines.push({ key: "sbu", label: "SBU", row: sbuRow, notSet: "Target not set" });
+  if (teamRow) lines.push({ key: "team", label: "Your team", row: teamRow, notSet: "Target not set" });
+  return lines;
+}
+
+// The target the boxes at the top are measured against: the narrowest summary
+// row (team, else SBU); a rep, who has no summary row, their own.
+export function headlineTarget(
+  sbuRow: TargetVsActualSummaryRow | null,
+  teamRow: TargetVsActualSummaryRow | null,
+  people: { target_lakhs: string | null }[],
+): string | null {
+  const row = teamRow ?? sbuRow;
+  if (row) return row.target_lakhs;
+  return people.length === 1 ? people[0].target_lakhs : null;
+}
+
 export function plural(n: number, one: string, many: string): string {
   return n === 1 ? one : many;
 }

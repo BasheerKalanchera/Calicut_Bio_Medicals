@@ -98,7 +98,16 @@ export function MiniBar({
 
 // With onClick the tile is a button (keyboard and focus included), e.g. My
 // Work's Summary boxes that open their list (Weekly Follow-up plan D33).
-export function StatTile({ label, value, sublabel, onClick }: { label: string; value: string; sublabel?: string; onClick?: () => void }) {
+export function StatTile({ label, value, sublabel, onClick, children, inGrid = false }: {
+  label: string;
+  value: string;
+  sublabel?: string;
+  onClick?: () => void;
+  // A bar or note under the figure.
+  children?: React.ReactNode;
+  // Sits in a grid that sets the widths (two to a row on a phone): no minimum width of its own.
+  inGrid?: boolean;
+}) {
   return (
     <Box
       component={onClick ? ButtonBase : "div"}
@@ -106,7 +115,7 @@ export function StatTile({ label, value, sublabel, onClick }: { label: string; v
       sx={{
         ...(onClick && { display: "block", textAlign: "left", font: "inherit", transition: "border-color 0.2s", "&:hover": { borderColor: "blue.300" } }),
         flex: 1,
-        minWidth: 160,
+        minWidth: inGrid ? 0 : 160,
         bgcolor: "background.paper",
         borderRadius: "1rem",
         border: 1,
@@ -120,6 +129,7 @@ export function StatTile({ label, value, sublabel, onClick }: { label: string; v
       </Box>
       <Box sx={{ typography: "h5", fontWeight: 900, color: "report.figure", fontVariantNumeric: "tabular-nums" }}>{value}</Box>
       {sublabel && <Box sx={{ typography: "caption", color: "gray.500", mt: 0.25 }}>{sublabel}</Box>}
+      {children && <Box sx={{ mt: 1 }}>{children}</Box>}
     </Box>
   );
 }

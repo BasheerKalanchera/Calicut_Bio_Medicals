@@ -49,6 +49,19 @@ export interface OverdueActionRow {
   user_id: string;
   display_name: string;
   overdue_count: number;
+  // Redesign D5/D11: Active Opportunities past their expected closing date
+  // (BR-OP-16, same rule as My Work's "Closing date passed"), with their value.
+  past_closing_count: number;
+  past_closing_value_lakhs: string;
+}
+
+// Insights' Overdue tab asks My Work to open on one person's list (Redesign
+// D11). nonce makes a repeat of the same request count as a new one.
+export interface MyWorkRequest {
+  userId: string;
+  tabId: "opportunities" | "next-actions";
+  listId: "closing-date-passed" | "overdue";
+  nonce: number;
 }
 
 export interface OverdueActionsResponse {

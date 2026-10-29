@@ -13,6 +13,7 @@ import { listUsers } from "../services/masterData";
 import { formatLakhs } from "../utils/formatter";
 import { statusColors } from "../theme/statusColors";
 import { shadows } from "../theme/shadows";
+import type { MyWorkRequest } from "../types/reporting";
 import type {
   ReminderResponse,
   WeeklyFollowupHospitalList,
@@ -48,9 +49,11 @@ interface Props {
   isActive: boolean;
   onSelectAccount: (account: Selected) => void;
   onSelectOpportunity: (opportunity: Selected) => void;
+  // Set by Insights' Overdue tab (Redesign D11).
+  startRequest?: MyWorkRequest | null;
 }
 
-export default function MyWorkScreen({ isActive, onSelectAccount, onSelectOpportunity }: Props) {
+export default function MyWorkScreen({ isActive, onSelectAccount, onSelectOpportunity, startRequest }: Props) {
   const queryClient = useQueryClient();
   const { userProfile } = useAuth();
   const profile = userProfile as { id?: string; role_name?: string } | null;
@@ -90,6 +93,13 @@ export default function MyWorkScreen({ isActive, onSelectAccount, onSelectOpport
     }, 50);
   }, [centerTab]);
 
+  // Redesign D11: Insights' Overdue tab opens this screen on one person's
+  // list. A new request (new nonce) sets who is shown and which tab; the
+  // scroll to its list waits below for that person's lists to load.
+  const [start, setStart] = useState<{ listId: string; tabId: TabId; nonce: number } | null>(null);
+  const [handledNonce, setHandledNonce] = useState<number | null>(startRequest?.nonce ?? null);
+  const scrolledNonce = useRef<number | null>(null);
+
   // D6, D33: everything back to its default whenever the screen is left
   // (state adjusted during render, same as InsightsDashboardScreen).
   const [wasActive, setWasActive] = useState(isActive);
@@ -100,7 +110,15 @@ export default function MyWorkScreen({ isActive, onSelectAccount, onSelectOpport
       setHighChanceOnly(false);
       setUserId("");
       setActiveTab("summary");
+      setStart(null);
     }
+  }
+
+  if (isActive && startRequest && startRequest.nonce !== handledNonce) {
+    setHandledNonce(startRequest.nonce);
+    setStart({ listId: startRequest.listId, tabId: startRequest.tabId, nonce: startRequest.nonce });
+    setUserId(startRequest.userId === profile?.id ? "" : startRequest.userId);
+    setActiveTab(startRequest.tabId);
   }
 
   useEffect(() => {
@@ -128,6 +146,18 @@ export default function MyWorkScreen({ isActive, onSelectAccount, onSelectOpport
     enabled: isActive,
   });
   const data = query.data;
+
+  // Once the requested person's lists have loaded (not the previous person's,
+  // still shown while loading), centre the tab and scroll to the list.
+  useEffect(() => {
+    if (!start || !data || query.isPlaceholderData || scrolledNonce.current === start.nonce) return;
+    scrolledNonce.current = start.nonce;
+    // The tab itself was set when the request arrived; this only scrolls.
+    centerTab(start.tabId);
+    setTimeout(() => {
+      listsRef.current?.querySelector(`[data-list="${start.listId}"]`)?.scrollIntoView({ block: "start" });
+    }, 50);
+  }, [start, data, query.isPlaceholderData, centerTab]);
 
   // D15: closing a next action records a visit or call as if it happened,
   // so someone else's lists are view-only. Not while the previous person's

@@ -36,6 +36,7 @@ import TargetPlanningScreen from "./screens/TargetPlanningScreen";
 import RateHospitalsScreen from "./screens/RateHospitalsScreen";
 import BrandTargetTrackingScreen from "./screens/BrandTargetTrackingScreen";
 import type { PipelineOpportunity } from "./types/api-aliases";
+import type { MyWorkRequest } from "./types/reporting";
 import { shadows } from "./theme/shadows";
 
 const ADMIN_ROLES = new Set(["Admin", "General Manager"]);
@@ -137,6 +138,8 @@ export default function DemoApp() {
   // Planning even when the same plan is clicked twice.
   const [targetPlanFocus, setTargetPlanFocus] = useState<{ period: string; sbuId: string; planId: string; nonce: number } | null>(null);
   const [isSidebarOpen, setIsSidebarOpen]       = useState(false);
+  // Insights' Overdue tab opening My Work on one person's list.
+  const [myWorkRequest, setMyWorkRequest]       = useState<MyWorkRequest | null>(null);
   // Sidebar sections collapse independently -- Sales Execution open by
   // default (daily-use), Reports/Administration start collapsed since most
   // sessions don't touch them every visit. Remembered per-browser so a
@@ -844,6 +847,7 @@ export default function DemoApp() {
               isActive={view === "myWork"}
               onSelectAccount={handleSelectAccount}
               onSelectOpportunity={handleSelectOpportunity}
+              startRequest={myWorkRequest}
             />
           </Box>
 
@@ -881,7 +885,13 @@ export default function DemoApp() {
                 Insights Dashboard
               </Typography>
             </Box>
-            <InsightsDashboardScreen isActive={view === "insights"} />
+            <InsightsDashboardScreen
+              isActive={view === "insights"}
+              onOpenMyWork={(request) => {
+                setMyWorkRequest({ ...request, nonce: Date.now() });
+                setView("myWork");
+              }}
+            />
           </Box>
 
           {/* Reports — always mounted, hidden when not active; no admin
