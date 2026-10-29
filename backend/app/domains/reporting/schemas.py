@@ -82,7 +82,10 @@ class OverdueActionRow(BaseModel):
 
     user_id: uuid.UUID
     display_name: str
-    overdue_count: int
+    overdue_count: int = 0
+    # D5/D11: Active Opportunities they own past their expected closing date.
+    past_closing_count: int = 0
+    past_closing_value_lakhs: Decimal = Decimal(0)
 
 
 class OverdueActionsResponse(BaseModel):

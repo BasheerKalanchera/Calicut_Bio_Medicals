@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 
 from sqlalchemy import Row, String, case, cast, func, or_, select
 from sqlalchemy.orm import Session
@@ -383,6 +383,46 @@ class ReportingRepository:
         if zone_id is not None:
             stmt = stmt.where(UserProfile.id.in_(select(UserZone.user_id).where(UserZone.zone_id == zone_id)))
         stmt = stmt.order_by(func.count(Reminder.id).desc())
+        return list(self.db.execute(stmt).all())
+
+    def past_closing_by_owner(
+        self,
+        current_user: UserProfile,
+        today: date,
+        *,
+        sbu_id: uuid.UUID | None = None,
+        zone_id: uuid.UUID | None = None,
+        user_id: uuid.UUID | None = None,
+    ) -> list[Row]:
+        """Overdue tab (D5, D11): per owner, how many ACTIVE Opportunities
+        they own have an expected closing date before `today`, and their net
+        value. Same rule as My Work's "Closing date passed" (owner only), so
+        the two numbers match."""
+        value_subq = (
+            select(OpportunityItem.opportunity_id, func.sum(_NET_VALUE).label("value_lakhs"))
+            .group_by(OpportunityItem.opportunity_id)
+            .subquery()
+        )
+        stmt = (
+            select(
+                UserProfile.id.label("user_id"),
+                UserProfile.display_name.label("display_name"),
+                func.count(Opportunity.id).label("past_closing_count"),
+                # No line items yet counts at 0 value (as My Work).
+                func.coalesce(func.sum(value_subq.c.value_lakhs), 0).label("past_closing_value_lakhs"),
+            )
+            .select_from(Opportunity)
+            .join(OpportunityStatus, Opportunity.status_id == OpportunityStatus.id)
+            .join(UserProfile, Opportunity.owner_id == UserProfile.id)
+            .outerjoin(value_subq, value_subq.c.opportunity_id == Opportunity.id)
+            .where(OpportunityStatus.status_code == "ACTIVE", Opportunity.expected_closure_date < today)
+            .group_by(UserProfile.id, UserProfile.display_name)
+        )
+        stmt = self._apply_owner_scope(stmt, current_user, user_id)
+        if sbu_id is not None:
+            stmt = stmt.where(UserProfile.sbu_id == sbu_id)
+        if zone_id is not None:
+            stmt = stmt.where(UserProfile.id.in_(select(UserZone.user_id).where(UserZone.zone_id == zone_id)))
         return list(self.db.execute(stmt).all())
 
     def weekly_followup_opportunities(self, current_user: UserProfile, user_id: uuid.UUID) -> list[Row]:

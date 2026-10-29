@@ -4528,8 +4528,21 @@ export interface components {
             user_id: string;
             /** Display Name */
             display_name: string;
-            /** Overdue Count */
+            /**
+             * Overdue Count
+             * @default 0
+             */
             overdue_count: number;
+            /**
+             * Past Closing Count
+             * @default 0
+             */
+            past_closing_count: number;
+            /**
+             * Past Closing Value Lakhs
+             * @default 0
+             */
+            past_closing_value_lakhs: string;
         };
         /** OverdueActionsResponse */
         OverdueActionsResponse: {
@@ -5812,40 +5825,6 @@ export interface components {
             /** Won Lakhs */
             won_lakhs: string;
         };
-        /**
-         * TargetVsActualLateOpportunity
-         * @description BR-OP-16: still open past its expected closing date. Flag only.
-         *     Listed on every split participant's row (BR-FIN-09).
-         */
-        TargetVsActualLateOpportunity: {
-            /**
-             * Opportunity Id
-             * Format: uuid
-             */
-            opportunity_id: string;
-            /** Name */
-            name: string;
-            /**
-             * Account Id
-             * Format: uuid
-             */
-            account_id: string;
-            /** Account Name */
-            account_name: string;
-            /**
-             * Expected Closure Date
-             * Format: date
-             */
-            expected_closure_date: string;
-            /** Value Lakhs */
-            value_lakhs: string;
-            /** Share Percentage */
-            share_percentage: string;
-            /** Share Lakhs */
-            share_lakhs: string;
-            /** Owner Name */
-            owner_name?: string | null;
-        };
         /** TargetVsActualPerson */
         TargetVsActualPerson: {
             /**
@@ -5878,8 +5857,6 @@ export interface components {
             undated_opportunity_count: number;
             /** No Po Date Count */
             no_po_date_count: number;
-            /** Late Opportunities */
-            late_opportunities: components["schemas"]["TargetVsActualLateOpportunity"][];
             /** Hospitals */
             hospitals: components["schemas"]["TargetVsActualHospital"][];
             /** Brands */
@@ -5950,8 +5927,8 @@ export interface components {
         };
         /**
          * TargetVsActualYearPerson
-         * @description A person's whole year (D78): target and plan for every counted
-         *     quarter added up; PO received and Won so far.
+         * @description A person's year so far (Redesign D2): target and Won for the counted
+         *     quarters up to the one we are in.
          */
         TargetVsActualYearPerson: {
             /**
@@ -5965,62 +5942,16 @@ export interface components {
             manager_id?: string | null;
             /** Target Lakhs */
             target_lakhs: string | null;
-            /** Planned Lakhs */
-            planned_lakhs: string;
-            /** Po Received Lakhs */
-            po_received_lakhs: string;
             /** Won Lakhs */
             won_lakhs: string;
-            /** Still To Win Lakhs */
-            still_to_win_lakhs: string | null;
-            /** Quarters */
-            quarters: components["schemas"]["TargetVsActualYearPersonQuarter"][];
-        };
-        /**
-         * TargetVsActualYearPersonQuarter
-         * @description A person's running totals by the end of one counted quarter (D78).
-         */
-        TargetVsActualYearPersonQuarter: {
-            /** Planning Period */
-            planning_period: string;
-            quarter_state: components["schemas"]["QuarterState"];
-            /** Target So Far Lakhs */
-            target_so_far_lakhs: string | null;
-            /** Planned So Far Lakhs */
-            planned_so_far_lakhs: string;
-            /** Won So Far Lakhs */
-            won_so_far_lakhs: string | null;
-        };
-        /**
-         * TargetVsActualYearQuarter
-         * @description One quarter of the Year view's quarter-by-quarter table (Annual
-         *     Target Planning D31): that quarter's target and Won, and the running
-         *     totals from the year's first counted quarter. counted=False for a
-         *     quarter before targets began (FY 2026-27's Apr-Sep, D66): every figure
-         *     is None. Won figures are None for a quarter still to come.
-         */
-        TargetVsActualYearQuarter: {
-            /** Planning Period */
-            planning_period: string;
-            quarter_state: components["schemas"]["QuarterState"];
-            /** Counted */
-            counted: boolean;
-            /** Target Lakhs */
-            target_lakhs: string | null;
-            /** Won Lakhs */
-            won_lakhs: string | null;
-            /** Target So Far Lakhs */
-            target_so_far_lakhs: string | null;
-            /** Won So Far Lakhs */
-            won_so_far_lakhs: string | null;
-            /** Percent Of Target So Far */
-            percent_of_target_so_far: string | null;
+            /** Percent Of Target */
+            percent_of_target: string | null;
         };
         /**
          * TargetVsActualYearResponse
-         * @description Target vs Actuals for a fiscal year (D31, D66, D78, D79, D80). The
-         *     headline and summary rows are "so far": counted quarters up to the one
-         *     we are in. No Expected, zones, brands or late list (D79, D80).
+         * @description Target vs Actuals for a fiscal year (Redesign D2, D6; Annual Target
+         *     D66, D81). Everything is "so far": counted quarters up to the one we are
+         *     in. A year that hasn't started comes back not_started, with no rows.
          */
         TargetVsActualYearResponse: {
             /**
@@ -6035,27 +5966,20 @@ export interface components {
              * Format: date
              */
             as_of: string;
+            /** Not Started */
+            not_started: boolean;
+            /**
+             * Starts On
+             * Format: date
+             */
+            starts_on: string;
             /** First Counted Period */
             first_counted_period: string | null;
-            /** Planned Lakhs */
-            planned_lakhs: string;
-            /** Po Received Lakhs */
-            po_received_lakhs: string;
             /** Won Lakhs */
             won_lakhs: string;
-            /** Percent Of Target */
-            percent_of_target: string | null;
-            /** No Po Date Count */
-            no_po_date_count: number;
-            /** Roster Count */
-            roster_count: number | null;
-            /** Not Submitted Count */
-            not_submitted_count: number | null;
             sbu_row: components["schemas"]["TargetVsActualSummaryRow"] | null;
             company_row: components["schemas"]["TargetVsActualSummaryRow"] | null;
             team_row: components["schemas"]["TargetVsActualSummaryRow"] | null;
-            /** Quarters */
-            quarters: components["schemas"]["TargetVsActualYearQuarter"][];
             /** People */
             people: components["schemas"]["TargetVsActualYearPerson"][];
         };

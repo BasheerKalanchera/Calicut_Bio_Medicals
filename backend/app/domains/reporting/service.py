@@ -267,7 +267,22 @@ class ReportingService:
         rows = self.repository.overdue_actions(
             current_user, end_of_today, sbu_id=sbu_id, zone_id=zone_id, user_id=user_id
         )
-        parsed = [OverdueActionRow.model_validate(r) for r in rows]
+        by_person = {r.user_id: OverdueActionRow.model_validate(r) for r in rows}
+        for r in self.repository.past_closing_by_owner(
+            current_user, today_ist(), sbu_id=sbu_id, zone_id=zone_id, user_id=user_id
+        ):
+            row = by_person.get(r.user_id) or OverdueActionRow(user_id=r.user_id, display_name=r.display_name)
+            by_person[r.user_id] = row.model_copy(
+                update={
+                    "past_closing_count": r.past_closing_count,
+                    "past_closing_value_lakhs": Decimal(r.past_closing_value_lakhs),
+                }
+            )
+        # D11: someone with nothing overdue and nothing late isn't listed.
+        parsed = sorted(
+            (r for r in by_person.values() if r.overdue_count or r.past_closing_count),
+            key=lambda r: (-r.overdue_count, -r.past_closing_count, r.display_name),
+        )
         return OverdueActionsResponse(rows=parsed, total_overdue=sum(r.overdue_count for r in parsed))
 
     def weekly_followup(

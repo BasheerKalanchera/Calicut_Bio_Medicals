@@ -9,7 +9,7 @@ the reminder.
 """
 
 import uuid
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from unittest.mock import MagicMock
 
 from app.domains.organization.models import UserProfile
@@ -238,6 +238,34 @@ class TestOverdueActions:
         current_user = _make_current_user("Area Manager")
         sql = _run("overdue_actions", current_user, END_OF_TODAY)
         assert _uuid_literal(current_user.id) in sql
+
+
+class TestPastClosingByOwner:
+    TODAY = date(2026, 10, 29)
+
+    def test_active_owner_only_and_closing_before_today(self):
+        # Same late rule as My Work (D11): owner only, split partners excluded.
+        sql = _run("past_closing_by_owner", _make_current_user("Admin"), self.TODAY)
+        assert "opportunity_status.status_code = 'ACTIVE'" in sql
+        assert "opportunity.expected_closure_date < '2026-10-29'" in sql
+        assert "JOIN user_profile ON opportunity.owner_id = user_profile.id" in sql
+        assert "split" not in sql.lower()
+
+    def test_grouped_by_owner_with_netted_value(self):
+        sql = _run("past_closing_by_owner", _make_current_user("Admin"), self.TODAY)
+        assert "group by user_profile.id" in sql.lower()
+        assert "past_closing_count" in sql and "past_closing_value_lakhs" in sql
+
+    def test_area_manager_scoped_to_team_and_self(self):
+        current_user = _make_current_user("Area Manager")
+        sql = _run("past_closing_by_owner", current_user, self.TODAY)
+        assert _uuid_literal(current_user.id) in sql
+
+    def test_zone_filter_uses_user_zone_membership(self):
+        zone_id = uuid.uuid4()
+        sql = _run("past_closing_by_owner", _make_current_user("Admin"), self.TODAY, zone_id=zone_id)
+        assert "user_zone" in sql
+        assert _uuid_literal(zone_id) in sql
 
 
 class TestWeeklyFollowupOpportunities:

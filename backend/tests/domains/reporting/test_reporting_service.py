@@ -61,14 +61,87 @@ class TestOverdueActionsTeamGate:
     def test_total_overdue_sums_across_rows(self):
         mock_repo = MagicMock(spec=ReportingRepository)
         mock_repo.overdue_actions.return_value = [
-            MagicMock(user_id=uuid.uuid4(), display_name="Rep One", overdue_count=3),
-            MagicMock(user_id=uuid.uuid4(), display_name="Rep Two", overdue_count=5),
+            SimpleNamespace(user_id=uuid.uuid4(), display_name="Rep One", overdue_count=3),
+            SimpleNamespace(user_id=uuid.uuid4(), display_name="Rep Two", overdue_count=5),
         ]
+        mock_repo.past_closing_by_owner.return_value = []
         service = ReportingService(repository=mock_repo)
 
         result = service.overdue_actions(_make_current_user("Admin"))
 
         assert result.total_overdue == 8
+
+
+class TestOverduePastClosingDate:
+    """D5/D11: each person's Opportunities past their closing date sit beside
+    their overdue Next Actions; someone with neither is not listed."""
+
+    @staticmethod
+    def _service(overdue, past_closing):
+        mock_repo = MagicMock(spec=ReportingRepository)
+        mock_repo.overdue_actions.return_value = overdue
+        mock_repo.past_closing_by_owner.return_value = past_closing
+        return ReportingService(repository=mock_repo), mock_repo
+
+    def test_both_counts_land_on_the_same_person(self):
+        asha = uuid.uuid4()
+        service, _ = self._service(
+            [SimpleNamespace(user_id=asha, display_name="Asha", overdue_count=2)],
+            [SimpleNamespace(user_id=asha, display_name="Asha", past_closing_count=3, past_closing_value_lakhs=42.5)],
+        )
+
+        (row,) = service.overdue_actions(_make_current_user("Admin")).rows
+
+        assert (row.overdue_count, row.past_closing_count, row.past_closing_value_lakhs) == (2, 3, Decimal("42.5"))
+
+    def test_person_with_only_past_closing_opportunities_is_listed(self):
+        bindu = uuid.uuid4()
+        past = SimpleNamespace(user_id=bindu, display_name="Bindu", past_closing_count=1, past_closing_value_lakhs=10)
+        service, _ = self._service([], [past])
+
+        result = service.overdue_actions(_make_current_user("Admin"))
+
+        assert [(r.display_name, r.overdue_count, r.past_closing_count) for r in result.rows] == [("Bindu", 0, 1)]
+        assert result.total_overdue == 0  # still only counts overdue Next Actions
+
+    def test_person_with_only_overdue_next_actions_has_zero_past_closing(self):
+        vivek = uuid.uuid4()
+        service, _ = self._service([SimpleNamespace(user_id=vivek, display_name="Vivek", overdue_count=4)], [])
+
+        (row,) = service.overdue_actions(_make_current_user("Admin")).rows
+
+        assert (row.past_closing_count, row.past_closing_value_lakhs) == (0, Decimal(0))
+
+    def test_person_with_neither_is_not_listed(self):
+        nisha = uuid.uuid4()
+        service, _ = self._service(
+            [SimpleNamespace(user_id=nisha, display_name="Nisha", overdue_count=0)],
+            [SimpleNamespace(user_id=nisha, display_name="Nisha", past_closing_count=0, past_closing_value_lakhs=0)],
+        )
+
+        assert service.overdue_actions(_make_current_user("Admin")).rows == []
+
+    def test_rows_run_most_overdue_first_then_most_past_closing_then_name(self):
+        a, b, c = uuid.uuid4(), uuid.uuid4(), uuid.uuid4()
+        service, _ = self._service(
+            [
+                SimpleNamespace(user_id=a, display_name="Asha", overdue_count=1),
+                SimpleNamespace(user_id=b, display_name="Bindu", overdue_count=1),
+                SimpleNamespace(user_id=c, display_name="Chitra", overdue_count=5),
+            ],
+            [SimpleNamespace(user_id=b, display_name="Bindu", past_closing_count=2, past_closing_value_lakhs=1)],
+        )
+
+        result = service.overdue_actions(_make_current_user("Admin"))
+
+        assert [r.display_name for r in result.rows] == ["Chitra", "Bindu", "Asha"]
+
+    def test_sales_staff_do_not_query_past_closing(self):
+        service, mock_repo = self._service([], [])
+
+        service.overdue_actions(_make_current_user("Sales Staff"))
+
+        mock_repo.past_closing_by_owner.assert_not_called()
 
 
 class TestSalesHeadlineDerivedFields:

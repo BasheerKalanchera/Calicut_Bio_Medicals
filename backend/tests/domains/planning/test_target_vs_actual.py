@@ -102,7 +102,6 @@ def _repo(**overrides) -> MagicMock:
     repo.po_received_by_person.return_value = []
     repo.no_po_date_counts.return_value = []
     repo.expected_by_person.return_value = []
-    repo.late_opportunities.return_value = []
     repo.undated_counts.return_value = []
     repo.active_sbu_targets.return_value = {}
     repo.person_targets.return_value = {}
@@ -455,16 +454,13 @@ def test_company_target_waits_until_every_sbu_has_one(monkeypatch):
 # --- expected, zones, brands ------------------------------------------------
 
 
-def test_current_quarter_expected_includes_late_and_flags_them(monkeypatch):
-    rep, acc, opp = (uuid.uuid4() for _ in range(3))
+def test_current_quarter_expected_has_no_lower_bound_on_closing_date(monkeypatch):
+    rep, acc = uuid.uuid4(), uuid.uuid4()
     repo = _repo(
         roster=[(rep, "Asha")],
         list_plans=[_plan(rep, "Asha", [(acc, "A", "100")])],
         won_by_person_account=[(rep, "Asha", acc, None, None, Decimal("20.00"))],
         expected_by_person=[(rep, "Asha", Decimal("30.456"))],
-        late_opportunities=[
-            (opp, "Ventilators", acc, "A", rep, "Asha", rep, "Asha", date(2026, 10, 2), Decimal("12.00"), Decimal(100))
-        ],
         undated_counts=[(rep, "Asha", 2)],
     )
     resp = _run(repo, IN_QUARTER, monkeypatch)
@@ -473,7 +469,6 @@ def test_current_quarter_expected_includes_late_and_flags_them(monkeypatch):
     asha = resp.people[0]
     assert asha.expected_lakhs == Decimal("30.46")
     assert asha.likely_finish_lakhs == Decimal("50.46")
-    assert len(asha.late_opportunities) == 1
     assert asha.undated_opportunity_count == 2
     assert resp.expected_lakhs == Decimal("30.46")
 
@@ -482,7 +477,6 @@ def test_future_quarter_expected_is_bounded_both_sides(monkeypatch):
     repo = _repo()
     _run(repo, date(2026, 9, 1), monkeypatch)
     assert repo.expected_by_person.call_args.args[2:] == (date(2026, 10, 1), date(2026, 12, 31))
-    repo.late_opportunities.assert_not_called()
 
 
 def test_past_quarter_has_no_expected_and_finish_equals_won(monkeypatch):
@@ -494,7 +488,6 @@ def test_past_quarter_has_no_expected_and_finish_equals_won(monkeypatch):
     )
     resp = _run(repo, date(2027, 2, 1), monkeypatch)
     repo.expected_by_person.assert_not_called()
-    repo.late_opportunities.assert_not_called()
     assert resp.expected_lakhs is None
     assert resp.people[0].expected_lakhs is None
     assert resp.likely_finish_lakhs == Decimal("80.00")
@@ -572,44 +565,6 @@ def test_shares_round_per_row_but_totals_add_back_to_the_full_value(monkeypatch)
     assert (resp.won_lakhs, resp.expected_lakhs) == (Decimal("10.00"), Decimal("10.00"))
 
 
-def test_late_shared_opportunity_shows_on_every_sharers_row(monkeypatch):
-    fazal, vivek, acc, opp = (uuid.uuid4() for _ in range(4))
-    opp_cols = (opp, "New USG m/c", acc, "aster medicity")
-    owner_cols = (fazal, "Fazal", date(2026, 10, 2), Decimal("10"))
-    repo = _repo(
-        roster=[(fazal, "Fazal"), (vivek, "Vivek")],
-        late_opportunities=[
-            (*opp_cols, fazal, "Fazal", *owner_cols, Decimal(60)),
-            (*opp_cols, vivek, "Vivek", *owner_cols, Decimal(40)),
-        ],
-    )
-    f, v = _run(repo, IN_QUARTER, monkeypatch).people
-    (fl,), (vl,) = f.late_opportunities, v.late_opportunities
-    assert (fl.owner_name, fl.share_percentage, fl.share_lakhs) == (None, Decimal(60), Decimal("6.00"))
-    assert (vl.owner_name, vl.share_percentage, vl.share_lakhs) == ("Fazal", Decimal(40), Decimal("4.00"))
-    assert vl.value_lakhs == Decimal("10")
-
-
-def test_late_opportunity_reaches_an_owner_with_no_share(monkeypatch):
-    # Fazal owns it but split it 100 % to Vivek: Fazal still sees the late
-    # flag (he must update it), at 0 %; his Won and Expected stay untouched.
-    fazal, vivek, acc, opp = (uuid.uuid4() for _ in range(4))
-    opp_cols = (opp, "New USG m/c", acc, "aster medicity")
-    owner_cols = (fazal, "Fazal", date(2026, 10, 2), Decimal("10"))
-    repo = _repo(
-        roster=[(fazal, "Fazal"), (vivek, "Vivek")],
-        late_opportunities=[
-            (*opp_cols, fazal, "Fazal", *owner_cols, Decimal(0)),
-            (*opp_cols, vivek, "Vivek", *owner_cols, Decimal(100)),
-        ],
-    )
-    f, v = _run(repo, IN_QUARTER, monkeypatch).people
-    (fl,), (vl,) = f.late_opportunities, v.late_opportunities
-    assert (fl.owner_name, fl.share_percentage, fl.share_lakhs) == (None, Decimal(0), Decimal("0.00"))
-    assert (vl.owner_name, vl.share_percentage, vl.share_lakhs) == ("Fazal", Decimal(100), Decimal("10.00"))
-    assert (f.won_lakhs, f.expected_lakhs) == (Decimal("0.00"), Decimal("0.00"))
-
-
 # --- Year view (Annual Target Planning D31, D66, D78-D80) --------------------
 
 Q3_START = datetime(2026, 10, 1, tzinfo=IST)
@@ -647,7 +602,7 @@ def test_year_counts_fy_2026_27_from_oct_dec(monkeypatch):
 
 def test_later_years_count_all_four_quarters(monkeypatch):
     repo = _repo()
-    resp = _run_year(repo, IN_QUARTER, monkeypatch, fiscal_year=2027)
+    resp = _run_year(repo, date(2027, 5, 1), monkeypatch, fiscal_year=2027)
     assert [c.args[2] for c in repo.list_plans.call_args_list] == [f"2027-Q{n}" for n in range(1, 5)]
     assert resp.first_counted_period == "2027-Q1"
 
@@ -660,14 +615,13 @@ def test_year_before_targets_counts_nothing(monkeypatch):
 
 
 def test_year_skips_what_the_year_view_leaves_out(monkeypatch):
-    # D79, D80: no Expected, undated counts, zones, brands or late list.
+    # D79, D80: no Expected, undated counts, zones or brands.
     repo = _repo()
     _run_year(repo, IN_QUARTER, monkeypatch)
     for method in (
         "expected_by_person",
         "undated_counts",
         "zone_of_accounts",
-        "late_opportunities",
         "won_by_person_brand",
     ):
         getattr(repo, method).assert_not_called()
@@ -683,20 +637,6 @@ def test_a_quarter_so_far_without_a_target_leaves_the_year_target_unset(monkeypa
         "2026-Q4": (Decimal("120"), Decimal("40"), Decimal("30.00")),
     }[period]
     resp = _run_year(repo, date(2027, 2, 1), monkeypatch, user=_user_with_role("SBU Manager"))
-    q1, q2, q3, q4 = resp.quarters
-    assert not q1.counted and not q2.counted and q1.target_so_far_lakhs is None
-    assert (q3.target_lakhs, q3.won_lakhs, q3.target_so_far_lakhs, q3.won_so_far_lakhs) == (
-        Decimal("280"),
-        Decimal("50.00"),
-        Decimal("280"),
-        Decimal("50.00"),
-    )
-    assert (q4.target_lakhs, q4.target_so_far_lakhs, q4.won_so_far_lakhs, q4.percent_of_target_so_far) == (
-        None,
-        None,
-        Decimal("80.00"),
-        None,
-    )
     row = resp.sbu_row
     assert (row.target_lakhs, row.planned_lakhs, row.po_received_lakhs, row.won_lakhs, row.percent_of_target) == (
         None,
@@ -729,8 +669,7 @@ def test_person_with_a_quarter_so_far_without_a_target_has_no_year_target(monkey
     )
     repo.person_targets.side_effect = _by_period({"2026-Q3": {rep: Decimal("90")}}, {})
     (p,) = _run_year(repo, date(2027, 2, 1), monkeypatch).people
-    assert (p.target_lakhs, p.still_to_win_lakhs, p.won_lakhs) == (None, None, Decimal("40.00"))
-    assert [q.target_so_far_lakhs for q in p.quarters] == [Decimal("90"), None]
+    assert (p.target_lakhs, p.percent_of_target, p.won_lakhs) == (None, None, Decimal("40.00"))
 
 
 def test_person_upcoming_quarter_without_a_target_keeps_the_year_target(monkeypatch):
@@ -742,7 +681,7 @@ def test_person_upcoming_quarter_without_a_target_keeps_the_year_target(monkeypa
     assert p.target_lakhs == Decimal("90")
 
 
-def test_upcoming_quarter_adds_to_target_but_not_to_so_far(monkeypatch):
+def test_upcoming_quarter_is_left_out_of_every_so_far_figure(monkeypatch):
     # Today in Oct-Dec: Jan-Mar is still to come.
     repo = _repo()
     repo.active_sbu_targets.side_effect = _by_period(
@@ -753,60 +692,35 @@ def test_upcoming_quarter_adds_to_target_but_not_to_so_far(monkeypatch):
         "2026-Q4": (Decimal("120"), Decimal("0"), Decimal("0")),
     }[period]
     resp = _run_year(repo, IN_QUARTER, monkeypatch, user=_user_with_role("SBU Manager"))
-    q4 = resp.quarters[3]
-    assert q4.quarter_state == QuarterState.FUTURE
-    assert (q4.target_so_far_lakhs, q4.won_lakhs, q4.won_so_far_lakhs, q4.percent_of_target_so_far) == (
-        Decimal("580"),
-        None,
-        None,
-        None,
-    )
     assert resp.sbu_row.target_lakhs == Decimal("280")  # so far: Oct-Dec only
-    assert resp.sbu_row.planned_lakhs == Decimal("100")
+    assert (resp.sbu_row.planned_lakhs, resp.sbu_row.won_lakhs) == (Decimal("100"), Decimal("50.00"))
 
 
-def test_person_row_is_the_whole_year_with_running_totals(monkeypatch):
-    # D78: target and plan for every counted quarter; Won so far.
+def _vivek_two_quarters():
+    """Vivek's target 90 (Oct-Dec) and 96 (Jan-Mar); Won 45 and 7."""
     rep, acc = uuid.uuid4(), uuid.uuid4()
     repo = _repo(roster=[(rep, "Vivek")])
-    repo.list_plans.side_effect = _by_period(
-        {"2026-Q3": [_plan(rep, "Vivek", [(acc, "A", "100")])], "2026-Q4": [_plan(rep, "Vivek", [(acc, "A", "120")])]},
-        [],
-    )
     repo.person_targets.side_effect = _by_period({"2026-Q3": {rep: Decimal("90")}, "2026-Q4": {rep: Decimal("96")}}, {})
     repo.won_by_person_account.side_effect = _by_window(
-        [(rep, "Vivek", acc, None, None, Decimal("50.00"))], [(rep, "Vivek", acc, None, None, Decimal("7.00"))]
+        [(rep, "Vivek", acc, None, None, Decimal("45.00"))], [(rep, "Vivek", acc, None, None, Decimal("7.00"))]
     )
-    repo.po_received_by_person.side_effect = _by_window([(rep, "Vivek", Decimal("60.00"))], [])
-    resp = _run_year(repo, IN_QUARTER, monkeypatch)
+    return repo
+
+
+def test_person_row_is_target_so_far_won_so_far_and_percent(monkeypatch):
+    # Today in Oct-Dec: Jan-Mar is still to come, so it adds nothing.
+    resp = _run_year(_vivek_two_quarters(), IN_QUARTER, monkeypatch)
     (p,) = resp.people
-    assert (p.target_lakhs, p.planned_lakhs, p.po_received_lakhs, p.won_lakhs, p.still_to_win_lakhs) == (
-        Decimal("186"),
-        Decimal("220"),
-        Decimal("60.00"),
-        Decimal("50.00"),
-        Decimal("136.00"),
-    )
-    q3, q4 = p.quarters
-    assert (q3.target_so_far_lakhs, q3.planned_so_far_lakhs, q3.won_so_far_lakhs) == (
-        Decimal("90"),
-        Decimal("100"),
-        Decimal("50.00"),
-    )
-    assert (q4.target_so_far_lakhs, q4.planned_so_far_lakhs, q4.won_so_far_lakhs) == (
-        Decimal("186"),
-        Decimal("220"),
-        None,
-    )
-    # Headline is so far: Oct-Dec only.
-    assert (resp.planned_lakhs, resp.won_lakhs, resp.percent_of_target) == (
-        Decimal("100"),
-        Decimal("50.00"),
-        Decimal("50.00"),
-    )
+    assert (p.target_lakhs, p.won_lakhs, p.percent_of_target) == (Decimal("90"), Decimal("45.00"), Decimal("50.00"))
+    assert resp.won_lakhs == Decimal("45.00")
 
 
-def test_still_to_win_never_goes_below_zero(monkeypatch):
+def test_person_row_adds_up_every_quarter_so_far(monkeypatch):
+    (p,) = _run_year(_vivek_two_quarters(), date(2027, 2, 1), monkeypatch).people
+    assert (p.target_lakhs, p.won_lakhs) == (Decimal("186"), Decimal("52.00"))
+
+
+def test_person_percent_can_pass_100(monkeypatch):
     rep, acc = uuid.uuid4(), uuid.uuid4()
     repo = _repo(
         roster=[(rep, "Vivek")],
@@ -814,21 +728,13 @@ def test_still_to_win_never_goes_below_zero(monkeypatch):
         won_by_person_account=[(rep, "Vivek", acc, None, None, Decimal("50.00"))],
     )
     (p,) = _run_year(repo, date(2027, 2, 1), monkeypatch).people
-    assert p.still_to_win_lakhs == Decimal(0)
+    assert (p.target_lakhs, p.won_lakhs, p.percent_of_target) == (Decimal("20"), Decimal("100.00"), Decimal("500.00"))
 
 
-def test_person_without_any_target_has_no_still_to_win(monkeypatch):
+def test_person_without_any_target_has_no_percent(monkeypatch):
     rep = uuid.uuid4()
     (p,) = _run_year(_repo(roster=[(rep, "Vivek")]), IN_QUARTER, monkeypatch).people
-    assert p.target_lakhs is None and p.still_to_win_lakhs is None
-
-
-def test_year_counts_a_rejected_revision_at_its_last_approved_total(monkeypatch):
-    # BR-PL-05, as in the Quarter view.
-    rep, acc = uuid.uuid4(), uuid.uuid4()
-    plan = _plan(rep, "Vivek", [(acc, "A", "150")], status="REJECTED", previous="100")
-    (p,) = _run_year(_repo(roster=[(rep, "Vivek")], list_plans=[plan]), IN_QUARTER, monkeypatch).people
-    assert p.planned_lakhs == Decimal("200")  # 100 in each counted quarter
+    assert p.target_lakhs is None and p.percent_of_target is None
 
 
 def test_year_area_manager_table_follows_the_team_row(monkeypatch):
@@ -840,17 +746,15 @@ def test_year_area_manager_table_follows_the_team_row(monkeypatch):
         won_by_person_account=[(rep, "Asha", acc, None, None, Decimal("20.00"))],
     )
     resp = _run_year(repo, date(2027, 2, 1), monkeypatch, user=am)
-    assert [q.target_lakhs for q in resp.quarters if q.counted] == [Decimal("160"), Decimal("160")]
-    assert resp.quarters[3].won_so_far_lakhs == Decimal("40.00")
+    assert resp.won_lakhs == Decimal("40.00")
     assert resp.team_row.target_lakhs == Decimal("320")
     assert resp.sbu_row is None
     repo.summary_totals.assert_not_called()
 
 
-def test_year_rep_gets_no_summary_rows_or_quarter_table(monkeypatch):
+def test_year_rep_gets_no_summary_rows(monkeypatch):
     resp = _run_year(_repo(), IN_QUARTER, monkeypatch)
     assert resp.sbu_row is None and resp.company_row is None and resp.team_row is None
-    assert resp.quarters == []
 
 
 @pytest.mark.parametrize(("role", "has_company"), [("General Manager", True), ("SBU Manager", False)])
@@ -864,13 +768,23 @@ def test_year_company_row_only_for_gm_and_admin(monkeypatch, role, has_company):
         assert resp.company_row.target_lakhs == Decimal("400")
 
 
-def test_n_of_m_is_the_current_quarters_and_absent_for_a_past_year(monkeypatch):
-    rep = uuid.uuid4()
-    repo = _repo(roster=[(rep, "Vivek")])
-    resp = _run_year(repo, IN_QUARTER, monkeypatch)
-    assert (resp.roster_count, resp.not_submitted_count) == (1, 1)
-    past = _run_year(_repo(roster=[(rep, "Vivek")]), date(2027, 5, 1), monkeypatch)
-    assert (past.roster_count, past.not_submitted_count) == (None, None)
+def test_year_that_has_not_started_comes_back_empty_with_its_start_date(monkeypatch):
+    # D6: FY 2027-28 starts 1 Apr 2027; nothing is fetched before then.
+    repo = _repo(roster=[(uuid.uuid4(), "Vivek")])
+    resp = _run_year(repo, IN_QUARTER, monkeypatch, fiscal_year=2027)
+    assert (resp.not_started, resp.starts_on) == (True, date(2027, 4, 1))
+    assert resp.people == [] and resp.won_lakhs == Decimal(0)
+    assert resp.sbu_row is None and resp.company_row is None and resp.team_row is None
+    repo.list_plans.assert_not_called()
+
+
+def test_year_is_started_from_its_first_day(monkeypatch):
+    resp = _run_year(_repo(), date(2027, 4, 1), monkeypatch, fiscal_year=2027)
+    assert (resp.not_started, resp.starts_on) == (False, date(2027, 4, 1))
+
+
+def test_year_in_progress_is_not_flagged_as_not_started(monkeypatch):
+    assert _run_year(_repo(), IN_QUARTER, monkeypatch).not_started is False
 
 
 # --- Target Planning roster (Target-Coverage-Roster plan) -------------------
@@ -1032,12 +946,6 @@ def test_expected_counts_only_active_and_weights_by_probability():
     assert "expected_closure_date <=" in sql
 
 
-def test_late_opportunities_are_active_and_before_today():
-    sql = _sql_of("late_opportunities", _user_with_role("Admin"), SBU_ID, IN_QUARTER)
-    assert "'ACTIVE'" in sql
-    assert "expected_closure_date < '2026-11-01'" in sql
-
-
 @pytest.mark.parametrize(
     ("method", "args"),
     [
@@ -1045,7 +953,6 @@ def test_late_opportunities_are_active_and_before_today():
         ("won_by_person_brand", (WIN_START, WIN_END)),
         ("expected_by_person", (None, date(2026, 12, 31))),
         ("po_received_by_person", (date(2026, 10, 1), date(2026, 12, 31))),
-        ("late_opportunities", (IN_QUARTER,)),
     ],
 )
 def test_per_person_figures_credit_split_shares_or_the_owner(method, args):
@@ -1060,18 +967,10 @@ def test_per_person_figures_credit_split_shares_or_the_owner(method, args):
     assert "split.opportunity_id = opportunity.id" in sql
     assert "NOT (EXISTS" in sql
     assert "user_profile.id = credit.user_id" in sql
-    if method != "late_opportunities":
-        assert "* credit.pct" in sql
-        # Only the late list adds an owner left out of their own split.
-        assert "split.user_id = opportunity.owner_id" not in sql
-        assert " 0 AS anon" not in sql
-
-
-def test_late_list_reaches_an_owner_left_out_of_their_split():
-    sql = _sql_of("late_opportunities", _user_with_role("Admin"), SBU_ID, IN_QUARTER)
-    assert "split.user_id = opportunity.owner_id" in sql
-    # Two owner parts: no split (at 100 %), and left out of the split (at 0 %).
-    assert " 100 AS anon" in sql and " 0 AS anon" in sql
+    assert "* credit.pct" in sql
+    # The owner is only credited when they have no split rows (never at 0 %).
+    assert "split.user_id = opportunity.owner_id" not in sql
+    assert " 0 AS anon" not in sql
 
 
 def test_won_by_person_is_status_won():

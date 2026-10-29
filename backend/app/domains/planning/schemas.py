@@ -235,22 +235,6 @@ class RosterStatus(StrEnum):
     REJECTED = "REJECTED"
 
 
-class TargetVsActualLateOpportunity(BaseModel):
-    """BR-OP-16: still open past its expected closing date. Flag only.
-    Listed on every split participant's row (BR-FIN-09)."""
-
-    opportunity_id: uuid.UUID
-    name: str
-    account_id: uuid.UUID
-    account_name: str
-    expected_closure_date: date
-    value_lakhs: Decimal  # the Opportunity's full net value
-    share_percentage: Decimal  # this person's share (100 when not shared)
-    share_lakhs: Decimal
-    # The owner, when this row's person isn't them; else None.
-    owner_name: str | None = None
-
-
 class TargetVsActualHospital(BaseModel):
     """One line per hospital on the person's plan; wins at hospitals that
     aren't on the plan share a single line with account_id=None
@@ -297,7 +281,6 @@ class TargetVsActualPerson(BaseModel):
     percent_of_target: Decimal | None
     undated_opportunity_count: int
     no_po_date_count: int
-    late_opportunities: list[TargetVsActualLateOpportunity]
     hospitals: list[TargetVsActualHospital]
     brands: list[TargetVsActualBrand]
 
@@ -349,77 +332,36 @@ class TargetVsActualResponse(BaseModel):
     brands: list[TargetVsActualBrand]
 
 
-class TargetVsActualYearQuarter(BaseModel):
-    """One quarter of the Year view's quarter-by-quarter table (Annual
-    Target Planning D31): that quarter's target and Won, and the running
-    totals from the year's first counted quarter. counted=False for a
-    quarter before targets began (FY 2026-27's Apr-Sep, D66): every figure
-    is None. Won figures are None for a quarter still to come."""
-
-    planning_period: str
-    quarter_state: QuarterState
-    counted: bool
-    target_lakhs: Decimal | None
-    won_lakhs: Decimal | None
-    # None until some counted quarter so far has a target.
-    target_so_far_lakhs: Decimal | None
-    won_so_far_lakhs: Decimal | None
-    percent_of_target_so_far: Decimal | None
-
-
-class TargetVsActualYearPersonQuarter(BaseModel):
-    """A person's running totals by the end of one counted quarter (D78)."""
-
-    planning_period: str
-    quarter_state: QuarterState
-    target_so_far_lakhs: Decimal | None
-    planned_so_far_lakhs: Decimal
-    # None for a quarter still to come.
-    won_so_far_lakhs: Decimal | None
-
-
 class TargetVsActualYearPerson(BaseModel):
-    """A person's whole year (D78): target and plan for every counted
-    quarter added up; PO received and Won so far."""
+    """A person's year so far (Redesign D2): target and Won for the counted
+    quarters up to the one we are in."""
 
     user_id: uuid.UUID
     display_name: str
     manager_id: uuid.UUID | None = None
-    # None when no counted quarter has a target for them.
+    # Target so far; None when a quarter so far has no target for them (D81).
     target_lakhs: Decimal | None
-    planned_lakhs: Decimal
-    po_received_lakhs: Decimal
     won_lakhs: Decimal
-    # Target less Won, never below 0; None without a target.
-    still_to_win_lakhs: Decimal | None
-    quarters: list[TargetVsActualYearPersonQuarter]
+    percent_of_target: Decimal | None
 
 
 class TargetVsActualYearResponse(BaseModel):
-    """Target vs Actuals for a fiscal year (D31, D66, D78, D79, D80). The
-    headline and summary rows are "so far": counted quarters up to the one
-    we are in. No Expected, zones, brands or late list (D79, D80)."""
+    """Target vs Actuals for a fiscal year (Redesign D2, D6; Annual Target
+    D66, D81). Everything is "so far": counted quarters up to the one we are
+    in. A year that hasn't started comes back not_started, with no rows."""
 
     sbu_id: uuid.UUID
     fiscal_year: int  # the April it starts in: 2026 = FY 2026-27
     as_of: date
+    # D6: today is before the year's first day; starts_on is that day.
+    not_started: bool
+    starts_on: date
     # The first quarter that counts (D66); None if none of the year does.
     first_counted_period: str | None
-    planned_lakhs: Decimal
-    po_received_lakhs: Decimal
     won_lakhs: Decimal
-    # Won so far against team plans so far.
-    percent_of_target: Decimal | None
-    no_po_date_count: int
-    # The current quarter's "N of M" -- None outside the current year.
-    roster_count: int | None
-    not_submitted_count: int | None
     sbu_row: TargetVsActualSummaryRow | None
     company_row: TargetVsActualSummaryRow | None
     team_row: TargetVsActualSummaryRow | None
-    # For the narrowest summary row the caller has (team, else SBU); empty
-    # for a rep, who has none.
-    quarters: list[TargetVsActualYearQuarter]
     people: list[TargetVsActualYearPerson]
 
 

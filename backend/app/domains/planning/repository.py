@@ -689,61 +689,6 @@ class TargetVsActualRepository:
         stmt = self._apply_owner_scope(stmt, current_user)
         return [(u, n, Decimal(v)) for u, n, v in self.db.execute(stmt).all()]
 
-    def late_opportunities(
-        self, current_user: UserProfile, sbu_id: uuid.UUID, today: date
-    ) -> list[tuple[uuid.UUID, str, uuid.UUID, str, uuid.UUID, str, uuid.UUID, str, date, Decimal, Decimal]]:
-        """BR-OP-16: ACTIVE Opportunities whose expected closure date has
-        passed, one row per credited person (BR-FIN-09): (id, name,
-        account_id, account_name, user_id, display_name, owner_id,
-        owner_name, expected_closure_date, full net value, share %). An owner
-        left out of their own split gets a row at 0 %."""
-        credit = self._credit(sbu_id, owner_at_zero=True)
-        owner = aliased(UserProfile)
-        value = func.coalesce(func.sum(_NET_VALUE), 0)
-        stmt = (
-            select(
-                Opportunity.id,
-                Opportunity.name,
-                Opportunity.account_id,
-                Account.name,
-                credit.c.user_id,
-                UserProfile.display_name,
-                Opportunity.owner_id,
-                owner.display_name,
-                Opportunity.expected_closure_date,
-                value,
-                credit.c.pct,
-            )
-            .select_from(Opportunity)
-            .outerjoin(OpportunityItem, OpportunityItem.opportunity_id == Opportunity.id)
-            .join(OpportunityStatus, OpportunityStatus.id == Opportunity.status_id)
-            .join(credit, credit.c.opportunity_id == Opportunity.id)
-            .join(UserProfile, UserProfile.id == credit.c.user_id)
-            .join(owner, owner.id == Opportunity.owner_id)
-            .join(Account, Account.id == Opportunity.account_id)
-            .where(OpportunityStatus.status_code == "ACTIVE")
-            .where(Opportunity.sbu_id == sbu_id)
-            .where(Opportunity.expected_closure_date < today)
-            .group_by(
-                Opportunity.id,
-                Opportunity.name,
-                Opportunity.account_id,
-                Account.name,
-                credit.c.user_id,
-                UserProfile.display_name,
-                Opportunity.owner_id,
-                owner.display_name,
-                Opportunity.expected_closure_date,
-                credit.c.pct,
-            )
-            .order_by(Opportunity.expected_closure_date, Opportunity.name)
-        )
-        stmt = self._apply_owner_scope(stmt, current_user)
-        return [
-            (i, n, a, an, u, un, o, on, d, Decimal(v), Decimal(p))
-            for i, n, a, an, u, un, o, on, d, v, p in self.db.execute(stmt).all()
-        ]
-
     def undated_counts(
         self, current_user: UserProfile, sbu_id: uuid.UUID
     ) -> list[tuple[uuid.UUID, str, int]]:
