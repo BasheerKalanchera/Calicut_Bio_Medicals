@@ -5573,3 +5573,41 @@ moved to after the restart (Basheer).
   mocked up the phone only without saying why the tablet needed none.
   No tracker line: none touched live data or UAT, lost work, or could
   be caught by a tool check.
+
+### 2026-10-29 — Build & Test: My Work E2E finished (every step Pass)
+- Basheer ran the rest of the My Work E2E on Dev: F4–F7, G1 (390/768/1280
+  px after the fixes), H1–H12. All Pass. Test plan:
+  `docs/Weekly-Follow-up-Daily-Hub-Manual-E2E-Test-Plan.md`.
+- Found and fixed during the run (Basheer's look at each screen):
+  G1 tablet "48 days" wrapped → bare numbers, "Days overdue", "Oct–Dec
+  2026" (D35, D36); Opportunities small tabs (D34); Rep dropdown on
+  Stagnant Opportunities (D37); Next actions small tabs, due this week
+  first (D38); small tabs on one row at 390 px (D39); taller, pinned
+  small tabs (D40); Summary redesign with the side menu's emoji icons and
+  three Opportunities boxes on a row from tablet width (D41). Committed
+  and pushed as `676a05d` (tsc, lint, MUI check clean). The commit was
+  refused once by the MUI check (two typed text sizes in the new code);
+  fixed with theme text styles, icons now a little smaller (h5).
+- Basheer asked about making all Summary box text dark grey, then said
+  to leave it as it is.
+- Not exercised: the red "N days overdue" badge on a hospital (Vivek has
+  0 overdue next actions on Dev). Basheer's note on Stagnant
+  Opportunities (rep filter) is done as D37.
+- Plan Status line and test plan "Built" line updated with the fix
+  hashes. Traceability row 11.1 not touched: the hospital next-action
+  rule (build order D9) is still to build.
+- **Retro — corrections from Basheer this stretch (after the `c7977f2`
+  retro): 5.** (1) "This is not required - Each small tab's label carries
+  its count … we don't have it on the opportunities tab" — Claude put
+  counts in the Next actions small-tab labels, which the Opportunities
+  tabs don't have. (2) "Didn't understand this - It resets to that when
+  you leave My Work …" — plan wording he couldn't follow. (3) "Open on
+  Due this week, as it will always have something to show" — wrong
+  default small tab. (4) "the heights can be increased a bit. They look
+  very thin. On a phone it will be difficult to press" and "the sub tabs
+  scroll up" — small tabs built too thin and not pinned; a phone tap
+  target and a scroll-away that could have been judged from the code.
+  (5) "H10 is fully pass" — Claude had recorded only half of H10 as Pass
+  after he said "10". No tracker line: none touched live data or UAT,
+  lost work, or is a repeat a tool check could catch (the MUI-standard
+  check already caught the two typed text sizes before the commit).

@@ -8,9 +8,13 @@ Progress-Archive. Steps 2, 4 and 5 built 2026-10-28 on branch
 and merged into `main` the same day on Basheer's go, with the Annual Target
 Planning Part 2 E2E paused (D18; the Part 1 E2E that D14 waited for passed
 2026-10-24); step 3 has nothing of its own (D13). Still to do: user manual
-and in-app help (merge-time catch-up); this plan's E2E not yet run. E2E test plan written 2026-10-25
-(`docs/Weekly-Follow-up-Daily-Hub-Manual-E2E-Test-Plan.md`, 33 steps per
-`393beee`'s message).
+and in-app help (merge-time catch-up). E2E test plan written 2026-10-25
+(`docs/Weekly-Follow-up-Daily-Hub-Manual-E2E-Test-Plan.md`). E2E run on Dev
+28–29 Oct (Basheer, Fahad / Fazal / Vivek / Marketing User) — every
+step recorded Pass; fixes during the run: `048c741`, `4deb68c` (Stagnant
+500), `c7977f2` (tabs + Summary, D30–D33), `676a05d` (small tabs, Summary
+look, Rep dropdown, D34–D41). One thing not exercised: the red "N days
+overdue" badge on a hospital (no overdue next action on Dev).
 **Traceability rows:** 11.1 Weekly Follow-up Report (Not started). Also
 touches 6.1 Beat Planning (Not started) once hospital-wise planning is on
 UAT.
@@ -68,6 +72,14 @@ in `— proposed`; once Basheer answers, change the ending to
 - D31. The "Not visited for (days)" box and the "70 %+ only" tick move into the Opportunities tab, since each changes only a list there; the managers' "Showing" switch stays above the tabs, as it changes every tab — Basheer, 2026-10-29
 - D32. The Summary tab has one box per list, under the three tab headings in tab order (D30): for My hospitals the number of hospitals on the plan, how many were never visited (no visit, call, meeting or email, D27) and how many have an overdue next action (D29); each Opportunity list's count and ₹ total; each next-action list's count only (D21). The boxes follow the days box, the tick and "Showing"; no grand total across boxes (D3) — Basheer, 2026-10-29
 - D33. My Work always opens on the Summary tab, and goes back to it whenever the screen is left (like D6). Clicking a Summary box opens that list's tab and jumps to that list — Basheer, 2026-10-29
+- D34. After G1 (tablet), the Opportunities tab shows one list at a time, picked by three small tabs headed "High priority or 70 %+", "Closing date passed" and "Not visited in N+ days" (opens on the first). A Summary Opportunity box opens its small tab. "Not visited" stays on the Opportunities tab (it lists Opportunities; the hospital "never visited" figure stays on the My hospitals tab and its Summary box). The "Not visited for (days)" box shows only on the "Not visited" small tab and the "70 %+ only" tick only on the "High priority" one, each beside the list it changes (refines D31). The two next-action lists stay one under the other — Basheer, 2026-10-29
+- D35. A column headed "Days ..." shows the bare number, not "48 days", which wrapped onto two lines at tablet width: "Days since visit" and "Days past closing" on the Opportunity lists, and "Days overdue" (new heading, was "Due") on the Overdue next actions list (a row due earlier today shows 0). The "Next actions due this week" list keeps "Due" with the date. On My hospitals the "Next action due" column mixes dates and late rows, so it keeps its heading and a late row reads "48 days overdue" in a no-wrap badge — Basheer, 2026-10-29 (hospitals detail is Claude's, to confirm)
+- D36. The quarter shows as "Oct–Dec 2026", not the code "2026-Q3" (Q3 of the Indian financial year), in the My hospitals tab title and its Summary box — same wording as the Target screen (Annual Target plan D39) — Basheer, 2026-10-29
+- D37. The Stagnant Opportunities report gets a "Rep" dropdown beside the days box ("All reps" first, then the people the viewer may see, the same list as My Work's "Showing"); shown only when the viewer can see more than one person. No server change: the report already takes a person filter. Not now: listing only the people who have rows in the report (needs the owner's id on each row, a small server change) — built only if Cabio leadership asks — Basheer, 2026-10-29
+- D38. The Next actions tab gets two small tabs, "Next actions due this week" (first, and open by default, because it always has something to show) and "Overdue next actions", the same as Opportunities (D34); only the chosen list shows. No counts in the small-tab labels (Opportunities has none). A Summary box for either list opens the Next actions tab at that small tab. Leaving My Work puts it back on "Next actions due this week" (D6, D33). Replaces the two lists one under the other, which needed scrolling on a phone — Basheer, 2026-10-29
+- D39. The small tabs under Opportunities and Next actions share one row at phone width: equal widths, a long label wrapping onto a second line inside its own button rather than a tab dropping to a new row — Basheer, 2026-10-29
+- D40. The small tabs are taller (44 px, easy to press with a thumb) and stay pinned above the list while it scrolls; the "Not visited for (days)" box and the "70 %+ only" tick are pinned with them — Basheer, 2026-10-29
+- D41. The Summary gets a fresh look, with the same figures, wording and click targets: section headings with an icon; a bigger figure per box with a chevron; a coloured left edge per kind of list (blue High priority and hospitals, red Closing date passed and Overdue next actions, amber Not visited, green Next actions due this week); the ₹ total as a small pill; a box showing 0 turns grey. One box per row on a phone; from tablet width two per row, but the three Opportunities boxes share one row. Group icons are the same colour emojis the side menu uses (🏥 My hospitals, 📈 Opportunities, ✅ Next actions), large, with no tile behind them (they blend with the screen) — Basheer, 2026-10-29
 
 ## 1. In plain terms
 
