@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Target vs Actuals Redesign Mock-up</title>
+<style>
+body{margin:0;padding:24px;background:#eef1f4;font-family:Roboto,"Segoe UI",system-ui,sans-serif;color:#1f2933}
+h1{font-size:22px;margin:0 0 4px}
+p{margin:0 0 24px;color:#52606d;font-size:14px;max-width:900px}
+section{margin-bottom:40px}
+h2{font-size:16px;margin:0 0 8px}
+iframe{border:1px solid #c3ccd6;background:#fff;display:block;max-width:100%}
+</style>
+</head>
+<body>
+<h1>Target vs Actuals redesign — agreed mock-up</h1>
+<p>Copy of the design canvas https://claude.ai/artifact/XR3ftVbahPshwicQ9Vxsd5
+(laptop screens version 16, agreed 28 Oct 2026; phone screens version 21, agreed
+29 Oct 2026). Decisions: docs/Target-vs-Actuals-Redesign-Implementation-Plan.md
+D2–D5 and D10. All figures are made up.</p>
+<section><h2>Laptop — Year view</h2><iframe title="Laptop — Year view" width="1100" height="820" srcdoc="&lt;!doctype html&gt;&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;style&gt;
+body{margin:0;font-family:Roboto,&quot;Segoe UI&quot;,system-ui,sans-serif;color:#1f2933}
+a{color:#1565c0}a:hover{color:#0d47a1}
+&lt;/style&gt;&lt;/head&gt;&lt;body&gt;
+
+&lt;div style=&quot;width: 1100px; height: 820px; box-sizing: border-box; padding: 32px; background: #f4f6f8;&quot;&gt;
+&lt;div style=&quot;background: #ffffff; border: 1px solid #dde3ea; border-radius: 8px; padding: 24px 28px; display: flex; flex-direction: column; gap: 24px;&quot;&gt;
+
+&lt;div style=&quot;display: flex; align-items: center; gap: 16px; flex-wrap: wrap;&quot;&gt;
+&lt;h2 style=&quot;margin: 0; font-size: 20px; font-weight: 600; flex-grow: 1;&quot;&gt;Target vs Actuals&lt;/h2&gt;
+&lt;label style=&quot;font-size: 13px; color: #52606d; display: flex; align-items: center; gap: 6px;&quot;&gt;SBU
+&lt;select style=&quot;font-size: 14px; padding: 6px 10px; border: 1px solid #c3ccd6; border-radius: 4px; background: #fff;&quot;&gt;&lt;option&gt;Imaging&lt;/option&gt;&lt;/select&gt;&lt;/label&gt;
+&lt;div style=&quot;display: flex; border: 1px solid #1565c0; border-radius: 4px; overflow: hidden;&quot;&gt;
+&lt;button style=&quot;font-size: 14px; padding: 6px 14px; border: 0; background: #fff; color: #1565c0;&quot;&gt;Quarter&lt;/button&gt;
+&lt;button style=&quot;font-size: 14px; padding: 6px 14px; border: 0; background: #1565c0; color: #fff;&quot;&gt;Year&lt;/button&gt;
+&lt;/div&gt;
+&lt;div style=&quot;display: flex; align-items: center; gap: 4px;&quot;&gt;
+&lt;button aria-label=&quot;Previous year&quot; style=&quot;width: 36px; height: 36px; border: 0; background: none; font-size: 18px; color: #52606d;&quot;&gt;‹&lt;/button&gt;
+&lt;span style=&quot;font-size: 15px; font-weight: 600;&quot;&gt;Apr 2026 – Mar 2027&lt;/span&gt;
+&lt;button aria-label=&quot;Next year&quot; style=&quot;width: 36px; height: 36px; border: 0; background: none; font-size: 18px; color: #52606d;&quot;&gt;›&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div style=&quot;font-size: 13px; color: #52606d;&quot;&gt;This year so far: Oct–Dec 2026 (targets start there) · as of 28 Oct 2026 · Example figures, made up&lt;/div&gt;
+
+&lt;div style=&quot;display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px;&quot;&gt;
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 16px 20px;&quot;&gt;
+&lt;div style=&quot;font-size: 13px; color: #52606d;&quot;&gt;Target so far&lt;/div&gt;
+&lt;div style=&quot;font-size: 30px; font-weight: 600; margin-top: 4px;&quot;&gt;₹300.0L&lt;/div&gt;
+&lt;/div&gt;
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 16px 20px;&quot;&gt;
+&lt;div style=&quot;font-size: 13px; color: #52606d;&quot;&gt;Won (paid) so far&lt;/div&gt;
+&lt;div style=&quot;font-size: 30px; font-weight: 600; margin-top: 4px;&quot;&gt;₹96.0L&lt;/div&gt;
+&lt;/div&gt;
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 16px 20px;&quot;&gt;
+&lt;div style=&quot;font-size: 13px; color: #52606d;&quot;&gt;Won % of target&lt;/div&gt;
+&lt;div style=&quot;font-size: 30px; font-weight: 600; margin-top: 4px; color: #1565c0;&quot;&gt;32%&lt;/div&gt;
+&lt;div style=&quot;height: 8px; background: #e3e8ef; border-radius: 4px; margin-top: 10px;&quot;&gt;&lt;div style=&quot;width: 32%; height: 8px; background: #1565c0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;table style=&quot;width: 100%; border-collapse: collapse; font-size: 14px;&quot;&gt;
+&lt;thead&gt;
+&lt;tr style=&quot;color: #52606d; font-size: 13px; text-align: left;&quot;&gt;
+&lt;th style=&quot;padding: 10px 8px; border-bottom: 1px solid #dde3ea; font-weight: 500;&quot;&gt;Who&lt;/th&gt;
+&lt;th style=&quot;padding: 10px 8px; border-bottom: 1px solid #dde3ea; font-weight: 500; text-align: right;&quot;&gt;Target so far&lt;/th&gt;
+&lt;th style=&quot;padding: 10px 8px; border-bottom: 1px solid #dde3ea; font-weight: 500; text-align: right;&quot;&gt;Won (paid) so far&lt;/th&gt;
+&lt;th style=&quot;padding: 10px 8px; border-bottom: 1px solid #dde3ea; font-weight: 500; width: 260px;&quot;&gt;Won % of target&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr style=&quot;background: #f7f9fb; font-weight: 600;&quot;&gt;
+&lt;td style=&quot;padding: 12px 8px;&quot;&gt;Company&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; text-align: right;&quot;&gt;₹500.0L&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; text-align: right;&quot;&gt;₹155.0L&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px;&quot;&gt;&lt;div style=&quot;display: flex; align-items: center; gap: 10px;&quot;&gt;&lt;div style=&quot;flex-grow: 1; height: 8px; background: #e3e8ef; border-radius: 4px;&quot;&gt;&lt;div style=&quot;width: 31%; height: 8px; background: #1565c0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;span style=&quot;width: 40px; text-align: right;&quot;&gt;31%&lt;/span&gt;&lt;/div&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr style=&quot;background: #f7f9fb; font-weight: 600;&quot;&gt;
+&lt;td style=&quot;padding: 12px 8px;&quot;&gt;SBU · Imaging&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; text-align: right;&quot;&gt;₹300.0L&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; text-align: right;&quot;&gt;₹96.0L&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px;&quot;&gt;&lt;div style=&quot;display: flex; align-items: center; gap: 10px;&quot;&gt;&lt;div style=&quot;flex-grow: 1; height: 8px; background: #e3e8ef; border-radius: 4px;&quot;&gt;&lt;div style=&quot;width: 32%; height: 8px; background: #1565c0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;span style=&quot;width: 40px; text-align: right;&quot;&gt;32%&lt;/span&gt;&lt;/div&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&quot;padding: 12px 8px; border-top: 1px solid #eef1f4;&quot;&gt;Nishad K V&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; border-top: 1px solid #eef1f4; text-align: right;&quot;&gt;₹120.0L&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; border-top: 1px solid #eef1f4; text-align: right;&quot;&gt;₹42.0L&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; border-top: 1px solid #eef1f4;&quot;&gt;&lt;div style=&quot;display: flex; align-items: center; gap: 10px;&quot;&gt;&lt;div style=&quot;flex-grow: 1; height: 8px; background: #e3e8ef; border-radius: 4px;&quot;&gt;&lt;div style=&quot;width: 35%; height: 8px; background: #1565c0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;span style=&quot;width: 40px; text-align: right;&quot;&gt;35%&lt;/span&gt;&lt;/div&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&quot;padding: 12px 8px 12px 32px; border-top: 1px solid #eef1f4;&quot;&gt;Adydev&lt;div style=&quot;font-size: 12px; color: #52606d;&quot;&gt;reports to Nishad K V&lt;/div&gt;&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; border-top: 1px solid #eef1f4; text-align: right;&quot;&gt;₹60.0L&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; border-top: 1px solid #eef1f4; text-align: right;&quot;&gt;₹25.0L&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; border-top: 1px solid #eef1f4;&quot;&gt;&lt;div style=&quot;display: flex; align-items: center; gap: 10px;&quot;&gt;&lt;div style=&quot;flex-grow: 1; height: 8px; background: #e3e8ef; border-radius: 4px;&quot;&gt;&lt;div style=&quot;width: 42%; height: 8px; background: #1565c0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;span style=&quot;width: 40px; text-align: right;&quot;&gt;42%&lt;/span&gt;&lt;/div&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&quot;padding: 12px 8px 12px 32px; border-top: 1px solid #eef1f4;&quot;&gt;Rep B&lt;div style=&quot;font-size: 12px; color: #52606d;&quot;&gt;reports to Nishad K V&lt;/div&gt;&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; border-top: 1px solid #eef1f4; text-align: right;&quot;&gt;₹60.0L&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; border-top: 1px solid #eef1f4; text-align: right;&quot;&gt;₹17.0L&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; border-top: 1px solid #eef1f4;&quot;&gt;&lt;div style=&quot;display: flex; align-items: center; gap: 10px;&quot;&gt;&lt;div style=&quot;flex-grow: 1; height: 8px; background: #e3e8ef; border-radius: 4px;&quot;&gt;&lt;div style=&quot;width: 28%; height: 8px; background: #1565c0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;span style=&quot;width: 40px; text-align: right;&quot;&gt;28%&lt;/span&gt;&lt;/div&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&quot;padding: 12px 8px; border-top: 1px solid #eef1f4;&quot;&gt;Second Area Manager&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; border-top: 1px solid #eef1f4; text-align: right;&quot;&gt;₹180.0L&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; border-top: 1px solid #eef1f4; text-align: right;&quot;&gt;₹54.0L&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; border-top: 1px solid #eef1f4;&quot;&gt;&lt;div style=&quot;display: flex; align-items: center; gap: 10px;&quot;&gt;&lt;div style=&quot;flex-grow: 1; height: 8px; background: #e3e8ef; border-radius: 4px;&quot;&gt;&lt;div style=&quot;width: 30%; height: 8px; background: #1565c0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;span style=&quot;width: 40px; text-align: right;&quot;&gt;30%&lt;/span&gt;&lt;/div&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/body&gt;&lt;/html&gt;"></iframe></section><section><h2>Laptop — Quarter view</h2><iframe title="Laptop — Quarter view" width="1100" height="860" srcdoc="&lt;!doctype html&gt;&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;style&gt;
+body{margin:0;font-family:Roboto,&quot;Segoe UI&quot;,system-ui,sans-serif;color:#1f2933}
+a{color:#1565c0}a:hover{color:#0d47a1}
+&lt;/style&gt;&lt;/head&gt;&lt;body&gt;
+
+&lt;div style=&quot;width: 1100px; height: 860px; box-sizing: border-box; padding: 32px; background: #f4f6f8;&quot;&gt;
+&lt;div style=&quot;background: #ffffff; border: 1px solid #dde3ea; border-radius: 8px; padding: 24px 28px; display: flex; flex-direction: column; gap: 24px;&quot;&gt;
+
+&lt;div style=&quot;display: flex; align-items: center; gap: 16px; flex-wrap: wrap;&quot;&gt;
+&lt;h2 style=&quot;margin: 0; font-size: 20px; font-weight: 600; flex-grow: 1;&quot;&gt;Target vs Actuals&lt;/h2&gt;
+&lt;label style=&quot;font-size: 13px; color: #52606d; display: flex; align-items: center; gap: 6px;&quot;&gt;SBU
+&lt;select style=&quot;font-size: 14px; padding: 6px 10px; border: 1px solid #c3ccd6; border-radius: 4px; background: #fff;&quot;&gt;&lt;option&gt;Imaging&lt;/option&gt;&lt;/select&gt;&lt;/label&gt;
+&lt;div style=&quot;display: flex; border: 1px solid #1565c0; border-radius: 4px; overflow: hidden;&quot;&gt;
+&lt;button style=&quot;font-size: 14px; padding: 6px 14px; border: 0; background: #1565c0; color: #fff;&quot;&gt;Quarter&lt;/button&gt;
+&lt;button style=&quot;font-size: 14px; padding: 6px 14px; border: 0; background: #fff; color: #1565c0;&quot;&gt;Year&lt;/button&gt;
+&lt;/div&gt;
+&lt;div style=&quot;display: flex; align-items: center; gap: 4px;&quot;&gt;
+&lt;button aria-label=&quot;Previous quarter&quot; style=&quot;width: 36px; height: 36px; border: 0; background: none; font-size: 18px; color: #52606d;&quot;&gt;‹&lt;/button&gt;
+&lt;span style=&quot;font-size: 15px; font-weight: 600;&quot;&gt;Oct–Dec 2026&lt;/span&gt;
+&lt;button aria-label=&quot;Next quarter&quot; style=&quot;width: 36px; height: 36px; border: 0; background: none; font-size: 18px; color: #52606d;&quot;&gt;›&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div style=&quot;font-size: 13px; color: #52606d;&quot;&gt;This quarter · as of 28 Oct 2026 · Example figures, made up&lt;/div&gt;
+
+&lt;div style=&quot;display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px;&quot;&gt;
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 16px 20px;&quot;&gt;
+&lt;div style=&quot;font-size: 13px; color: #52606d;&quot;&gt;Target&lt;/div&gt;
+&lt;div style=&quot;font-size: 30px; font-weight: 600; margin-top: 4px;&quot;&gt;₹300.0L&lt;/div&gt;
+&lt;/div&gt;
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 16px 20px;&quot;&gt;
+&lt;div style=&quot;font-size: 13px; color: #52606d;&quot;&gt;Won (paid)&lt;/div&gt;
+&lt;div style=&quot;font-size: 30px; font-weight: 600; margin-top: 4px;&quot;&gt;₹96.0L&lt;/div&gt;
+&lt;div style=&quot;font-size: 12px; color: #52606d; margin-top: 2px;&quot;&gt;PO received ₹130.0L&lt;/div&gt;
+&lt;/div&gt;
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 16px 20px;&quot;&gt;
+&lt;div style=&quot;font-size: 13px; color: #52606d;&quot;&gt;Won % of target&lt;/div&gt;
+&lt;div style=&quot;font-size: 30px; font-weight: 600; margin-top: 4px; color: #1565c0;&quot;&gt;32%&lt;/div&gt;
+&lt;/div&gt;
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 16px 20px;&quot;&gt;
+&lt;div style=&quot;font-size: 13px; color: #52606d;&quot;&gt;Likely finish&lt;/div&gt;
+&lt;div style=&quot;font-size: 30px; font-weight: 600; margin-top: 4px;&quot;&gt;₹240.0L&lt;/div&gt;
+&lt;div style=&quot;font-size: 12px; color: #52606d; margin-top: 2px;&quot;&gt;80% of target · Won + open Opportunities closing this quarter&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div style=&quot;display: flex; gap: 20px; font-size: 12px; color: #52606d; align-items: center;&quot;&gt;
+&lt;span style=&quot;display: flex; align-items: center; gap: 6px;&quot;&gt;&lt;span style=&quot;width: 14px; height: 8px; background: #1565c0; border-radius: 2px;&quot;&gt;&lt;/span&gt;Won&lt;/span&gt;
+&lt;span style=&quot;display: flex; align-items: center; gap: 6px;&quot;&gt;&lt;span style=&quot;width: 14px; height: 8px; background: #9ec5f0; border-radius: 2px;&quot;&gt;&lt;/span&gt;Likely finish&lt;/span&gt;
+&lt;/div&gt;
+
+&lt;table style=&quot;width: 100%; border-collapse: collapse; font-size: 14px;&quot;&gt;
+&lt;thead&gt;
+&lt;tr style=&quot;color: #52606d; font-size: 13px; text-align: left;&quot;&gt;
+&lt;th style=&quot;padding: 10px 8px; border-bottom: 1px solid #dde3ea; font-weight: 500;&quot;&gt;Who&lt;/th&gt;
+&lt;th style=&quot;padding: 10px 8px; border-bottom: 1px solid #dde3ea; font-weight: 500; text-align: right;&quot;&gt;Target&lt;/th&gt;
+&lt;th style=&quot;padding: 10px 8px; border-bottom: 1px solid #dde3ea; font-weight: 500; text-align: right;&quot;&gt;Won (paid)&lt;/th&gt;
+&lt;th style=&quot;padding: 10px 8px; border-bottom: 1px solid #dde3ea; font-weight: 500; text-align: right;&quot;&gt;Likely finish&lt;/th&gt;
+&lt;th style=&quot;padding: 10px 8px; border-bottom: 1px solid #dde3ea; font-weight: 500; width: 260px;&quot;&gt;Won % of target&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr style=&quot;background: #f7f9fb; font-weight: 600;&quot;&gt;
+&lt;td style=&quot;padding: 12px 8px;&quot;&gt;Company&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; text-align: right;&quot;&gt;₹500.0L&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; text-align: right;&quot;&gt;₹155.0L&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; text-align: right;&quot;&gt;₹400.0L&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px;&quot;&gt;&lt;div style=&quot;display: flex; align-items: center; gap: 10px;&quot;&gt;&lt;div style=&quot;flex-grow: 1; height: 8px; background: #e3e8ef; border-radius: 4px; position: relative;&quot;&gt;&lt;div style=&quot;position: absolute; left: 0; top: 0; width: 80%; height: 8px; background: #9ec5f0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;div style=&quot;position: absolute; left: 0; top: 0; width: 31%; height: 8px; background: #1565c0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;span style=&quot;width: 40px; text-align: right;&quot;&gt;31%&lt;/span&gt;&lt;/div&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr style=&quot;background: #f7f9fb; font-weight: 600;&quot;&gt;
+&lt;td style=&quot;padding: 12px 8px;&quot;&gt;SBU · Imaging&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; text-align: right;&quot;&gt;₹300.0L&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; text-align: right;&quot;&gt;₹96.0L&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; text-align: right;&quot;&gt;₹240.0L&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px;&quot;&gt;&lt;div style=&quot;display: flex; align-items: center; gap: 10px;&quot;&gt;&lt;div style=&quot;flex-grow: 1; height: 8px; background: #e3e8ef; border-radius: 4px; position: relative;&quot;&gt;&lt;div style=&quot;position: absolute; left: 0; top: 0; width: 80%; height: 8px; background: #9ec5f0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;div style=&quot;position: absolute; left: 0; top: 0; width: 32%; height: 8px; background: #1565c0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;span style=&quot;width: 40px; text-align: right;&quot;&gt;32%&lt;/span&gt;&lt;/div&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&quot;padding: 12px 8px; border-top: 1px solid #eef1f4;&quot;&gt;&lt;a href=&quot;#&quot;&gt;Nishad K V&lt;/a&gt;&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; border-top: 1px solid #eef1f4; text-align: right;&quot;&gt;₹120.0L&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; border-top: 1px solid #eef1f4; text-align: right;&quot;&gt;₹42.0L&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; border-top: 1px solid #eef1f4; text-align: right;&quot;&gt;₹105.0L&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; border-top: 1px solid #eef1f4;&quot;&gt;&lt;div style=&quot;display: flex; align-items: center; gap: 10px;&quot;&gt;&lt;div style=&quot;flex-grow: 1; height: 8px; background: #e3e8ef; border-radius: 4px; position: relative;&quot;&gt;&lt;div style=&quot;position: absolute; left: 0; top: 0; width: 88%; height: 8px; background: #9ec5f0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;div style=&quot;position: absolute; left: 0; top: 0; width: 35%; height: 8px; background: #1565c0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;span style=&quot;width: 40px; text-align: right;&quot;&gt;35%&lt;/span&gt;&lt;/div&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&quot;padding: 12px 8px 12px 32px; border-top: 1px solid #eef1f4;&quot;&gt;&lt;a href=&quot;#&quot;&gt;Adydev&lt;/a&gt;&lt;div style=&quot;font-size: 12px; color: #52606d;&quot;&gt;reports to Nishad K V&lt;/div&gt;&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; border-top: 1px solid #eef1f4; text-align: right;&quot;&gt;₹60.0L&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; border-top: 1px solid #eef1f4; text-align: right;&quot;&gt;₹25.0L&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; border-top: 1px solid #eef1f4; text-align: right;&quot;&gt;₹55.0L&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; border-top: 1px solid #eef1f4;&quot;&gt;&lt;div style=&quot;display: flex; align-items: center; gap: 10px;&quot;&gt;&lt;div style=&quot;flex-grow: 1; height: 8px; background: #e3e8ef; border-radius: 4px; position: relative;&quot;&gt;&lt;div style=&quot;position: absolute; left: 0; top: 0; width: 92%; height: 8px; background: #9ec5f0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;div style=&quot;position: absolute; left: 0; top: 0; width: 42%; height: 8px; background: #1565c0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;span style=&quot;width: 40px; text-align: right;&quot;&gt;42%&lt;/span&gt;&lt;/div&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&quot;padding: 12px 8px 12px 32px; border-top: 1px solid #eef1f4;&quot;&gt;&lt;a href=&quot;#&quot;&gt;Rep B&lt;/a&gt;&lt;div style=&quot;font-size: 12px; color: #52606d;&quot;&gt;reports to Nishad K V&lt;/div&gt;&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; border-top: 1px solid #eef1f4; text-align: right;&quot;&gt;₹60.0L&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; border-top: 1px solid #eef1f4; text-align: right;&quot;&gt;₹17.0L&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; border-top: 1px solid #eef1f4; text-align: right;&quot;&gt;₹50.0L&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; border-top: 1px solid #eef1f4;&quot;&gt;&lt;div style=&quot;display: flex; align-items: center; gap: 10px;&quot;&gt;&lt;div style=&quot;flex-grow: 1; height: 8px; background: #e3e8ef; border-radius: 4px; position: relative;&quot;&gt;&lt;div style=&quot;position: absolute; left: 0; top: 0; width: 83%; height: 8px; background: #9ec5f0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;div style=&quot;position: absolute; left: 0; top: 0; width: 28%; height: 8px; background: #1565c0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;span style=&quot;width: 40px; text-align: right;&quot;&gt;28%&lt;/span&gt;&lt;/div&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&quot;padding: 12px 8px; border-top: 1px solid #eef1f4;&quot;&gt;&lt;a href=&quot;#&quot;&gt;Second Area Manager&lt;/a&gt;&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; border-top: 1px solid #eef1f4; text-align: right;&quot;&gt;₹180.0L&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; border-top: 1px solid #eef1f4; text-align: right;&quot;&gt;₹54.0L&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; border-top: 1px solid #eef1f4; text-align: right;&quot;&gt;₹135.0L&lt;/td&gt;
+&lt;td style=&quot;padding: 12px 8px; border-top: 1px solid #eef1f4;&quot;&gt;&lt;div style=&quot;display: flex; align-items: center; gap: 10px;&quot;&gt;&lt;div style=&quot;flex-grow: 1; height: 8px; background: #e3e8ef; border-radius: 4px; position: relative;&quot;&gt;&lt;div style=&quot;position: absolute; left: 0; top: 0; width: 75%; height: 8px; background: #9ec5f0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;div style=&quot;position: absolute; left: 0; top: 0; width: 30%; height: 8px; background: #1565c0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;span style=&quot;width: 40px; text-align: right;&quot;&gt;30%&lt;/span&gt;&lt;/div&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;div style=&quot;font-size: 12px; color: #52606d; margin-top: -12px;&quot;&gt;Click a name to see that person&#x27;s hospitals and brands on a screen of its own.&lt;/div&gt;
+
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/body&gt;&lt;/html&gt;"></iframe></section><section><h2>Laptop — a person&#x27;s own screen (click a name in the Quarter view)</h2><iframe title="Laptop — a person&#x27;s own screen (click a name in the Quarter view)" width="1100" height="1180" srcdoc="&lt;!doctype html&gt;&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;style&gt;
+body{margin:0;font-family:Roboto,&quot;Segoe UI&quot;,system-ui,sans-serif;color:#1f2933}
+a{color:#1565c0}a:hover{color:#0d47a1}
+th{padding: 10px 8px; border-bottom: 1px solid #dde3ea; font-weight: 500; color: #52606d; font-size: 13px; text-align: right;}
+th:first-child{text-align: left;}
+td{padding: 10px 8px; border-top: 1px solid #eef1f4; text-align: right;}
+td:first-child{text-align: left;}
+h3{margin: 0 0 4px 0; font-size: 16px; font-weight: 600;}
+&lt;/style&gt;&lt;/head&gt;&lt;body&gt;
+
+&lt;div style=&quot;width: 1100px; height: 1180px; box-sizing: border-box; padding: 32px; background: #f4f6f8;&quot;&gt;
+&lt;div style=&quot;background: #ffffff; border: 1px solid #dde3ea; border-radius: 8px; padding: 24px 28px; display: flex; flex-direction: column; gap: 22px; font-size: 14px;&quot;&gt;
+
+&lt;div style=&quot;font-size: 13px;&quot;&gt;&lt;a href=&quot;#&quot;&gt;‹ Target vs Actuals&lt;/a&gt;&lt;/div&gt;
+
+&lt;div style=&quot;display: flex; align-items: flex-end; gap: 16px;&quot;&gt;
+&lt;div style=&quot;flex-grow: 1;&quot;&gt;
+&lt;h2 style=&quot;margin: 0; font-size: 22px; font-weight: 600;&quot;&gt;Adydev&lt;/h2&gt;
+&lt;div style=&quot;font-size: 13px; color: #52606d; margin-top: 2px;&quot;&gt;Imaging · reports to Nishad K V · Oct–Dec 2026 · as of 28 Oct 2026 · Example figures, made up&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div style=&quot;display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px;&quot;&gt;
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 16px 20px;&quot;&gt;&lt;div style=&quot;font-size: 13px; color: #52606d;&quot;&gt;Target&lt;/div&gt;&lt;div style=&quot;font-size: 28px; font-weight: 600; margin-top: 4px;&quot;&gt;₹60.0L&lt;/div&gt;&lt;/div&gt;
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 16px 20px;&quot;&gt;&lt;div style=&quot;font-size: 13px; color: #52606d;&quot;&gt;Won (paid)&lt;/div&gt;&lt;div style=&quot;font-size: 28px; font-weight: 600; margin-top: 4px;&quot;&gt;₹25.0L&lt;/div&gt;&lt;div style=&quot;font-size: 12px; color: #52606d; margin-top: 2px;&quot;&gt;PO received ₹35.0L&lt;/div&gt;&lt;/div&gt;
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 16px 20px;&quot;&gt;&lt;div style=&quot;font-size: 13px; color: #52606d;&quot;&gt;Won % of target&lt;/div&gt;&lt;div style=&quot;font-size: 28px; font-weight: 600; margin-top: 4px; color: #1565c0;&quot;&gt;42%&lt;/div&gt;&lt;/div&gt;
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 16px 20px;&quot;&gt;&lt;div style=&quot;font-size: 13px; color: #52606d;&quot;&gt;Likely finish&lt;/div&gt;&lt;div style=&quot;font-size: 28px; font-weight: 600; margin-top: 4px;&quot;&gt;₹55.0L&lt;/div&gt;&lt;div style=&quot;font-size: 12px; color: #52606d; margin-top: 2px;&quot;&gt;92% of target&lt;/div&gt;&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div style=&quot;display: grid; grid-template-columns: 1fr 1fr; gap: 24px;&quot;&gt;
+&lt;div&gt;
+&lt;h3&gt;By hospital&lt;/h3&gt;
+&lt;table style=&quot;width: 100%; border-collapse: collapse;&quot;&gt;
+&lt;thead&gt;&lt;tr&gt;&lt;th&gt;Hospital&lt;/th&gt;&lt;th&gt;Planned&lt;/th&gt;&lt;th&gt;Won&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;&lt;td&gt;[Hospital 1]&lt;/td&gt;&lt;td&gt;₹30.0L&lt;/td&gt;&lt;td&gt;₹15.0L&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;[Hospital 2]&lt;/td&gt;&lt;td&gt;₹15.0L&lt;/td&gt;&lt;td&gt;₹10.0L&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;[Hospital 3]&lt;/td&gt;&lt;td&gt;₹10.0L&lt;/td&gt;&lt;td&gt;—&lt;/td&gt;&lt;/tr&gt;
+&lt;tr style=&quot;font-weight: 600;&quot;&gt;&lt;td&gt;Total&lt;/td&gt;&lt;td&gt;₹55.0L&lt;/td&gt;&lt;td&gt;₹25.0L&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;div&gt;
+&lt;h3&gt;By brand&lt;/h3&gt;
+&lt;table style=&quot;width: 100%; border-collapse: collapse;&quot;&gt;
+&lt;thead&gt;&lt;tr&gt;&lt;th&gt;Brand&lt;/th&gt;&lt;th&gt;Planned&lt;/th&gt;&lt;th&gt;Won&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;&lt;td&gt;SonoScape&lt;/td&gt;&lt;td&gt;₹40.0L&lt;/td&gt;&lt;td&gt;₹20.0L&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;[Other brand]&lt;/td&gt;&lt;td&gt;₹15.0L&lt;/td&gt;&lt;td&gt;₹5.0L&lt;/td&gt;&lt;/tr&gt;
+&lt;tr style=&quot;font-weight: 600;&quot;&gt;&lt;td&gt;Total&lt;/td&gt;&lt;td&gt;₹55.0L&lt;/td&gt;&lt;td&gt;₹25.0L&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div style=&quot;font-size: 13px; color: #52606d; border-top: 1px solid #eef1f4; padding-top: 14px; display: flex; flex-direction: column; gap: 4px;&quot;&gt;
+&lt;div&gt;1 open Opportunity (₹8.0L) has no expected closing date, so it isn&#x27;t in Likely finish.&lt;/div&gt;
+&lt;div&gt;1 won Opportunity (₹3.0L) has no PO date, so it isn&#x27;t in PO received.&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/body&gt;&lt;/html&gt;"></iframe></section><section><h2>Laptop — Overdue tab (managers only)</h2><iframe title="Laptop — Overdue tab (managers only)" width="1100" height="640" srcdoc="&lt;!doctype html&gt;&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;style&gt;
+body{margin:0;font-family:Roboto,&quot;Segoe UI&quot;,system-ui,sans-serif;color:#1f2933}
+a{color:#1565c0}a:hover{color:#0d47a1}
+th{padding: 10px 8px; border-bottom: 1px solid #dde3ea; font-weight: 500; color: #52606d; font-size: 13px; text-align: right;}
+th:first-child{text-align: left;}
+td{padding: 12px 8px; border-top: 1px solid #eef1f4; text-align: right;}
+td:first-child{text-align: left; font-weight: 600;}
+.chip{display: inline-block; font-size: 12px; font-weight: 800; padding: 2px 8px; border-radius: 6px; background: #fdecea; color: #c62828; text-decoration: none;}
+.zero{background: #f1f3f5; color: #9aa5b1;}
+&lt;/style&gt;&lt;/head&gt;&lt;body&gt;
+
+&lt;div style=&quot;width: 1100px; height: 640px; box-sizing: border-box; padding: 32px; background: #f4f6f8;&quot;&gt;
+&lt;div style=&quot;display: flex; gap: 4px; border-bottom: 1px solid #dde3ea; margin-bottom: 16px; font-size: 14px;&quot;&gt;
+&lt;span style=&quot;padding: 10px 16px; color: #52606d;&quot;&gt;Target vs Actuals&lt;/span&gt;
+&lt;span style=&quot;padding: 10px 16px; color: #52606d;&quot;&gt;Pipeline&lt;/span&gt;
+&lt;span style=&quot;padding: 10px 16px; color: #52606d;&quot;&gt;Team Activity&lt;/span&gt;
+&lt;span style=&quot;padding: 10px 16px; color: #1565c0; font-weight: 600; border-bottom: 2px solid #1565c0;&quot;&gt;Overdue&lt;/span&gt;
+&lt;/div&gt;
+&lt;div style=&quot;background: #ffffff; border: 1px solid #dde3ea; border-radius: 8px; padding: 24px 28px; display: flex; flex-direction: column; gap: 16px; font-size: 14px;&quot;&gt;
+&lt;div&gt;
+&lt;h2 style=&quot;margin: 0; font-size: 18px; font-weight: 600;&quot;&gt;Overdue&lt;/h2&gt;
+&lt;div style=&quot;font-size: 13px; color: #52606d; margin-top: 2px;&quot;&gt;Managers only · as of 28 Oct 2026 · Example figures, made up&lt;/div&gt;
+&lt;/div&gt;
+&lt;table style=&quot;width: 100%; border-collapse: collapse;&quot;&gt;
+&lt;thead&gt;&lt;tr&gt;&lt;th&gt;Person&lt;/th&gt;&lt;th&gt;Overdue next actions&lt;/th&gt;&lt;th&gt;Past closing date&lt;/th&gt;&lt;th&gt;Value past closing date&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;&lt;td&gt;Adydev&lt;/td&gt;&lt;td&gt;&lt;a class=&quot;chip&quot; href=&quot;#&quot;&gt;3 overdue&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class=&quot;chip&quot; href=&quot;#&quot;&gt;2&lt;/a&gt;&lt;/td&gt;&lt;td&gt;₹18.0L&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Rep B&lt;/td&gt;&lt;td&gt;&lt;span class=&quot;chip zero&quot;&gt;0 overdue&lt;/span&gt;&lt;/td&gt;&lt;td&gt;&lt;a class=&quot;chip&quot; href=&quot;#&quot;&gt;1&lt;/a&gt;&lt;/td&gt;&lt;td&gt;₹5.0L&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Nishad K V&lt;/td&gt;&lt;td&gt;&lt;a class=&quot;chip&quot; href=&quot;#&quot;&gt;1 overdue&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;span class=&quot;chip zero&quot;&gt;0&lt;/span&gt;&lt;/td&gt;&lt;td&gt;—&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Second Area Manager&lt;/td&gt;&lt;td&gt;&lt;span class=&quot;chip zero&quot;&gt;0 overdue&lt;/span&gt;&lt;/td&gt;&lt;td&gt;&lt;span class=&quot;chip zero&quot;&gt;0&lt;/span&gt;&lt;/td&gt;&lt;td&gt;—&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;div style=&quot;font-size: 12px; color: #52606d;&quot;&gt;Click a count to open that person&#x27;s My Work, with them already chosen in &quot;Showing&quot;.&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/body&gt;&lt;/html&gt;"></iframe></section><section><h2>Phone — Quarter view</h2><iframe title="Phone — Quarter view" width="390" height="1500" srcdoc="&lt;!doctype html&gt;&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;style&gt;
+body{margin:0;font-family:Roboto,&quot;Segoe UI&quot;,system-ui,sans-serif;color:#1f2933}
+a{color:#1565c0}a:hover{color:#0d47a1}
+&lt;/style&gt;&lt;/head&gt;&lt;body&gt;
+
+&lt;div style=&quot;width: 390px; height: 1500px; box-sizing: border-box; padding: 16px; background: #f4f6f8;&quot;&gt;
+&lt;div style=&quot;background: #ffffff; border: 1px solid #dde3ea; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 16px;&quot;&gt;
+
+&lt;h2 style=&quot;margin: 0; font-size: 18px; font-weight: 600;&quot;&gt;Target vs Actuals&lt;/h2&gt;
+&lt;div style=&quot;display: flex; gap: 8px; align-items: center;&quot;&gt;
+&lt;label style=&quot;font-size: 13px; color: #52606d; display: flex; align-items: center; gap: 6px; flex-grow: 1;&quot;&gt;SBU
+&lt;select style=&quot;font-size: 14px; padding: 8px 10px; border: 1px solid #c3ccd6; border-radius: 4px; background: #fff; flex-grow: 1;&quot;&gt;&lt;option&gt;Imaging&lt;/option&gt;&lt;/select&gt;&lt;/label&gt;
+&lt;div style=&quot;display: flex; border: 1px solid #1565c0; border-radius: 4px; overflow: hidden;&quot;&gt;
+&lt;button style=&quot;font-size: 14px; padding: 10px 12px; border: 0; background: #1565c0; color: #fff;&quot;&gt;Quarter&lt;/button&gt;
+&lt;button style=&quot;font-size: 14px; padding: 10px 12px; border: 0; background: #fff; color: #1565c0;&quot;&gt;Year&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div style=&quot;display: flex; align-items: center; justify-content: space-between;&quot;&gt;
+&lt;button aria-label=&quot;Previous quarter&quot; style=&quot;width: 44px; height: 44px; border: 0; background: none; font-size: 20px; color: #52606d;&quot;&gt;‹&lt;/button&gt;
+&lt;span style=&quot;font-size: 15px; font-weight: 600;&quot;&gt;Oct–Dec 2026&lt;/span&gt;
+&lt;button aria-label=&quot;Next quarter&quot; style=&quot;width: 44px; height: 44px; border: 0; background: none; font-size: 20px; color: #52606d;&quot;&gt;›&lt;/button&gt;
+&lt;/div&gt;
+&lt;div style=&quot;font-size: 12px; color: #52606d; margin-top: -8px;&quot;&gt;This quarter · as of 28 Oct 2026 · Example figures, made up&lt;/div&gt;
+
+&lt;div style=&quot;display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;&quot;&gt;
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 12px;&quot;&gt;
+&lt;div style=&quot;font-size: 12px; color: #52606d;&quot;&gt;Target&lt;/div&gt;
+&lt;div style=&quot;font-size: 22px; font-weight: 600; margin-top: 2px;&quot;&gt;₹300.0L&lt;/div&gt;
+&lt;/div&gt;
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 12px;&quot;&gt;
+&lt;div style=&quot;font-size: 12px; color: #52606d;&quot;&gt;Won (paid)&lt;/div&gt;
+&lt;div style=&quot;font-size: 22px; font-weight: 600; margin-top: 2px;&quot;&gt;₹96.0L&lt;/div&gt;
+&lt;div style=&quot;font-size: 11px; color: #52606d; margin-top: 2px;&quot;&gt;PO received ₹130.0L&lt;/div&gt;
+&lt;/div&gt;
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 12px;&quot;&gt;
+&lt;div style=&quot;font-size: 12px; color: #52606d;&quot;&gt;Won % of target&lt;/div&gt;
+&lt;div style=&quot;font-size: 22px; font-weight: 600; margin-top: 2px; color: #1565c0;&quot;&gt;32%&lt;/div&gt;
+&lt;/div&gt;
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 12px;&quot;&gt;
+&lt;div style=&quot;font-size: 12px; color: #52606d;&quot;&gt;Likely finish&lt;/div&gt;
+&lt;div style=&quot;font-size: 22px; font-weight: 600; margin-top: 2px;&quot;&gt;₹240.0L&lt;/div&gt;
+&lt;div style=&quot;font-size: 11px; color: #52606d; margin-top: 2px;&quot;&gt;80% of target&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div style=&quot;display: flex; gap: 16px; font-size: 12px; color: #52606d; align-items: center;&quot;&gt;
+&lt;span style=&quot;display: flex; align-items: center; gap: 6px;&quot;&gt;&lt;span style=&quot;width: 14px; height: 8px; background: #1565c0; border-radius: 2px;&quot;&gt;&lt;/span&gt;Won&lt;/span&gt;
+&lt;span style=&quot;display: flex; align-items: center; gap: 6px;&quot;&gt;&lt;span style=&quot;width: 14px; height: 8px; background: #9ec5f0; border-radius: 2px;&quot;&gt;&lt;/span&gt;Likely finish&lt;/span&gt;
+&lt;/div&gt;
+
+&lt;div style=&quot;display: flex; flex-direction: column; gap: 10px;&quot;&gt;
+
+&lt;div style=&quot;background: #f7f9fb; border: 1px solid #dde3ea; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px;&quot;&gt;
+&lt;div style=&quot;font-size: 15px; font-weight: 600;&quot;&gt;Company&lt;/div&gt;
+&lt;div style=&quot;display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; font-size: 13px;&quot;&gt;
+&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Target&lt;/div&gt;₹500.0L&lt;/div&gt;
+&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Won (paid)&lt;/div&gt;₹155.0L&lt;/div&gt;
+&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Likely finish&lt;/div&gt;₹400.0L&lt;/div&gt;
+&lt;/div&gt;
+&lt;div style=&quot;display: flex; align-items: center; gap: 10px;&quot;&gt;&lt;div style=&quot;flex-grow: 1; height: 8px; background: #e3e8ef; border-radius: 4px; position: relative;&quot;&gt;&lt;div style=&quot;position: absolute; left: 0; top: 0; width: 80%; height: 8px; background: #9ec5f0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;div style=&quot;position: absolute; left: 0; top: 0; width: 31%; height: 8px; background: #1565c0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;span style=&quot;font-size: 13px; font-weight: 600;&quot;&gt;31%&lt;/span&gt;&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div style=&quot;background: #f7f9fb; border: 1px solid #dde3ea; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px;&quot;&gt;
+&lt;div style=&quot;font-size: 15px; font-weight: 600;&quot;&gt;SBU · Imaging&lt;/div&gt;
+&lt;div style=&quot;display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; font-size: 13px;&quot;&gt;
+&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Target&lt;/div&gt;₹300.0L&lt;/div&gt;
+&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Won (paid)&lt;/div&gt;₹96.0L&lt;/div&gt;
+&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Likely finish&lt;/div&gt;₹240.0L&lt;/div&gt;
+&lt;/div&gt;
+&lt;div style=&quot;display: flex; align-items: center; gap: 10px;&quot;&gt;&lt;div style=&quot;flex-grow: 1; height: 8px; background: #e3e8ef; border-radius: 4px; position: relative;&quot;&gt;&lt;div style=&quot;position: absolute; left: 0; top: 0; width: 80%; height: 8px; background: #9ec5f0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;div style=&quot;position: absolute; left: 0; top: 0; width: 32%; height: 8px; background: #1565c0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;span style=&quot;font-size: 13px; font-weight: 600;&quot;&gt;32%&lt;/span&gt;&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px;&quot;&gt;
+&lt;div style=&quot;font-size: 15px; font-weight: 600;&quot;&gt;&lt;a href=&quot;#&quot;&gt;Nishad K V&lt;/a&gt;&lt;/div&gt;
+&lt;div style=&quot;display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; font-size: 13px;&quot;&gt;
+&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Target&lt;/div&gt;₹120.0L&lt;/div&gt;
+&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Won (paid)&lt;/div&gt;₹42.0L&lt;/div&gt;
+&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Likely finish&lt;/div&gt;₹105.0L&lt;/div&gt;
+&lt;/div&gt;
+&lt;div style=&quot;display: flex; align-items: center; gap: 10px;&quot;&gt;&lt;div style=&quot;flex-grow: 1; height: 8px; background: #e3e8ef; border-radius: 4px; position: relative;&quot;&gt;&lt;div style=&quot;position: absolute; left: 0; top: 0; width: 88%; height: 8px; background: #9ec5f0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;div style=&quot;position: absolute; left: 0; top: 0; width: 35%; height: 8px; background: #1565c0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;span style=&quot;font-size: 13px; font-weight: 600;&quot;&gt;35%&lt;/span&gt;&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 12px; margin-left: 16px; display: flex; flex-direction: column; gap: 8px;&quot;&gt;
+&lt;div&gt;&lt;div style=&quot;font-size: 15px; font-weight: 600;&quot;&gt;&lt;a href=&quot;#&quot;&gt;Adydev&lt;/a&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px; color: #52606d;&quot;&gt;reports to Nishad K V&lt;/div&gt;&lt;/div&gt;
+&lt;div style=&quot;display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; font-size: 13px;&quot;&gt;
+&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Target&lt;/div&gt;₹60.0L&lt;/div&gt;
+&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Won (paid)&lt;/div&gt;₹25.0L&lt;/div&gt;
+&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Likely finish&lt;/div&gt;₹55.0L&lt;/div&gt;
+&lt;/div&gt;
+&lt;div style=&quot;display: flex; align-items: center; gap: 10px;&quot;&gt;&lt;div style=&quot;flex-grow: 1; height: 8px; background: #e3e8ef; border-radius: 4px; position: relative;&quot;&gt;&lt;div style=&quot;position: absolute; left: 0; top: 0; width: 92%; height: 8px; background: #9ec5f0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;div style=&quot;position: absolute; left: 0; top: 0; width: 42%; height: 8px; background: #1565c0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;span style=&quot;font-size: 13px; font-weight: 600;&quot;&gt;42%&lt;/span&gt;&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 12px; margin-left: 16px; display: flex; flex-direction: column; gap: 8px;&quot;&gt;
+&lt;div&gt;&lt;div style=&quot;font-size: 15px; font-weight: 600;&quot;&gt;&lt;a href=&quot;#&quot;&gt;Rep B&lt;/a&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px; color: #52606d;&quot;&gt;reports to Nishad K V&lt;/div&gt;&lt;/div&gt;
+&lt;div style=&quot;display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; font-size: 13px;&quot;&gt;
+&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Target&lt;/div&gt;₹60.0L&lt;/div&gt;
+&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Won (paid)&lt;/div&gt;₹17.0L&lt;/div&gt;
+&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Likely finish&lt;/div&gt;₹50.0L&lt;/div&gt;
+&lt;/div&gt;
+&lt;div style=&quot;display: flex; align-items: center; gap: 10px;&quot;&gt;&lt;div style=&quot;flex-grow: 1; height: 8px; background: #e3e8ef; border-radius: 4px; position: relative;&quot;&gt;&lt;div style=&quot;position: absolute; left: 0; top: 0; width: 83%; height: 8px; background: #9ec5f0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;div style=&quot;position: absolute; left: 0; top: 0; width: 28%; height: 8px; background: #1565c0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;span style=&quot;font-size: 13px; font-weight: 600;&quot;&gt;28%&lt;/span&gt;&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px;&quot;&gt;
+&lt;div style=&quot;font-size: 15px; font-weight: 600;&quot;&gt;&lt;a href=&quot;#&quot;&gt;Second Area Manager&lt;/a&gt;&lt;/div&gt;
+&lt;div style=&quot;display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; font-size: 13px;&quot;&gt;
+&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Target&lt;/div&gt;₹180.0L&lt;/div&gt;
+&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Won (paid)&lt;/div&gt;₹54.0L&lt;/div&gt;
+&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Likely finish&lt;/div&gt;₹135.0L&lt;/div&gt;
+&lt;/div&gt;
+&lt;div style=&quot;display: flex; align-items: center; gap: 10px;&quot;&gt;&lt;div style=&quot;flex-grow: 1; height: 8px; background: #e3e8ef; border-radius: 4px; position: relative;&quot;&gt;&lt;div style=&quot;position: absolute; left: 0; top: 0; width: 75%; height: 8px; background: #9ec5f0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;div style=&quot;position: absolute; left: 0; top: 0; width: 30%; height: 8px; background: #1565c0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;span style=&quot;font-size: 13px; font-weight: 600;&quot;&gt;30%&lt;/span&gt;&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;/div&gt;
+&lt;div style=&quot;font-size: 12px; color: #52606d;&quot;&gt;Tap a name to see that person&#x27;s hospitals and brands on a screen of its own.&lt;/div&gt;
+
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/body&gt;&lt;/html&gt;"></iframe></section><section><h2>Phone — Year view</h2><iframe title="Phone — Year view" width="390" height="1180" srcdoc="&lt;!doctype html&gt;&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;style&gt;
+body{margin:0;font-family:Roboto,&quot;Segoe UI&quot;,system-ui,sans-serif;color:#1f2933}
+a{color:#1565c0}a:hover{color:#0d47a1}
+&lt;/style&gt;&lt;/head&gt;&lt;body&gt;
+
+&lt;div style=&quot;width: 390px; height: 1180px; box-sizing: border-box; padding: 16px; background: #f4f6f8;&quot;&gt;
+&lt;div style=&quot;background: #ffffff; border: 1px solid #dde3ea; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 16px;&quot;&gt;
+
+&lt;h2 style=&quot;margin: 0; font-size: 18px; font-weight: 600;&quot;&gt;Target vs Actuals&lt;/h2&gt;
+&lt;div style=&quot;display: flex; gap: 8px; align-items: center;&quot;&gt;
+&lt;label style=&quot;font-size: 13px; color: #52606d; display: flex; align-items: center; gap: 6px; flex-grow: 1;&quot;&gt;SBU
+&lt;select style=&quot;font-size: 14px; padding: 8px 10px; border: 1px solid #c3ccd6; border-radius: 4px; background: #fff; flex-grow: 1;&quot;&gt;&lt;option&gt;Imaging&lt;/option&gt;&lt;/select&gt;&lt;/label&gt;
+&lt;div style=&quot;display: flex; border: 1px solid #1565c0; border-radius: 4px; overflow: hidden;&quot;&gt;
+&lt;button style=&quot;font-size: 14px; padding: 10px 12px; border: 0; background: #fff; color: #1565c0;&quot;&gt;Quarter&lt;/button&gt;
+&lt;button style=&quot;font-size: 14px; padding: 10px 12px; border: 0; background: #1565c0; color: #fff;&quot;&gt;Year&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div style=&quot;display: flex; align-items: center; justify-content: space-between;&quot;&gt;
+&lt;button aria-label=&quot;Previous year&quot; style=&quot;width: 44px; height: 44px; border: 0; background: none; font-size: 20px; color: #52606d;&quot;&gt;‹&lt;/button&gt;
+&lt;span style=&quot;font-size: 15px; font-weight: 600;&quot;&gt;Apr 2026 – Mar 2027&lt;/span&gt;
+&lt;button aria-label=&quot;Next year&quot; style=&quot;width: 44px; height: 44px; border: 0; background: none; font-size: 20px; color: #52606d;&quot;&gt;›&lt;/button&gt;
+&lt;/div&gt;
+&lt;div style=&quot;font-size: 12px; color: #52606d; margin-top: -8px;&quot;&gt;This year so far: Oct–Dec 2026 (targets start there) · as of 28 Oct 2026 · Example figures, made up&lt;/div&gt;
+
+&lt;div style=&quot;display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;&quot;&gt;
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 12px;&quot;&gt;
+&lt;div style=&quot;font-size: 12px; color: #52606d;&quot;&gt;Target so far&lt;/div&gt;
+&lt;div style=&quot;font-size: 22px; font-weight: 600; margin-top: 2px;&quot;&gt;₹300.0L&lt;/div&gt;
+&lt;/div&gt;
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 12px;&quot;&gt;
+&lt;div style=&quot;font-size: 12px; color: #52606d;&quot;&gt;Won (paid) so far&lt;/div&gt;
+&lt;div style=&quot;font-size: 22px; font-weight: 600; margin-top: 2px;&quot;&gt;₹96.0L&lt;/div&gt;
+&lt;/div&gt;
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 12px; grid-column: span 2;&quot;&gt;
+&lt;div style=&quot;font-size: 12px; color: #52606d;&quot;&gt;Won % of target&lt;/div&gt;
+&lt;div style=&quot;font-size: 22px; font-weight: 600; margin-top: 2px; color: #1565c0;&quot;&gt;32%&lt;/div&gt;
+&lt;div style=&quot;height: 8px; background: #e3e8ef; border-radius: 4px; margin-top: 8px;&quot;&gt;&lt;div style=&quot;width: 32%; height: 8px; background: #1565c0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div style=&quot;display: flex; flex-direction: column; gap: 10px;&quot;&gt;
+
+&lt;div style=&quot;background: #f7f9fb; border: 1px solid #dde3ea; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px;&quot;&gt;
+&lt;div style=&quot;font-size: 15px; font-weight: 600;&quot;&gt;Company&lt;/div&gt;
+&lt;div style=&quot;display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; font-size: 13px;&quot;&gt;
+&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Target so far&lt;/div&gt;₹500.0L&lt;/div&gt;
+&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Won (paid) so far&lt;/div&gt;₹155.0L&lt;/div&gt;
+&lt;/div&gt;
+&lt;div style=&quot;display: flex; align-items: center; gap: 10px;&quot;&gt;&lt;div style=&quot;flex-grow: 1; height: 8px; background: #e3e8ef; border-radius: 4px;&quot;&gt;&lt;div style=&quot;width: 31%; height: 8px; background: #1565c0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;span style=&quot;font-size: 13px; font-weight: 600;&quot;&gt;31%&lt;/span&gt;&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div style=&quot;background: #f7f9fb; border: 1px solid #dde3ea; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px;&quot;&gt;
+&lt;div style=&quot;font-size: 15px; font-weight: 600;&quot;&gt;SBU · Imaging&lt;/div&gt;
+&lt;div style=&quot;display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; font-size: 13px;&quot;&gt;
+&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Target so far&lt;/div&gt;₹300.0L&lt;/div&gt;
+&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Won (paid) so far&lt;/div&gt;₹96.0L&lt;/div&gt;
+&lt;/div&gt;
+&lt;div style=&quot;display: flex; align-items: center; gap: 10px;&quot;&gt;&lt;div style=&quot;flex-grow: 1; height: 8px; background: #e3e8ef; border-radius: 4px;&quot;&gt;&lt;div style=&quot;width: 32%; height: 8px; background: #1565c0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;span style=&quot;font-size: 13px; font-weight: 600;&quot;&gt;32%&lt;/span&gt;&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px;&quot;&gt;
+&lt;div style=&quot;font-size: 15px; font-weight: 600;&quot;&gt;Nishad K V&lt;/div&gt;
+&lt;div style=&quot;display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; font-size: 13px;&quot;&gt;
+&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Target so far&lt;/div&gt;₹120.0L&lt;/div&gt;
+&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Won (paid) so far&lt;/div&gt;₹42.0L&lt;/div&gt;
+&lt;/div&gt;
+&lt;div style=&quot;display: flex; align-items: center; gap: 10px;&quot;&gt;&lt;div style=&quot;flex-grow: 1; height: 8px; background: #e3e8ef; border-radius: 4px;&quot;&gt;&lt;div style=&quot;width: 35%; height: 8px; background: #1565c0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;span style=&quot;font-size: 13px; font-weight: 600;&quot;&gt;35%&lt;/span&gt;&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 12px; margin-left: 16px; display: flex; flex-direction: column; gap: 8px;&quot;&gt;
+&lt;div&gt;&lt;div style=&quot;font-size: 15px; font-weight: 600;&quot;&gt;Adydev&lt;/div&gt;&lt;div style=&quot;font-size: 12px; color: #52606d;&quot;&gt;reports to Nishad K V&lt;/div&gt;&lt;/div&gt;
+&lt;div style=&quot;display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; font-size: 13px;&quot;&gt;
+&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Target so far&lt;/div&gt;₹60.0L&lt;/div&gt;
+&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Won (paid) so far&lt;/div&gt;₹25.0L&lt;/div&gt;
+&lt;/div&gt;
+&lt;div style=&quot;display: flex; align-items: center; gap: 10px;&quot;&gt;&lt;div style=&quot;flex-grow: 1; height: 8px; background: #e3e8ef; border-radius: 4px;&quot;&gt;&lt;div style=&quot;width: 42%; height: 8px; background: #1565c0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;span style=&quot;font-size: 13px; font-weight: 600;&quot;&gt;42%&lt;/span&gt;&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 12px; margin-left: 16px; display: flex; flex-direction: column; gap: 8px;&quot;&gt;
+&lt;div&gt;&lt;div style=&quot;font-size: 15px; font-weight: 600;&quot;&gt;Rep B&lt;/div&gt;&lt;div style=&quot;font-size: 12px; color: #52606d;&quot;&gt;reports to Nishad K V&lt;/div&gt;&lt;/div&gt;
+&lt;div style=&quot;display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; font-size: 13px;&quot;&gt;
+&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Target so far&lt;/div&gt;₹60.0L&lt;/div&gt;
+&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Won (paid) so far&lt;/div&gt;₹17.0L&lt;/div&gt;
+&lt;/div&gt;
+&lt;div style=&quot;display: flex; align-items: center; gap: 10px;&quot;&gt;&lt;div style=&quot;flex-grow: 1; height: 8px; background: #e3e8ef; border-radius: 4px;&quot;&gt;&lt;div style=&quot;width: 28%; height: 8px; background: #1565c0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;span style=&quot;font-size: 13px; font-weight: 600;&quot;&gt;28%&lt;/span&gt;&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px;&quot;&gt;
+&lt;div style=&quot;font-size: 15px; font-weight: 600;&quot;&gt;Second Area Manager&lt;/div&gt;
+&lt;div style=&quot;display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; font-size: 13px;&quot;&gt;
+&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Target so far&lt;/div&gt;₹180.0L&lt;/div&gt;
+&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Won (paid) so far&lt;/div&gt;₹54.0L&lt;/div&gt;
+&lt;/div&gt;
+&lt;div style=&quot;display: flex; align-items: center; gap: 10px;&quot;&gt;&lt;div style=&quot;flex-grow: 1; height: 8px; background: #e3e8ef; border-radius: 4px;&quot;&gt;&lt;div style=&quot;width: 30%; height: 8px; background: #1565c0; border-radius: 4px;&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;span style=&quot;font-size: 13px; font-weight: 600;&quot;&gt;30%&lt;/span&gt;&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;/div&gt;
+
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/body&gt;&lt;/html&gt;"></iframe></section><section><h2>Phone — a person&#x27;s own screen</h2><iframe title="Phone — a person&#x27;s own screen" width="390" height="1300" srcdoc="&lt;!doctype html&gt;&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;style&gt;
+body{margin:0;font-family:Roboto,&quot;Segoe UI&quot;,system-ui,sans-serif;color:#1f2933}
+a{color:#1565c0}a:hover{color:#0d47a1}
+h3{margin: 0; font-size: 16px; font-weight: 600;}
+&lt;/style&gt;&lt;/head&gt;&lt;body&gt;
+
+&lt;div style=&quot;width: 390px; height: 1300px; box-sizing: border-box; padding: 16px; background: #f4f6f8;&quot;&gt;
+&lt;div style=&quot;background: #ffffff; border: 1px solid #dde3ea; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 16px; font-size: 14px;&quot;&gt;
+
+&lt;div style=&quot;font-size: 13px;&quot;&gt;&lt;a href=&quot;#&quot; style=&quot;display: inline-block; padding: 12px 0;&quot;&gt;‹ Target vs Actuals&lt;/a&gt;&lt;/div&gt;
+
+&lt;div&gt;
+&lt;h2 style=&quot;margin: 0; font-size: 20px; font-weight: 600;&quot;&gt;Adydev&lt;/h2&gt;
+&lt;div style=&quot;font-size: 12px; color: #52606d; margin-top: 2px;&quot;&gt;Imaging · reports to Nishad K V · Oct–Dec 2026 · as of 28 Oct 2026 · Example figures, made up&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div style=&quot;display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;&quot;&gt;
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 12px;&quot;&gt;&lt;div style=&quot;font-size: 12px; color: #52606d;&quot;&gt;Target&lt;/div&gt;&lt;div style=&quot;font-size: 22px; font-weight: 600; margin-top: 2px;&quot;&gt;₹60.0L&lt;/div&gt;&lt;/div&gt;
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 12px;&quot;&gt;&lt;div style=&quot;font-size: 12px; color: #52606d;&quot;&gt;Won (paid)&lt;/div&gt;&lt;div style=&quot;font-size: 22px; font-weight: 600; margin-top: 2px;&quot;&gt;₹25.0L&lt;/div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d; margin-top: 2px;&quot;&gt;PO received ₹35.0L&lt;/div&gt;&lt;/div&gt;
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 12px;&quot;&gt;&lt;div style=&quot;font-size: 12px; color: #52606d;&quot;&gt;Won % of target&lt;/div&gt;&lt;div style=&quot;font-size: 22px; font-weight: 600; margin-top: 2px; color: #1565c0;&quot;&gt;42%&lt;/div&gt;&lt;/div&gt;
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 12px;&quot;&gt;&lt;div style=&quot;font-size: 12px; color: #52606d;&quot;&gt;Likely finish&lt;/div&gt;&lt;div style=&quot;font-size: 22px; font-weight: 600; margin-top: 2px;&quot;&gt;₹55.0L&lt;/div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d; margin-top: 2px;&quot;&gt;92% of target&lt;/div&gt;&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;h3&gt;By hospital&lt;/h3&gt;
+&lt;div style=&quot;display: flex; flex-direction: column; gap: 8px; margin-top: -8px;&quot;&gt;
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 10px 12px;&quot;&gt;&lt;div style=&quot;font-weight: 600;&quot;&gt;[Hospital 1]&lt;/div&gt;&lt;div style=&quot;display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; font-size: 13px; margin-top: 4px;&quot;&gt;&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Planned&lt;/div&gt;₹30.0L&lt;/div&gt;&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Won&lt;/div&gt;₹15.0L&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 10px 12px;&quot;&gt;&lt;div style=&quot;font-weight: 600;&quot;&gt;[Hospital 2]&lt;/div&gt;&lt;div style=&quot;display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; font-size: 13px; margin-top: 4px;&quot;&gt;&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Planned&lt;/div&gt;₹15.0L&lt;/div&gt;&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Won&lt;/div&gt;₹10.0L&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 10px 12px;&quot;&gt;&lt;div style=&quot;font-weight: 600;&quot;&gt;[Hospital 3]&lt;/div&gt;&lt;div style=&quot;display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; font-size: 13px; margin-top: 4px;&quot;&gt;&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Planned&lt;/div&gt;₹10.0L&lt;/div&gt;&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Won&lt;/div&gt;—&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;div style=&quot;background: #f7f9fb; border: 1px solid #dde3ea; border-radius: 8px; padding: 10px 12px; font-weight: 600;&quot;&gt;&lt;div&gt;Total&lt;/div&gt;&lt;div style=&quot;display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; font-size: 13px; margin-top: 4px;&quot;&gt;&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d; font-weight: 400;&quot;&gt;Planned&lt;/div&gt;₹55.0L&lt;/div&gt;&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d; font-weight: 400;&quot;&gt;Won&lt;/div&gt;₹25.0L&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;h3&gt;By brand&lt;/h3&gt;
+&lt;div style=&quot;display: flex; flex-direction: column; gap: 8px; margin-top: -8px;&quot;&gt;
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 10px 12px;&quot;&gt;&lt;div style=&quot;font-weight: 600;&quot;&gt;SonoScape&lt;/div&gt;&lt;div style=&quot;display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; font-size: 13px; margin-top: 4px;&quot;&gt;&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Planned&lt;/div&gt;₹40.0L&lt;/div&gt;&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Won&lt;/div&gt;₹20.0L&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 10px 12px;&quot;&gt;&lt;div style=&quot;font-weight: 600;&quot;&gt;[Other brand]&lt;/div&gt;&lt;div style=&quot;display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; font-size: 13px; margin-top: 4px;&quot;&gt;&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Planned&lt;/div&gt;₹15.0L&lt;/div&gt;&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d;&quot;&gt;Won&lt;/div&gt;₹5.0L&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;div style=&quot;background: #f7f9fb; border: 1px solid #dde3ea; border-radius: 8px; padding: 10px 12px; font-weight: 600;&quot;&gt;&lt;div&gt;Total&lt;/div&gt;&lt;div style=&quot;display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; font-size: 13px; margin-top: 4px;&quot;&gt;&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d; font-weight: 400;&quot;&gt;Planned&lt;/div&gt;₹55.0L&lt;/div&gt;&lt;div&gt;&lt;div style=&quot;font-size: 11px; color: #52606d; font-weight: 400;&quot;&gt;Won&lt;/div&gt;₹25.0L&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div style=&quot;font-size: 12px; color: #52606d; border-top: 1px solid #eef1f4; padding-top: 12px; display: flex; flex-direction: column; gap: 4px;&quot;&gt;
+&lt;div&gt;1 open Opportunity (₹8.0L) has no expected closing date, so it isn&#x27;t in Likely finish.&lt;/div&gt;
+&lt;div&gt;1 won Opportunity (₹3.0L) has no PO date, so it isn&#x27;t in PO received.&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/body&gt;&lt;/html&gt;"></iframe></section><section><h2>Phone — Overdue tab</h2><iframe title="Phone — Overdue tab" width="390" height="900" srcdoc="&lt;!doctype html&gt;&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;style&gt;
+body{margin:0;font-family:Roboto,&quot;Segoe UI&quot;,system-ui,sans-serif;color:#1f2933}
+a{color:#1565c0}a:hover{color:#0d47a1}
+.chip{display: inline-block; font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 6px; background: #fdecea; color: #c62828; text-decoration: none;}
+.zero{background: #f1f3f5; color: #6b7785;}
+.lbl{font-size: 11px; color: #52606d; margin-bottom: 4px;}
+&lt;/style&gt;&lt;/head&gt;&lt;body&gt;
+
+&lt;div style=&quot;width: 390px; height: 900px; box-sizing: border-box; padding: 16px; background: #f4f6f8;&quot;&gt;
+&lt;div style=&quot;display: flex; gap: 2px; border-bottom: 1px solid #dde3ea; margin-bottom: 12px; font-size: 13px; overflow-x: auto; white-space: nowrap;&quot;&gt;
+&lt;span style=&quot;padding: 12px 10px; color: #52606d;&quot;&gt;Target vs Actuals&lt;/span&gt;
+&lt;span style=&quot;padding: 12px 10px; color: #52606d;&quot;&gt;Pipeline&lt;/span&gt;
+&lt;span style=&quot;padding: 12px 10px; color: #52606d;&quot;&gt;Team Activity&lt;/span&gt;
+&lt;span style=&quot;padding: 12px 10px; color: #1565c0; font-weight: 600; border-bottom: 2px solid #1565c0;&quot;&gt;Overdue&lt;/span&gt;
+&lt;/div&gt;
+&lt;div style=&quot;background: #ffffff; border: 1px solid #dde3ea; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 12px; font-size: 14px;&quot;&gt;
+&lt;div&gt;
+&lt;h2 style=&quot;margin: 0; font-size: 17px; font-weight: 600;&quot;&gt;Overdue&lt;/h2&gt;
+&lt;div style=&quot;font-size: 12px; color: #52606d; margin-top: 2px;&quot;&gt;Managers only · as of 28 Oct 2026 · Example figures, made up&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px;&quot;&gt;
+&lt;div style=&quot;font-size: 15px; font-weight: 600;&quot;&gt;Adydev&lt;/div&gt;
+&lt;div&gt;&lt;div class=&quot;lbl&quot;&gt;Overdue next actions&lt;/div&gt;&lt;a class=&quot;chip&quot; href=&quot;#&quot;&gt;3 overdue&lt;/a&gt;&lt;/div&gt;
+&lt;div style=&quot;display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px;&quot;&gt;
+&lt;div&gt;&lt;div class=&quot;lbl&quot;&gt;Past closing date&lt;/div&gt;&lt;a class=&quot;chip&quot; href=&quot;#&quot;&gt;2&lt;/a&gt;&lt;/div&gt;
+&lt;div&gt;&lt;div class=&quot;lbl&quot;&gt;Value past closing date&lt;/div&gt;₹18.0L&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px;&quot;&gt;
+&lt;div style=&quot;font-size: 15px; font-weight: 600;&quot;&gt;Rep B&lt;/div&gt;
+&lt;div&gt;&lt;div class=&quot;lbl&quot;&gt;Overdue next actions&lt;/div&gt;&lt;span class=&quot;chip zero&quot;&gt;0 overdue&lt;/span&gt;&lt;/div&gt;
+&lt;div style=&quot;display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px;&quot;&gt;
+&lt;div&gt;&lt;div class=&quot;lbl&quot;&gt;Past closing date&lt;/div&gt;&lt;a class=&quot;chip&quot; href=&quot;#&quot;&gt;1&lt;/a&gt;&lt;/div&gt;
+&lt;div&gt;&lt;div class=&quot;lbl&quot;&gt;Value past closing date&lt;/div&gt;₹5.0L&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px;&quot;&gt;
+&lt;div style=&quot;font-size: 15px; font-weight: 600;&quot;&gt;Nishad K V&lt;/div&gt;
+&lt;div&gt;&lt;div class=&quot;lbl&quot;&gt;Overdue next actions&lt;/div&gt;&lt;a class=&quot;chip&quot; href=&quot;#&quot;&gt;1 overdue&lt;/a&gt;&lt;/div&gt;
+&lt;div style=&quot;display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px;&quot;&gt;
+&lt;div&gt;&lt;div class=&quot;lbl&quot;&gt;Past closing date&lt;/div&gt;&lt;span class=&quot;chip zero&quot;&gt;0&lt;/span&gt;&lt;/div&gt;
+&lt;div&gt;&lt;div class=&quot;lbl&quot;&gt;Value past closing date&lt;/div&gt;—&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div style=&quot;border: 1px solid #dde3ea; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px;&quot;&gt;
+&lt;div style=&quot;font-size: 15px; font-weight: 600;&quot;&gt;Second Area Manager&lt;/div&gt;
+&lt;div&gt;&lt;div class=&quot;lbl&quot;&gt;Overdue next actions&lt;/div&gt;&lt;span class=&quot;chip zero&quot;&gt;0 overdue&lt;/span&gt;&lt;/div&gt;
+&lt;div style=&quot;display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px;&quot;&gt;
+&lt;div&gt;&lt;div class=&quot;lbl&quot;&gt;Past closing date&lt;/div&gt;&lt;span class=&quot;chip zero&quot;&gt;0&lt;/span&gt;&lt;/div&gt;
+&lt;div&gt;&lt;div class=&quot;lbl&quot;&gt;Value past closing date&lt;/div&gt;—&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div style=&quot;font-size: 12px; color: #52606d;&quot;&gt;Tap a count to open that person&#x27;s My Work, with them already chosen in &quot;Showing&quot;.&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/body&gt;&lt;/html&gt;"></iframe></section>
+</body>
+</html>

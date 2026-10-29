@@ -432,6 +432,13 @@ Basheer K (D57). Shruthi goes back to Haroon in G7.
 
 ## I — Target vs Actuals: Year view (D16, D22, D31, D66, D77–D80)
 
+**Replaced — not to be resumed.** The Year view tested here is redesigned
+(`docs/Target-vs-Actuals-Redesign-Implementation-Plan.md` D1, D2, D6;
+Basheer, 2026-10-28/29). Its test is
+`docs/Target-vs-Actuals-Redesign-Manual-E2E-Test-Plan.md` section A,
+which also answers the open I8. The Part 2 E2E resumes at J (redesign
+plan D7). Results below kept as a record.
+
 1. [Simple] As Haroon, Insights Dashboard → Target vs Actuals card → the
    "Quarter" box → "Year". **Expected:** "FY 2026-27" between the arrows;
    the note under it starts "This year · as of …" and says "counted from
@@ -591,8 +598,11 @@ P7.
 
 ## L — Phone, tablet and laptop look of the redone screens (Part 2 screens plan D5, D7)
 
-Claude drives these; each is measured at 390, 768 and 1280 px (any
-element inside a card with `scrollWidth > clientWidth` runs past it). No
+Basheer runs these by eye, at 390, 768 and 1280 px (phone, tablet,
+laptop). Claude measures in the browser only if Basheer sees something
+wrong, or for a step that can't be judged by eye (step 10's widths) —
+Basheer, 2026-10-29, to save usage credits. When Claude measures, any
+element inside a card with `scrollWidth > clientWidth` runs past it. No
 step saves anything. Screen names and wording read from the code on
 2026-10-28; the Part 2 screens plan (D3) lists what is in scope.
 

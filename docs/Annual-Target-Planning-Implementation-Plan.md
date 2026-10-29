@@ -1,7 +1,8 @@
 # Annual Target Planning — Implementation Plan
 
-**Status:** Part 2 reopened for redesign 2026-10-28 (D82–D86, all
-decided). Part 1 approved — Basheer, 2026-10-20 (D1–D56; D57 added
+**Status:** Part 2's Target vs Actuals redesign
+moved to its own plan, `docs/Target-vs-Actuals-Redesign-Implementation-Plan.md`
+(Basheer, 2026-10-29; was D82–D87). Part 1 approved — Basheer, 2026-10-20 (D1–D56; D57 added
 2026-10-21; D66–D73 for Part 2, 2026-10-22; D74, 2026-10-22). Replanned
 2026-10-17 to 2026-10-20 (calendar-year brand targets, Haroon and
 Latheef Bhai via Basheer; D23 onwards; incentive year settled
@@ -447,51 +448,9 @@ this replan: D8, D12, D12a, D14.
   adds nothing. Same rule as the Quarter view's company target: a
   part-total would read as the real target. Found in the pre-E2E code
   review — Basheer, 2026-10-25.
-- D82. Target vs Actuals is where people come to check how they are
-  doing against their targets, so the Year view is a simple dashboard
-  with minimal information. The Year view as built (25 Oct) is too
-  cluttered and less clear than the Quarter view; it is redesigned
-  from a mock-up before the Part 2 E2E resumes. Reopens D31, D67 and
-  D78 — Basheer, 2026-10-28.
-- D83. The Year view is three boxes and one table (mock-up
-  https://claude.ai/artifact/XR3ftVbahPshwicQ9Vxsd5, "Proposed — simple
-  Year view"). Boxes: Target so far, Won (paid) so far, Won % of target
-  with a bar. Table: Company, SBU, then each person under their manager,
-  with Target so far, Won (paid) so far and Won % of target with a bar.
-  Gone from the Year view: Team plans, PO received, Plans vs target, the
-  quarter-by-quarter table, rows that open, Year's target, Plan for year,
-  Still to win and the "haven't submitted a plan" note. D81 still holds
-  for what remains: with a quarter so far missing its target, Target so
-  far and Won % are not shown. Replaces D31, D67 and D78 — Basheer,
-  2026-10-28.
-- D84. The Quarter view takes the same shape (same mock-up, "Proposed —
-  simple Quarter view"). Boxes: Target; Won (paid) with "PO received ₹X"
-  as a small line under it; Won % of target; Likely finish with its % of
-  target. Table: Company, SBU, then each person, with Target, Won (paid),
-  Likely finish and a bar (won dark, likely finish light). A person's %
-  is now of their target, not their plan. Gone from the Quarter view:
-  the Team plans, PO received and Expected boxes, the Plans vs target
-  column, plan Status and Rep Plan, the "haven't submitted a plan" note,
-  rows that open, and the zone and brand tables (the Sales Report
-  already groups won amounts by zone and by brand). A person's plan and
-  its status stay on Target & Coverage Planning. Changes D79's "stay in
-  the Quarter view" for the zone and brand tables — Basheer, 2026-10-28.
-- D85. Clicking a person's name in the Quarter view opens a screen of
-  their own, not a row that opens underneath (mock-up "Proposed — a
-  person's own screen"): the four boxes for that person, a By hospital
-  table and a By brand table (Planned against Won), and the notes on
-  Opportunities with no closing date or no PO date. No such screen for
-  the SBU row. Names in the Year view are not links (D83) — Basheer,
-  2026-10-28.
-- D86. The red "N past closing date" mark leaves Target vs Actuals
-  altogether; Target vs Actuals carries no to-dos. Managers find late
-  Opportunities instead in the Insights Dashboard's manager-only
-  "Overdue Actions" tab, which gains a "Past closing date" count and
-  value per person beside the overdue next actions, and is renamed
-  "Overdue". Clicking a person's count opens My Work with that person
-  already chosen. Built in Part 2 so the mark and its replacement change
-  together. Changes D80 and BR-OP-16's "Where shown" — Basheer,
-  2026-10-28.
+- D82–D87 (Target vs Actuals redesign, 28–29 Oct) moved to `docs/Target-vs-Actuals-Redesign-Implementation-Plan.md`
+  as its D1–D6; Part 2 goes to UAT together with it (its D8) —
+  Basheer, 2026-10-29.
 
 ## Figures and sources
 
@@ -574,25 +533,8 @@ targets as soon as it is live (D38); Part 2 adds the rest.
   (D34); only Admin and GM see brand figures (D23).
 
 **Part 2 — the rest.**
-- **Target vs Actuals becomes a simple dashboard** (D82): how people are
-  doing against their targets, nothing else.
-  - **Year view** (D83): three boxes (Target so far, Won (paid) so far,
-    Won % of target) and one table (Company, SBU, each person under
-    their manager). "So far" counts from Oct–Dec 2026 for FY 2026-27
-    (D66).
-  - **Quarter view** (D84): the same shape, plus Likely finish; PO
-    received is a small line under Won. A person's % is of their target.
-    Zone and brand tables go (the Sales Report has them); plans and
-    their status stay on Target & Coverage Planning.
-  - **A person's own screen** (D85): clicking a name in the Quarter view
-    opens it — their four boxes, By hospital and By brand (Planned
-    against Won), and the notes on Opportunities with no closing date or
-    no PO date.
-- **Overdue tab** (D86): the Insights Dashboard's manager-only "Overdue
-  Actions" tab is renamed "Overdue" and gains each person's count and
-  value of Opportunities past their closing date. Clicking a count opens
-  My Work with that person chosen. The red "past closing date" mark
-  leaves Target vs Actuals.
+- **Target vs Actuals redesign** (Year and Quarter views, a person's
+  own screen, the Overdue tab): its own plan, `docs/Target-vs-Actuals-Redesign-Implementation-Plan.md`.
 - **Plan notifications** on the bell: submitted or revised → the
   approver ("who submitted"); approved or rejected → the rep; no notes in
   the bell; clicking opens the plan (D18–D21).
@@ -610,7 +552,8 @@ vs Actuals for Admin, GM and reps' own plans work as today. The stored
 quarter stays in the same form; only its label changes (D39).
 
 **Where it lands.** Each part is built and tested on Dev. Part 1 goes to
-UAT with the full UAT move; Part 2 follows in a later move (D52).
+UAT with the full UAT move; Part 2 follows in a later move (D52),
+together with the Target vs Actuals redesign (its D8).
 
 ## 2. Build order
 
@@ -646,12 +589,8 @@ UAT with the full UAT move; Part 2 follows in a later move (D52).
    is shown before building. Also the quarter picker's right arrow kept
    inside the card (D77). Checkpoint commit. *Built 25 Oct; redesigned
    by 5a.*
-5a. **Target vs Actuals redesign** (D82–D86, mock-up
-   https://claude.ai/artifact/XR3ftVbahPshwicQ9Vxsd5): the simple Year
-   and Quarter views, a person's own screen, and the Overdue tab with its
-   click-through to My Work. No migration. Checkpoint commit. *Stops
-   working on Dev until it lands:* nothing — the as-built views stay
-   until it is merged.
+5a. **Target vs Actuals redesign:** its own plan, `docs/Target-vs-Actuals-Redesign-Implementation-Plan.md`
+   (2026-10-29).
 6. **Plan notifications** (D18–D21), **Brands Billing to Cabio**
    (D37, D54, D68) and **one brand quarter typed by hand** (D70–D73;
    added to this step by Basheer, 2026-10-25 — same screen, one round of
@@ -674,10 +613,8 @@ target tables, their screens and the notification bell:
   change. The plan
   form's brand split doesn't read brand targets (only Brand Target
   Tracking does). Part 2: the bell's existing destinations (Opportunity,
-  lead, activity) must still open as today. Part 2 redesign (D84–D86):
-  the Overdue tab's existing overdue-actions count must not change; My
-  Work must still open on "Me" from the menu and reset when left (My
-  Work D6); the Sales Report is unchanged.
+  lead, activity) must still open as today. The Target vs Actuals redesign's
+  reach is in its own plan.
 - Not affected: the old SBU-target figures in `App.jsx` (the legacy
   dashboard) are kept in the browser only, never in these tables.
 
@@ -697,9 +634,6 @@ Each gets a check before and after, in the E2E test plan.
 - **A quarter-review screen:** Target vs Actuals with "Previous quarter"
   already covers it (discussion section 5e).
 - **Email or WhatsApp notifications** (D20): the app has neither today.
-- **Zones and brands for the SBU in Target vs Actuals** (D84, D85): the
-  Sales Report already groups won amounts by zone and by brand.
-- **Clickable names in the Year view** (D85).
 
 ## 5. Business rules and records to update
 
@@ -707,10 +641,8 @@ Each gets a check before and after, in the E2E test plan.
   month, own figure, stretch, seasonal split, saved quarters; Admin and
   GM only), BR-PL-11 (SBU quarterly target: the brands' total, not typed;
   who sees it), BR-PL-12 (per-person quarterly targets: who sets,
-  who sees, the warning). Part 2: BR-PL-13 (plan notifications) and the
-  Year view's "so far" totals (D83, with D81). BR-OP-16's "Where shown":
-  Plan vs Actuals Tracking replaced by the Insights Dashboard's Overdue
-  tab (D86), in the same commit as the build. Matrix rows in the same
+  who sees, the warning). Part 2: BR-PL-13 (plan notifications); the Year
+  view's totals and BR-OP-16 are in the Target vs Actuals redesign plan. Matrix rows in the same
   commits.
 - ADR-019 (Planning Calendar Model): addendum — brand years start in any
   calendar quarter; screens label quarters by month; storage unchanged.
@@ -819,28 +751,7 @@ Each gets a check before and after, in the E2E test plan.
   row for an Area Manager, else SBU row; none for a rep); "N of M haven't
   submitted" is the current quarter's (shown only in the current year) —
   as presented to Basheer 2026-10-25.
-- **Redesign (D82–D86), step 5a** — what changes; file and line numbers
-  re-read at build:
-  - Year view: the screen drops the quarter-by-quarter table, opening
-    rows, plan, PO received and "haven't submitted" parts; the year
-    endpoint's unused fields are removed with them. D81's hiding of an
-    incomplete target stays.
-  - Quarter view (`TargetVsActualsSection.tsx`): four boxes and one
-    table as in D84; zone and brand tables, plan status and Rep Plan
-    removed; a person's % uses `target_lakhs`, not their plan.
-  - Person screen (D85): a new screen opened from a name in the Quarter
-    view, for one person and quarter; reuses the hospital and brand
-    detail the Quarter view's opening rows use today.
-  - Overdue tab (`InsightsDashboardScreen.tsx`, tab list `:38-43`, tab
-    body `:248-280`, read 2026-10-28): renamed "Overdue"; each person's
-    row gains the count and ₹ value of their Active Opportunities past
-    their expected closing date (BR-OP-16, same rule as My Work's
-    "Closing date passed"), from `getOverdueActions()` or a sibling call.
-    A count opens `MyWorkScreen.tsx` with that person chosen in
-    "Showing": the screen accepts a starting person; its reset when left
-    (My Work D6) and view-only rule (D15) are unchanged.
-  - The red "N past closing date" mark and the late list are removed
-    from the Quarter view and its endpoint (D86).
+- **Redesign (step 5a):** see `docs/Target-vs-Actuals-Redesign-Implementation-Plan.md`.
 - **Notifications (D18–D21):** `NotificationService.notify_plan_submitted`
   (recipient `get_approver_id(owner)`; skipped when None) and
   `notify_plan_decided` (recipient `target_plan.user_id`),

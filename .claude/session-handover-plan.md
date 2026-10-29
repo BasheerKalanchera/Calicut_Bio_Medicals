@@ -7,14 +7,17 @@ session edits this note._
 
 - Forecast plan (untracked, written by Antigravity — Basheer 27 Oct): commit it, and by which session? Open. At review, line 110 → BR-FIN-09.
 
-## Annual Target Part 2 — Target vs Actuals redesign (paused 28 Oct)
+## Target vs Actuals redesign — own plan, Approved 29 Oct
 
-- D82–D86 decided 28 Oct; plan updated (step 5a), pushed `5552e20`
-  with the Activity Type plan, archive entry and retro. Mock-up
-  https://claude.ai/artifact/XR3ftVbahPshwicQ9Vxsd5.
-- **Next (29 Oct):** finalise with Basheer; hand step 5a to a build
-  session; rewrite E2E section I (plus I8, I9, I11, K5) once Build &
-  Test pauses that file. No new questions on the agreed design.
+- `docs/Target-vs-Actuals-Redesign-Implementation-Plan.md` Approved
+  (Basheer, 29 Oct; D10 phone UI from mock-up v21,
+  https://claude.ai/artifact/XR3ftVbahPshwicQ9Vxsd5). Annual plan points
+  to it. E2E plan written 29 Oct; Annual E2E section I marked replaced.
+  All uncommitted.
+- Overdue-tab answers recorded as D11 (Basheer, 29 Oct: both counts
+  open My Work at the matching list; 0/0 people not listed).
+- **Next:** docs batch. Basheer tells Build (build it) and Build & Test
+  (Part 2 resumes at J).
 
 ## Activity Type table plan — Draft 28 Oct
 
@@ -25,10 +28,8 @@ session edits this note._
 ## Hospital next-action rule — 28 Oct
 
 - Plan (Approved, D1–D5) and its E2E test plan pushed `eec66c2`.
-  **Next:** a build session builds it; before or after My Work steps
-  2 and 4 in `/build` is Basheer's call, asked 28 Oct.
-- My Work D18 changed 28 Oct: steps 2 and 4 go in `/build` during the
-  Part 2 E2E. Basheer tells Build & Test (don't edit their note).
+  **Next:** `/build` builds it after the redesign and My Work steps 2
+  and 4 (redesign plan D9, Basheer 29 Oct). Basheer tells Build & Test.
 
 ## MUI clean-up plan — started 26 Oct
 
@@ -57,9 +58,8 @@ session edits this note._
 
 ## Harness Engineering
 
-- Weekly review due 2026-10-28, not yet run (asked, unanswered); Basheer
-  wants a thorough analysis of corrections (tracker "For the next
-  review"). Doc tidy-up also due 28 Oct, unanswered.
+- Weekly review and doc tidy-up due, asked 28 and 29 Oct, unanswered;
+  review: thorough analysis of corrections (tracker "For the next review").
 - Code and UI checks trial (Basheer, 28 Oct, via Build & Test): Backlog
   "Code and UI checks — minimal-effort trial". Cap one day; show scope first.
 

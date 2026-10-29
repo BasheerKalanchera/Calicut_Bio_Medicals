@@ -5536,3 +5536,40 @@ moved to after the restart (Basheer).
   (3) "I didn't understand this - 3. The hospital box's three figures."
   — unclear question. No tracker line: none touched live data or UAT,
   lost work, or could be caught by a tool check.
+
+### 2026-10-29 — Plan & Chore: UAT backup; Target vs Actuals redesign plan, mock-up and E2E plan
+- UAT backup done: `cabio_uat_2026-10-29_0751.dump` (797,793 bytes).
+  Basheer copies it to Google Drive.
+- Basheer: both Target vs Actuals views are being redesigned, but the
+  plans were titled Annual Target Planning. The redesign was split into
+  its own plan, `docs/Target-vs-Actuals-Redesign-Implementation-Plan.md`
+  (Annual Target D82–D87 became its D1–D6; D7 own plan; D8 to UAT
+  together with Annual Target Part 2; D9 build order: redesign, then My
+  Work steps 2 and 4, then the hospital next-action rule). Approved.
+- D10 phone screens mocked up (canvas versions 18–21) and agreed as the
+  phone UI; a copy of the agreed laptop and phone screens is kept in
+  `docs/Target-vs-Actuals-Redesign-Mockup-2026-10-29.html`. No tablet
+  mock-up (Basheer): tablet and laptop both get tables (`TableOrCards`
+  shows cards on a phone only).
+- E2E plan written, `docs/Target-vs-Actuals-Redesign-Manual-E2E-Test-Plan.md`
+  (sections A–F). Read-only Dev check (as Haroon, three RLS settings
+  verified): Fahad has 0 overdue next actions but 1 Active Opportunity
+  past its closing date (₹20.0 L), so today's Overdue Actions tab,
+  which lists only people with an overdue action, leaves him out; the
+  redesigned tab must show him.
+- D11 (Basheer): both counts on the Overdue tab open My Work with the
+  person chosen, straight at the matching list (Opportunities tab →
+  "Closing date passed"; Next actions tab → "Overdue next actions"),
+  using My Work's new tabs (My Work D30–D33); people with nothing
+  overdue and nothing late aren't listed.
+- Annual Target E2E: section L reworded (Basheer runs the phone, tablet
+  and laptop look; from Build & Test); section I marked replaced by the
+  redesign E2E, so the Part 2 E2E resumes at J.
+- **Retro — corrections from Basheer this session: 2.** (1) "we are
+  redesigning both Quarterly and Annual version … the implementation
+  and e2e plans say Annual Target planning. So should we separate or
+  rename them?" — Claude hadn't raised the naming and split.
+  (2) "What about mockups for the Tab and Laptop views?" — Claude
+  mocked up the phone only without saying why the tablet needed none.
+  No tracker line: none touched live data or UAT, lost work, or could
+  be caught by a tool check.
