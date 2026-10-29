@@ -1,16 +1,17 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Box, Button, Checkbox, FormControlLabel, Link, MenuItem, TextField } from "@mui/material";
+import { Box, Button, ButtonBase, Checkbox, FormControlLabel, Link, MenuItem, TextField } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import dayjs from "dayjs";
 import TableOrCards, { TocCell, TocRow } from "../components/TableOrCards";
-import { LoadingOrEmpty, SectionCard, StatTile } from "../components/ReportingUI";
+import { LoadingOrEmpty, SectionCard } from "../components/ReportingUI";
 import CloseReminderModal from "../components/CloseReminderModal";
 import LogActivityModal from "../components/LogActivityModal";
 import { useAuth } from "../contexts/AuthContext";
 import { getWeeklyFollowup } from "../services/reporting";
 import { listUsers } from "../services/masterData";
-import { formatLakhs } from "../utils/formatter";
+import { formatLakhs, formatPlanningPeriod } from "../utils/formatter";
 import { statusColors } from "../theme/statusColors";
 import { shadows } from "../theme/shadows";
 import type {
@@ -42,6 +43,10 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "next-actions", label: "Next actions" },
 ];
 
+// D34: the Opportunities tab shows one list at a time, picked by a row of small tabs.
+type OppListId = "high-priority" | "closing-date-passed" | "not-visited";
+type NextListId = "overdue" | "this-week";
+
 type Selected = { id: string; name: string };
 
 interface Props {
@@ -62,6 +67,8 @@ export default function MyWorkScreen({ isActive, onSelectAccount, onSelectOpport
   const [closing, setClosing] = useState<ReminderResponse | null>(null);
   const [logFor, setLogFor] = useState<{ accountId: string; opportunityId?: string } | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>("summary");
+  const [oppList, setOppList] = useState<OppListId>("high-priority");
+  const [nextList, setNextList] = useState<NextListId>("this-week");
   const chipBarRef = useRef<HTMLDivElement>(null);
   const listsRef = useRef<HTMLDivElement>(null);
 
@@ -78,16 +85,14 @@ export default function MyWorkScreen({ isActive, onSelectAccount, onSelectOpport
     }, 50);
   }, []);
 
-  // Opens a tab at its top, or at one list when listId is given (D33).
+  // Opens a tab at its top, or at one list when listId is given (D33, D34,
+  // D38: on Opportunities and Next actions that means its small tab).
   const openTab = useCallback((tabId: TabId, listId?: string) => {
     setActiveTab(tabId);
+    if (tabId === "opportunities" && listId) setOppList(listId as OppListId);
+    if (tabId === "next-actions" && listId) setNextList(listId as NextListId);
     centerTab(tabId);
-    setTimeout(() => {
-      const container = listsRef.current;
-      const list = listId ? container?.querySelector(`[data-list="${listId}"]`) : null;
-      if (list) list.scrollIntoView({ block: "start" });
-      else container?.scrollTo({ top: 0 });
-    }, 50);
+    setTimeout(() => listsRef.current?.scrollTo({ top: 0 }), 50);
   }, [centerTab]);
 
   // D6, D33: everything back to its default whenever the screen is left
@@ -100,6 +105,8 @@ export default function MyWorkScreen({ isActive, onSelectAccount, onSelectOpport
       setHighChanceOnly(false);
       setUserId("");
       setActiveTab("summary");
+      setOppList("high-priority");
+      setNextList("this-week");
     }
   }
 
@@ -214,25 +221,57 @@ export default function MyWorkScreen({ isActive, onSelectAccount, onSelectOpport
         <Box sx={{ position: "absolute", right: 0, top: 0, height: "100%", width: 40, pointerEvents: "none", background: (theme) => `linear-gradient(to left, ${theme.palette.background.default}, transparent)` }} />
       </Box>
 
+      {/* D34, D40: small tabs pick the Opportunities / Next actions list and
+          stay put, like the tab bar above, while the list scrolls; the days
+          box and the tick show only on the list each one changes (D31). */}
+      {(activeTab === "opportunities" || activeTab === "next-actions") && (
+        <Box sx={{ px: 2, flexShrink: 0 }}>
+          {activeTab === "opportunities" && (
+            <SubTabs
+              value={oppList}
+              onChange={setOppList}
+              tabs={[
+                { id: "high-priority", label: highPriorityTitle },
+                { id: "closing-date-passed", label: "Closing date passed" },
+                { id: "not-visited", label: notVisitedTitle },
+              ]}
+            />
+          )}
+          {activeTab === "next-actions" && (
+            <SubTabs
+              value={nextList}
+              onChange={setNextList}
+              tabs={[
+                { id: "this-week", label: "Next actions due this week" },
+                { id: "overdue", label: "Overdue next actions" },
+              ]}
+            />
+          )}
+          {activeTab === "opportunities" && oppList === "not-visited" && (
+            <Box sx={{ mb: 2 }}>
+              <TextField
+                size="small"
+                type="number"
+                label="Not visited for (days)"
+                value={idleText}
+                onChange={(e) => setIdleText(e.target.value)}
+                slotProps={{ htmlInput: { min: 1 }, inputLabel: { shrink: true } }}
+                sx={{ width: 170, mt: 1 }}
+              />
+            </Box>
+          )}
+          {activeTab === "opportunities" && oppList === "high-priority" && (
+            <Box sx={{ mb: 2 }}>
+              <FormControlLabel
+                control={<Checkbox size="small" checked={highChanceOnly} onChange={(e) => setHighChanceOnly(e.target.checked)} />}
+                label="70 %+ only"
+              />
+            </Box>
+          )}
+        </Box>
+      )}
+
       <Box ref={listsRef} sx={{ flex: 1, overflowY: "auto", minHeight: 0, px: 2, pb: 2 }}>
-        {/* D31: the days box and the tick each change only an Opportunities list. */}
-        {activeTab === "opportunities" && (
-          <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 2, mb: 2 }}>
-            <TextField
-              size="small"
-              type="number"
-              label="Not visited for (days)"
-              value={idleText}
-              onChange={(e) => setIdleText(e.target.value)}
-              slotProps={{ htmlInput: { min: 1 }, inputLabel: { shrink: true } }}
-              sx={{ width: 170, mt: 1 }}
-            />
-            <FormControlLabel
-              control={<Checkbox size="small" checked={highChanceOnly} onChange={(e) => setHighChanceOnly(e.target.checked)} />}
-              label="70 %+ only"
-            />
-          </Box>
-        )}
         <LoadingOrEmpty
           isLoading={query.isLoading}
           isError={query.isError}
@@ -243,31 +282,33 @@ export default function MyWorkScreen({ isActive, onSelectAccount, onSelectOpport
         />
         {data && highPriority && activeTab === "summary" && (
           // D32: one box per list; no grand total across boxes (D3).
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <SummaryGroup title="My hospitals">
-              <StatTile
-                label={`My hospitals this quarter (${data.planning_period})`}
-                value={String(data.planned_hospitals.count)}
-                sublabel={data.planned_hospitals.count === 0
+          // D41: coloured edge per kind of list; a 0 goes grey and quiet.
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+            <SummaryGroup title="My hospitals" icon="🏥">
+              <SummaryTile
+                label={`My hospitals this quarter (${formatPlanningPeriod(data.planning_period)})`}
+                value={data.planned_hospitals.count}
+                tone="info"
+                detail={data.planned_hospitals.count === 0
                   ? "No approved hospital plan for this quarter."
                   : `${neverVisited} never visited · ${overdueHospitals} overdue next action`}
                 onClick={() => openTab("hospitals")}
               />
             </SummaryGroup>
-            <SummaryGroup title="Opportunities">
-              <StatTile label={highPriorityTitle} value={String(highPriority.count)} sublabel={formatLakhs(parseFloat(highPriority.value_lakhs))} onClick={() => openTab("opportunities", "high-priority")} />
-              <StatTile label="Closing date passed" value={String(data.closing_date_passed.count)} sublabel={formatLakhs(parseFloat(data.closing_date_passed.value_lakhs))} onClick={() => openTab("opportunities", "closing-date-passed")} />
-              <StatTile label={notVisitedTitle} value={String(data.not_visited.count)} sublabel={formatLakhs(parseFloat(data.not_visited.value_lakhs))} onClick={() => openTab("opportunities", "not-visited")} />
+            <SummaryGroup title="Opportunities" icon="📈" columns={3}>
+              <SummaryTile label={highPriorityTitle} value={highPriority.count} tone="info" pill={formatLakhs(parseFloat(highPriority.value_lakhs))} onClick={() => openTab("opportunities", "high-priority")} />
+              <SummaryTile label="Closing date passed" value={data.closing_date_passed.count} tone="danger" pill={formatLakhs(parseFloat(data.closing_date_passed.value_lakhs))} onClick={() => openTab("opportunities", "closing-date-passed")} />
+              <SummaryTile label={notVisitedTitle} value={data.not_visited.count} tone="warning" pill={formatLakhs(parseFloat(data.not_visited.value_lakhs))} onClick={() => openTab("opportunities", "not-visited")} />
             </SummaryGroup>
-            <SummaryGroup title="Next actions">
-              <StatTile label="Overdue next actions" value={String(data.overdue_next_actions.rows.length)} onClick={() => openTab("next-actions", "overdue")} />
-              <StatTile label="Next actions due this week" value={String(data.next_actions_this_week.rows.length)} onClick={() => openTab("next-actions", "this-week")} />
+            <SummaryGroup title="Next actions" icon="✅">
+              <SummaryTile label="Overdue next actions" value={data.overdue_next_actions.rows.length} tone="danger" onClick={() => openTab("next-actions", "overdue")} />
+              <SummaryTile label="Next actions due this week" value={data.next_actions_this_week.rows.length} tone="success" onClick={() => openTab("next-actions", "this-week")} />
             </SummaryGroup>
           </Box>
         )}
         {data && highPriority && activeTab === "opportunities" && (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <Box data-list="high-priority">
+          <>
+            {oppList === "high-priority" && (
               <OpportunitySection
                 title={highPriorityTitle}
                 list={highPriority}
@@ -278,8 +319,8 @@ export default function MyWorkScreen({ isActive, onSelectAccount, onSelectOpport
                 onSelectOpportunity={onSelectOpportunity}
                 onLog={setLogFor}
               />
-            </Box>
-            <Box data-list="closing-date-passed">
+            )}
+            {oppList === "closing-date-passed" && (
               <OpportunitySection
                 title="Closing date passed"
                 list={data.closing_date_passed}
@@ -291,8 +332,8 @@ export default function MyWorkScreen({ isActive, onSelectAccount, onSelectOpport
                 onSelectOpportunity={onSelectOpportunity}
                 onLog={setLogFor}
               />
-            </Box>
-            <Box data-list="not-visited">
+            )}
+            {oppList === "not-visited" && (
               <OpportunitySection
                 title={notVisitedTitle}
                 list={data.not_visited}
@@ -304,34 +345,32 @@ export default function MyWorkScreen({ isActive, onSelectAccount, onSelectOpport
                 onSelectOpportunity={onSelectOpportunity}
                 onLog={setLogFor}
               />
-            </Box>
-          </Box>
+            )}
+          </>
         )}
         {data && activeTab === "next-actions" && (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <Box data-list="overdue">
-              <NextActionSection
-                title="Overdue next actions"
-                rows={data.overdue_next_actions.rows}
-                today={data.today}
-                canAct={canAct}
-                onSelectAccount={onSelectAccount}
-                onSelectOpportunity={onSelectOpportunity}
-                onDone={setClosing}
-              />
-            </Box>
-            <Box data-list="this-week">
-              <NextActionSection
-                title="Next actions due this week"
-                rows={data.next_actions_this_week.rows}
-                today={data.today}
-                canAct={canAct}
-                onSelectAccount={onSelectAccount}
-                onSelectOpportunity={onSelectOpportunity}
-                onDone={setClosing}
-              />
-            </Box>
-          </Box>
+          nextList === "overdue" ? (
+            <NextActionSection
+              title="Overdue next actions"
+              overdueList
+              rows={data.overdue_next_actions.rows}
+              today={data.today}
+              canAct={canAct}
+              onSelectAccount={onSelectAccount}
+              onSelectOpportunity={onSelectOpportunity}
+              onDone={setClosing}
+            />
+          ) : (
+            <NextActionSection
+              title="Next actions due this week"
+              rows={data.next_actions_this_week.rows}
+              today={data.today}
+              canAct={canAct}
+              onSelectAccount={onSelectAccount}
+              onSelectOpportunity={onSelectOpportunity}
+              onDone={setClosing}
+            />
+          )
         )}
         {data && activeTab === "hospitals" && (
           <HospitalSection
@@ -367,20 +406,107 @@ function sectionTitle(title: string, count: number) {
   return `${title} · ${count}`;
 }
 
-function SummaryGroup({ title, children }: { title: string; children: ReactNode }) {
+// D34, D38: the small tabs under Opportunities and Next actions. Equal widths
+// on one row (D39): a long label wraps onto a second line inside its button
+// instead of pushing the last small tab onto a new row on a phone.
+function SubTabs<T extends string>({
+  value,
+  onChange,
+  tabs,
+}: {
+  value: T;
+  onChange: (id: T) => void;
+  tabs: { id: T; label: string }[];
+}) {
   return (
-    <Box>
-      <Box sx={{ typography: "caption", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "gray.500", mb: 1 }}>{title}</Box>
-      <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>{children}</Box>
+    <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+      {tabs.map((t) => (
+        <Button
+          key={t.id}
+          size="small"
+          variant={value === t.id ? "contained" : "outlined"}
+          onClick={() => onChange(t.id)}
+          sx={{ flex: "1 1 0", minWidth: 0, minHeight: 44, px: 0.5, textTransform: "none", typography: "caption", fontWeight: 700, lineHeight: 1.2 }}
+        >
+          {t.label}
+        </Button>
+      ))}
     </Box>
   );
 }
 
-function DaysBadge({ days, overdue }: { days: number; overdue?: boolean }) {
+// The icon is the same emoji the side menu uses for that area (D41).
+function SummaryGroup({ title, icon, columns = 2, children }: { title: string; icon: string; columns?: number; children: ReactNode }) {
+  return (
+    <Box>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, mb: 1.25 }}>
+        <Box
+          component="span"
+          sx={{ display: "flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, flexShrink: 0, typography: "h5", lineHeight: 1 }}
+        >
+          {icon}
+        </Box>
+        <Box sx={{ typography: "body2", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "text.primary" }}>{title}</Box>
+      </Box>
+      {/* One box per row on a phone; from tablet width, `columns` per row. */}
+      <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", sm: `repeat(${columns}, 1fr)` } }}>{children}</Box>
+    </Box>
+  );
+}
+
+// D41: a Summary box. The coloured left edge and figure show the kind of
+// list; a figure of 0 turns grey so the eye goes to what needs attention.
+function SummaryTile({
+  label,
+  value,
+  tone,
+  pill,
+  detail,
+  onClick,
+}: {
+  label: string;
+  value: number;
+  tone: "info" | "danger" | "warning" | "success";
+  pill?: string;
+  detail?: string;
+  onClick: () => void;
+}) {
+  const colors = value === 0 ? statusColors.neutral : statusColors[tone];
+  return (
+    <ButtonBase
+      onClick={onClick}
+      sx={{
+        display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1.5, textAlign: "left", font: "inherit",
+        minHeight: 84, p: 2, bgcolor: "background.paper", borderRadius: "1rem", border: 1, borderColor: "gray.100",
+        borderLeft: 6, borderLeftColor: colors.text, boxShadow: shadows.sm, transition: "border-color 0.2s",
+        "&:hover": { borderColor: "blue.300", borderLeftColor: colors.text },
+      }}
+    >
+      <Box sx={{ minWidth: 0 }}>
+        <Box sx={{ typography: "body2", fontWeight: 700, color: value === 0 ? "gray.500" : "text.primary" }}>{label}</Box>
+        {pill && (
+          <Box component="span" sx={{ display: "inline-block", mt: 0.75, typography: "caption", fontWeight: 700, px: 1, py: 0.25, borderRadius: 1, bgcolor: colors.bg, color: colors.text }}>
+            {pill}
+          </Box>
+        )}
+        {detail && <Box sx={{ typography: "caption", color: "gray.500", mt: 0.5 }}>{detail}</Box>}
+      </Box>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexShrink: 0 }}>
+        <Box sx={{ typography: "h4", fontWeight: 900, color: colors.text, fontVariantNumeric: "tabular-nums" }}>{value}</Box>
+        <ChevronRightIcon sx={{ color: "gray.400" }} />
+      </Box>
+    </ButtonBase>
+  );
+}
+
+// D35: a column headed "Days ..." shows the bare number (the word "days" made
+// the cell wrap at tablet width); `unit` is for a column whose heading doesn't
+// say what the number is.
+function DaysBadge({ days, overdue, unit }: { days: number; overdue?: boolean; unit?: string }) {
   const colors = overdue ? statusColors.overdue : statusColors.warning;
   return (
-    <Box component="span" sx={{ typography: "caption", fontWeight: 700, px: 1, py: 0.25, borderRadius: 1, bgcolor: colors.bg, color: colors.text }}>
-      {days} {days === 1 ? "day" : "days"}
+    <Box component="span" sx={{ typography: "caption", fontWeight: 700, px: 1, py: 0.25, borderRadius: 1, whiteSpace: "nowrap", bgcolor: colors.bg, color: colors.text }}>
+      {days}{unit ? ` ${unit}` : ""}
     </Box>
   );
 }
@@ -482,7 +608,7 @@ function HospitalSection({
   // visited first. Last visit is this person's own (D27, D28); next action is
   // their earliest open one at the hospital (D29).
   return (
-    <SectionCard title={sectionTitle(`My hospitals this quarter (${planningPeriod})`, list.count)}>
+    <SectionCard title={sectionTitle(`My hospitals this quarter (${formatPlanningPeriod(planningPeriod)})`, list.count)}>
       {list.rows.length === 0 ? (
         <Box sx={{ color: "text.secondary", typography: "body2", fontStyle: "italic" }}>
           No approved hospital plan for this quarter.
@@ -508,7 +634,7 @@ function HospitalSection({
                   {daysAgo === null ? "Never" : `${dayjs(r.last_visit_date).format("D MMM")} · ${daysAgo} ${daysAgo === 1 ? "day" : "days"} ago`}
                 </TocCell>
                 <TocCell label="Next action due" align="right">
-                  {daysLate === null ? "—" : daysLate > 0 ? <DaysBadge days={daysLate} overdue /> : dayjs(r.next_action_due).format(daysLate === 0 ? "[Today] h:mm A" : "ddd D MMM")}
+                  {daysLate === null ? "—" : daysLate > 0 ? <DaysBadge days={daysLate} overdue unit={daysLate === 1 ? "day overdue" : "days overdue"} /> : dayjs(r.next_action_due).format(daysLate === 0 ? "[Today] h:mm A" : "ddd D MMM")}
                 </TocCell>
                 {canAct && (
                   <TocCell action align="right">
@@ -526,6 +652,7 @@ function HospitalSection({
 
 function NextActionSection({
   title,
+  overdueList,
   rows,
   today,
   canAct,
@@ -534,6 +661,7 @@ function NextActionSection({
   onDone,
 }: {
   title: string;
+  overdueList?: boolean;
   rows: ReminderResponse[];
   today: string;
   canAct: boolean;
@@ -541,7 +669,9 @@ function NextActionSection({
   onSelectOpportunity: (opportunity: Selected) => void;
   onDone: (reminder: ReminderResponse) => void;
 }) {
-  // D21: next-action cards show a count only.
+  // D21: next-action cards show a count only. D35: the overdue list's column
+  // is "Days overdue" (bare number); the due-this-week list's is "Due" (a date).
+  const dueLabel = overdueList ? "Days overdue" : "Due";
   return (
     <SectionCard title={sectionTitle(title, rows.length)}>
       {rows.length === 0 ? <Nothing /> : (
@@ -550,7 +680,7 @@ function NextActionSection({
             { label: "Next action" },
             { label: "Hospital" },
             { label: "Opportunity" },
-            { label: "Due", align: "right" },
+            { label: dueLabel, align: "right" },
             ...(canAct ? [{ label: "", align: "right" as const }] : []),
           ]}
         >
@@ -567,8 +697,10 @@ function NextActionSection({
                 <TocCell label="Opportunity">
                   {opportunity ? <NameLink onClick={() => onSelectOpportunity(opportunity)}>{opportunity.name}</NameLink> : "—"}
                 </TocCell>
-                <TocCell label="Due" align="right">
-                  {daysLate > 0 ? <DaysBadge days={daysLate} overdue /> : dayjs(r.due_date).format(daysLate === 0 ? "[Today] h:mm A" : "ddd D MMM")}
+                <TocCell label={dueLabel} align="right">
+                  {overdueList || daysLate > 0
+                    ? <DaysBadge days={Math.max(daysLate, 0)} overdue />
+                    : dayjs(r.due_date).format(daysLate === 0 ? "[Today] h:mm A" : "ddd D MMM")}
                 </TocCell>
                 {canAct && (
                   <TocCell action align="right">
