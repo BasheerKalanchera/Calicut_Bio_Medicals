@@ -3,11 +3,14 @@
 **Status:** Approved — Basheer, 2026-10-29. Split out of
 `docs/Annual-Target-Planning-Implementation-Plan.md` (its D82–D87, which
 become D1–D6 here) — Basheer, 2026-10-29 (D7).
-**Build progress (Build branch `worktree-build`, not merged):** step 1
-server `76ef5ab`; step 2 screens `d623d33`; step 3 docs and pre-E2E review
-done 2026-10-29 (Business-Rules, rule matrix, Plan-vs-Actuals note; tests,
-ruff, tsc, lint green; `/code-review` medium, one cleanup). The user manual
-waits for the UAT move (D8). Reaches Dev at the merge; E2E pending.
+**Build progress:** built and merged into `main` 2026-10-29 (merge
+`3bafbc0`, pushed): step 1 server `76ef5ab`; step 2 screens `d623d33`;
+step 3 docs and pre-E2E review (Business-Rules, rule matrix,
+Plan-vs-Actuals note; tests, ruff, tsc, lint green; `/code-review`
+medium, one cleanup). The user manual waits for the UAT move (D8). On
+the merge, My Work's new small tabs replaced the scroll to a list: the
+Overdue tab's counts now pick the matching small tab. No migration. E2E
+(A–F) pending, run by `/test`.
 **Traceability rows:** signed 3.2 ("Real-time actual-vs-target via
 role-specific dashboards").
 **Design / discussion:** mock-up

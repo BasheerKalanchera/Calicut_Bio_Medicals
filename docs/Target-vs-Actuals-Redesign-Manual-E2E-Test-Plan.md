@@ -196,8 +196,9 @@ beside it in brackets. This plan creates none.
    passed" lists "New USG m/c" (aster medicity) and "New oppotunity fast
    track" (Aster DM); the count matches the Overdue tab's 2 (D11). —
 7. [Complex: cross-screen] Leave My Work, then open it from the menu.
-   **Expected:** "Showing" is back on "Me" and the Summary tab (My Work
-   D6, D33). —
+   **Expected:** "Showing" is back on "Me" and the Summary tab; the
+   small tabs are back on "High priority" (Opportunities) and "This week"
+   (Next actions) (My Work D6, D33). —
 8. [Complex: cross-screen] From the Overdue tab, open Fahad in My Work
    again. **Expected:** view-only, as today when a manager picks a rep
    (My Work D15). —

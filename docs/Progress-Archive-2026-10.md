@@ -5574,7 +5574,17 @@ moved to after the restart (Basheer).
   No tracker line: none touched live data or UAT, lost work, or could
   be caught by a tool check.
 
-### 2026-10-29 — Build: Target vs Actuals redesign, steps 1–3 (branch `worktree-build`, not merged)
+### 2026-10-29 — Build: Target vs Actuals redesign, steps 1–3 (merged into `main` as `3bafbc0`)
+- Merge (Basheer's order: merge, then the redesign E2E, then Annual Part 2's
+  J, K, L): `main` had gained Build & Test's My Work small tabs
+  (`676a05d`) and the My Work E2E entry (`dae15f0`). `main` merged into the
+  branch (`3bafbc0`), two clashes settled: Progress-Archive (both
+  entries kept) and `MyWorkScreen.tsx` — main's small tabs replaced my
+  scroll-to-list, so the Overdue tab's request now sets the matching small
+  tab ("Closing date passed" / "Overdue next actions") and only centres the
+  chip. Checks after the merge: pytest 1441, ruff, tsc, eslint clean.
+  Not seen in a browser. Pushed `main`; `api.ts` regenerated, no change
+  beyond line endings; scorecard --check OK.
 - Step 1, server, `76ef5ab` (pushed): Year view returns only target so
   far, Won so far and Won % per person plus the SBU/Company/Team rows, and
   a "not started" answer with the start date (D2, D6); Quarter drops the
