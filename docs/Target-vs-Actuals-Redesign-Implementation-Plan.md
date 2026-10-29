@@ -3,6 +3,11 @@
 **Status:** Approved — Basheer, 2026-10-29. Split out of
 `docs/Annual-Target-Planning-Implementation-Plan.md` (its D82–D87, which
 become D1–D6 here) — Basheer, 2026-10-29 (D7).
+**Build progress (Build branch `worktree-build`, not merged):** step 1
+server `76ef5ab`; step 2 screens `d623d33`; step 3 docs and pre-E2E review
+done 2026-10-29 (Business-Rules, rule matrix, Plan-vs-Actuals note; tests,
+ruff, tsc, lint green; `/code-review` medium, one cleanup). The user manual
+waits for the UAT move (D8). Reaches Dev at the merge; E2E pending.
 **Traceability rows:** signed 3.2 ("Real-time actual-vs-target via
 role-specific dashboards").
 **Design / discussion:** mock-up
@@ -41,7 +46,10 @@ a phone) and D81 (a target so far with a missing quarter is not shown).
   received ₹X" as a small line under it; Won % of target; Likely finish
   with its % of target. Table: Company, SBU, then each person, with
   Target, Won (paid), Likely finish and a bar (won dark, likely finish
-  light). A person's % is of their target, not their plan. Gone from the
+  light). A person's % stays Won ÷ their plan figure, labelled "of plan";
+  the Company, SBU and team rows are Won ÷ target ("of target") and show
+  a dash for Likely finish, since there is no SBU-wide Likely finish query
+  (Basheer, 2026-10-29: "keep it simple"). Gone from the
   Quarter view: the Team plans, PO received and Expected boxes, the Plans
   vs target column, plan Status and Rep Plan, the "haven't submitted a
   plan" note, rows that open, and the zone and brand tables (the Sales
@@ -143,7 +151,8 @@ targets, nothing else (D1).
 - **Quarter view (D3):** four boxes — Target; Won (paid), with PO
   received as a small line under it; Won % of target; Likely finish with
   its % of target — and the same table with Target, Won (paid), Likely
-  finish and a bar. A person's % is now of their target, not their plan.
+  finish and a bar. A person's % stays of their plan ("of plan"); the
+  Company, SBU and team rows are "of target" (D3).
 - **A person's own screen (D4):** clicking a name in the Quarter view
   opens it: that person's four boxes, By hospital and By brand (Planned
   against Won), and notes on Opportunities with no closing date or no PO
@@ -243,8 +252,9 @@ File and line numbers re-read at build.
   `service.py:1232–1235`).
 - **Quarter view** (`TargetVsActualsSection.tsx`,
   `TargetVsActualsParts.tsx`): four boxes and one table as in D3; zone
-  and brand tables, plan status and Rep Plan removed; a person's % uses
-  `target_lakhs`, not their plan.
+  and brand tables, plan status and Rep Plan removed; a person's % stays
+  `percent_of_target` as the server sends it (Won ÷ plan, shown "of plan");
+  the summary rows' % is Won ÷ target.
 - **Person screen** (D4): new, opened from a name in the Quarter view
   for one person and quarter; reuses the hospital and brand detail the
   Quarter view's opening rows use today.

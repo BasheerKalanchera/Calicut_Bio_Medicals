@@ -179,6 +179,16 @@ the matrix; for an edit that changes no rule (e.g. a typo), add
 * **Target vs Actuals:** an Area Manager's "Your team" row is measured
   against the Area Manager's own target; each rep's target shows beside
   their plan.
+* **Target vs Actuals, Year view:** it shows only Target so far, Won
+  (paid) so far and Won % of target, for the Company, SBU or "Your team"
+  row and each person, counted from the first quarter whose targets count
+  (Annual Target Planning D66, D81). A year that hasn't started shows one
+  line saying when it does. A person's Won % is their Won ÷ their target
+  so far. In the Quarter view a person's % is their Won ÷ their plan
+  (labelled "of plan"); the Company, SBU and team rows use Won ÷ target
+  and show no Likely finish.
+  (Target vs Actuals Redesign D2, D3, D6; Basheer, 2026-10-29. Built on
+  the Build branch, reaches Dev at the merge.)
 * **Origin:** Annual Target Planning D30, D33, D35, D45, D49, D57, D61, D62
   (Basheer, 2026-10-19 to 2026-10-21). Build: same plan.
 
@@ -330,8 +340,8 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 ### BR-OP-16: Closing Date Passed (2026-09-29)
 * **Rule:** An Active opportunity whose Expected Closure Date is before today (India time) is flagged "Closing date passed".
 * **Effect:** Flag only — it never blocks saving, stage moves or closing. The owner either closes the Opportunity (Won/Lost) or enters a realistic new date; managers use the flag to raise it with the owner.
-* **Where shown:** the Plan vs Actuals Tracking section of the Insights Dashboard; and the "Closing date passed" section of My Work (built 2026-10-28 on the Build branch, reaches Dev at the merge), which lists it only for the Opportunity's owner, since only the owner can change the date or close it (Basheer, 2026-10-21; `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md` D16).
-* **Forecast effect:** in Plan vs Actuals Tracking, a flagged Opportunity counts in the current quarter's Expected, not in the past quarter its date points to.
+* **Where shown:** the Overdue tab of the Insights Dashboard (managers only), which shows beside each person's overdue next actions how many of their Active Opportunities are past their closing date and their ₹ value, each count opening My Work at that person's list (Target vs Actuals Redesign D5, D11; built on the Build branch, reaches Dev at the merge — it replaces the red mark and late list that Target vs Actuals showed until then); and the "Closing date passed" section of My Work (built 2026-10-28 on the Build branch, reaches Dev at the merge), which lists it only for the Opportunity's owner, since only the owner can change the date or close it (Basheer, 2026-10-21; `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md` D16).
+* **Forecast effect:** in Target vs Actuals, a flagged Opportunity counts in the current quarter's Expected (which feeds Likely finish), not in the past quarter its date points to.
 * **Rationale:** Basheer, 2026-09-29, after comparing Salesforce, Dynamics and Zoho: none blocks on a past closing date; common practice is to flag it and have the manager follow up. Salesforce's default of quietly dropping such Opportunities from forward-looking reports is what this avoids.
 * **Enforcement:** built for Plan vs Actuals Tracking (`cc4eb91`, split-aware `2e2e4c0`); manual E2E passed 2026-10-13 — `docs/Plan-vs-Actuals-Tracking-Implementation-Plan.md`. On UAT 2026-10-25.
 

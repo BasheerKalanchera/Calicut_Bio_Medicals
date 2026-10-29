@@ -136,8 +136,10 @@ beside it in brackets. This plan creates none.
 2. [Simple] Same screen, the table. **Expected:** Company, Imaging, then
    Fazal (with Fahad under him), Shruthi (with Rudrappa), Basheer K;
    columns Target, Won (paid), Likely finish and a bar (won dark, likely
-   finish light). Rudrappa's % is of his ₹100.0 L target, not his
-   ₹10.0 L plan. —
+   finish light). Rudrappa's % is of his ₹10.0 L plan and says "of plan"
+   beneath it (Basheer, 2026-10-29: a person's % stays Won ÷ plan); the
+   Company and Imaging rows say "of target" and show a dash for Likely
+   finish. His own screen (C1) shows Won % of his ₹100.0 L target. —
 3. [Simple] Same screen. **Expected:** none of: Team plans, PO received
    or Expected boxes, Plans vs target, plan Status, Rep Plan, the
    "haven't submitted a plan" note, rows that open underneath, the zone

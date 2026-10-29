@@ -5573,3 +5573,49 @@ moved to after the restart (Basheer).
   mocked up the phone only without saying why the tablet needed none.
   No tracker line: none touched live data or UAT, lost work, or could
   be caught by a tool check.
+
+### 2026-10-29 — Build: Target vs Actuals redesign, steps 1–3 (branch `worktree-build`, not merged)
+- Step 1, server, `76ef5ab` (pushed): Year view returns only target so
+  far, Won so far and Won % per person plus the SBU/Company/Team rows, and
+  a "not started" answer with the start date (D2, D6); Quarter drops the
+  late list and count (D5); Overdue adds each person's count and ₹ value
+  past closing date and lists only people with a count above zero (D5,
+  D11). No migration. `api.ts` regenerated.
+- Step 2, screens, `d623d33` (pushed): Year view (three boxes, one
+  table, not-started line); Quarter view (four boxes, Won/Likely finish
+  bar table); a person's own screen on a name click (D4); Overdue tab
+  renamed, its two counts open My Work at the matching list (D11); phone
+  layout (D10). Not seen in a browser — Basheer runs the 390/768/1280 px
+  look at E2E.
+- Rulings (Basheer, 29 Oct): a Quarter person's % stays Won ÷ their plan
+  ("of plan"), no new SBU-wide Likely finish query, so Company/SBU/team rows
+  show a dash for it; Year names stay plain text ("add later if
+  required"); a missing quarter row for a person in the Year view stays as
+  it is (late joiners and team moves are normal) — D81 is only for a
+  quarter listed with no target.
+- Step 3, checks and docs: Business-Rules (BR-OP-16 Where shown and
+  Forecast effect; new Year-view line under BR-PL-12), rule matrix
+  (BR-OP-16, BR-FIN-09), Plan-vs-Actuals-Tracking "replaced in part"
+  note, redesign plan D3 wording and build progress, E2E plan B2 reworded
+  ("of plan" / "of target"). User manual deferred to the UAT move (D8);
+  in-app help has no Insights topic.
+- Checks: pytest 1441 passed, ruff, tsc clean, lint 0 errors (133 old
+  warnings). `/code-review` medium on `76ef5ab..d623d33`: 10 points, one
+  needed a change (unused `headCellSx` removed). Looked at and left: a
+  Year-table row for someone listed only in a future quarter cannot occur
+  (the people list is the current team for every quarter; a test written
+  for it passed without any fix, so both were dropped); the Overdue count
+  and My Work's "Closing date passed" use the same rule. For E2E to watch:
+  the headline Won box against the SBU row's Won, and the scroll to the
+  list when My Work opens from the Overdue tab.
+- A person's table % ("of plan") differs from the % on their own screen
+  ("of target"); both labelled. Look at it at the E2E phone/laptop step.
+- **Retro — corrections from Basheer this session: 4.** (1) "Person's
+  percentage will continue to be won ÷ their plan figure… Please
+  elaborate this" — the Quarter percentage choice wasn't explained
+  clearly enough to decide on. (2) "You started complicating things now.
+  Lets keep it simple." — scope beyond the plan. (3) "So actually the
+  docs batch commit we should do after step 3 right?" — docs batch
+  started before step 3, against the agreed order. (4) "Didn't understand
+  this…" — jargon in the first pass. No tracker line: none touched live
+  data or UAT, lost work, or could be caught by a tool check.
