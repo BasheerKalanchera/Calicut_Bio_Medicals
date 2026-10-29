@@ -281,3 +281,6 @@ The backstory below is copied verbatim from each memory note's **Why:**.
 
 - **Rule:** E2E testing — if feature or fix code lands after the pre-E2E review, including mid-E2E, review those changes before the next E2E step; the small-fixes batch is exempt (`cabio-e2e-testing` skill).
   **Why:** 2026-10-28 — Annual Target Part 2's pre-E2E review ran on 25 Oct; six feat:/fix: commits (phone fixes, Part 2 screens plan steps 1–6) then landed mid-E2E and none was reviewed, because the rule said only "before manual E2E" and the handover said "continue at P7". Basheer asked why; the late review found 10 points.
+
+- **Rule:** E2E testing — Claude drives the browser only for very complex steps (can't be judged by eye or described plainly); Basheer runs Simple and most Complex steps from exact instructions (`cabio-e2e-testing` skill, E2E test plan template).
+  **Why:** 2026-10-29 — Basheer, before the My Work tabs browser check: "Lets limit your browser checks to very complex testing steps only. I want to conserve usage credits." Extended the same day, at his yes, to the 2026-10-25 before-handover phone-width check: Basheer now does the 390/768/1280 px look in the E2E's phone layout step, and Claude measures only when something looks off.

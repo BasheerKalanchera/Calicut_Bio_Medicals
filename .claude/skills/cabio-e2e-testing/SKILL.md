@@ -28,11 +28,15 @@ Moved here word for word from CLAUDE.md on 2026-10-08
   *(2026-09-23)*
 - Before manual E2E, run pytest, ruff, tsc and lint and report plainly, noting
   any failures that already existed. *(2026-07-03)*
-- Before handing a build over for E2E, check every screen, card and pop-up
-  it adds or changes at phone width (390 px), every row, arrow and tab
-  opened. Measure, don't eyeball: in the browser, any element inside a card
-  whose `scrollWidth > clientWidth` runs past it. Fix before handover;
-  Basheer should never be the one to find a phone problem. *(2026-10-25)*
+- Phone, tablet and laptop look: no browser check before handover (saves
+  usage credits). Basheer looks at every screen, card and pop-up the build
+  adds or changes at 390, 768 and 1280 px in the E2E's
+  `[Complex: phone layout]` step, every row, arrow and tab opened, told
+  exactly what to open. Claude measures in the browser (any element inside
+  a card whose `scrollWidth > clientWidth` runs past it) only when Basheer
+  sees something off or can't tell. Before handover, read the code for
+  phone risks instead: tables through `TableOrCards`, no fixed widths
+  wider than a phone. *(2026-10-25, 2026-10-29)*
 - For every screen and pop-up the change adds or touches, check the MUI
   standard rules the automatic check can't (Frontend standards §6.11),
   across the whole file, not just the changed lines (MUI plan D10): a
@@ -41,8 +45,9 @@ Moved here word for word from CLAUDE.md on 2026-10-08
   `TableOrCards`, with no hand-built phone version beside the laptop one
   (`display: { xs: "block", sm: "none" }`) (rule 2); each filter has its
   name above it and "All …" inside, each search box a 🔍 and an ✕ once
-  typed in (rule 7); and it is measured at 768 and 1280 px as well as
-  390 (rule 1). A miss is a review finding, fixed before handover.
+  typed in (rule 7); its 390, 768 and 1280 px look (rule 1) is Basheer's
+  phone layout step at E2E (above). A miss is a review finding, fixed
+  before handover.
   *(2026-10-26; tables and widths wording from Build & Test's review)*
 - Suggest `/ultrareview` only for higher-risk changes (security, untested hotfix,
   large unreviewed change), not routine commits. *(2026-09-15)*
@@ -54,9 +59,15 @@ Moved here word for word from CLAUDE.md on 2026-10-08
   click/type/verify-a-value with an unambiguous pass — Basheer runs these, told
   exactly what to do and check, and reports back. **Complex** = precise targeting
   after a layout shift, multi-step/branching, cross-screen/cross-role, or a genuine
-  visual check — Claude drives these in the browser. Nothing is skipped; every step
-  is recorded. *(2026-09-23)* Before each browser action, say which step it is
-  and why it's Complex; a Simple step goes to Basheer. *(2026-10-06)* Check
+  visual check. Nothing is skipped; every step is recorded. *(2026-09-23)*
+- **Browser checks only for very complex steps** (saves usage credits).
+  Basheer runs Simple steps and most Complex ones too — phone/tablet/laptop
+  looks, multi-step flows, tab and button clicks — given exact steps and
+  what to check. Claude drives the browser only when a step can't be judged
+  by eye or described plainly: measuring whether something runs past its
+  card, reading a value the screen doesn't show, or a long cross-screen
+  sequence where one wrong click spoils the result. *(2026-10-29)* Before each browser action, say which step it is
+  and why it needs Claude; anything else goes to Basheer. *(2026-10-06)* Check
   with Basheer before starting browser checks of the screens for any E2E
   test plan. *(2026-10-08)*
 - Screenshot only at meaningful checkpoints; use `get_page_text`/`find` to confirm

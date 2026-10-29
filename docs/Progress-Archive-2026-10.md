@@ -5502,3 +5502,37 @@ moved to after the restart (Basheer).
   technical-first explanations (6–11). No tracker line (none
   guard-stoppable; no live data or UAT touched); the pattern goes to the
   weekly Harness Engineering review, still due.
+
+### 2026-10-29 — Build & Test: My Work tabs and Summary; browser checks cut back
+
+- Before the E2E, Basheer found My Work's six lists one under the other,
+  the bottom ones reached only by scrolling, and asked for tabs. Offered
+  one tab per list; he chose three grouped tabs and added a Summary
+  tab with one box per list that opens its list (D30–D33). Then he asked
+  for My hospitals first, on the tab row and the Summary. Built in
+  `MyWorkScreen.tsx`; `StatTile` gets an optional click (Insights and the
+  reports unchanged). No server change. tsc and lint clean.
+- Basheer looked at the tabs on Dev himself: "looks very good". Test plan
+  reworded for tabs (A2, B, C, F, G1) and new section H (7 steps, tabs
+  and Summary); G1's 28 Oct pass recorded as on the old layout (it had
+  been left out of the plan). Plan now 45 steps.
+- Rule change (Basheer, to save usage credits): Claude uses the browser
+  only for steps that can't be judged by eye; Basheer runs the rest,
+  including the phone, tablet and laptop look, which no longer happens
+  before handover. Written into the E2E skill, test plan template,
+  Frontend standards rule 10 and Process-Rules-History.
+- Slip: Claude started a second copy of the Dev servers while Basheer's
+  were already running (frontend came up on 5174) and began checking
+  ports; stopped both at his word.
+- Committed and pushed as `c7977f2` (screen, plan D30–D33, test plan);
+  scorecard --check OK. For Plan & Chore (Basheer passes it on): the
+  Annual Target test plan's section L still says Claude measures the
+  phone layout.
+- **Retro — corrections from Basheer this session: 3.** (1) "I already
+  started the servers and checked the screens. Don't waste time and
+  tokens doing the checking." — duplicate Dev servers and screen checks.
+  (2) "Lets limit your browser checks to very complex testing steps
+  only." — proposed a browser check of the tabs he could judge by eye.
+  (3) "I didn't understand this - 3. The hospital box's three figures."
+  — unclear question. No tracker line: none touched live data or UAT,
+  lost work, or could be caught by a tool check.

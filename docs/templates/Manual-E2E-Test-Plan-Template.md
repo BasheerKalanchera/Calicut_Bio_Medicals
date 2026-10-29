@@ -30,8 +30,12 @@ this section filled in.
 - <figure or example> — <source>
 
 **Tags:** every step starts with `[Simple]` (one click/type/verify-a-value,
-Basheer runs it) or `[Complex: <reason>]` (Claude drives: layout shift,
-multi-step, cross-screen/cross-role, or a genuine visual check). Saves to
+Basheer runs it) or `[Complex: <reason>]` (layout shift, multi-step,
+cross-screen/cross-role, or a genuine visual check). Basheer runs Complex
+steps too, from exact instructions; a step Claude drives in the browser
+says so — `[Complex: Claude — <reason>]` — and only when it can't be judged
+by eye (e.g. measuring whether something runs past its card), to save
+usage credits (Basheer, 2026-10-29). Saves to
 Dev are "Basheer clicks, Claude watches"; Claude reads the record back in
 the app.
 
@@ -39,8 +43,9 @@ the app.
 feature adds or changes gets its own `[Complex: phone layout]` step: at
 phone width, every row, arrow and tab opened, nothing runs past the card
 and nothing looks squashed. A save-time check refuses a plan without at
-least one. Claude has already checked each screen at phone width before
-handing the build over; this step is the second look.
+least one. Basheer runs it at 390, 768 and 1280 px; nobody checks in a
+browser before handover (Basheer, 2026-10-29), so this step is the first
+look. Claude measures in the browser only if something looks off.
 
 **Opportunities:** every step that names an Opportunity puts its hospital
 beside it in brackets, e.g. "usg m/c" (aster medicity). An Opportunity the
