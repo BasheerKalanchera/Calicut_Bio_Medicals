@@ -44,12 +44,19 @@ the build branch, and reaches `main` at the merge (Basheer, 2026-10-17)._
   Next Actions tab. The tab matches a next action when its activity's
   Project **or** its Opportunity's Project is the Project (an activity
   logged on an Opportunity carries no Project).
-- **Step 4 (Project screen into tabs, D10) built, not committed** (30 Oct):
+- **Step 4 (Project screen into tabs, D10) `0e99f99`, pushed** (30 Oct):
   `ProjectDirectoryScreen.tsx` `ProjectDetailView` — chip row Overview /
   Opportunities / Activity under the header; the three cards moved into
   tabs unchanged. tsc clean, lint 0 errors. Not run in a browser.
-- **Next:** commit step 4 (shown to Basheer first), then step 5 (Project
-  Next Actions tab, D9; server route + tab reusing `NextActionsPanel`) —
-  check in first. E2E plan still needs the
+- Session wound up 30 Oct: retro in Progress-Archive (0 corrections);
+  `0e99f99` and this docs batch pushed together.
+- **Next:** step 5 (Project Next Actions tab, D9).
+  Plan shown to Basheer 30 Oct, awaiting his go: `list_by_project` /
+  `count_by_project` / `project_exists` in the repository (activity's
+  Project OR an Opportunity under it, via subquery so the query-size guard
+  holds), `ReminderService.list_for_project`, `GET /projects/{id}/reminders`,
+  `listProjectReminders`, a 4th tab with `NextActionsPanel`, refresh of
+  `["project-reminders"]` in the close and log forms, regenerate `api.ts`,
+  tests. Two commits (4, then 5) unless he asks for one. E2E plan still needs the
   Project-screen cases (D9, D10, D12).
 - Migration number last chosen: none.

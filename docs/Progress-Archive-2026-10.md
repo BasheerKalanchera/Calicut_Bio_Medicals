@@ -5706,3 +5706,31 @@ moved to after the restart (Basheer).
   extra side pieces proposed where he wanted it in the main thing. No
   tracker line: none touched live data or UAT, lost work, or could be
   caught by a tool check.
+
+## 2026-10-30 — Hospital next-action rule, build steps 1–4 (Build, parallel)
+
+- Branch `worktree-build`: step 1 server `2b5a113` (pushed), step 2 Log
+  Activity form `421fc63` (pushed), step 3 seeing them all `f129bb0`
+  (pushed), step 4 Project screen tabs `0e99f99` (pushed with the docs
+  batch). Step 5 (Project Next Actions tab, D9) planned and shown, not
+  started; step 6 is the E2E on Dev after the merge. Nothing applied to
+  Dev; no migration.
+- Decisions (Basheer): the close form is reused at hospital and Project
+  level; D12 — a Project-level next action closes like a hospital one,
+  with "This visit produced a new Opportunity" opening the Add
+  Opportunity form with hospital filled and Project locked. Dealer-partner
+  tracking for requirements Cabio doesn't supply is a future Backlog item
+  (entry added), not built.
+- Build notes: reminder responses now carry the Project name, so the
+  query-size guard's join counts rose by one (pending 7 and 8, completed
+  13 and 14). Step 3 differs from the plan's wording ("copy"): one shared
+  `NextActionsPanel` used by Opportunity Detail and Customer 360, so
+  step 5 reuses it. Log Activity filters Project-level blocking
+  client-side over the hospital's first 100 next actions; past that the
+  rep gets the plain server error (safe). Checks per step: pytest, ruff,
+  `tsc`, lint 0 errors; no browser run (E2E after merge).
+- Basheer folded step 5 into the day's plan, then chose to commit step 4
+  and stop for the day.
+- **Retro — corrections from Basheer this session: 0** (counted from his
+  messages: approvals, design questions on Projects and dealer partners,
+  commit and push go-aheads). No tracker line.
