@@ -5,7 +5,7 @@ import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import dayjs from "dayjs";
 import FormModal from "./FormModal";
 import CloseReminderModal from "./CloseReminderModal";
-import { logActivity, listAccountOpportunitiesLookup, listOpportunityReminders } from "../services/activities";
+import { logActivity, listAccountOpportunitiesLookup, listAccountReminders, listOpportunityReminders } from "../services/activities";
 import { listAccounts, listOpportunities } from "../services/accounts";
 import { SilentModalError } from "../lib/formErrors";
 import { listUsers } from "../services/masterData";
@@ -164,8 +164,25 @@ export default function LogActivityModal({
     enabled: isOpen && !!effectiveOpportunityId && isCustomerFacing,
     queryFn: () => listOpportunityReminders(effectiveOpportunityId!, false),
   });
-  const blockingReminders = isCustomerFacing && effectiveOpportunityId
-    ? openOpportunityReminders.filter((r) => !r.is_completed && r.assigned_to_user_id === loggedForUserId)
+  // Hospital-next-action plan D1/D2: the same rule one level up. Each level
+  // blocks only itself, and the server picks the level the same way:
+  // Opportunity, else Project, else the hospital.
+  const level = !isCustomerFacing ? null
+    : effectiveOpportunityId ? "Opportunity"
+    : projectId ? "Project"
+    : resolvedAccountId ? "hospital"
+    : null;
+  const { data: openAccountReminders = [] } = useQuery({
+    queryKey: ["account-reminders", resolvedAccountId, level === "hospital"],
+    enabled: isOpen && !!resolvedAccountId && (level === "hospital" || level === "Project"),
+    queryFn: () => listAccountReminders(resolvedAccountId, { hospitalLevelOnly: level === "hospital" }),
+  });
+  const ownOpen = (rs: ReminderResponse[]) =>
+    rs.filter((r) => !r.is_completed && r.assigned_to_user_id === loggedForUserId);
+  const blockingReminders =
+    level === "Opportunity" ? ownOpen(openOpportunityReminders)
+    : level === "Project" ? ownOpen(openAccountReminders).filter((r) => r.activity.project?.id === projectId && !r.activity.opportunity)
+    : level === "hospital" ? ownOpen(openAccountReminders)
     : [];
   const mustClose = blockingReminders.length > 0;
   const loggedForName = loggedForUserId === currentUserId
@@ -261,6 +278,7 @@ export default function LogActivityModal({
       queryClient.invalidateQueries({ queryKey: ["activities", "project", projectId] });
     }
     queryClient.invalidateQueries({ queryKey: ["reminders"] });
+    queryClient.invalidateQueries({ queryKey: ["account-reminders"] });
     if (loggedOpportunityId) {
       queryClient.invalidateQueries({ queryKey: ["opp-reminders", loggedOpportunityId] });
     }
@@ -435,8 +453,8 @@ export default function LogActivityModal({
               <Alert severity="warning">
                 <Typography sx={{ fontSize: "0.8125rem", mb: 1 }}>
                   {loggedForName
-                    ? `${loggedForName} has ${blockingReminders.length > 1 ? "open next actions" : "an open next action"} on this Opportunity. Close ${blockingReminders.length > 1 ? "them" : "it"}, saying what happened, instead of logging a new activity.`
-                    : `You have ${blockingReminders.length > 1 ? "open next actions" : "an open next action"} on this Opportunity. Close ${blockingReminders.length > 1 ? "them" : "it"}, saying what happened, instead of logging a new activity.`}
+                    ? `${loggedForName} has ${blockingReminders.length > 1 ? "open next actions" : "an open next action"} on this ${level}. Close ${blockingReminders.length > 1 ? "them" : "it"}, saying what happened, instead of logging a new activity.`
+                    : `You have ${blockingReminders.length > 1 ? "open next actions" : "an open next action"} on this ${level}. Close ${blockingReminders.length > 1 ? "them" : "it"}, saying what happened, instead of logging a new activity.`}
                 </Typography>
                 {blockingReminders.map((r) => (
                   <Typography key={r.id} sx={{ fontSize: "0.75rem", mt: 0.5, whiteSpace: "pre-line" }}>

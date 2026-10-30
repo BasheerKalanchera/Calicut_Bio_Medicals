@@ -603,12 +603,14 @@ class ReminderService:
     ) -> None:
         # BR-ACT-05 change (next-action rules plan, point 2): closing a next
         # action needs a follow-up, except (a) its Opportunity is Won or
-        # Lost, or (b) a hospital-level next action whose visit produced a
-        # new Opportunity on the same hospital (plan D3).
+        # Lost, or (b) a hospital-level or Project-level next action whose
+        # visit produced a new Opportunity on the same hospital (plan D3;
+        # Project level: hospital-next-action plan D12).
         if original.opportunity_id:
             if produced_opportunity_id:
                 raise BusinessRuleViolation(
-                    "A new Opportunity can only stand in for the follow-up on a hospital-level next action."
+                    "A new Opportunity can only stand in for the follow-up on a hospital-level "
+                    "or Project-level next action."
                 )
             if self.repository.get_opportunity_status_code(original.opportunity_id) in {"WON", "LOST"}:
                 return

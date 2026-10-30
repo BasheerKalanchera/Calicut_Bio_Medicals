@@ -61,6 +61,13 @@ the gap).
 - D11. Build order: the tab split (D10) is its own commit, before the
   Next Actions tab (D9), so the layout change can be checked alone —
   Basheer, 2026-10-30 (recommended option)
+- D12. Closing a Project-level next action works like closing a
+  hospital-level one (Opportunity plan D3): the close form offers "This
+  visit produced a new Opportunity", and the Add Opportunity form opens
+  with the hospital filled in and the Project filled in and locked, so
+  the new Opportunity lands under the Project. A Project can start with
+  no Opportunity and gain several later, each blocking only itself (D3)
+  — Basheer, 2026-10-30
 
 ## Figures and sources
 

@@ -184,6 +184,17 @@ to decide: change the code, or change the rule.
 - The app has no confirm pop-up yet — one small shared one. Build &
   Test, in the next batch of small fixes.
 
+### Projects: track the requirements that go to dealer partners — not started, future (2026-10-30)
+
+- **Today (Basheer, 2026-10-30):** a Project groups Opportunities for
+  Cabio's own products only, across more than one SBU, under one customer.
+  The customer's other requirements are passed to a dealer partner by
+  word of mouth, so the app records nothing about them.
+- **Wanted when more such Projects come:** a way to track those
+  requirements — who the partner is, what was handed over, and its
+  progress. Not decided; needs its own plan. Until then they live in the
+  Project's own next actions and activity notes.
+
 ### Commit check: keep `.githooks/commit-msg` in Unix line endings — not started (2026-10-08)
 
 Git on Windows warned it will give the hook Windows line endings the next

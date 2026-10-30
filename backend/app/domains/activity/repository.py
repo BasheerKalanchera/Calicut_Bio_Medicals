@@ -263,13 +263,13 @@ def _comment_display_options():
 
 def _activity_display_options(relationship, loader=joinedload):
     # ActivityContextNested needs the activity's own columns plus the
-    # account, opportunity, user and created-by names -- nothing else.
+    # account, opportunity, project, user and created-by names -- nothing else.
     return loader(relationship).options(
         _name_only(Activity.account, Account.id, Account.name),
         _name_only(Activity.opportunity, Opportunity.id, Opportunity.name),
+        _name_only(Activity.project, Project.id, Project.name),
         _name_only(Activity.user, UserProfile.id, UserProfile.display_name),
         _name_only(Activity.created_by_user, UserProfile.id, UserProfile.display_name),
-        noload(Activity.project),
     )
 
 

@@ -169,7 +169,11 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
   // Stage-change mode with no open next action of one's own: a Note (D14).
   const noteOnly = !!stageChange && ownReminders.length === 0;
   const accountId = (plainClose ? contextReminder : reminder)?.activity.account?.id;
+  // "Hospital level" here means no Opportunity: it covers Project-level next
+  // actions too (hospital-next-action plan D12), whose new Opportunity is
+  // created under that Project.
   const isHospitalLevel = plainClose && !!reminder && !opportunityId;
+  const projectId = isHospitalLevel ? reminder?.activity.project?.id : undefined;
 
   const { data: users = [] } = useQuery({
     queryKey: ["users", "assignable"],
@@ -277,7 +281,11 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
       queryClient.invalidateQueries({ queryKey: ["activities", "opportunity", opportunityId] });
       queryClient.invalidateQueries({ queryKey: ["opp-reminders", opportunityId] });
     }
+    if (projectId) {
+      queryClient.invalidateQueries({ queryKey: ["activities", "project", projectId] });
+    }
     queryClient.invalidateQueries({ queryKey: ["reminders"] });
+    queryClient.invalidateQueries({ queryKey: ["account-reminders"] });
     // Same reasoning as above -- the closing Activity should show up in the
     // Daily Activity Report immediately too, not just the Activity tab.
     queryClient.invalidateQueries({ queryKey: ["activityReport"] });
@@ -626,6 +634,8 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
           onCreated={handleOpportunityCreated}
           initialAccountId={accountId}
           lockAccount
+          initialProjectId={projectId}
+          lockProject={!!projectId}
           // Plan D17: the visit just described is the new Opportunity's first activity.
           initialFirstActivity={{ activity_type: activityType, activity_date: activityDate, notes: notes.trim() }}
         />

@@ -135,6 +135,18 @@ export async function listOpportunityReminders(
   return r.data.data.items;
 }
 
+// Hospital-next-action plan: every open next action at a hospital -- or, with
+// hospitalLevelOnly, just those with no Opportunity and no Project.
+export async function listAccountReminders(
+  accountId: string,
+  { includeCompleted = false, hospitalLevelOnly = false } = {},
+): Promise<ReminderResponse[]> {
+  const r = await api.get(`/accounts/${accountId}/reminders`, {
+    params: { include_completed: includeCompleted, hospital_level: hospitalLevelOnly, page_size: 100 },
+  });
+  return r.data.data.items;
+}
+
 export async function createReminder(payload: {
   activity_id: string;
   assigned_to_user_id: string;

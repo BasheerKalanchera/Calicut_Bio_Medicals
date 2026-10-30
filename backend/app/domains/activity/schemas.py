@@ -306,6 +306,9 @@ class ActivityContextNested(BaseModel):
     outcome_notes: str | None
     account: AccountNested | None
     opportunity: OpportunityNested | None
+    # Hospital-next-action plan D9/D12: tells a Project-level next action
+    # (project set, no opportunity) from a hospital-level one.
+    project: ProjectNested | None = None
     user: UserNested
     created_by_user: UserNested | None = None
 

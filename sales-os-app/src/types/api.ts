@@ -3299,6 +3299,7 @@ export interface components {
             outcome_notes: string | null;
             account: components["schemas"]["AccountNested"] | null;
             opportunity: components["schemas"]["OpportunityNested"] | null;
+            project?: components["schemas"]["ProjectNested"] | null;
             user: components["schemas"]["UserNested"];
             created_by_user?: components["schemas"]["UserNested"] | null;
         };

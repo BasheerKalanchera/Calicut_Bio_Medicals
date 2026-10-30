@@ -235,11 +235,12 @@ class TestReminderListQuerySize:
         return str(stmt.compile(dialect=postgresql.dialect())).lower()
 
     def _assert_only_displayed_tables(self, sql: str) -> None:
-        # Shown on screen: account, opportunity and people's names.
-        for table in ("account", "opportunity", "user_profile"):
+        # Shown on screen: account, opportunity, project (tells a Project-level
+        # next action from a hospital-level one) and people's names.
+        for table in ("account", "opportunity", "project", "user_profile"):
             assert f"join {table} " in sql
-        # Never shown: the user's SBU/role/zone chain and the project.
-        for table in ("sbu", "role", "zone", "project"):
+        # Never shown: the user's SBU/role/zone chain.
+        for table in ("sbu", "role", "zone"):
             assert f"join {table} " not in sql
 
     def _order_by(self, sql: str) -> str:
@@ -264,29 +265,29 @@ class TestReminderListQuerySize:
     # Pending list: the closing activity is a separate lookup (no joins of
     # its own in the main statement). list_by_opportunity has one extra join
     # for its own Activity filter.
-    def test_list_for_user_pending_has_six_joins(self):
+    def test_list_for_user_pending_has_seven_joins(self):
         sql = self._compiled(lambda repo: repo.list_for_user(uuid.uuid4()))
-        self._assert_only_displayed_tables(sql)
-        assert sql.count(" join ") == 6
-
-    def test_list_by_opportunity_pending_has_seven_joins(self):
-        sql = self._compiled(lambda repo: repo.list_by_opportunity(uuid.uuid4()))
         self._assert_only_displayed_tables(sql)
         assert sql.count(" join ") == 7
 
+    def test_list_by_opportunity_pending_has_eight_joins(self):
+        sql = self._compiled(lambda repo: repo.list_by_opportunity(uuid.uuid4()))
+        self._assert_only_displayed_tables(sql)
+        assert sql.count(" join ") == 8
+
     # Completed list: every row has a closing activity the screen shows, so
-    # it joins in the same statement (5 more joins).
+    # it joins in the same statement (6 more joins).
     def test_list_for_user_completed_joins_closing_activity(self):
         sql = self._compiled(lambda repo: repo.list_for_user(uuid.uuid4(), include_completed=True))
         self._assert_only_displayed_tables(sql)
-        assert sql.count(" join ") == 11
+        assert sql.count(" join ") == 13
 
     def test_list_by_opportunity_completed_joins_closing_activity(self):
         sql = self._compiled(
             lambda repo: repo.list_by_opportunity(uuid.uuid4(), include_completed=True)
         )
         self._assert_only_displayed_tables(sql)
-        assert sql.count(" join ") == 12
+        assert sql.count(" join ") == 14
 
 
 class TestDailyReportAndCommentQuerySize:

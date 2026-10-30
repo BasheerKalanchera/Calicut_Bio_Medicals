@@ -1759,6 +1759,22 @@ class TestPatchReminder:
         )
         repo.create.assert_not_called()
 
+    def test_completing_project_reminder_with_produced_opportunity_needs_no_follow_up(self):
+        # Hospital-next-action plan D12: a Project-level next action (no
+        # Opportunity) takes the same route as a hospital-level one.
+        produced, first_id = uuid.uuid4(), uuid.uuid4()
+        reminder = _make_reminder(
+            activity=_make_activity(opportunity_id=None, account_id=ACCOUNT_ID, project_id=uuid.uuid4())
+        )
+        svc, repo, activity_repo = self._patch_svc(reminder)
+        repo.opportunity_created_on_account_since.return_value = True
+        repo.first_activity_id_on_opportunity.return_value = first_id
+
+        svc.patch_reminder(REMINDER_ID, self._no_follow_up(produced_opportunity_id=produced), updated_by=ACTOR_ID)
+
+        assert reminder.closing_activity_id == first_id
+        activity_repo.create.assert_not_called()
+
     def test_produced_opportunity_closes_with_its_first_activity_not_a_hospital_copy(self):
         # Plan D20: the visit is recorded once, on the new Opportunity.
         produced, first_id = uuid.uuid4(), uuid.uuid4()
