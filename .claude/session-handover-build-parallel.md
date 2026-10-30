@@ -7,7 +7,7 @@ and Build & Test keep their own notes (`.claude/session-handover-plan.md`,
 note. While a `/build` worktree exists, the live copy is the one in it, on
 the build branch, and reaches `main` at the merge (Basheer, 2026-10-17)._
 
-## In progress — Hospital next-action rule, steps 1–3 of 6 built (30 Oct)
+## In progress — Hospital next-action rule, steps 1–3 of 6 done (30 Oct)
 - Worktree `.claude/worktrees/build`, branch `worktree-build`, brought up
   to `main` `1afc50d` by fast-forward on 30 Oct. The redesign is already
   merged (`3bafbc0`); its E2E is `/test`'s, not mine.
@@ -32,7 +32,7 @@ the build branch, and reaches `main` at the merge (Basheer, 2026-10-17)._
   completed). pytest 1467+1, ruff, tsc clean. Project filter is
   client-side over the hospital's first 100 next actions. Dealer-partner
   tracking added to Backlog.
-- **Step 3 (seeing them all) built, not committed** (30 Oct): the three
+- **Step 3 (seeing them all) `f129bb0`, pushed** (30 Oct): the three
   reminder list calls in `activities.ts` now walk every page; new shared
   `components/NextActionsPanel.tsx` (list, Pending/Completed switch, total
   in heading, Close on own rows only) used by Opportunity Detail's tab and
@@ -44,7 +44,12 @@ the build branch, and reaches `main` at the merge (Basheer, 2026-10-17)._
   Next Actions tab. The tab matches a next action when its activity's
   Project **or** its Opportunity's Project is the Project (an activity
   logged on an Opportunity carries no Project).
-- **Next:** commit step 3 (shown to Basheer first), then step 4 (Project
-  screen into tabs, D10) — check in first. E2E plan still needs the
+- **Step 4 (Project screen into tabs, D10) built, not committed** (30 Oct):
+  `ProjectDirectoryScreen.tsx` `ProjectDetailView` — chip row Overview /
+  Opportunities / Activity under the header; the three cards moved into
+  tabs unchanged. tsc clean, lint 0 errors. Not run in a browser.
+- **Next:** commit step 4 (shown to Basheer first), then step 5 (Project
+  Next Actions tab, D9; server route + tab reusing `NextActionsPanel`) —
+  check in first. E2E plan still needs the
   Project-screen cases (D9, D10, D12).
 - Migration number last chosen: none.

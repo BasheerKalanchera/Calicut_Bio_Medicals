@@ -5,6 +5,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import CheckIcon from "@mui/icons-material/Check";
 import { listAllProjects } from "../services/projects";
 import { listAccounts, createProject, updateProject, listOpportunities } from "../services/accounts";
 import { listProjectStatuses, listUsers } from "../services/masterData";
@@ -15,6 +16,13 @@ import ActivityTimeline from "../components/ActivityTimeline";
 import useDebouncedValue from "../hooks/useDebouncedValue";
 
 const SHADOW_SM = "0 1px 2px rgba(0,0,0,0.05)";
+
+// Same chip row as Customer 360 (hospital next-action plan D10).
+const DETAIL_TABS = [
+  { id: "overview", label: "Overview" },
+  { id: "opportunities", label: "Opportunities" },
+  { id: "activity", label: "Activity" },
+];
 
 // Minimal shape DemoApp.tsx's selectedProject state actually needs — this
 // screen's own project rows/queries carry richer objects (see the `any`
@@ -46,6 +54,7 @@ function ProjectDetailView({
   // The one create form (QuickLeadModal), with this project's hospital and
   // the project itself fixed -- Win Probability plan step 2, D10.
   const [showAddOpp, setShowAddOpp] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
 
   const { data: opportunities = [], isLoading: oppsLoading } = useQuery({
     queryKey: ["opportunities", "byAccount", p.account.id],
@@ -88,9 +97,34 @@ function ProjectDetailView({
               Edit
             </Button>
           </Box>
+
+          {/* Tab chip bar */}
+          <Box sx={{ display: "flex", gap: 1, overflowX: "auto", pb: 0.5, mb: 2, "&::-webkit-scrollbar": { display: "none" }, scrollbarWidth: "none" }}>
+            {DETAIL_TABS.map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <Button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  sx={{
+                    flexShrink: 0, display: "flex", alignItems: "center", gap: 0.75, px: 2, py: 1,
+                    borderRadius: "9999px", fontSize: "0.875rem", fontWeight: 700, whiteSpace: "nowrap",
+                    transition: "all 0.2s", border: "1px solid", textTransform: "none",
+                    ...(isActive
+                      ? { bgcolor: "primary.main", color: "#fff", borderColor: "primary.main", boxShadow: SHADOW_SM }
+                      : { bgcolor: "#fff", color: "#6b7280", borderColor: "#e5e7eb", "&:hover": { borderColor: "#93c5fd", color: "primary.main" } }),
+                  }}
+                >
+                  {isActive && <CheckIcon sx={{ fontSize: 14, flexShrink: 0 }} />}
+                  {tab.label}
+                </Button>
+              );
+            })}
+          </Box>
         </Box>
         {/* Scrollable content */}
         <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0, px: 2, pb: 2, display: "flex", flexDirection: "column", gap: 2 }}>
+          {activeTab === "overview" && (
           <Box sx={{ bgcolor: "#fff", borderRadius: "1.5rem", boxShadow: SHADOW_SM, border: "1px solid #f3f4f6", p: 2.5 }}>
             <Typography component="h4" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em", mb: 2 }}>
               Project Details
@@ -104,8 +138,10 @@ function ProjectDetailView({
               ))}
             </Box>
           </Box>
+          )}
 
           {/* Opportunities */}
+          {activeTab === "opportunities" && (
           <Box sx={{ bgcolor: "#fff", borderRadius: "1.5rem", boxShadow: SHADOW_SM, border: "1px solid #f3f4f6", p: 2.5 }}>
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
               <Typography component="h4" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em" }}>
@@ -162,11 +198,14 @@ function ProjectDetailView({
               </Box>
             )}
           </Box>
+          )}
 
           {/* Activity */}
+          {activeTab === "activity" && (
           <Box sx={{ bgcolor: "#fff", borderRadius: "1.5rem", boxShadow: SHADOW_SM, border: "1px solid #f3f4f6", p: 2.5 }}>
             <ActivityTimeline projectId={p.id} onLogActivity={() => openLogActivityRef?.current?.()} />
           </Box>
+          )}
         </Box>
       </Box>
 
