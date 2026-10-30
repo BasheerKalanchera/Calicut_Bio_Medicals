@@ -110,29 +110,42 @@ export async function createActivityComment(
   return r.data.data;
 }
 
+// Hospital-next-action plan D6: the next-action lists show every row, not the
+// first page. Walks the pages at the router's maximum page size (100).
+async function fetchAllReminderPages(
+  url: string,
+  params: Record<string, string | number | boolean>,
+): Promise<ReminderResponse[]> {
+  const all: ReminderResponse[] = [];
+  let page = 1;
+  let totalPages = 1;
+  while (page <= totalPages) {
+    const r = await api.get(url, { params: { ...params, page, page_size: 100 } });
+    all.push(...r.data.data.items);
+    totalPages = r.data.data.total_pages;
+    page += 1;
+  }
+  return all;
+}
+
 export async function listReminders(
   includeCompleted = false,
   dueAfter?: string,
   dueBefore?: string,
 ): Promise<ReminderResponse[]> {
-  const params: Record<string, string | number | boolean> = {
-    include_completed: includeCompleted,
-    page_size: 50,
-  };
+  const params: Record<string, string | number | boolean> = { include_completed: includeCompleted };
   if (dueAfter) params.due_after = dueAfter;
   if (dueBefore) params.due_before = dueBefore;
-  const r = await api.get("/reminders", { params });
-  return r.data.data.items;
+  return fetchAllReminderPages("/reminders", params);
 }
 
 export async function listOpportunityReminders(
   opportunityId: string,
   includeCompleted = false,
 ): Promise<ReminderResponse[]> {
-  const r = await api.get(`/opportunities/${opportunityId}/reminders`, {
-    params: { include_completed: includeCompleted, page_size: 50 },
+  return fetchAllReminderPages(`/opportunities/${opportunityId}/reminders`, {
+    include_completed: includeCompleted,
   });
-  return r.data.data.items;
 }
 
 // Hospital-next-action plan: every open next action at a hospital -- or, with
@@ -141,10 +154,10 @@ export async function listAccountReminders(
   accountId: string,
   { includeCompleted = false, hospitalLevelOnly = false } = {},
 ): Promise<ReminderResponse[]> {
-  const r = await api.get(`/accounts/${accountId}/reminders`, {
-    params: { include_completed: includeCompleted, hospital_level: hospitalLevelOnly, page_size: 100 },
+  return fetchAllReminderPages(`/accounts/${accountId}/reminders`, {
+    include_completed: includeCompleted,
+    hospital_level: hospitalLevelOnly,
   });
-  return r.data.data.items;
 }
 
 export async function createReminder(payload: {

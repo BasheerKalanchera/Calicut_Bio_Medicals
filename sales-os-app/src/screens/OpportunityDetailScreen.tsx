@@ -14,8 +14,6 @@ import {
   IconButton,
   MenuItem,
   TextField,
-  ToggleButton,
-  ToggleButtonGroup,
   Typography,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -47,7 +45,7 @@ import { sumAllocation, isAllocationBalanced } from "../utils/allocationSplit";
 import ActivityTimeline from "../components/ActivityTimeline";
 import LogActivityModal from "../components/LogActivityModal";
 import FormModal from "../components/FormModal";
-import ReminderRow from "../components/ReminderRow";
+import NextActionsPanel from "../components/NextActionsPanel";
 import CloseReminderModal, { type StageChangeNote } from "../components/CloseReminderModal";
 import { SilentModalError } from "../lib/formErrors";
 import OpportunityItemAddRow from "../components/OpportunityItemAddRow";
@@ -285,75 +283,14 @@ function OverviewTab({
 // read-only: closing someone else's follow-up isn't offered here.
 // ---------------------------------------------------------------------------
 function NextActionsTab({ opportunityId, currentUserId }: { opportunityId: string; currentUserId?: string }) {
-  const [includeCompleted, setIncludeCompleted] = useState(false);
-  const [closingReminder, setClosingReminder] = useState<ReminderResponse | null>(null);
-
-  const { data, isLoading } = useQuery({
-    queryKey: ["opp-reminders", opportunityId, includeCompleted],
-    queryFn:  () => listOpportunityReminders(opportunityId, includeCompleted),
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const reminders = data ?? [];
-
-  if (isLoading) return <LoadingPlaceholder />;
-
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-      <ToggleButtonGroup
-        value={includeCompleted}
-        exclusive
-        onChange={(_, value) => { if (value !== null) setIncludeCompleted(value); }}
-        sx={{ width: "fit-content", border: "1px solid #e5e7eb", borderRadius: "0.75rem", overflow: "hidden" }}
-      >
-        <ToggleButton
-          value={false}
-          disableRipple
-          sx={{
-            px: 2, py: 0.75, fontSize: "10px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
-            border: "none", color: "#9ca3af", bgcolor: "#fff",
-            "&:hover": { bgcolor: "background.default" },
-            "&.Mui-selected": { bgcolor: "primary.main", color: "#fff" },
-            "&.Mui-selected:hover": { bgcolor: "primary.main" },
-          }}
-        >
-          Pending
-        </ToggleButton>
-        <ToggleButton
-          value={true}
-          disableRipple
-          sx={{
-            px: 2, py: 0.75, fontSize: "10px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
-            border: "none", color: "#9ca3af", bgcolor: "#fff",
-            "&:hover": { bgcolor: "background.default" },
-            "&.Mui-selected": { bgcolor: "primary.main", color: "#fff" },
-            "&.Mui-selected:hover": { bgcolor: "primary.main" },
-          }}
-        >
-          Completed
-        </ToggleButton>
-      </ToggleButtonGroup>
-
-      {reminders.length === 0 ? (
-        <EmptyPlaceholder message={includeCompleted ? "No completed next actions yet." : "No pending next actions for this opportunity."} />
-      ) : (
-        reminders.map((r) => (
-          <ReminderRow
-            key={r.id}
-            reminder={r}
-            hideOpportunity
-            onComplete={r.assigned_to_user_id === currentUserId ? setClosingReminder : undefined}
-          />
-        ))
-      )}
-
-      <CloseReminderModal
-        isOpen={!!closingReminder}
-        onClose={() => setClosingReminder(null)}
-        reminder={closingReminder}
-        onCompleted={() => setClosingReminder(null)}
-      />
-    </Box>
+    <NextActionsPanel
+      queryKeyPrefix={["opp-reminders", opportunityId]}
+      fetchReminders={(includeCompleted) => listOpportunityReminders(opportunityId, includeCompleted)}
+      emptyPendingMessage="No pending next actions for this opportunity."
+      currentUserId={currentUserId}
+      hideOpportunity
+    />
   );
 }
 

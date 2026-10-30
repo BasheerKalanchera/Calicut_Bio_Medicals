@@ -49,12 +49,13 @@ import ZonePicker from "../components/ZonePicker";
 import { ApiError } from "../lib/api";
 import { SilentModalError } from "../lib/formErrors";
 import { listProducts } from "../services/products";
-import { listActivitiesByAccount } from "../services/activities";
+import { listActivitiesByAccount, listAccountReminders } from "../services/activities";
 import { isReactivationOverdue } from "../utils/opportunityStatus";
 import { useAuth } from "../contexts/AuthContext";
 import useDebouncedValue from "../hooks/useDebouncedValue";
 import FormModal from "../components/FormModal";
 import ActivityTimeline from "../components/ActivityTimeline";
+import NextActionsPanel from "../components/NextActionsPanel";
 import LogActivityModal from "../components/LogActivityModal";
 import QuickLeadModal from "../components/QuickLeadModal";
 
@@ -85,6 +86,7 @@ const TABS = [
   { id: "stakeholders", label: "Stakeholders" },
   { id: "projects", label: "Projects" },
   { id: "opportunities", label: "Opportunities" },
+  { id: "next-actions", label: "Next Actions" },
   { id: "installed", label: "Installed Base" },
 ];
 
@@ -1185,6 +1187,15 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
         {activeTab === "stakeholders" && (stakeholdersLoading ? <LoadingRow /> : <StakeholdersTab stakeholders={stakeholders} opportunityCounts={stakeholderOpportunityCounts} onAdd={openCreateStakeholder} onEdit={openEditStakeholder} onViewOpportunities={(s) => setViewingStakeholderOpportunities({ id: s.id, name: s.name })} />)}
         {activeTab === "projects" && (projectsLoading ? <LoadingRow /> : <ProjectsTab projects={projects} onAdd={openCreateProject} onEdit={openEditProject} onSelectProject={(p: any) => onSelectProject?.({ ...p, account: { id: accountId, name: account?.name } })} />)}
         {activeTab === "opportunities" && (opportunitiesLoading ? <LoadingRow /> : <OpportunitiesTab opportunities={opportunities} onAdd={() => setShowCreateOpp(true)} onSelectOpportunity={(o: any) => onSelectOpportunity?.(o, undefined, "opportunities")} showAll={showAllOpportunities} onToggleShowAll={() => onShowAllOpportunitiesChange?.(!showAllOpportunities)} />)}
+        {activeTab === "next-actions" && (
+          <NextActionsPanel
+            queryKeyPrefix={["account-reminders", accountId, "customer-360"]}
+            fetchReminders={(includeCompleted) => listAccountReminders(accountId, { includeCompleted })}
+            emptyPendingMessage="No pending next actions at this hospital."
+            currentUserId={(userProfile as any)?.id}
+            onSelectOpportunity={(o) => onSelectOpportunity?.(o, undefined, "next-actions")}
+          />
+        )}
         {activeTab === "installed" && (installedLoading ? <LoadingRow /> : <InstalledBaseTab assets={installed} onAdd={openCreateAsset} onEdit={openEditAsset} />)}
         {activeTab === "activity" && (
           <ActivityTimeline accountId={accountId} onLogActivity={() => setShowLogActivity(true)} totalCount={mergedAccount.activity_count} selfFetch={false} highlightActivityId={highlightActivityId} />

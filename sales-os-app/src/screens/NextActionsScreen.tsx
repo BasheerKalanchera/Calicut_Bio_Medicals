@@ -126,6 +126,9 @@ export default function NextActionsScreen({
 
         {!isLoading && reminders.length > 0 && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+            <Box sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              {includeCompleted ? "Completed" : "Pending"} ({reminders.length})
+            </Box>
             {reminders.map((r) => (
               <ReminderRow
                 key={r.id}
