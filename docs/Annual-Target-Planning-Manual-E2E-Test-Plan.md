@@ -516,74 +516,120 @@ P7.
 1. [Complex: save, then check another user's bell] As Fahad, Target &
    Coverage Planning, Imaging, Oct–Dec 2026: "Plan", the P7 hospital
    ₹20 L, SonoScape ₹20 L → "Save draft". **Expected:** Fazal's bell
-   unchanged (a draft isn't submitted). —
+   unchanged (a draft isn't submitted). — Pass, 2026-10-30 (Basheer):
+   Fahad saved the Oct–Dec 2026 draft (hospital "new customer", SonoScape);
+   Fazal's bell showed no red dot before or after. The bell is a red dot
+   only, never a number (`NotificationBell.tsx:141`, hidden at 0 unread), and
+   a sales rep has no SBU picker, so the "Imaging" choice didn't apply.
 2. [Complex: cross-user] Fahad: "Continue" → "Submit for approval".
    **Expected:** Fazal's bell +1: "Fahad submitted a plan for Oct–Dec
-   2026". Haroon's and Abdul Latheef P's bells unchanged (D18). —
+   2026". Haroon's and Abdul Latheef P's bells unchanged (D18). — Pass,
+   2026-10-30 (Basheer): Fazal's list has "Fahad submitted a plan for
+   Oct–Dec 2026"; Haroon's and Abdul Latheef P's lists don't.
 3. [Complex: click-through] As Fazal, click it. **Expected:** Target &
    Coverage Planning opens on Oct–Dec 2026 at Fahad's plan, with "Approve"
-   and "Reject"; the badge drops by one (D21). —
+   and "Reject"; the badge drops by one (D21). — Pass, 2026-10-30
+   (Basheer).
 4. [Complex: cross-user] Fazal: "Reject" → pop-up "Reject Fahad's plan?",
    "Note (optional)" "Add one more hospital" → "Reject". **Expected:**
    Fahad's bell +1: "Fazal rejected your plan for Oct–Dec 2026", no note
    in the bell (D19); clicking opens his Oct–Dec 2026 plan, which shows
-   the note. —
+   the note. — Pass, 2026-10-30 (Basheer).
 5. [Complex: cross-user] As Fahad: "Revise", ₹25 L, "Why did the plan
-   change?" "Added a second hospital" → "Submit for approval".
+   change?" "Raised the amount" → "Submit for approval".
    **Expected:** Fazal's bell +1: "Fahad submitted a plan for Oct–Dec
-   2026", no note in the bell (D18). —
+   2026", no note in the bell (D18). — Pass, 2026-10-30 (Basheer): Fazal's
+   list has "Fahad submitted a plan for Oct–Dec 2026", no note. The note
+   typed was "Added a second hospital" but only the amount rose; wording
+   below changed to "Raised the amount" (Basheer).
 6. [Complex: cross-user] Fazal: "Approve" → pop-up "Approve Fahad's
    plan?", note "OK" → "Approve". **Expected:** Fahad's bell +1: "Fazal
    approved your plan for Oct–Dec 2026", no note in the bell (D19). —
+   Pass, 2026-10-30 (Basheer): exact line "Fazal approved your plan for
+   Oct–Dec 2026" in Fahad's list.
 7. [Complex: an Area Manager's plan goes to the GM] As Nishad K V: revise
-   the Jan–Mar 2027 ₹10 L plan to ₹12 L, note "Second hospital added".
+   the Jan–Mar 2027 ₹10 L plan to ₹12 L, note "Raised the amount".
    **Expected:** Haroon's bell +1. Haroon approves. **Expected:** Nishad K
-   V's bell +1. —
+   V's bell +1. — Pass, 2026-10-30 (Basheer).
 8. [Complex: no manager, D18, D69] As Haroon: Imaging, Oct–Dec 2026, a
    plan for the P7 hospital, ₹30 L; submit. **Expected:** no one's bell
    changes, Abdul Latheef P's included. As Abdul Latheef P, approve it
-   from the approval list. **Expected:** Haroon's bell +1 (D19). —
+   from the approval list. **Expected:** Haroon's bell +1 (D19). — Pass,
+   2026-10-30 (Basheer): Abdul Latheef P's list had nothing new after the
+   submit (others not checked, as they get nothing from Haroon); Haroon's
+   list has "Abdul Latheef P approved your plan for Oct–Dec 2026". Adding
+   "new customer" showed the reminder "Fahad in your SBU has also planned
+   new customer this quarter. These are reminders only — you can still
+   save." (the overlap reminder, not a block).
 9. [Simple] As Haroon (not Vivek's manager), approve Vivek's Oct–Dec 2026
    ₹66 L plan. **Expected:** Vivek's bell +1; Arun Adarsh's unchanged. —
+   Skipped, 2026-10-30 (Basheer): can't be run on the screen. Haroon's
+   "Needs Your Approval" lists only his direct reports and people with no
+   manager (`repository.py:110–114`), so Vivek's plan isn't there; the
+   server would allow it (`service.py:435`). Arun Adarsh had already
+   approved the ₹66 L plan, and an approver-approves-rep notification is
+   what J6 (Fazal and Fahad) passed.
 10. [Simple] Every plan notification reads quarters as months ("Oct–Dec
-    2026"), never "2026-Q3". —
+    2026"), never "2026-Q3". — Pass, 2026-10-30 (Basheer): none of the
+    lines seen in J2–J8 used "2026-Q3".
 11. [Complex: three old destinations] Haroon clicks the P7 Opportunity
     notification; Nishad K V the lead one; Basheer K the comment one.
     **Expected:** each opens as today (the Opportunity, the lead queue,
-    the comment). —
+    the comment). — Pass, 2026-10-30 (Basheer).
 12. [Simple] Hide-check: as Rudrappa and as Shruthi, none of Fahad's plan
-    notifications. —
+    notifications. — Pass, 2026-10-30 (Basheer): neither list shows any of
+    the notifications created today; all their items are old.
 
 ## K — Brand Target Tracking: billing and hand-typed quarters (D37, D54, D68, D70–D73)
 
 1. [Simple] As Haroon, 2026, open SonoScape's line. **Expected:** "Brands
    Billing to Cabio" ₹100 L in each of Jan–Mar, Apr–Jun, Jul–Sep and
-   Oct–Dec 2026 (D68), beside the seasonal targets: ₹280 L in Oct–Dec,
-   none before (D46a). —
+   Oct–Dec 2026 (D68), beside the Target column: ₹280 L in Oct–Dec,
+   "Not set" before (D46a). — Pass, 2026-10-30 (Basheer): billing ₹100 L
+   a quarter; Target ₹280 L at Oct–Dec 2026, "Not set" for the other three
+   quarters. The screen has no "seasonal target" field; the plan's word
+   was changed to "Target column".
 2. [Simple] EDAN. **Expected:** billing ₹50 L a quarter (its own ₹200 L,
-   not the stretched ₹300 L). —
+   not the stretched ₹300 L). — Pass, 2026-10-30 (Basheer): ₹50 L in each
+   of the four quarters.
 3. [Simple] Medion ("Apr 2026–Mar 2027"). **Expected:** billing ₹25 L in
-   each of Apr–Jun 2026 … Jan–Mar 2027. —
+   each of Apr–Jun 2026 … Jan–Mar 2027. — Pass, 2026-10-30 (Basheer): ₹25 L
+   in each of the four quarters.
 4. [Complex: look for an edit the screen shouldn't offer] **Expected:** no
-   way to type or change a billing figure (D54, D70). —
+   way to type or change a billing figure (D54, D70). — Pass, 2026-10-30
+   (Basheer): no way to edit a billing figure.
 5. [Complex: save, read back, put back] Maquet's line → "Revise" →
    "Brand's own yearly figure (₹ Lakhs)" ₹100.01 L → "Save". **Expected:** billing ₹25.00, ₹25.00, ₹25.00, ₹25.01. Put it back
    to ₹100 L; save. **Expected:** ₹25 L each; Oct–Dec target back to
-   ₹25 L. —
+   ₹25 L. — Part 1 Pass, 2026-10-30 (Claude, as Haroon, read only; the
+   screen shows one decimal, so ₹25.01 cannot be told from ₹25.00 by
+   eye): saved own figure 100.01; billing 25.00 / 25.00 / 25.00 / 25.01
+   (Jan–Mar to Oct–Dec 2026); Oct–Dec 2026 target saved 25.01. Part 2
+   Pass, 2026-10-30 (Basheer put it back to ₹100 L; Claude read again,
+   read only): own figure 100.00; billing 25.00 each; Oct–Dec 2026 target
+   25.00. Maquet is back at its original figure. Reword for next time:
+   Claude reads the cents, since the screen shows one decimal.
 6. [Complex: save, then check another screen] Medion, Jan–Mar 2027 →
    "Change" → pop-up "Medion · Jan–Mar 2027", "Target for this quarter
    (₹ Lakhs)" ₹20 L → "Save". **Expected:** Jan–Mar ₹20 L marked "changed by
    hand"; Medion's line still ₹100 L / 0 % / ₹100 L, nothing extra (D72);
    Target & Coverage Planning, Critical Care, Jan–Mar 2027 target ₹20 L. —
+   Pass, 2026-10-30 (Basheer). Medion's Jan–Mar 2027 is left at ₹20 L for K8.
 7. [Simple] **Expected:** quarters before Oct–Dec 2026 have no "Change"
-   button; Oct–Dec 2026 and later do (D70). —
+   button; Oct–Dec 2026 and later do (D70). — Pass, 2026-10-30 (Basheer):
+   no "Change" on Apr–Jun and Jul–Sep 2026; "Change" on Oct–Dec 2026 and
+   Jan–Mar 2027.
 8. [Complex: save, read back] Medion's own figure → ₹120 L; save.
    **Expected:** Oct–Dec 2026 ₹48 L; Jan–Mar 2027 stays ₹20 L, still
    marked (D71); billing ₹30 L a quarter. Put it back to ₹100 L; save.
    **Expected:** Oct–Dec ₹40 L, Jan–Mar still ₹20 L. Type Jan–Mar back to
-   ₹10 L; save. **Expected:** ₹10 L, still marked (D73). —
+   ₹10 L; save. **Expected:** ₹10 L, still marked (D73). — Pass,
+   2026-10-30 (Basheer): values at steps 3, 5 and 7 matched the expected
+   figures. Medion is back at ₹100 L, Oct–Dec ₹40 L, Jan–Mar 2027 ₹10 L.
 9. [Simple] Hide-check: as Basheer K and as Fazal, no Brand Target
-   Tracking in the menu; "Brands Billing to Cabio" nowhere. —
+   Tracking in the menu; "Brands Billing to Cabio" nowhere. — Pass,
+   2026-10-30 (Basheer): neither sees Brand Target Tracking in the menu,
+   so the billing line has no screen to appear on.
 10. [Complex: phone layout] Phone width, as Haroon, Brand Target
     Tracking, 2026, Critical Care. **Expected:** each brand is a card
     titled with its name and year (e.g. "Maquet · Jan–Dec 2026", "Medion ·
@@ -594,7 +640,7 @@ P7.
     Jan–Mar 2027; nothing runs past the card's edge. On a laptop the
     brands and quarters stay tables. (Found by Basheer at P6, 2026-10-25;
     re-worded 2026-10-28 for the MUI card layout, read from
-    `BrandTargetTrackingScreen.tsx`.) —
+    `BrandTargetTrackingScreen.tsx`.) — Pass, 2026-10-30 (Basheer).
 
 ## L — Phone, tablet and laptop look of the redone screens (Part 2 screens plan D5, D7)
 

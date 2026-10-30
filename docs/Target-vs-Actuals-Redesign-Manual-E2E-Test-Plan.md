@@ -12,8 +12,8 @@ Target Part 2 E2E (sections J, K, L), per D9.
 
 Checked read-only on Dev, 2026-10-29, as Haroon Sidheeq (GM), with all
 three RLS settings (user, role, SBU) set and verified (GM has no SBU; the
-check returned General Manager and his id). Re-run at P3: Dev data
-changes during other E2Es.
+check returned General Manager and his id). Re-run at P3 on 2026-10-30, the same way: Dev data
+changes during other E2Es. What moved is marked "30 Oct" below.
 
 - **Who sees:** as Target vs Actuals and the Overdue Actions tab today:
   Admin and GM everyone; an Area Manager their own row and their team;
@@ -30,10 +30,11 @@ changes during other E2Es.
   - Fazal 2 / 2, ₹24.0 L: "New USG m/c" (aster medicity) ₹1.0 L, closing
     15 Sep 2026; "New oppotunity fast track" (Aster DM) ₹23.0 L, 1 Oct
     2026.
-  - Fahad 0 / 1, ₹20.0 L: "Test Gate override oppotunity (renamed for
-    TC-19/22)" (Maulana), 3 Sep 2026. **Today's tab leaves Fahad out**
-    (it lists only people with an overdue action); the redesign must
-    show him.
+  - Fahad 2 / 1, ₹20.0 L (30 Oct; was 0 / 1 on 29 Oct): "Test Gate
+    override oppotunity (renamed for TC-19/22)" (Maulana), 3 Sep 2026.
+    The old tab listed only people with an overdue action; the redesign
+    also lists anyone with a late Opportunity (D11).
+  - Overdue total as Haroon: 31 (30 Oct; was 29).
   - Haroon Sidheeq 6 / 1, ₹50.0 L: "Activity visibility test" (Aster
     DM), 21 Sep 2026.
   - Targets, Oct–Dec 2026 (Dev, 28 Oct, Annual E2E P8): Imaging ₹280.0 L
@@ -42,6 +43,14 @@ changes during other E2Es.
     ₹109.8 L; Critical Care ₹185.0 L (Arun Adarsh ₹100.0 L, Vivek
     ₹90.0 L, Nishad K V ₹85.0 L), Won ₹0; Company ₹465.0 L. Plans:
     Rudrappa ₹10.0 L approved, Basheer K ₹55.0 L pending.
+  - Re-checked 30 Oct (the app's own Target vs Actuals code, run as
+    Haroon on Dev): every figure above is unchanged (Imaging ₹280.0 L /
+    ₹34.0 L / PO ₹16.0 L / Likely finish ₹109.8 L; Company ₹465.0 L,
+    7.31 %). Won by person, Oct–Dec: Basheer K ₹23.0 L (41.82 % of his
+    ₹55.0 L plan), Fahad ₹11.0 L, everyone else 0; Critical Care Won 0.
+    Rudrappa's plan: hospitals — one line, "Not assigned to a hospital",
+    ₹10.0 L; brands — SonoScape ₹10.0 L (P5). Critical Care plans, both
+    approved: Arun Adarsh ₹50.0 L, Vivek ₹66.0 L (not used by any step).
 
 Button labels, messages and the order of checks are taken from the plan,
 since the screens aren't built yet. **Re-check every quoted label
@@ -52,17 +61,27 @@ against the built code before the E2E starts** (pre-E2E review).
 - 2026-Q3 = 01 Oct 2026 to 31 Dec 2026 (today's quarter); FY 2027-28
   starts Apr 2027 — `scripts/quarter.py`, 2026-10-29.
 - Overdue and past-closing counts, values and Opportunity names above —
-  Dev read-only query, 2026-10-29 (scratchpad `tva_overdue_check.py`).
-- Overdue total as Haroon, 29 — counted with a tool from that query.
+  Dev read-only query, 2026-10-29 (scratchpad `tva_overdue_check.py`),
+  re-run 2026-10-30 (scratchpad `tva_p3_check.py`).
+- Overdue total as Haroon, 31 — counted with a tool from the 30 Oct run
+  (was 29 on 29 Oct).
+- Won by person, Rudrappa's plan lines, Critical Care plans — the app's
+  own Target vs Actuals code run as Haroon on Dev, 2026-10-30 (scratchpad
+  `tva_p3_figures.py`).
 - Targets, Won, PO received, Likely finish, plans — Annual Target E2E
   P8, Dev, 2026-10-28.
-- Won % 12.1 (Imaging), 7.3 (Company); Likely finish 39.2 % (Imaging) —
+- Won % 12.14 (Imaging), 7.31 (Company); Likely finish 39.21 % (Imaging) —
   worked out with a tool from the P8 figures; re-worked at P3.
 - Teams and managers — Annual Target E2E "Checked against live data",
   Dev, 2026-10-21; confirmed by the 29 Oct query's manager column.
-- Today's tab: label "Overdue Actions", card title "Overdue Actions —
-  {total} total", empty text "Nobody on the team has overdue actions."
-  — `InsightsDashboardScreen.tsx`, read 2026-10-29.
+- Overdue tab as built: label "Overdue"; empty text "Nobody on the team
+  has overdue next actions or Opportunities past their closing date." —
+  `InsightsDashboardScreen.tsx` lines 42 and 272, read 2026-10-30. (The
+  old tab, before the redesign: label "Overdue Actions", card title
+  "Overdue Actions — {total} total", empty text "Nobody on the team has
+  overdue actions." — same file, read 2026-10-29.)
+- My Work's small tab "Overdue next actions" (P4) —
+  `MyWorkScreen.tsx:275`, read 2026-10-30.
 - "FY 2027-28 starts in Apr 2027 — nothing to show yet." — plan D6.
 - My Work's "Showing" picker and its Summary tab — `MyWorkScreen.tsx`,
   read 2026-10-29.
@@ -89,29 +108,47 @@ beside it in brackets. This plan creates none.
 ## Pre-flight
 
 - P1. [Simple] Dev backend restarted since the build's last backend
-  change. —
+  change. — 30 Oct: **Pass** (Basheer; merge done 29 Oct night, servers
+  started 30 Oct morning).
 - P2. [Simple] App running on Dev; Basheer can sign in as Haroon
-  Sidheeq, Fazal, Shruthi and Fahad. —
+  Sidheeq, Fazal, Shruthi and Fahad. — 30 Oct: **Pass** (Basheer; Haroon
+  and Fazal signed in; Shruthi and Fahad not tried yet, first needed at
+  E3 and E4).
 - P3. [Complex: Claude — reading values the screen doesn't show] Re-run
   the 29 Oct read-only query and the P8 figures; update "Existing
-  values" and the expected figures below if they moved. —
-- P4. [Simple] Before the build is merged (old screens), as Fazal:
-  Insights Dashboard → "Overdue Actions" tab. Note each person and
-  count. **Expected:** Fazal, 2 overdue; Fahad not listed. —
-- P5. [Simple] Before the build is merged, as Shruthi: Target & Coverage
-  Planning → Rudrappa's Oct–Dec 2026 plan. Note each hospital and brand
-  with its planned amount (used in D5–D6). —
+  values" and the expected figures below if they moved. Done 30 Oct:
+  Fahad's overdue count went 0 → 2 (total 31, not 29); the other
+  figures are unchanged; the steps below are updated. — 30 Oct:
+  **Pass** (Claude).
+- P4. [Simple] As Fazal: My Work → "Showing" on "Me" → Next actions →
+  "Overdue next actions". Note the number of rows. **Expected:** 2 (Dev,
+  29 Oct). D2 compares the Overdue tab's count with this one, taken from
+  a separate screen. — 30 Oct: **Pass** (Basheer; row count not stated
+  in his reply).
+- P5. [Complex: Claude — reading values the screen doesn't show]
+  Rudrappa's Oct–Dec 2026 plan, read from Dev on 30 Oct (P3): hospitals —
+  one line, "Not assigned to a hospital", ₹10.0 L; brands — SonoScape
+  ₹10.0 L. Used by C2 and F2. — 30 Oct: **Pass** (Claude).
 
 ## A — Year view (D2, D6)
 
 1. [Simple] As Haroon: Insights Dashboard → Target vs Actuals → Year,
-   FY 2026-27, SBU "All". **Expected:** three boxes — Target so far
-   ₹465.0 L, Won (paid) so far ₹34.0 L, Won % of target 7.3 % with a
-   bar. —
+   FY 2026-27, the SBU box on its default (Imaging; Haroon's SBU box
+   lists only Imaging and Critical Care, there is no "All"). **Expected:**
+   the three boxes follow the chosen SBU — Imaging: Target so far
+   ₹280.0 L, Won (paid) so far ₹34.0 L, Won % of target 12.14 % (34.0
+   ÷ 280.0) with a bar. The ₹465.0 L and 7.31 % are the Company row in
+   the table (A2), not the boxes. Switching the SBU box to Critical Care:
+   ₹185.0 L, ₹0.0 L, 0.00 % (Dev, 30 Oct). Corrected 30 Oct: the plan
+   first said SBU "All" and ₹465.0 L / 7.3 % for the boxes (Basheer, A1).
+   —
+   30 Oct: **Pass** (Basheer; Won % box read 12%, before percentages
+   moved to two decimals).
 2. [Simple] Same screen, the table. **Expected:** Company, then
    Critical Care and Imaging, then each person under their manager, each
    with Target so far, Won (paid) so far and Won % with a bar; Imaging
-   ₹280.0 L / ₹34.0 L / 12.1 %. —
+   ₹280.0 L / ₹34.0 L / 12.14 %; Company 7.31 % (percentages show two
+   decimals from 30 Oct, Basheer). —
 3. [Simple] Same screen. **Expected:** none of: Team plans, PO received,
    Plans vs target, a quarter-by-quarter table, Year's target, Plan for
    year, Still to win, the "haven't submitted a plan" note. —
@@ -132,7 +169,7 @@ beside it in brackets. This plan creates none.
 1. [Simple] As Haroon: Target vs Actuals → Quarter, Oct–Dec 2026, SBU
    "Imaging". **Expected:** four boxes — Target ₹280.0 L; Won (paid)
    ₹34.0 L with "PO received ₹16.0 L" as a small line under it; Won %
-   of target 12.1 %; Likely finish ₹109.8 L, 39.2 % of target. —
+   of target 12.14 %; Likely finish ₹109.8 L, 39.21 % of target. —
 2. [Simple] Same screen, the table. **Expected:** Company, Imaging, then
    Fazal (with Fahad under him), Shruthi (with Rudrappa), Basheer K;
    columns Target, Won (paid), Likely finish and a bar (won dark, likely
@@ -159,8 +196,10 @@ beside it in brackets. This plan creates none.
    "Rudrappa". **Expected:** a screen of his own, not a row opening
    underneath: his four boxes (Target ₹100.0 L, Won (paid), Won %,
    Likely finish). —
-2. [Simple] Same screen, By hospital and By brand. **Expected:**
-   Planned against Won; each Planned figure matches P5. —
+2. [Simple] Same screen, By hospital and By brand. **Expected:** By
+   hospital: one line, "Not assigned to a hospital", Planned ₹10.0 L,
+   Won 0, then a Total line; By brand: SonoScape, Planned ₹10.0 L, Won 0,
+   then a Total line. Both match P5. —
 3. [Simple] Same screen, bottom. **Expected:** the notes on
    Opportunities with no closing date or no PO date (wording as built).
    —
@@ -179,10 +218,11 @@ beside it in brackets. This plan creates none.
 1. [Simple] As Fazal: Insights Dashboard. **Expected:** the tab is
    called "Overdue" (not "Overdue Actions"). —
 2. [Simple] Open it. **Expected:** Fazal — 2 overdue next actions; Past
-   closing date 2, ₹24.0 L. Fahad — 0 overdue; Past closing date 1,
+   closing date 2, ₹24.0 L. Fahad — 2 overdue; Past closing date 1,
    ₹20.0 L. Fazal's overdue count is the same as P4. —
-3. [Simple] Same tab. **Expected:** Fahad's 0 is grey and can't be
-   clicked; Fazal's "2" past closing date is red. —
+3. [Simple] Same tab. **Expected:** every count above zero is red and
+   can be tapped (Fazal's 2 and 2, Fahad's 2 and 1). The grey zero is
+   checked at step 9, as Haroon. —
 4. [Complex: cross-screen] Click Fahad's past closing date count.
    **Expected:** My Work opens with "Showing" set to Fahad, on the
    Opportunities tab, at "Closing date passed", which lists "Test Gate
@@ -203,10 +243,11 @@ beside it in brackets. This plan creates none.
    again. **Expected:** view-only, as today when a manager picks a rep
    (My Work D15). —
 9. [Simple] As Haroon: Overdue tab. **Expected:** Abdul Latheef P 1 / 0;
-   Basheer K 15 / 0; Fazal 2 / 2, ₹24.0 L; Fahad 0 / 1, ₹20.0 L; Haroon
+   Basheer K 15 / 0; Fazal 2 / 2, ₹24.0 L; Fahad 2 / 1, ₹20.0 L; Haroon
    Sidheeq 6 / 1, ₹50.0 L; Nishad K V 1 / 0; Shruthi 2 / 0; Vivek
-   2 / 0. Total overdue 29. Arun Adarsh and Rudrappa (0 / 0) are not
-   listed (D11). —
+   2 / 0. Total overdue 31. Arun Adarsh and Rudrappa (0 / 0) are not
+   listed (D11). Shruthi's Past closing date 0 is grey and can't be
+   tapped. —
 10. [Complex: phone layout] Overdue tab at 390, 768 and 1280 px, as
    Haroon. **Expected (390):** one block per person — overdue next
    actions, then Past closing date count and value side by side; a

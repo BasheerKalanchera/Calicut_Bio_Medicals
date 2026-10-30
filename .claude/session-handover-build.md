@@ -13,21 +13,27 @@ session edits this note._
   hotfix-branch route (`docs/Deployment-Topology.md` "Fix to UAT ahead
   of a full promotion").
 
-## Now: My Work E2E (Weekly Follow-up plan, steps 2–5) — before Part 2
-- Merged `b704b56`; review fixes `048c741`, Stagnant 500 fix `4deb68c`
-  (pushed 28 Oct). Archive 28 and 29 Oct has the detail.
-- 29 Oct: tabs + Summary `c7977f2`; small-tab/Summary-look fixes (D34–D41,
-  Next actions small tabs, taller pinned tabs, emoji icons, Rep dropdown on
-  Stagnant Opportunities) committed and pushed as `676a05d` (tsc, lint,
-  MUI check clean; own diff read, not the formal /code-review).
-- E2E finished 29 Oct: every step Pass (55 of 55, my count). Red "N days
-  overdue" hospital badge not exercised (no overdue next action on Dev).
-- Docs UNCOMMITTED: plan (D38–D41, Status line), test plan (results),
-  Progress-Archive-2026-10 entry, this note. One docs commit awaits
-  Basheer's approval (shown first).
-- Retro written in the archive entry (5 corrections), in the same docs
-  batch. Next: the Plan & Chore build order (Basheer decides): Part 2 E2E resumes at I9 (paused),
-  or the Target vs Actuals redesign plan.
+## Now: Annual Target Part 2 E2E, sections J–L (Target vs Actuals E2E parked)
+- 30 Oct: the redesign merged as `3bafbc0`; Dev at migration 0064 (head).
+  Target vs Actuals E2E run 6 of 40 (P1–P5, A1 Pass) then PARKED by
+  Basheer — he wants to redesign it again (boxes on top look redundant
+  with the table; Quarter table should gain PO received + Likely finish,
+  Company Likely finish = SBUs added up). Design not agreed; Plan & Chore.
+- Uncommitted from this session (see `git status`): My Work scroll-to-top
+  and D42 reset (Basheer confirmed on Fazal's login), plan D42; two-decimal
+  % (`percent()`, `WonBar` widths) and the E2E plan's figures. Small-fixes
+  `fix:` commit not yet proposed; the two-decimal change may be moot after
+  the redesign.
+- Annual Target E2E (`docs/Annual-Target-Planning-Manual-E2E-Test-Plan.md`):
+  J 11 Pass + 1 Skipped (J9), K 10 of 10 Pass (30 Oct): 21 Pass, 1 Skipped,
+  of 33. **Next: L1** (phone/tablet/laptop look of Target & Coverage
+  Planning); L7 (Target vs Actuals card) waits for the redesign. Load
+  `cabio-e2e-testing`; Basheer signs in as each user. Dev test data left
+  as found (Maquet ₹100 L; Medion ₹100 L, Oct–Dec ₹40 L, Jan–Mar 2027
+  ₹10 L). K5's wording: Claude reads the cents (screen shows one decimal).
+- To Plan & Chore (Backlog, 30 Oct): tab per section on Target & Coverage
+  Planning (L1–L3 re-test after it); rollout of planning (pilot quarter);
+  GM approval list gap. Results and findings: Progress-Archive 30 Oct.
 - Idea raised by Basheer: widen Backlog "Front-end consistency audit" into a
   convention audit (expensive job — show scope/cost first).
 

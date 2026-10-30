@@ -7,6 +7,13 @@ session edits this note._
 
 - Forecast plan (untracked, written by Antigravity — Basheer 27 Oct): commit it, and by which session? Open. At review, line 110 → BR-FIN-09.
 
+## Rollout: when planning counts — to plan (Basheer, 30 Oct)
+
+- Planning in the system won't be done properly in Oct–Dec; July–Sep deals
+  were entered without targets (paper only). Plan the go-live quarter,
+  pilot quarter, exit criteria, paper targets. Backlog "Rollout: when
+  planning starts to count". **Next:** read the Backlog entry, then plan.
+
 ## Activity Type table plan — Draft 28 Oct
 
 - `docs/Activity-Type-Table-Implementation-Plan.md`; D4, D7, D8, D9
@@ -17,7 +24,8 @@ session edits this note._
 
 - Plan (Approved, D1–D5) and its E2E test plan pushed `eec66c2`. D6–D8
   (show all next actions; Customer 360 Next Actions tab) added 30 Oct,
-  build step 3, E2E section G.
+  build step 3, E2E section G; pushed `1afc50d` with the 30 Oct archive
+  entry and retro.
   **Next:** `/build` starts step 1 now (Basheer, 30 Oct); this session
   pauses so only two run. UAT reports 30 Oct shared with Haroon, moved
   to the main reports folder.

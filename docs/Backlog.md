@@ -222,6 +222,65 @@ G4 (Shruthi under Basheer K, Dev). Cabio has no SBU Manager today, so
 the GM's card already lists every Area Manager he sets. Possible fix when
 needed: each row on the GM's card opens to the people under that person,
 each with Change. Basheer, 2026-10-24: leave it for now.
+The same gap for approvals: the server lets the GM approve or reject any
+plan except his own (`service.py:435`), but his "Needs Your Approval" list
+shows only his direct reports and people with no manager
+(`repository.py:110–114`), so he can't approve Vivek's plan on screen.
+Found in Annual Target E2E J9, 2026-10-30; skipped there.
+
+### Target & Coverage Planning: one tab per section, like My Work — Plan & Chore to take next, design not started (2026-10-30)
+
+The screen (`TargetPlanningScreen.tsx`) stacks its sections one under the
+other: My Plan, Needs Your Approval, Team Plans, and (from the Annual
+Target plan) the SBU Target box and Team Targets, quarterly and annual.
+Basheer, 2026-10-30, during Annual Target E2E J3 (a bell click has to land
+on Fahad's plan inside that long page): give each section its own tab, as
+My Work has (Weekly Follow-up plan D11, D31), for a simpler screen.
+Points to decide in a plan: which sections become tabs; which tab each
+role opens on (a rep: My Plan; a manager: Needs Your Approval); whether a
+bell click opens the matching tab, as My Work's counts do. Needs a plan
+and a mock-up before any build. Touches Annual Target E2E section L steps
+1–3 (the three-width look), which would need re-testing after it. Separate
+from the Target vs Actuals redesign Basheer parked the same day
+(`docs/Target-vs-Actuals-Redesign-Implementation-Plan.md`, E2E stopped at
+6 of 40); Plan & Chore decides the order.
+
+### Rollout: when planning starts to count — Plan & Chore to plan, nothing decided (2026-10-30)
+
+Basheer, 2026-10-30, during Annual Target E2E K1. Reality on UAT: Cabio
+Sales entered and closed many Opportunities in July–September; the
+Target & Coverage Planning feature wasn't there, so those quarters' team
+targets exist on paper only. The feature soft-launched on UAT in October
+and is still being tuned, so Oct–Dec 2026 planning in the system won't be
+done properly either. A team can't be asked to start on the first day of
+a quarter or year, so how are the old and the new process run together?
+
+What the system does today: the Year view counts only from the first
+quarter whose targets count; earlier quarters read "No target that
+quarter, so not counted" (Annual Target D66, E2E I2). A brand's year that
+began before Oct–Dec 2026 saves only its quarters from Oct–Dec 2026 on
+(D46a; SonoScape's Dev example: ₹280 L of ₹800 L counts), and "Brands
+Billing to Cabio" shows an even split of the brand's own figure (D68).
+Not yet read: whether the first quarter that counts is a setting or
+follows from whichever targets are saved.
+
+General rollout practice (Claude's own knowledge, not checked against a
+source): keep actuals (Opportunities, Won) in the system from day one,
+since they need no target; start targets and plans from a named first
+full period; don't type old paper targets in as if planned in the system
+(optionally one line per SBU, marked "imported from paper"); show "no
+target set", not 0 %, before go-live; run the pilot quarter next to
+paper with written exit criteria, then retire paper.
+
+Options: A — accountable from Oct–Dec 2026 (today's design); B — Oct–Dec
+2026 a pilot, first accountable quarter Jan–Mar 2027 (Claude's
+recommendation: brands' 2027 years start in January, so no partial brand
+year); C — wait for Apr–Jun 2027, the start of the Indian financial year.
+Risks: paper and system disagree (name which is authoritative per
+quarter); FY 2026-27 Year view is a partial year; pilot never ends
+without exit criteria. Touches the parked Target vs Actuals redesign (how
+a pilot quarter shows) and Backlog "Target & Coverage Planning: one tab
+per section". Likely an ADR. Basheer decides the option.
 
 ### User Directory: org tree view — not started (2026-10-24)
 

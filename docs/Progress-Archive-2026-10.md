@@ -5706,3 +5706,59 @@ moved to after the restart (Basheer).
   extra side pieces proposed where he wanted it in the main thing. No
   tracker line: none touched live data or UAT, lost work, or could be
   caught by a tool check.
+
+## 2026-10-30 — Target vs Actuals E2E parked at 6 of 40; Annual Target Part 2 E2E J and K done (Build & Test)
+
+- **Target vs Actuals E2E parked** by Basheer after P1–P5 and A1 (6 of 40):
+  "not simple and intuitive enough". His asks, none approved to build: drop
+  the row of boxes on the Year and Quarter views (the table repeats them);
+  add PO received and Likely finish to the table; show a Company Likely
+  finish as the two SBUs added up. Only one SBU is fetched at a time
+  (`TargetVsActualsSection.tsx:54–57`), so the Company figure needs a
+  server change. Redesign goes to Plan & Chore.
+- **Annual Target Part 2 E2E (`docs/Annual-Target-Planning-Manual-E2E-Test-Plan.md`):**
+  J 11 Pass, 1 Skipped (J9); K 10 of 10 Pass; L not started (L7 waits for
+  the redesign). Total 21 Pass, 1 Skipped, of 33.
+- **Findings:**
+  - The notification bell is a red dot only, never a number
+    (`NotificationBell.tsx:141`); a person with unread items sees no change,
+    so the new line has to be looked for at the top of the list.
+  - J5 and J7 were reworded to "Raised the amount" (the original note
+    claimed a second hospital that did not exist).
+  - J9 skipped: the server lets the GM approve any plan but his own, but
+    his "Needs Your Approval" list shows only direct reports and
+    manager-less people, so he can't reach Vivek's plan on screen
+    (Backlog, under "Target Planning: GM can't change a target set below
+    them").
+  - Overlap reminder ("…also planned new customer this quarter") shown
+    when adding a hospital Fahad's SBU colleague also planned (J8).
+  - K1: past quarters of a Jan–Dec 2026 brand read "Not set" (D46a);
+    the even ₹100 L billing split is a separate thing (D68).
+  - K5: the screen shows lakhs to one decimal (`formatter.ts:4`), so
+    ₹25.01 and ₹25.00 look the same; Claude read Dev read-only (scratchpad
+    `k5_maquet_check.py`) before and after. Saved ₹100.01 gave billing
+    25.00 / 25.00 / 25.00 / 25.01 and Oct–Dec target 25.01; put back to
+    ₹100 L gave 25.00 each. Test data left as found: Maquet ₹100 L, Medion
+    ₹100 L with Oct–Dec ₹40 L and Jan–Mar 2027 ₹10 L.
+- **Ideas to Backlog (Plan & Chore):** one tab per section on Target &
+  Coverage Planning, like My Work (would need L1–L3 re-tested); "Rollout:
+  when planning starts to count" (Basheer: July–Sep deals entered on UAT
+  without system targets; Oct–Dec planning won't be proper either).
+  Claude's recommendation, for Basheer to decide: Oct–Dec 2026 a pilot,
+  first accountable quarter Jan–Mar 2027.
+- **Uncommitted code, for the small-fixes `fix:` commit after the E2E:**
+  My Work scroll-to-top and D42 reset (Basheer confirmed on Fazal's
+  login), and the two-decimal percentages (may be moot after the
+  redesign).
+- **Retro — corrections from Basheer this session: 10.** (1) Why not make
+  P4 check the new Overdue tab (plan was stale). (2) "P1 merge was done
+  yesterday night… What is P2?" (asked about something already settled).
+  (3) A1 plan's Company row figure wrong (₹465 L). (4) P2/P4 mix-up.
+  (5) J1: told him to note a bell "number". (6) J1: offered an SBU choice
+  to a rep. (7) J5: a note faking a second hospital. (8) J9: step
+  impossible, Haroon can't see Vivek's plan. (9) K1: plan named a
+  "seasonal targets" field that doesn't exist. (10) K5: asked him to judge
+  ₹25.01 on a one-decimal screen. Common thread: steps given without
+  first checking what the screen shows or who can see it (existing P2,
+  accepted as a judgement slip). No tracker line: none touched live data
+  or UAT, lost work, or could be caught by a tool check.
