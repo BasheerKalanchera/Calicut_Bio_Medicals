@@ -165,13 +165,17 @@ class ActivityService:
         # open next action of their own on this Opportunity, they close it
         # (PATCH /reminders/{id}, BR-ACT-05) instead of logging a fresh
         # activity. Types that never carry a next action are unchanged.
-        if (
-            data.opportunity_id
-            and data.activity_type not in NOT_CUSTOMER_FACING_TYPES
-            and self.reminder_repository.has_open_for_user_on_opportunity(data.opportunity_id, activity_user_id)
-        ):
+        # Hospital next-action plan D1-D3: the same at Project level (an
+        # activity on a Project without an Opportunity) and hospital level
+        # (neither); each level blocks only itself.
+        blocked_on = (
+            None
+            if data.activity_type in NOT_CUSTOMER_FACING_TYPES
+            else self._open_next_action_level(data, activity_user_id)
+        )
+        if blocked_on:
             raise BusinessRuleViolation(
-                "There is an open next action on this Opportunity for this person. "
+                f"There is an open next action on this {blocked_on} for this person. "
                 "Close it, saying what happened, instead of logging a new activity."
             )
 
@@ -210,6 +214,20 @@ class ActivityService:
             )
 
         return activity, reminder
+
+    def _open_next_action_level(self, data: ActivityCreate, user_id: uuid.UUID) -> str | None:
+        # The level this activity is logged at, when the person already has
+        # an open next action of their own there -- else None.
+        if data.opportunity_id:
+            has_open = self.reminder_repository.has_open_for_user_on_opportunity(data.opportunity_id, user_id)
+            return "Opportunity" if has_open else None
+        if data.project_id:
+            has_open = self.reminder_repository.has_open_for_user_on_project(data.project_id, user_id)
+            return "Project" if has_open else None
+        if data.account_id:
+            has_open = self.reminder_repository.has_open_for_user_on_account_level(data.account_id, user_id)
+            return "hospital" if has_open else None
+        return None
 
     def log_stage_change_note(
         self,
@@ -385,6 +403,30 @@ class ReminderService:
         total = self.repository.count_by_opportunity(opportunity_id, include_completed=include_completed)
         return items, total
 
+    def list_for_account(
+        self,
+        account_id: uuid.UUID,
+        *,
+        include_completed: bool = False,
+        hospital_level_only: bool = False,
+        page: int = 1,
+        page_size: int = 50,
+    ) -> tuple[list[Reminder], int]:
+        if not self.repository.account_exists(account_id):
+            raise NotFoundError(f"Account {account_id} not found")
+        offset = (page - 1) * page_size
+        items = self.repository.list_by_account(
+            account_id,
+            include_completed=include_completed,
+            hospital_level_only=hospital_level_only,
+            offset=offset,
+            limit=page_size,
+        )
+        total = self.repository.count_by_account(
+            account_id, include_completed=include_completed, hospital_level_only=hospital_level_only
+        )
+        return items, total
+
     def create_reminder(
         self,
         data: ReminderCreate,
@@ -517,15 +559,15 @@ class ReminderService:
 
     def _others_to_close(self, reminder: Reminder, also_close_ids: list[uuid.UUID]) -> list[Reminder]:
         # Plan D22 / BR-ACT-05: closing several at once is only for the same
-        # person's open next actions on the same Opportunity -- checked
-        # before anything is saved.
+        # person's open next actions at the same level -- the same
+        # Opportunity, or (hospital next-action plan D1, D2) the same
+        # Project or hospital with no Opportunity -- checked before
+        # anything is saved.
         if not also_close_ids:
             return []
-        opportunity_id = reminder.activity.opportunity_id
-        if opportunity_id is None:
-            raise BusinessRuleViolation("Only next actions on an Opportunity can be closed together.")
         if len(set(also_close_ids)) != len(also_close_ids) or reminder.id in also_close_ids:
             raise BusinessRuleViolation("Each next action can only be closed once.")
+        first = reminder.activity
         others = []
         for other_id in also_close_ids:
             other = self.repository.get_by_id(other_id)
@@ -533,13 +575,24 @@ class ReminderService:
                 not other
                 or other.is_completed
                 or other.assigned_to_user_id != reminder.assigned_to_user_id
-                or other.activity.opportunity_id != opportunity_id
+                or not self._same_level(first, other.activity)
             ):
                 raise BusinessRuleViolation(
-                    "Next actions closed together must be open ones of the same person on the same Opportunity."
+                    "Next actions closed together must be open ones of the same person "
+                    "on the same Opportunity, Project or hospital."
                 )
             others.append(other)
         return others
+
+    @staticmethod
+    def _same_level(a: Activity, b: Activity) -> bool:
+        # An Opportunity is its own level; with no Opportunity, the level is
+        # the Project, or failing that the hospital.
+        if a.opportunity_id or b.opportunity_id:
+            return a.opportunity_id == b.opportunity_id
+        if a.project_id or b.project_id:
+            return a.project_id == b.project_id
+        return a.account_id is not None and a.account_id == b.account_id
 
     def _require_follow_up_exemption(
         self,

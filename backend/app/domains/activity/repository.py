@@ -306,6 +306,9 @@ class ReminderRepository(BaseRepository[Reminder]):
     def opportunity_exists(self, opportunity_id: uuid.UUID) -> bool:
         return (self.db.scalar(select(1).where(Opportunity.id == opportunity_id)) or 0) > 0
 
+    def account_exists(self, account_id: uuid.UUID) -> bool:
+        return (self.db.scalar(select(1).where(Account.id == account_id)) or 0) > 0
+
     def has_open_for_user_on_opportunity(self, opportunity_id: uuid.UUID, user_id: uuid.UUID) -> bool:
         # BR-ACT-11: only next actions assigned to this person count, and
         # only those whose creating Activity is on this Opportunity (same
@@ -315,6 +318,38 @@ class ReminderRepository(BaseRepository[Reminder]):
             .select_from(Reminder)
             .join(Activity, Reminder.activity_id == Activity.id)
             .where(Activity.opportunity_id == opportunity_id)
+            .where(Reminder.assigned_to_user_id == user_id)
+            .where(Reminder.is_completed == False)  # noqa: E712
+            .limit(1)
+        )
+        return self.db.scalar(stmt) is not None
+
+    def has_open_for_user_on_account_level(self, account_id: uuid.UUID, user_id: uuid.UUID) -> bool:
+        # BR-ACT-11 at hospital level (hospital next-action plan D1, D3):
+        # only next actions whose creating Activity is on this hospital with
+        # neither an Opportunity nor a Project -- each level blocks only itself.
+        stmt = (
+            select(1)
+            .select_from(Reminder)
+            .join(Activity, Reminder.activity_id == Activity.id)
+            .where(Activity.account_id == account_id)
+            .where(Activity.opportunity_id.is_(None))
+            .where(Activity.project_id.is_(None))
+            .where(Reminder.assigned_to_user_id == user_id)
+            .where(Reminder.is_completed == False)  # noqa: E712
+            .limit(1)
+        )
+        return self.db.scalar(stmt) is not None
+
+    def has_open_for_user_on_project(self, project_id: uuid.UUID, user_id: uuid.UUID) -> bool:
+        # BR-ACT-11 at Project level (plan D2): activities logged on the
+        # Project without an Opportunity.
+        stmt = (
+            select(1)
+            .select_from(Reminder)
+            .join(Activity, Reminder.activity_id == Activity.id)
+            .where(Activity.project_id == project_id)
+            .where(Activity.opportunity_id.is_(None))
             .where(Reminder.assigned_to_user_id == user_id)
             .where(Reminder.is_completed == False)  # noqa: E712
             .limit(1)
@@ -428,4 +463,46 @@ class ReminderRepository(BaseRepository[Reminder]):
             .where(Activity.opportunity_id == opportunity_id)
             .where(Reminder.is_completed == include_completed)
         )
+        return self.db.scalar(stmt) or 0
+
+    def list_by_account(
+        self,
+        account_id: uuid.UUID,
+        *,
+        include_completed: bool = False,
+        hospital_level_only: bool = False,
+        offset: int = 0,
+        limit: int = 50,
+    ) -> list[Reminder]:
+        # Hospital next-action plan D7/D8: everyone's next actions at the
+        # hospital, at every level; hospital_level_only keeps just those
+        # with neither an Opportunity nor a Project (the ones that block
+        # hospital-level logging, D1).
+        stmt = (
+            select(Reminder)
+            .options(*_reminder_display_options(include_completed))
+            .join(Activity, Reminder.activity_id == Activity.id)
+            .where(Activity.account_id == account_id)
+            .where(Reminder.is_completed == include_completed)
+        )
+        if hospital_level_only:
+            stmt = stmt.where(Activity.opportunity_id.is_(None), Activity.project_id.is_(None))
+        stmt = stmt.order_by(*_REMINDER_ORDER).offset(offset).limit(limit)
+        return list(self.db.scalars(stmt).all())
+
+    def count_by_account(
+        self,
+        account_id: uuid.UUID,
+        *,
+        include_completed: bool = False,
+        hospital_level_only: bool = False,
+    ) -> int:
+        stmt = (
+            select(func.count(Reminder.id))
+            .join(Activity, Reminder.activity_id == Activity.id)
+            .where(Activity.account_id == account_id)
+            .where(Reminder.is_completed == include_completed)
+        )
+        if hospital_level_only:
+            stmt = stmt.where(Activity.opportunity_id.is_(None), Activity.project_id.is_(None))
         return self.db.scalar(stmt) or 0

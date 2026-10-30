@@ -354,6 +354,80 @@ class TestNextActionRuleQueries:
         mock_db.scalar.return_value = 1
         assert ReminderRepository(mock_db).has_open_for_user_on_opportunity(uuid.uuid4(), uuid.uuid4()) is True
 
+    def test_has_open_for_user_on_account_level_filters_hospital_only_owner_and_open(self):
+        account_id, user_id = uuid.uuid4(), uuid.uuid4()
+        sql, _ = self._sql(lambda repo: repo.has_open_for_user_on_account_level(account_id, user_id))
+
+        assert "join activity on reminder.activity_id = activity.id" in sql
+        assert f"activity.account_id = '{account_id}'" in sql
+        assert "activity.opportunity_id is null" in sql
+        assert "activity.project_id is null" in sql
+        assert f"reminder.assigned_to_user_id = '{user_id}'" in sql
+        assert "reminder.is_completed = false" in sql
+
+    def test_has_open_for_user_on_project_filters_project_without_opportunity_owner_and_open(self):
+        project_id, user_id = uuid.uuid4(), uuid.uuid4()
+        sql, _ = self._sql(lambda repo: repo.has_open_for_user_on_project(project_id, user_id))
+
+        assert f"activity.project_id = '{project_id}'" in sql
+        assert "activity.opportunity_id is null" in sql
+        assert "activity.account_id" not in sql
+        assert f"reminder.assigned_to_user_id = '{user_id}'" in sql
+        assert "reminder.is_completed = false" in sql
+
+    def test_has_open_on_account_level_and_project_true_when_row_found(self):
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 1
+        repo = ReminderRepository(mock_db)
+        assert repo.has_open_for_user_on_account_level(uuid.uuid4(), uuid.uuid4()) is True
+        assert repo.has_open_for_user_on_project(uuid.uuid4(), uuid.uuid4()) is True
+
+    def _list_sql(self, call) -> str:
+        mock_db = MagicMock()
+        mock_db.scalars.return_value.all.return_value = []
+        call(ReminderRepository(mock_db))
+        stmt = mock_db.scalars.call_args.args[0]
+        return str(stmt.compile(dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True})).lower()
+
+    def test_list_by_account_covers_every_level_unless_hospital_only(self):
+        account_id = uuid.uuid4()
+        sql = self._list_sql(lambda repo: repo.list_by_account(account_id))
+
+        assert f"activity.account_id = '{account_id}'" in sql
+        assert "reminder.is_completed = false" in sql
+        assert "activity.opportunity_id is null" not in sql
+        assert "activity.project_id is null" not in sql
+
+    def test_list_by_account_hospital_only_drops_opportunity_and_project_rows(self):
+        sql = self._list_sql(lambda repo: repo.list_by_account(uuid.uuid4(), hospital_level_only=True))
+
+        assert "activity.opportunity_id is null" in sql
+        assert "activity.project_id is null" in sql
+
+    def test_list_by_account_completed_flag_and_paging(self):
+        sql = self._list_sql(
+            lambda repo: repo.list_by_account(uuid.uuid4(), include_completed=True, offset=100, limit=25)
+        )
+
+        assert "reminder.is_completed = true" in sql
+        assert "limit 25 offset 100" in sql
+
+    def test_count_by_account_filters_like_the_list(self):
+        account_id = uuid.uuid4()
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 7
+        repo = ReminderRepository(mock_db)
+
+        assert repo.count_by_account(account_id, hospital_level_only=True) == 7
+        sql = str(
+            mock_db.scalar.call_args.args[0].compile(
+                dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True}
+            )
+        ).lower()
+        assert f"activity.account_id = '{account_id}'" in sql
+        assert "activity.opportunity_id is null" in sql
+        assert "activity.project_id is null" in sql
+
     def test_get_opportunity_status_code_joins_status(self):
         opp_id = uuid.uuid4()
         sql, _ = self._sql(lambda repo: repo.get_opportunity_status_code(opp_id))

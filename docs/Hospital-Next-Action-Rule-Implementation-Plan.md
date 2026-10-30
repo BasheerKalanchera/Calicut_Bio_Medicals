@@ -1,8 +1,10 @@
 # Hospital-Level Open Next Action Rule — Implementation Plan
 
 **Status:** Approved 2026-10-28 (Basheer), D1–D5; D6–D8 added
-2026-10-30 (Basheer). Not built; E2E test plan written 2026-10-28,
-section G added 2026-10-30 (`docs/Hospital-Next-Action-Rule-Manual-E2E-Test-Plan.md`).
+2026-10-30 (Basheer); D9–D11 added 2026-10-30 (Basheer, Project screen).
+Not built; E2E test plan written 2026-10-28, section G added 2026-10-30
+(`docs/Hospital-Next-Action-Rule-Manual-E2E-Test-Plan.md`); its Project
+screen cases (D9, D10) are still to be added.
 **Traceability rows:** Activity logging / Next Actions rows (unchanged in
 what they cover; this tightens BR-ACT-11).
 **Design / discussion:** `docs/Next-Action-Rules-Implementation-Plan.md`
@@ -46,6 +48,19 @@ the gap).
 - D8. The Customer 360 tab lists every level at that hospital —
   hospital, Project and Opportunity — each row showing its Opportunity
   when it has one — Basheer, 2026-10-30
+- D9. The Project screen gets a Next Actions tab, like Customer 360's
+  (D7): everyone's open next actions on that Project — the Project's own
+  and those on the Opportunities under it — each row showing its owner
+  and its Opportunity; only the owner can close their own. A rep blocked
+  at Project level (D2) can then see why from that screen — Basheer,
+  2026-10-30 (recommended option)
+- D10. The Project screen is split into tabs — Overview, Opportunities,
+  Activity, Next Actions — using the same chip row as Customer 360.
+  Layout only: the three existing cards move into tabs unchanged —
+  Basheer, 2026-10-30 (recommended option)
+- D11. Build order: the tab split (D10) is its own commit, before the
+  Next Actions tab (D9), so the layout change can be checked alone —
+  Basheer, 2026-10-30 (recommended option)
 
 ## Figures and sources
 
@@ -63,6 +78,16 @@ the gap).
 - 536 overdue next actions across 13 people; Dhanushma 85 and Ravi Kumar
   83, more than the 50 the Next Actions screen shows (D6) — UAT read-only
   query, 2026-10-30 (`docs/Progress-Archive-2026-10.md`)
+- The Project screen today is one scrolling page of three cards (Project
+  Details, Opportunities, Activity): `ProjectDetailView` in
+  `sales-os-app/src/screens/ProjectDirectoryScreen.tsx:28` — code read
+  2026-10-30
+- An activity's Project is whatever the Log Activity form sends
+  (`LogActivityModal.tsx:240`, `project_id: projectId`), and `projectId`
+  is only set when the form is opened from the Project screen
+  (`DemoApp.tsx:992`). So an activity logged on an Opportunity from the
+  Opportunity screen has no Project on it even when the Opportunity
+  belongs to one — code read 2026-10-30
 - The 50 cap: `sales-os-app/src/services/activities.ts` `listReminders`
   and `listOpportunityReminders` send `page_size: 50` and ignore `total`
   — code read 2026-10-30, same on `main` and UAT
@@ -96,6 +121,11 @@ on the hospital, a Project or an Opportunity — so a rep or manager can
 see what is owed before the visit. Only the owner can close their own
 (D7, D8).
 
+The Project screen gets the same Next Actions tab (D9). To make room for
+it, the Project screen stops being one long page and becomes four tabs —
+Overview, Opportunities, Activity, Next Actions — like Customer 360
+(D10). The first three hold exactly what the page shows today.
+
 This is built and tested on Dev first. It reaches UAT only in a later
 update, with its own approval.
 
@@ -109,7 +139,9 @@ the Opportunity box does. There is no new screen or pop-up.
 
 Customer 360's new Next Actions tab sits in the same row of tabs as
 Activity and Opportunities, and looks like Opportunity Detail's Next
-Actions tab on a phone (same rows, same Pending/Completed switch).
+Actions tab on a phone (same rows, same Pending/Completed switch). The
+Project screen's tab row looks like Customer 360's, and its Next Actions
+tab is the same as these two.
 
 ## 2. Build order
 
@@ -125,7 +157,12 @@ Actions tab on a phone (same rows, same Pending/Completed switch).
    tab load every page (D6); Customer 360's Next Actions tab (D7, D8),
    using step 1's hospital list without the hospital-only filter. Tests.
    One commit. *Stops working on Dev:* nothing.
-4. **E2E on Dev** — its own test plan,
+4. **Project screen into tabs** (D10, D11) — Overview, Opportunities,
+   Activity; layout only, nothing it shows or does changes. One commit.
+   *Stops working on Dev:* nothing.
+5. **Project Next Actions tab** (D9) — the fourth tab and the server
+   list behind it. Tests. One commit. *Stops working on Dev:* nothing.
+6. **E2E on Dev** — its own test plan,
    `docs/Hospital-Next-Action-Rule-Manual-E2E-Test-Plan.md` (separate
    file — Basheer, 2026-10-28).
    Then Business-Rules BR-ACT-11 is updated, and the UAT move follows with
@@ -146,6 +183,12 @@ Logging an activity, and closing a next action, are the two ways in.
   Opportunity Detail Next Actions tab and the other Opportunity Detail
   places that call `listOpportunityReminders`; the new Customer 360 tab.
   Each must refresh after a close from any of them.
+- (e) The Project screen (D9, D10): its three cards move into tabs, so
+  anything that opens it — the Projects list and Customer 360's Projects
+  tab (`onSelectProject`) — still lands on Overview; the
+  Opportunities "+ Add" and Edit buttons, and Log Activity opened from it
+  (`projectId`), keep working from inside their tabs. A close from the
+  new tab refreshes the other next-action lists too.
 
 ## 4. Not in this plan (with reasons)
 
@@ -198,3 +241,18 @@ Logging an activity, and closing a next action, are the two ways in.
   "Next Actions"; the tab copies `OpportunityDetailScreen.tsx:282`
   `NextActionsTab` (Close on own rows only; `ReminderRow` already shows
   "Owner:" and the Opportunity chip) without `hideOpportunity`.
+- D10: `ProjectDirectoryScreen.tsx:28` `ProjectDetailView` gets
+  `activeTab` state and the chip row copied from
+  `Customer360Screen.tsx:1145`; the three cards become the Overview,
+  Opportunities and Activity tab bodies. The "Opportunities" card's
+  `showAddOpp` modal and `refreshOppsRef` / `openLogActivityRef` wiring
+  stay in `ProjectDetailView`.
+- D9: new `GET /projects/{project_id}/reminders` (paged like the others,
+  not-found error for a Project the user can't see). Query: a next action
+  belongs to the Project when its creating Activity has
+  `Activity.project_id == project_id` **or** its Opportunity has
+  `Opportunity.project_id == project_id`. The Opportunity half is needed
+  because an activity logged on an Opportunity from the Opportunity
+  screen carries no Project (see Figures and sources). Reuses
+  `_reminder_display_options` and `_REMINDER_ORDER`. New tab beside the
+  Customer 360 one, same `NextActionsTab` copy.

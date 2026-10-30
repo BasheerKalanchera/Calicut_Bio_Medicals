@@ -92,6 +92,11 @@ def _make_reminder_repo() -> MagicMock:
     repo.count_by_opportunity.return_value = 0
     # BR-ACT-11: default to no open next action holding the logger back.
     repo.has_open_for_user_on_opportunity.return_value = False
+    repo.has_open_for_user_on_project.return_value = False
+    repo.has_open_for_user_on_account_level.return_value = False
+    repo.account_exists.return_value = True
+    repo.list_by_account.return_value = []
+    repo.count_by_account.return_value = 0
     repo.get_opportunity_status_code.return_value = "ACTIVE"
     repo.opportunity_created_on_account_since.return_value = False
     return repo
@@ -446,7 +451,9 @@ class TestLogActivity:
 
         reminder_repo.has_open_for_user_on_opportunity.assert_called_once_with(OPP_ID, USER_ID)
 
-    def test_hospital_level_activity_skips_open_next_action_check(self):
+    def test_hospital_level_activity_does_not_check_the_opportunity_level(self):
+        # Plan D3: an open next action on an Opportunity doesn't stop a
+        # hospital-level log at the same hospital.
         activity_repo = _make_activity_repo()
         activity_repo.create.return_value = _make_activity()
         reminder_repo = _make_reminder_repo()
@@ -457,6 +464,116 @@ class TestLogActivity:
 
         reminder_repo.has_open_for_user_on_opportunity.assert_not_called()
         activity_repo.create.assert_called_once()
+
+    # -- Hospital next-action plan D1-D3: the same rule at hospital and Project level --
+
+    def test_open_own_hospital_level_next_action_blocks_hospital_level_activity(self):
+        activity_repo = _make_activity_repo()
+        reminder_repo = _make_reminder_repo()
+        reminder_repo.has_open_for_user_on_account_level.return_value = True
+        svc = self._svc(activity_repo=activity_repo, reminder_repo=reminder_repo)
+
+        with pytest.raises(BusinessRuleViolation, match="open next action on this hospital"):
+            svc.log_activity(self._data(), created_by=ACTOR_ID)
+
+        reminder_repo.has_open_for_user_on_account_level.assert_called_once_with(ACCOUNT_ID, ACTOR_ID)
+        activity_repo.create.assert_not_called()
+
+    def test_hospital_level_check_uses_the_logged_for_person(self):
+        activity_repo = _make_activity_repo()
+        activity_repo.create.return_value = _make_activity()
+        reminder_repo = _make_reminder_repo()
+        svc = self._svc(activity_repo=activity_repo, reminder_repo=reminder_repo)
+
+        svc.log_activity(self._data(user_id=USER_ID), created_by=ACTOR_ID)
+
+        reminder_repo.has_open_for_user_on_account_level.assert_called_once_with(ACCOUNT_ID, USER_ID)
+
+    def test_open_own_project_next_action_blocks_project_level_activity(self):
+        activity_repo = _make_activity_repo()
+        reminder_repo = _make_reminder_repo()
+        reminder_repo.has_open_for_user_on_project.return_value = True
+        svc = self._svc(activity_repo=activity_repo, reminder_repo=reminder_repo)
+
+        with pytest.raises(BusinessRuleViolation, match="open next action on this Project"):
+            svc.log_activity(self._data(project_id=PROJECT_ID), created_by=ACTOR_ID)
+
+        reminder_repo.has_open_for_user_on_project.assert_called_once_with(PROJECT_ID, ACTOR_ID)
+        reminder_repo.has_open_for_user_on_account_level.assert_not_called()
+        activity_repo.create.assert_not_called()
+
+    def test_hospital_level_open_does_not_block_project_level_activity(self):
+        # Plan D3: each level blocks only itself.
+        activity_repo = _make_activity_repo()
+        activity_repo.create.return_value = _make_activity()
+        reminder_repo = _make_reminder_repo()
+        reminder_repo.has_open_for_user_on_account_level.return_value = True
+        svc = self._svc(activity_repo=activity_repo, reminder_repo=reminder_repo)
+
+        svc.log_activity(self._data(project_id=PROJECT_ID), created_by=ACTOR_ID)
+
+        activity_repo.create.assert_called_once()
+
+    def test_open_project_and_hospital_levels_do_not_block_an_opportunity_activity(self):
+        activity_repo = _make_activity_repo()
+        activity_repo.create.return_value = _make_activity()
+        reminder_repo = _make_reminder_repo()
+        reminder_repo.has_open_for_user_on_account_level.return_value = True
+        reminder_repo.has_open_for_user_on_project.return_value = True
+        svc = self._svc(activity_repo=activity_repo, reminder_repo=reminder_repo)
+
+        svc.log_activity(self._data(opportunity_id=OPP_ID, project_id=PROJECT_ID), created_by=ACTOR_ID)
+
+        reminder_repo.has_open_for_user_on_account_level.assert_not_called()
+        reminder_repo.has_open_for_user_on_project.assert_not_called()
+        activity_repo.create.assert_called_once()
+
+    @pytest.mark.parametrize("activity_type", ["MANAGER_NOTE", "CONFERENCE_EXPO"])
+    def test_exempt_types_not_blocked_at_hospital_or_project_level(self, activity_type):
+        for level in (dict(), dict(project_id=PROJECT_ID)):
+            activity_repo = _make_activity_repo()
+            activity_repo.create.return_value = _make_activity(activity_type=activity_type, user_id=USER_ID)
+            reminder_repo = _make_reminder_repo()
+            reminder_repo.has_open_for_user_on_account_level.return_value = True
+            reminder_repo.has_open_for_user_on_project.return_value = True
+            svc = self._svc(activity_repo=activity_repo, reminder_repo=reminder_repo)
+
+            svc.log_activity(
+                self._data(
+                    activity_type=activity_type,
+                    user_id=USER_ID,
+                    outcome_notes="Learnt about the new range",
+                    next_action_text=None,
+                    next_action_due_date=None,
+                    **level,
+                ),
+                created_by=ACTOR_ID,
+            )
+
+            reminder_repo.has_open_for_user_on_account_level.assert_not_called()
+            reminder_repo.has_open_for_user_on_project.assert_not_called()
+            activity_repo.create.assert_called_once()
+
+    def test_no_account_means_no_hospital_level_check(self):
+        # The Sales Development types carry no hospital -- and are exempt anyway;
+        # this guards the check itself against a missing account.
+        activity_repo = _make_activity_repo()
+        activity_repo.create.return_value = _make_activity(activity_type="CONFERENCE_EXPO")
+        reminder_repo = _make_reminder_repo()
+        svc = self._svc(activity_repo=activity_repo, reminder_repo=reminder_repo)
+
+        svc.log_activity(
+            self._data(
+                account_id=None,
+                activity_type="CONFERENCE_EXPO",
+                outcome_notes="Learnt about the new range",
+                next_action_text=None,
+                next_action_due_date=None,
+            ),
+            created_by=ACTOR_ID,
+        )
+
+        reminder_repo.has_open_for_user_on_account_level.assert_not_called()
 
     def test_manager_note_not_blocked_by_open_next_action(self):
         activity_repo = _make_activity_repo()
@@ -1123,6 +1240,57 @@ class TestListForUser:
 # ReminderService.list_for_opportunity
 # ---------------------------------------------------------------------------
 
+class TestListForAccount:
+    def test_raises_not_found_when_account_missing(self):
+        repo = _make_reminder_repo()
+        repo.account_exists.return_value = False
+        svc = ReminderService(repository=repo, activity_repository=_make_activity_repo())
+
+        with pytest.raises(NotFoundError):
+            svc.list_for_account(ACCOUNT_ID, page=1, page_size=50)
+        repo.list_by_account.assert_not_called()
+
+    def test_returns_items_and_total(self):
+        repo = _make_reminder_repo()
+        reminders = [_make_reminder()]
+        repo.list_by_account.return_value = reminders
+        repo.count_by_account.return_value = 1
+        svc = ReminderService(repository=repo, activity_repository=_make_activity_repo())
+
+        items, total = svc.list_for_account(ACCOUNT_ID, page=1, page_size=50)
+
+        assert items == reminders
+        assert total == 1
+
+    def test_every_level_and_pending_by_default(self):
+        repo = _make_reminder_repo()
+        svc = ReminderService(repository=repo, activity_repository=_make_activity_repo())
+
+        svc.list_for_account(ACCOUNT_ID, page=1, page_size=50)
+
+        repo.list_by_account.assert_called_once_with(
+            ACCOUNT_ID, include_completed=False, hospital_level_only=False, offset=0, limit=50
+        )
+        repo.count_by_account.assert_called_once_with(
+            ACCOUNT_ID, include_completed=False, hospital_level_only=False
+        )
+
+    def test_hospital_level_only_and_completed_forwarded(self):
+        repo = _make_reminder_repo()
+        svc = ReminderService(repository=repo, activity_repository=_make_activity_repo())
+
+        svc.list_for_account(
+            ACCOUNT_ID, include_completed=True, hospital_level_only=True, page=3, page_size=25
+        )
+
+        repo.list_by_account.assert_called_once_with(
+            ACCOUNT_ID, include_completed=True, hospital_level_only=True, offset=50, limit=25
+        )
+        repo.count_by_account.assert_called_once_with(
+            ACCOUNT_ID, include_completed=True, hospital_level_only=True
+        )
+
+
 class TestListForOpportunity:
     def test_raises_not_found_when_opportunity_missing(self):
         repo = _make_reminder_repo()
@@ -1421,7 +1589,7 @@ class TestPatchReminder:
             dict(activity=_make_activity(opportunity_id=uuid.uuid4())),
             dict(activity=_make_activity(opportunity_id=None)),
         ],
-        ids=["already-closed", "someone-else", "other-opportunity", "hospital-level"],
+        ids=["already-closed", "someone-else", "other-opportunity", "hospital-level-vs-opportunity"],
     )
     def test_also_close_rejects_a_next_action_that_does_not_qualify(self, overrides):
         other = _make_reminder(
@@ -1456,14 +1624,65 @@ class TestPatchReminder:
                 )
         activity_repo.create.assert_not_called()
 
-    def test_also_close_only_from_a_next_action_on_an_opportunity(self):
-        svc, _, activity_repo = self._patch_svc(_make_reminder(activity=_make_activity(opportunity_id=None)))
+    # -- Hospital next-action plan D1, D2, D5: several at hospital / Project level --
 
-        with pytest.raises(BusinessRuleViolation, match="on an Opportunity"):
+    def _close_several_at(self, main_activity: Activity, *others: Reminder):
+        main = _make_reminder(activity=main_activity)
+        svc, repo, activity_repo = self._patch_svc(main)
+        by_id = {main.id: main, **{o.id: o for o in others}}
+        repo.get_by_id.side_effect = by_id.get
+        return svc, repo, activity_repo, main
+
+    def test_also_close_at_hospital_level_shares_the_closing_activity(self):
+        other = _make_reminder(id=uuid.uuid4(), activity=_make_activity(opportunity_id=None))
+        svc, repo, activity_repo, main = self._close_several_at(_make_activity(opportunity_id=None), other)
+
+        svc.patch_reminder(REMINDER_ID, ReminderUpdate(**_closing_data(also_close_ids=[other.id])), updated_by=ACTOR_ID)
+
+        closing_id = activity_repo.create.return_value.id
+        activity_repo.create.assert_called_once()
+        repo.create.assert_called_once()  # one follow-up for both
+        assert main.closing_activity_id == other.closing_activity_id == closing_id
+        assert main.is_completed is True and other.is_completed is True
+
+    def test_also_close_at_project_level_shares_the_closing_activity(self):
+        other = _make_reminder(id=uuid.uuid4(), activity=_make_activity(project_id=PROJECT_ID))
+        svc, _, activity_repo, main = self._close_several_at(_make_activity(project_id=PROJECT_ID), other)
+
+        svc.patch_reminder(REMINDER_ID, ReminderUpdate(**_closing_data(also_close_ids=[other.id])), updated_by=ACTOR_ID)
+
+        closing_id = activity_repo.create.return_value.id
+        assert main.closing_activity_id == other.closing_activity_id == closing_id
+
+    @pytest.mark.parametrize(
+        "main_activity, other_activity",
+        [
+            (dict(), dict(account_id=uuid.uuid4())),
+            (dict(), dict(project_id=PROJECT_ID)),
+            (dict(project_id=PROJECT_ID), dict()),
+            (dict(project_id=PROJECT_ID), dict(project_id=uuid.uuid4())),
+            (dict(), dict(opportunity_id=OPP_ID)),
+            (dict(opportunity_id=OPP_ID), dict()),
+        ],
+        ids=[
+            "other-hospital",
+            "hospital-vs-project",
+            "project-vs-hospital",
+            "other-project",
+            "hospital-vs-opportunity",
+            "opportunity-vs-hospital",
+        ],
+    )
+    def test_also_close_rejects_a_different_level(self, main_activity, other_activity):
+        other = _make_reminder(id=uuid.uuid4(), activity=_make_activity(**other_activity))
+        svc, repo, activity_repo, _ = self._close_several_at(_make_activity(**main_activity), other)
+
+        with pytest.raises(BusinessRuleViolation, match="Opportunity, Project or hospital"):
             svc.patch_reminder(
-                REMINDER_ID, ReminderUpdate(**_closing_data(also_close_ids=[uuid.uuid4()])), updated_by=ACTOR_ID
+                REMINDER_ID, ReminderUpdate(**_closing_data(also_close_ids=[other.id])), updated_by=ACTOR_ID
             )
         activity_repo.create.assert_not_called()
+        repo.update.assert_not_called()
 
     def test_also_close_only_when_closing(self):
         with pytest.raises(pydantic.ValidationError, match="only valid when closing"):

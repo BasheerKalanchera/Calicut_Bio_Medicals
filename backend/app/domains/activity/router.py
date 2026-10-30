@@ -263,6 +263,34 @@ def list_opportunity_reminders(
     )
 
 
+@router.get("/accounts/{account_id}/reminders")
+def list_account_reminders(
+    account_id: uuid.UUID,
+    include_completed: bool = Query(False),
+    hospital_level: bool = Query(False),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=100),
+    current_user: UserProfile = Depends(get_current_user),
+    service: ReminderService = Depends(_get_reminder_service),
+) -> APIResponse[PaginatedResponse[ReminderResponse]]:
+    items, total = service.list_for_account(
+        account_id,
+        include_completed=include_completed,
+        hospital_level_only=hospital_level,
+        page=page,
+        page_size=page_size,
+    )
+    return APIResponse(
+        data=PaginatedResponse(
+            items=[ReminderResponse.model_validate(r) for r in items],
+            total=total,
+            page=page,
+            page_size=page_size,
+            total_pages=math.ceil(total / page_size) if total else 0,
+        )
+    )
+
+
 @router.post("/reminders", status_code=201)
 def create_reminder(
     body: ReminderCreate,
