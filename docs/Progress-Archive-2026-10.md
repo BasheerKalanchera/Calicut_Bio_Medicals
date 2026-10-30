@@ -5667,3 +5667,42 @@ moved to after the restart (Basheer).
   after he said "10". No tracker line: none touched live data or UAT,
   lost work, or is a repeat a tool check could catch (the MUI-standard
   check already caught the two typed text sizes before the commit).
+
+## 2026-10-30 — UAT backup; UAT data-quality reports for Haroon's Bangalore meeting; hospital next-action plan gains D6–D8 (Plan & Chore)
+
+- UAT backup `cabio_uat_2026-10-30_0641.dump` (785 KB), `C:\Backups\CabioUAT\DB_Backups`.
+- UAT data-quality check and closure-date report run (Basheer's yes),
+  plus two one-off read-only UAT queries (each with Basheer's yes; one
+  read-only transaction, RLS settings checked as Admin at start and end,
+  rolled back). Overdue next actions added as a new section; every
+  section grouped by rep, then hospital, then date. Two drafts in
+  `data_consistency_reports\drafts\`: whole team (48 pages) and
+  Bangalore and Tumakuru reps (26 pages), for Haroon's meeting today.
+  Basheer shared both with Haroon; moved up to the main reports folder
+  with the closure-date report.
+- Figures (UAT, 30 Oct): 536 overdue next actions across 13 people.
+  Bangalore and Tumakuru five: Dhanushma 85, Ravi Kumar 83, Rudrappa 49,
+  Om 40, Shruthi 36 — 293, only 9 on an Opportunity. Next highest team-wide:
+  Arun Adarsh 64, Gopika pv 57, Naeem 44.
+- Found: the Next Actions screen fetches only the first 50 and ignores
+  the total (`services/activities.ts` `listReminders`, same on UAT), so
+  Dhanushma and Ravi can't see all theirs; the Opportunity tab has the
+  same cap. Customer 360 has no list of a hospital's next actions.
+  The check script saves only 10 rows for the vague-notes section
+  (37 found); both reports say so.
+- Basheer: add both to the hospital next-action plan. D6 (show every next
+  action, total in the heading), D7 (Customer 360 Next Actions tab,
+  everyone's, close own only), D8 (every level at the hospital) written
+  into `docs/Hospital-Next-Action-Rule-Implementation-Plan.md` as build
+  step 3; E2E test plan section G and F3 added.
+- **Retro — corrections from Basheer this session: 3.** (1) "For Gap 2,
+  why not add a new section for this" — Claude proposed a separate query
+  and page for overdue next actions. (2) "Why not just add this over due
+  next actions section as a new section in the main report? Then prepare
+  two reports…" — Claude kept it as a separate Bangalore page; he wanted
+  it in the main report, two versions, every section grouped by rep and
+  hospital. (3) "I am saying add both to this plan" — Claude recommended
+  the Customer 360 Next Actions tab go to the Backlog. Common thread:
+  extra side pieces proposed where he wanted it in the main thing. No
+  tracker line: none touched live data or UAT, lost work, or could be
+  caught by a tool check.

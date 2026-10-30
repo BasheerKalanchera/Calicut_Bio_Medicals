@@ -7,18 +7,6 @@ session edits this note._
 
 - Forecast plan (untracked, written by Antigravity — Basheer 27 Oct): commit it, and by which session? Open. At review, line 110 → BR-FIN-09.
 
-## Target vs Actuals redesign — own plan, Approved 29 Oct
-
-- `docs/Target-vs-Actuals-Redesign-Implementation-Plan.md` Approved
-  (Basheer, 29 Oct; D10 phone UI from mock-up v21,
-  https://claude.ai/artifact/XR3ftVbahPshwicQ9Vxsd5). Annual plan points
-  to it. E2E plan written 29 Oct; Annual E2E section I marked replaced.
-  All uncommitted.
-- Overdue-tab answers recorded as D11 (Basheer, 29 Oct: both counts
-  open My Work at the matching list; 0/0 people not listed).
-- **Next:** docs batch. Basheer tells Build (build it) and Build & Test
-  (Part 2 resumes at J).
-
 ## Activity Type table plan — Draft 28 Oct
 
 - `docs/Activity-Type-Table-Implementation-Plan.md`; D4, D7, D8, D9
@@ -27,9 +15,12 @@ session edits this note._
 
 ## Hospital next-action rule — 28 Oct
 
-- Plan (Approved, D1–D5) and its E2E test plan pushed `eec66c2`.
-  **Next:** `/build` builds it after the redesign and My Work steps 2
-  and 4 (redesign plan D9, Basheer 29 Oct). Basheer tells Build & Test.
+- Plan (Approved, D1–D5) and its E2E test plan pushed `eec66c2`. D6–D8
+  (show all next actions; Customer 360 Next Actions tab) added 30 Oct,
+  build step 3, E2E section G.
+  **Next:** `/build` starts step 1 now (Basheer, 30 Oct); this session
+  pauses so only two run. UAT reports 30 Oct shared with Haroon, moved
+  to the main reports folder.
 
 ## MUI clean-up plan — started 26 Oct
 
@@ -58,8 +49,9 @@ session edits this note._
 
 ## Harness Engineering
 
-- Weekly review and doc tidy-up due, asked 28 and 29 Oct, unanswered;
-  review: thorough analysis of corrections (tracker "For the next review").
+- Weekly review, doc tidy-up and session retro: this evening if time
+  (Basheer, 30 Oct); review: thorough analysis of corrections (tracker
+  "For the next review").
 - Code and UI checks trial (Basheer, 28 Oct, via Build & Test): Backlog
   "Code and UI checks — minimal-effort trial". Cap one day; show scope first.
 

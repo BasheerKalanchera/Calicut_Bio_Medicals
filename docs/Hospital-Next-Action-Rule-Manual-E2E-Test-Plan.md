@@ -2,8 +2,8 @@
 # Hospital Next-Action Rule — Manual E2E Test Plan
 
 **Covers:** `docs/Hospital-Next-Action-Rule-Implementation-Plan.md`,
-steps 1–2 (D1–D5), one run after step 2. Written 2026-10-28, ahead of the
-build.
+steps 1–3 (D1–D8), one run after step 3. Written 2026-10-28, ahead of the
+build; section G and F3 (D6–D8) added 2026-10-30.
 **Built:** not yet — commit hashes filled in after the fact.
 **Where:** Dev.
 
@@ -87,6 +87,10 @@ brackets.
   covers it.
 - A manager closing several of a rep's hospital-level next actions at
   once — covered by a backend test, like the Opportunity version.
+- A list longer than 50 (D6), unless P4 finds a Dev user with more than
+  50 open next actions — not yet checked. If none has, the build's
+  automated test covers it; no next actions are created on Dev just for
+  this (they can't be deleted).
 
 **Left on Dev permanently:** every closing activity and follow-up below,
 Haroon's Call and its next action at Aster MIMS Calicut (D1), the Manager
@@ -101,7 +105,9 @@ deleted.
 - P3. [Simple] Signed in as Basheer K in one window; a private window
   for Haroon. —
 - P4. [Simple] Live-data re-check above re-run (Claude, read-only);
-  records as described, or this plan updated first. —
+  records as described, or this plan updated first. Also counts (for G):
+  every person's open next actions at Aster MIMS Calicut, Basheer K's
+  total open, and any Dev user with more than 50 open. —
 
 ## A — Hospital level (D1, D3)
 
@@ -226,3 +232,39 @@ deleted.
 2. [Complex: phone layout] 390 px: Project screen "Another new project"
    (Aster MIMS Calicut) → Log Activity. **Expected:** the "Project:"
    tag and the warning fit the form's width. Cancel. —
+3. [Complex: phone layout] 390 px: Customer 360 → Aster MIMS Calicut →
+   Next Actions tab. **Expected:** the tab is reachable in the tab row;
+   each row (text, due date, owner, Opportunity name) wraps inside the
+   screen, nothing runs past it. Same at 768 and 1280 px. —
+
+## G — Seeing them all (D6, D7, D8)
+
+Run G before A, so the next actions are as listed under "Existing
+values". Close-button label re-read from the built code before the run.
+
+1. [Simple] As Basheer K, Customer 360 → Aster MIMS Calicut.
+   **Expected:** a "Next Actions" tab in the tab row. —
+2. [Complex: three levels in one list] Open it. **Expected:** pending
+   list includes "Call Dr tomorrow" (hospital level, no Opportunity
+   shown), "Call tomorrow again" (Project "Another new project") and "zz
+   E2E E3 project follow-up" showing Opportunity "zz NA E2E – project"
+   (Aster MIMS Calicut); each shows "Owner: Basheer K" and a close
+   button. Any other person's rows at this hospital (full list re-checked
+   at P4) show their name and no close button (D7, D8). —
+3. [Complex: cross-role] Haroon's window, same tab. **Expected:** the
+   same rows, Basheer K's with no close button (Haroon has none of his
+   own here). —
+4. [Simple] Basheer K's window, same tab, switch to Completed (nothing
+   is closed here — A4 does that). **Expected:** completed next actions
+   at this hospital, if any, with no close button; back to Pending shows
+   the G2 list. After A4, this tab shows "Call Dr tomorrow" under
+   Completed and "zz E2E HR A4 follow-up" under Pending without a page
+   reload. —
+5. [Simple] Next Actions screen (left menu). **Expected:** the heading
+   shows Basheer K's total open next actions, and the list count matches
+   it (P4 gives the number). —
+6. [Complex: more than 50] Only if P4 found a Dev user with more than 50
+   open next actions: sign in as that user (or Haroon viewing them, if
+   the screen allows), Next Actions screen. **Expected:** every one
+   listed, total in the heading matches P4's count. Otherwise marked
+   "Not tested on Dev — automated test". —
