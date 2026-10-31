@@ -5936,3 +5936,39 @@ moved to after the restart (Basheer).
   Build session; he asked for the implications. No tracker line: none is
   guard-stoppable. Habit going forward: write the E2E cases in the same turn
   as the fix; check the Build worktree before proposing any wide change.
+
+## 2026-10-31 (afternoon) — Plan & Chore: Activity Type table plan Approved, its E2E plan written
+
+- **Approved.** Basheer said "yes to all" to the seven open decisions in
+  `docs/Activity-Type-Table-Implementation-Plan.md` (D4 Outcome/Learning
+  column, D7 everyone signed in reads the table, D8 the database's hospital
+  check reads the table, D9 Note icon for a type with none, D10 vendor
+  pipeline script left alone, D11 Dev then the next normal UAT move, D12
+  changing an existing type's answers stays a developer change). The
+  Manager Note managers-only rule (`843c552`) joined the rules that stay in
+  the code. Queued for `/build` after the simpler table and the tabs.
+- **D7 asked about:** "who can read" means every logged-in user gets the
+  whole list, with no SBU or role filter as other tables have; reading is
+  not changing (Admin/GM add and rename on the Reference Data screen, D5).
+- **E2E plan written ahead of the build:**
+  `docs/Activity-Type-Table-Manual-E2E-Test-Plan.md`, 35 steps (counted).
+  Users should see no change, so it is mostly before-and-after: a before
+  snapshot of Stagnant Opportunities, My Work and the data-quality script
+  (S), every type's fields and refusals in Log Activity without saving
+  (A, B), only two saves (C), the five closing types (D), the same report
+  numbers after (E), Vivek not offered Manager Note (F, hide-check), icons
+  (G), phone (H).
+- **Dev check, read-only, 31 Oct 15:20 IST** (as Haroon, all three RLS
+  settings verified, rolled back): 139 activities of 11 types, all among
+  the 13; Vivek is Sales Staff (Critical Care); "Mims calicut" (Aster MIMS
+  Calicut) is Basheer K's, Demo, no open next actions, last contact 21 Jul
+  2026 (so on both 30-day "Not visited" lists before C2).
+- **Render, UAT backend:** Render's email said 697 of 750 free instance
+  hours used this month. About 14½ hours were left to the month's reset
+  (believed 1 Nov 00:00 UTC, 05:30 IST; to confirm on Render's Billing
+  page), so no suspension. Note: one always-awake free service (UptimeRobot
+  keeps it up) needs 744 hours in a 31-day month, close to the limit; a
+  second free service would run out before month-end. Prod is planned on
+  the paid Starter tier.
+- **Handover pruned** to its limit (build queue merged into one section;
+  MUI step 5 left to Build & Test's note).

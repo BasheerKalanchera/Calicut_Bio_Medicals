@@ -7,13 +7,16 @@ session edits this note._
 
 - Forecast plan (untracked, written by Antigravity — Basheer 27 Oct): commit it, and by which session? Open. At review, line 110 → BR-FIN-09.
 
-## Target vs Actuals simpler table + Target & Coverage Planning tabs — 31 Oct
+## Build queue for `/build` (all Approved, E2E plans written)
 
-- Both plans Approved 31 Oct (mock-up v26); E2E plans written (redesign
-  A–C rewritten, Annual Target L1–L3, new tabs plan). Doc tidy-up,
-  archive entry and retro done; all in the 31 Oct Plan & Chore docs
-  commit (pushed). **Next:** `/build` builds the simpler table, then the
-  tabs. Harness review still due (run or skip?); 31 Oct UAT dump to Drive.
+- Hospital next-action rule: merged into `main` 31 Oct (`dce73f5`,
+  pushed); its E2E is Build & Test's.
+- Then, in order: Target vs Actuals simpler table, Target & Coverage
+  Planning tabs (both Approved 31 Oct, mock-up v26, `43f146e`); Activity
+  Type table (Approved 31 Oct, D1–D12; E2E plan
+  `docs/Activity-Type-Table-Manual-E2E-Test-Plan.md`, 35 steps, Dev data
+  checked 31 Oct 15:20 IST). Plan & Chore confirms plan and step before
+  each `/build` starts.
 
 ## Rollout: when planning counts — to plan (Basheer, 30 Oct)
 
@@ -21,22 +24,6 @@ session edits this note._
   were entered without targets (paper only). Plan the go-live quarter,
   pilot quarter, exit criteria, paper targets. Backlog "Rollout: when
   planning starts to count". **Next:** read the Backlog entry, then plan.
-
-## Activity Type table plan — Draft 28 Oct
-
-- `docs/Activity-Type-Table-Implementation-Plan.md`; D4, D7, D8, D9
-  fallback, D10, D11, D12 proposed (one yes asked 28 Oct, unanswered).
-  **Next:** Basheer answers; then Approved and handed to a build session.
-
-## Hospital next-action rule — 28 Oct
-
-- Plan Approved (D1–D8, `eec66c2`, `1afc50d`); `/build` is building it
-  (Basheer, 30 Oct).
-
-## MUI clean-up plan — started 26 Oct
-
-- Steps 1–4 done; step 5 (round 1 fixes) is Build & Test's, after
-  `/build` merges (Basheer, 31 Oct) — in their note, item 4.
 
 ## After the UAT move (25 Oct, details in the archive)
 
@@ -51,16 +38,15 @@ session edits this note._
 
 ## In-app help (help plan step 3a) — in progress 2026-10-22
 
-- Step 3b (help editor) is Build & Test's plan (`4aadacc`).
+- Step 3b (help editor) is Build & Test's plan (`4aadacc`), not yet built.
 - Help wording into the help plan's section 7: 11 of 30 agreed (`8c853d4`).
   Every reply closes with "Help wording: N of 30 (P %)" (Basheer, 25 Oct).
   **Next:** word-rules pass over the 10 earlier entries, then next screen.
 
 ## Harness Engineering
 
-- Weekly review, doc tidy-up and session retro: this evening if time
-  (Basheer, 30 Oct); review: thorough analysis of corrections (tracker
-  "For the next review").
+- Weekly review skipped 31 Oct (`.claude/due-today-skipped`); when run:
+  thorough analysis of corrections (tracker "For the next review").
 - Code and UI checks trial (Basheer, 28 Oct, via Build & Test): Backlog
   "Code and UI checks — minimal-effort trial". Cap one day; show scope first.
 
