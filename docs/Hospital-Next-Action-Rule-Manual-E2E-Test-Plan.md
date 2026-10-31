@@ -2,9 +2,11 @@
 # Hospital Next-Action Rule — Manual E2E Test Plan
 
 **Covers:** `docs/Hospital-Next-Action-Rule-Implementation-Plan.md`,
-steps 1–3 (D1–D8), one run after step 3. Written 2026-10-28, ahead of the
-build; section G and F3 (D6–D8) added 2026-10-30.
-**Built:** not yet — commit hashes filled in after the fact.
+steps 1–5 (D1–D12), one run after the merge. Written 2026-10-28, ahead of
+the build; section G and F3 (D6–D8) added 2026-10-30; section H, E3 and
+F4 (D9, D10, D12) added 2026-10-31.
+**Built:** steps 1–5 on branch `worktree-build` — `2b5a113`, `421fc63`,
+`f129bb0`, `0e99f99`, `406adcd` (31 Oct); pushed, not merged, not run.
 **Where:** Dev.
 
 The new warning wording ("on this hospital", "on this Project") is the
@@ -64,8 +66,16 @@ against the built code before the run.
 - Current Opportunity warning wording — `LogActivityModal.tsx:438-439`
 - "Mark to complete" on the Next Actions screen — Next-Action Rules E2E
   test plan, section H (run 2026-10-21)
-- Follow-up texts "zz E2E HR …" and the new Opportunity name "zz HR E2E –
-  produced" (aster medicity) — made up for this run
+- Follow-up texts "zz E2E HR …" and the new Opportunity names "zz HR E2E –
+  produced" (aster medicity) and "zz HR E2E – project produced" (Aster
+  MIMS Calicut) — made up for this run
+- Project-screen chips, "+ Add", "Edit", "Pending (n)", "Mark to
+  complete", "No pending next actions on this Project.", "No completed
+  next actions yet.", "No opportunities linked to this project." —
+  `ProjectDirectoryScreen.tsx`, `NextActionsPanel.tsx`, `ReminderRow.tsx`,
+  read 2026-10-31 in the build worktree
+- Which Opportunities sit under "Another new project" and "Project 2" —
+  not yet checked on Dev; P4 does it
 
 **Tags:** every step starts with `[Simple]` (one click/type/verify-a-value,
 Basheer runs it) or `[Complex: <reason>]` (Claude drives: layout shift,
@@ -95,8 +105,9 @@ brackets.
 **Left on Dev permanently:** every closing activity and follow-up below,
 Haroon's Call and its next action at Aster MIMS Calicut (D1), the Manager
 Note (D3), the new Opportunity "zz HR E2E – produced" (aster medicity)
-with its first activity and next action (E1). Activities can't be
-deleted.
+with its first activity and next action (E1), the new Opportunity "zz HR
+E2E – project produced" (Aster MIMS Calicut) with its first activity and
+next action (E3). Activities can't be deleted.
 
 ## Pre-flight
 
@@ -107,7 +118,12 @@ deleted.
 - P4. [Simple] Live-data re-check above re-run (Claude, read-only);
   records as described, or this plan updated first. Also counts (for G):
   every person's open next actions at Aster MIMS Calicut, Basheer K's
-  total open, and any Dev user with more than 50 open. —
+  total open, and any Dev user with more than 50 open. For H: which
+  Opportunities sit under the Projects "Another new project" and "Project
+  2" (Aster MIMS Calicut) — in particular whether "zz NA E2E – project"
+  (Aster MIMS Calicut) is under "Another new project" — and any open
+  next action on them. Not yet checked: H3, H4 and H6 are worded for
+  both answers and corrected here once P4 has them. —
 
 ## A — Hospital level (D1, D3)
 
@@ -221,6 +237,22 @@ deleted.
    follow-up. —
 2. [Simple] Top bar Log Activity, aster medicity, "None —
    hospital-level". **Expected:** no warning, button "Log". Cancel. —
+3. [Complex: save, two records, cross-screen] D12. Run after B3. As
+   Basheer K, Project screen "Another new project" (Aster MIMS Calicut) →
+   top bar Log Activity → warning lists "zz E2E HR B3 follow-up" → "Close
+   next action". Tick "This visit produced a new Opportunity".
+   **Expected:** the Add Opportunity form opens with Aster MIMS Calicut
+   filled and "Another new project" filled and not changeable (exact
+   wording of the locked field re-read from the built code before the
+   run). Create "zz HR E2E – project produced" (Aster MIMS Calicut) with
+   its first activity and next action, "Complete". Basheer clicks, Claude
+   watches. **Expected (read back):** the Project screen's Opportunities
+   tab lists "zz HR E2E – project produced"; its Next Actions tab shows
+   "zz E2E HR B3 follow-up" under Completed with no follow-up from the
+   close, and the new Opportunity's next action under Pending showing
+   that Opportunity's name (it belongs to the Project through its
+   Opportunity, D9); Customer 360 (Aster MIMS Calicut) lists the new
+   Opportunity. —
 
 ## F — Phone, tablet and laptop
 
@@ -236,6 +268,13 @@ deleted.
    Next Actions tab. **Expected:** the tab is reachable in the tab row;
    each row (text, due date, owner, Opportunity name) wraps inside the
    screen, nothing runs past it. Same at 768 and 1280 px. —
+4. [Complex: phone layout] 390 px: Project screen "Another new project"
+   (Aster MIMS Calicut). **Expected:** the four-chip row (Overview,
+   Opportunities, Activity, Next Actions) slides sideways inside the
+   screen with the page itself not scrolling sideways; each of the four
+   tabs fits the screen width, and on Next Actions each row (text, due
+   date, owner, Opportunity name) wraps inside it. Same at 768 and 1280
+   px. —
 
 ## G — Seeing them all (D6, D7, D8)
 
@@ -268,3 +307,51 @@ values". Close-button label re-read from the built code before the run.
    the screen allows), Next Actions screen. **Expected:** every one
    listed, total in the heading matches P4's count. Otherwise marked
    "Not tested on Dev — automated test". —
+
+## H — Project screen: tabs and Next Actions (D9, D10)
+
+Run H1–H6 before B, so "Call tomorrow again" is still pending; H7 runs
+after B3. Wording below is from `ProjectDirectoryScreen.tsx`,
+`NextActionsPanel.tsx` and `ReminderRow.tsx` as built (read 2026-10-31).
+
+1. [Complex: two ways in] As Basheer K, left menu Projects → "Another new
+   project" (Aster MIMS Calicut). **Expected:** the screen opens on
+   Overview (Project Details: Account, Status, Owner, Bid Submission
+   Date) with a chip row Overview, Opportunities, Activity, Next Actions.
+   Back, then Customer 360 → Aster MIMS Calicut → Projects tab → the same
+   Project. **Expected:** again opens on Overview. —
+2. [Complex: buttons inside tabs] Opportunities chip. **Expected:** the
+   Opportunities card with "+ Add"; the Project's Opportunities listed
+   (stage, win %, value) or "No opportunities linked to this project."; a
+   row opens that Opportunity (back returns). "+ Add" opens the new
+   Opportunity form with Aster MIMS Calicut and the Project fixed;
+   Cancel. Activity chip. **Expected:** the Project's activity timeline;
+   top bar Log Activity from here shows the tag "Project: Another new
+   project"; Cancel. Header "Edit" opens the Edit Project form from any
+   tab; Cancel. —
+3. [Complex: own and Opportunity next actions in one list] Next Actions
+   chip. **Expected:** heading "Pending (n)" with n matching the rows;
+   "Call tomorrow again" (Project level, no Opportunity shown) with "Mark
+   to complete". If P4 found "zz NA E2E – project" (Aster MIMS Calicut)
+   under this Project, "zz E2E E3 project follow-up" is listed too,
+   showing that Opportunity's name; if not, it is not listed (a next
+   action on an Opportunity under another Project or none must not
+   appear). Any other person's rows show their name and no "Mark to
+   complete". —
+4. [Simple] Projects → "Project 2" (Aster MIMS Calicut) → Next Actions.
+   **Expected:** "No pending next actions on this Project." (or only the
+   rows P4 found on Opportunities under it); Completed switch shows "No
+   completed next actions yet." or its completed ones. —
+5. [Complex: cross-role] Haroon's window, "Another new project" → Next
+   Actions. **Expected:** the same rows as H3, Basheer K's with no "Mark
+   to complete" (Haroon has none of his own here). —
+6. [Simple] Basheer K's window, H3 list: if "zz E2E E3 project
+   follow-up" is listed, press its Opportunity name. **Expected:** that
+   Opportunity opens. Otherwise "Not tested on Dev — P4 found no
+   Opportunity next action under the Project". —
+7. [Complex: refresh without reload] After B3, with the Project screen
+   still open on Next Actions. **Expected:** "Call tomorrow again" under
+   Completed (switch), "zz E2E HR B3 follow-up" under Pending, owner
+   Basheer K, without a page reload; after E3, "zz E2E HR B3 follow-up"
+   moves to Completed and the new Opportunity's next action shows under
+   Pending. —

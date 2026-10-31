@@ -1,10 +1,12 @@
 # Hospital-Level Open Next Action Rule — Implementation Plan
 
 **Status:** Approved 2026-10-28 (Basheer), D1–D5; D6–D8 added
-2026-10-30 (Basheer); D9–D11 added 2026-10-30 (Basheer, Project screen).
-Not built; E2E test plan written 2026-10-28, section G added 2026-10-30
-(`docs/Hospital-Next-Action-Rule-Manual-E2E-Test-Plan.md`); its Project
-screen cases (D9, D10) are still to be added.
+2026-10-30 (Basheer); D9–D12 added 2026-10-30 (Basheer, Project screen).
+Steps 1–5 built on branch `worktree-build` (31 Oct: `2b5a113`, `421fc63`,
+`f129bb0`, `0e99f99`, `406adcd`), pushed, not yet merged into `main`;
+step 6 (E2E on Dev) follows the merge. E2E test plan written 2026-10-28,
+section G added 2026-10-30, section H, E3 and F4 (D9, D10, D12) added
+2026-10-31 (`docs/Hospital-Next-Action-Rule-Manual-E2E-Test-Plan.md`).
 **Traceability rows:** Activity logging / Next Actions rows (unchanged in
 what they cover; this tightens BR-ACT-11).
 **Design / discussion:** `docs/Next-Action-Rules-Implementation-Plan.md`

@@ -5734,3 +5734,23 @@ moved to after the restart (Basheer).
 - **Retro — corrections from Basheer this session: 0** (counted from his
   messages: approvals, design questions on Projects and dealer partners,
   commit and push go-aheads). No tracker line.
+
+## 2026-10-31 — Hospital next-action rule, build step 5 (Build, parallel)
+
+- Branch `worktree-build`: step 5, the Project screen's Next Actions tab
+  (D9), `406adcd`, pushed. Steps 1–5 are all built; step 6 is the E2E on
+  Dev after the merge. Nothing applied to Dev; no migration.
+- What it does: new `GET /projects/{project_id}/reminders`; a next action
+  belongs to the Project when its Activity was logged on the Project or
+  on one of the Project's Opportunities (an Activity logged from the
+  Opportunity screen carries no Project of its own). The Opportunity half
+  is a subquery, so the reminder list's join counts stay 8 pending and 14
+  completed. The fourth chip reuses the shared `NextActionsPanel`; close
+  and Log Activity refresh it (`["project-reminders"]`). Checks: pytest
+  1478 passed (10 new), ruff, `tsc`, lint 0 errors; no browser run.
+- Basheer's call: `main` (2 commits behind: `0ae8e29`, `374a2a8`) is
+  merged into the branch at the end, not now.
+- E2E plan: section H (Project screen tabs and Next Actions, D9, D10), E3
+  (a Project-level close that produces a new Opportunity, D12) and F4
+  (phone layout) added. Which Opportunities sit under "Another new
+  project" and "Project 2" is not yet checked on Dev; P4 does it.

@@ -7,56 +7,35 @@ and Build & Test keep their own notes (`.claude/session-handover-plan.md`,
 note. While a `/build` worktree exists, the live copy is the one in it, on
 the build branch, and reaches `main` at the merge (Basheer, 2026-10-17)._
 
-## In progress — Hospital next-action rule, steps 1–3 of 6 done (30 Oct)
-- Worktree `.claude/worktrees/build`, branch `worktree-build`, brought up
-  to `main` `1afc50d` by fast-forward on 30 Oct. The redesign is already
-  merged (`3bafbc0`); its E2E is `/test`'s, not mine.
+## In progress — Hospital next-action rule, steps 1–5 of 6 built (31 Oct)
+- Worktree `.claude/worktrees/build`, branch `worktree-build`. On 31 Oct it
+  was 2 commits behind `main` (`0ae8e29`, `374a2a8`: My Work small fixes,
+  Build & Test docs). Basheer chose to merge `main` in at the end, not now.
+  The redesign is already merged (`3bafbc0`); its E2E is `/test`'s.
 - Plan: `docs/Hospital-Next-Action-Rule-Implementation-Plan.md`
-  (Approved, D1–D11). Build order now six steps: 1 server check,
-  2 Log Activity form, 3 seeing them all (D6–D8), 4 Project screen into
-  tabs (D10), 5 Project Next Actions tab (D9), 6 E2E on Dev.
-- **Step 1 (server) `2b5a113`, pushed** to `origin/worktree-build`
-  (30 Oct): hospital and Project blocking in `log_activity`; "close
-  several together" now also at hospital/Project level (same person, same
-  level); new `GET /accounts/{account_id}/reminders` (`hospital_level`,
-  `include_completed`, paged); plan edited for D9–D11. Checks: pytest
-  1467, ruff, tsc clean; `api.ts` regenerated. No router test for the new
-  route (existing router tests don't cover reminder routes). No migration.
-- **Step 2 (Log Activity form) `421fc63`, pushed** (30 Oct): Log Activity
-  warns and switches to the close form at hospital and Project level
-  (`LogActivityModal.tsx`, new `listAccountReminders`); the close form's
-  "produced a new Opportunity" box also serves Project-level next
-  actions, with the Project locked on the new Opportunity (D12).
-  Reminder responses now carry the Project name (`ActivityContextNested.project`);
-  query-size guard join counts raised by one (7/8 pending, 13/14
-  completed). pytest 1467+1, ruff, tsc clean. Project filter is
-  client-side over the hospital's first 100 next actions. Dealer-partner
-  tracking added to Backlog.
-- **Step 3 (seeing them all) `f129bb0`, pushed** (30 Oct): the three
-  reminder list calls in `activities.ts` now walk every page; new shared
-  `components/NextActionsPanel.tsx` (list, Pending/Completed switch, total
-  in heading, Close on own rows only) used by Opportunity Detail's tab and
-  a new Customer 360 "Next Actions" tab; Next Actions screen shows the
-  total. Differs from plan wording ("copy"): one shared component, so
-  step 5's Project tab reuses it. tsc clean, lint 0 errors; no server
-  change. Not run in a browser (E2E after merge).
-- Basheer added D9–D11 mid-step (30 Oct): Project screen gets tabs and a
-  Next Actions tab. The tab matches a next action when its activity's
-  Project **or** its Opportunity's Project is the Project (an activity
-  logged on an Opportunity carries no Project).
-- **Step 4 (Project screen into tabs, D10) `0e99f99`, pushed** (30 Oct):
-  `ProjectDirectoryScreen.tsx` `ProjectDetailView` — chip row Overview /
-  Opportunities / Activity under the header; the three cards moved into
-  tabs unchanged. tsc clean, lint 0 errors. Not run in a browser.
-- Session wound up 30 Oct: retro in Progress-Archive (0 corrections);
-  `0e99f99` and this docs batch pushed together.
-- **Next:** step 5 (Project Next Actions tab, D9).
-  Plan shown to Basheer 30 Oct, awaiting his go: `list_by_project` /
-  `count_by_project` / `project_exists` in the repository (activity's
-  Project OR an Opportunity under it, via subquery so the query-size guard
-  holds), `ReminderService.list_for_project`, `GET /projects/{id}/reminders`,
-  `listProjectReminders`, a 4th tab with `NextActionsPanel`, refresh of
-  `["project-reminders"]` in the close and log forms, regenerate `api.ts`,
-  tests. Two commits (4, then 5) unless he asks for one. E2E plan still needs the
-  Project-screen cases (D9, D10, D12).
+  (Approved, D1–D12). Steps: 1 server check, 2 Log Activity form,
+  3 seeing them all (D6–D8), 4 Project screen into tabs (D10), 5 Project
+  Next Actions tab (D9), 6 E2E on Dev.
+- **Built and pushed to `origin/worktree-build`:** step 1 `2b5a113`,
+  step 2 `421fc63`, step 3 `f129bb0`, step 4 `0e99f99`, **step 5
+  `406adcd` (31 Oct)**. Step detail is in the Progress-Archive entry of
+  30 Oct and the commit messages.
+- **Step 5 (Project Next Actions tab, D9) `406adcd`, pushed:** new
+  `GET /projects/{project_id}/reminders` (`project_exists`,
+  `list_by_project`, `count_by_project` with a shared `_on_project`
+  filter: activity's Project OR an Opportunity under it, the second half a
+  subquery so the join counts stay 8 pending / 14 completed);
+  `ReminderService.list_for_project`; `listProjectReminders`; fourth chip
+  "Next Actions" on `ProjectDetailView` using `NextActionsPanel`; close and
+  Log Activity forms refresh `["project-reminders"]`; `api.ts`
+  regenerated. Checks: pytest 1478 passed (10 new), ruff, tsc clean, lint
+  0 errors. Not run in a browser (E2E after merge). No migration.
+- **Next:** docs batch for steps 4–5 (this note, plan Status/progress,
+  Progress-Archive entry, and the E2E plan's Project-screen cases for
+  D9, D10, D12 — load `cabio-e2e-testing` before touching the test plan),
+  shown to Basheer before committing. Then step 6: check in before it; the
+  E2E itself runs after the merge (`/test`, or Build & Test).
+- Merge, when Basheer says go: bring `main` into the branch, settle shared
+  docs (Backlog, Progress-Archive: keep both sides), rebuild `api.ts`,
+  re-run tests, then merge into `main`; no migration to apply.
 - Migration number last chosen: none.
