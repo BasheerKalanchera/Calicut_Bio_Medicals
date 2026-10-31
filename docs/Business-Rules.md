@@ -600,7 +600,7 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Constraint:** An Activity without an Account reference must be rejected at both the application layer and the database layer, unless `activity_type` is one of the six BR-ACT-09 types.
 
 ### BR-ACT-02: Manager Push (Logging)
-*   **Rule:** Managers can log "Manager Notes" on any Opportunity. Managers here are Admin, General Manager, SBU Manager and Area Manager; no other role can choose Manager Note (Basheer, 2026-10-25; not yet built — Backlog "Log Activity: Manager Note for managers only").
+*   **Rule:** Managers can log "Manager Notes" on any Opportunity. Managers here are Admin, General Manager, SBU Manager and Area Manager; no other role can choose Manager Note (Basheer, 2026-10-25; built 2026-10-31 — Log Activity hides it from other roles and `activity/service.py` refuses it with a 403). Manager Notes logged earlier by other roles stay (Activities can't be changed).
 *   **Visibility:** These are highlighted in the activity timeline and cannot be deleted or edited by the Sales Executive owner.
 
 ### BR-ACT-03: Activity Account Constraint — Database Enforcement (amended BR-ACT-09, 2026-08-27)

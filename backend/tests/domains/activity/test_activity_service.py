@@ -23,7 +23,7 @@ from zoneinfo import ZoneInfo
 import pydantic
 import pytest
 
-from app.core.exceptions import BusinessRuleViolation, NotFoundError
+from app.core.exceptions import AuthorizationError, BusinessRuleViolation, NotFoundError
 from app.domains.activity.models import Activity, ActivityComment, Reminder
 from app.domains.activity.repository import ActivityCommentRepository, ActivityRepository, ReminderRepository
 from app.domains.activity.schemas import ActivityCommentCreate, ActivityCreate, ReminderCreate, ReminderUpdate
@@ -430,7 +430,7 @@ class TestLogActivity:
         svc = self._svc(activity_repo=activity_repo, reminder_repo=reminder_repo)
 
         with pytest.raises(BusinessRuleViolation, match="open next action"):
-            svc.log_activity(self._data(opportunity_id=OPP_ID), created_by=ACTOR_ID)
+            svc.log_activity(self._data(opportunity_id=OPP_ID), created_by=ACTOR_ID, role_name="Sales Executive")
 
         reminder_repo.has_open_for_user_on_opportunity.assert_called_once_with(OPP_ID, ACTOR_ID)
         activity_repo.create.assert_not_called()
@@ -442,7 +442,9 @@ class TestLogActivity:
         reminder_repo = _make_reminder_repo()
         svc = self._svc(activity_repo=activity_repo, reminder_repo=reminder_repo)
 
-        svc.log_activity(self._data(opportunity_id=OPP_ID, user_id=USER_ID), created_by=ACTOR_ID)
+        svc.log_activity(
+            self._data(opportunity_id=OPP_ID, user_id=USER_ID), created_by=ACTOR_ID, role_name="Sales Executive"
+        )
 
         reminder_repo.has_open_for_user_on_opportunity.assert_called_once_with(OPP_ID, USER_ID)
 
@@ -453,7 +455,7 @@ class TestLogActivity:
         reminder_repo.has_open_for_user_on_opportunity.return_value = True
         svc = self._svc(activity_repo=activity_repo, reminder_repo=reminder_repo)
 
-        svc.log_activity(self._data(opportunity_id=None), created_by=ACTOR_ID)
+        svc.log_activity(self._data(opportunity_id=None), created_by=ACTOR_ID, role_name="Sales Executive")
 
         reminder_repo.has_open_for_user_on_opportunity.assert_not_called()
         activity_repo.create.assert_called_once()
@@ -474,9 +476,49 @@ class TestLogActivity:
                 next_action_due_date=None,
             ),
             created_by=ACTOR_ID,
+            role_name="SBU Manager",
         )
 
         reminder_repo.has_open_for_user_on_opportunity.assert_not_called()
+        activity_repo.create.assert_called_once()
+
+    # -- BR-ACT-02: Manager Note is for managers only --
+
+    def _manager_note(self) -> ActivityCreate:
+        return self._data(
+            activity_type="MANAGER_NOTE",
+            user_id=USER_ID,
+            next_action_text=None,
+            next_action_due_date=None,
+        )
+
+    @pytest.mark.parametrize("role_name", ["Sales Executive", "Marketing User", "Not a real role"])
+    def test_manager_note_refused_for_non_manager_roles(self, role_name):
+        activity_repo = _make_activity_repo()
+        svc = self._svc(activity_repo=activity_repo)
+
+        with pytest.raises(AuthorizationError, match="Manager Note"):
+            svc.log_activity(self._manager_note(), created_by=ACTOR_ID, role_name=role_name)
+
+        activity_repo.create.assert_not_called()
+
+    @pytest.mark.parametrize("role_name", ["Admin", "General Manager", "SBU Manager", "Area Manager"])
+    def test_manager_note_allowed_for_the_four_manager_roles(self, role_name):
+        activity_repo = _make_activity_repo()
+        activity_repo.create.return_value = _make_activity(activity_type="MANAGER_NOTE", user_id=USER_ID)
+        svc = self._svc(activity_repo=activity_repo)
+
+        svc.log_activity(self._manager_note(), created_by=ACTOR_ID, role_name=role_name)
+
+        activity_repo.create.assert_called_once()
+
+    def test_other_activity_types_unaffected_by_role(self):
+        activity_repo = _make_activity_repo()
+        activity_repo.create.return_value = _make_activity()
+        svc = self._svc(activity_repo=activity_repo)
+
+        svc.log_activity(self._data(), created_by=ACTOR_ID, role_name="Sales Executive")
+
         activity_repo.create.assert_called_once()
 
     def test_raises_not_found_when_account_missing(self):
@@ -485,7 +527,7 @@ class TestLogActivity:
         svc = self._svc(activity_repo=repo)
 
         with pytest.raises(NotFoundError):
-            svc.log_activity(self._data(), created_by=ACTOR_ID)
+            svc.log_activity(self._data(), created_by=ACTOR_ID, role_name="Sales Executive")
 
     def test_raises_not_found_when_opportunity_missing(self):
         repo = _make_activity_repo()
@@ -493,14 +535,14 @@ class TestLogActivity:
         svc = self._svc(activity_repo=repo)
 
         with pytest.raises(NotFoundError):
-            svc.log_activity(self._data(opportunity_id=OPP_ID), created_by=ACTOR_ID)
+            svc.log_activity(self._data(opportunity_id=OPP_ID), created_by=ACTOR_ID, role_name="Sales Executive")
 
     def test_opportunity_not_checked_when_omitted(self):
         repo = _make_activity_repo()
         repo.create.return_value = _make_activity()
         svc = self._svc(activity_repo=repo)
 
-        svc.log_activity(self._data(opportunity_id=None), created_by=ACTOR_ID)
+        svc.log_activity(self._data(opportunity_id=None), created_by=ACTOR_ID, role_name="Sales Executive")
 
         repo.opportunity_exists.assert_not_called()
 
@@ -523,6 +565,7 @@ class TestLogActivity:
                 next_action_due_date=None,
             ),
             created_by=ACTOR_ID,
+            role_name="Sales Executive",
         )
 
         repo.opportunity_in_account.assert_called_once_with(OPP_ID, ACCOUNT_ID)
@@ -544,6 +587,7 @@ class TestLogActivity:
                     next_action_due_date=None,
                 ),
                 created_by=ACTOR_ID,
+            role_name="Sales Executive",
             )
 
     def test_user_id_defaults_to_created_by_when_not_provided(self):
@@ -552,7 +596,7 @@ class TestLogActivity:
         repo.create.return_value = created_activity
         svc = self._svc(activity_repo=repo)
 
-        svc.log_activity(self._data(user_id=None), created_by=ACTOR_ID)
+        svc.log_activity(self._data(user_id=None), created_by=ACTOR_ID, role_name="Sales Executive")
 
         call_args = repo.create.call_args[0][0]
         assert call_args.user_id == ACTOR_ID
@@ -563,7 +607,7 @@ class TestLogActivity:
         repo.create.return_value = _make_activity(user_id=explicit_user)
         svc = self._svc(activity_repo=repo)
 
-        svc.log_activity(self._data(user_id=explicit_user), created_by=ACTOR_ID)
+        svc.log_activity(self._data(user_id=explicit_user), created_by=ACTOR_ID, role_name="Sales Executive")
 
         call_args = repo.create.call_args[0][0]
         assert call_args.user_id == explicit_user
@@ -573,7 +617,7 @@ class TestLogActivity:
         repo.create.return_value = _make_activity()
         svc = self._svc(activity_repo=repo)
 
-        svc.log_activity(self._data(), created_by=ACTOR_ID)
+        svc.log_activity(self._data(), created_by=ACTOR_ID, role_name="Sales Executive")
 
         call_args = repo.create.call_args[0][0]
         assert call_args.created_by == ACTOR_ID
@@ -591,6 +635,7 @@ class TestLogActivity:
                 notes="Met the doctor",
             ),
             created_by=ACTOR_ID,
+            role_name="Sales Executive",
         )
 
         call_args = repo.create.call_args[0][0]
@@ -605,7 +650,7 @@ class TestLogActivity:
         repo.create.return_value = activity
         svc = self._svc(activity_repo=repo)
 
-        result = svc.log_activity(self._data(), created_by=ACTOR_ID)
+        result = svc.log_activity(self._data(), created_by=ACTOR_ID, role_name="Sales Executive")
 
         assert result[0] is activity
 
@@ -626,6 +671,7 @@ class TestLogActivity:
                 next_action_due_date=None,
             ),
             created_by=ACTOR_ID,
+            role_name="Sales Executive",
         )
 
         repo.account_exists.assert_not_called()
@@ -664,7 +710,7 @@ class TestLogActivityReminderCreation:
             notification_service=_make_notification_service(),
         )
 
-        svc.log_activity(self._data(), created_by=ACTOR_ID)
+        svc.log_activity(self._data(), created_by=ACTOR_ID, role_name="Sales Executive")
 
         call_args = reminder_repo.create.call_args[0][0]
         assert call_args.activity_id == activity.id
@@ -680,7 +726,7 @@ class TestLogActivityReminderCreation:
             notification_service=_make_notification_service(),
         )
 
-        svc.log_activity(self._data(next_action_owner_id=None), created_by=ACTOR_ID)
+        svc.log_activity(self._data(next_action_owner_id=None), created_by=ACTOR_ID, role_name="Sales Executive")
 
         call_args = reminder_repo.create.call_args[0][0]
         assert call_args.assigned_to_user_id == USER_ID
@@ -697,7 +743,9 @@ class TestLogActivityReminderCreation:
             notification_service=_make_notification_service(),
         )
 
-        svc.log_activity(self._data(next_action_owner_id=explicit_owner), created_by=ACTOR_ID)
+        svc.log_activity(
+            self._data(next_action_owner_id=explicit_owner), created_by=ACTOR_ID, role_name="Sales Executive"
+        )
 
         call_args = reminder_repo.create.call_args[0][0]
         assert call_args.assigned_to_user_id == explicit_owner
@@ -716,6 +764,7 @@ class TestLogActivityReminderCreation:
         svc.log_activity(
             self._data(next_action_text="Call the biomedical engineer", next_action_due_date=NOW),
             created_by=ACTOR_ID,
+            role_name="Sales Executive",
         )
 
         call_args = reminder_repo.create.call_args[0][0]
@@ -734,7 +783,7 @@ class TestLogActivityReminderCreation:
             notification_service=_make_notification_service(),
         )
 
-        svc.log_activity(self._data(), created_by=ACTOR_ID)
+        svc.log_activity(self._data(), created_by=ACTOR_ID, role_name="Sales Executive")
 
         call_args = reminder_repo.create.call_args[0][0]
         assert call_args.created_by == ACTOR_ID
@@ -757,6 +806,7 @@ class TestLogActivityReminderCreation:
                 next_action_due_date=None,
             ),
             created_by=ACTOR_ID,
+            role_name="SBU Manager",
         )
 
         reminder_repo.create.assert_not_called()
@@ -782,6 +832,7 @@ class TestLogActivityReminderCreation:
                 is_urgent=True,
             ),
             created_by=ACTOR_ID,
+            role_name="SBU Manager",
         )
 
         notification_service.notify_manager_note_added.assert_called_once_with(
@@ -811,6 +862,7 @@ class TestLogActivityReminderCreation:
                 next_action_due_date=None,
             ),
             created_by=ACTOR_ID,
+            role_name="SBU Manager",
         )
 
         notification_service.notify_manager_note_added.assert_not_called()
@@ -825,7 +877,7 @@ class TestLogActivityReminderCreation:
             notification_service=notification_service,
         )
 
-        svc.log_activity(self._data(), created_by=ACTOR_ID)
+        svc.log_activity(self._data(), created_by=ACTOR_ID, role_name="Sales Executive")
 
         notification_service.notify_manager_note_added.assert_not_called()
 
@@ -852,6 +904,7 @@ class TestLogActivityReminderCreation:
                 next_action_due_date=None,
             ),
             created_by=ACTOR_ID,
+            role_name="Sales Executive",
         )
 
         reminder_repo.create.assert_not_called()

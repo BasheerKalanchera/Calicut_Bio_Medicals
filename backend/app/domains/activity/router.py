@@ -177,7 +177,9 @@ def log_activity(
     current_user: UserProfile = Depends(get_current_user),
     service: ActivityService = Depends(_get_activity_service),
 ) -> APIResponse[ActivityResponse]:
-    activity, reminder = service.log_activity(body, created_by=current_user.id)
+    activity, reminder = service.log_activity(
+        body, created_by=current_user.id, role_name=current_user.role.role_name
+    )
     response = ActivityResponse.model_validate(activity)
     response.next_action_reminder_id = reminder.id if reminder else None
     return APIResponse(data=response)

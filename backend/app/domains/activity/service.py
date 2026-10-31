@@ -2,7 +2,7 @@ import uuid
 from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from app.core.exceptions import BusinessRuleViolation, NotFoundError
+from app.core.exceptions import AuthorizationError, BusinessRuleViolation, NotFoundError
 from app.domains.activity.models import Activity, ActivityComment, Reminder
 from app.domains.activity.repository import ActivityCommentRepository, ActivityRepository, ReminderRepository
 from app.domains.activity.schemas import (
@@ -19,6 +19,10 @@ from app.domains.organization.models import UserProfile
 # calendar day, regardless of the DB session's own timezone (unconfigured --
 # see repository.py's list_by_date for why this isn't a DB-side DATE() truncation).
 _IST = ZoneInfo("Asia/Kolkata")
+
+# BR-ACT-02 (Basheer, 2026-10-25): only these roles can log a Manager Note.
+# The same four as the Marketing Leads review queue's _MANAGER_ROLES.
+_MANAGER_NOTE_ROLES = {"Admin", "General Manager", "SBU Manager", "Area Manager"}
 
 
 def _maybe_create_next_action_reminder(
@@ -139,7 +143,15 @@ class ActivityService:
         data: ActivityCreate,
         *,
         created_by: uuid.UUID,
+        role_name: str,
     ) -> tuple[Activity, Reminder | None]:
+        # BR-ACT-02: checked first -- who is logging, before anything about
+        # what they submitted.
+        if data.activity_type == "MANAGER_NOTE" and role_name not in _MANAGER_NOTE_ROLES:
+            raise AuthorizationError(
+                "Only Admin, General Manager, SBU Manager or Area Manager can log a Manager Note."
+            )
+
         # BR-ACT-01/BR-ACT-09: account must exist when provided -- required
         # for every type except the six Sales Development Activity types
         # (schema validator already enforces the account_id is present at all

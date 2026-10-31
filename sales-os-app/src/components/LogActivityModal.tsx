@@ -10,6 +10,7 @@ import { listAccounts, listOpportunities } from "../services/accounts";
 import { SilentModalError } from "../lib/formErrors";
 import { listUsers } from "../services/masterData";
 import useDebouncedValue from "../hooks/useDebouncedValue";
+import { useAuth } from "../contexts/AuthContext";
 import type { ActivityType, ReminderResponse } from "../types/api-aliases";
 
 interface Props {
@@ -38,6 +39,10 @@ const ACTIVITY_TYPES: { value: ActivityType; label: string }[] = [
   { value: "OTHER_DEVELOPMENT",     label: "🌱 Other Development" },
   { value: "RELATIONSHIP_SUPPORT",  label: "🤲 Relationship Support" },
 ];
+
+// BR-ACT-02 (Basheer, 2026-10-25): only these roles can pick Manager Note;
+// the server refuses it from anyone else too (activity/service.py).
+const MANAGER_NOTE_ROLES = new Set(["Admin", "General Manager", "SBU Manager", "Area Manager"]);
 
 // BR-ACT-09: no Account required, no mandatory next action, not a valid
 // Reminder-closing activity type. Kept in sync by hand with the backend's
@@ -79,6 +84,9 @@ export default function LogActivityModal({
   onCreated,
 }: Props) {
   const queryClient = useQueryClient();
+  const { userProfile } = useAuth();
+  const canLogManagerNote = MANAGER_NOTE_ROLES.has((userProfile as { role_name?: string } | null)?.role_name ?? "");
+  const activityTypes = ACTIVITY_TYPES.filter((t) => t.value !== "MANAGER_NOTE" || canLogManagerNote);
   const [selectedAccount, setSelectedAccount] = useState<AccountOption | null>(null);
   const [accountSearchInput, setAccountSearchInput] = useState("");
   const debouncedAccountSearch = useDebouncedValue(accountSearchInput);
@@ -286,12 +294,12 @@ export default function LogActivityModal({
           onClick={() => setActiveTab("details")}
           disableRipple
           sx={{
-            px: 2, py: 1, fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
+            typography: "caption", px: 2, py: 1, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
             borderTopLeftRadius: "0.5rem", borderTopRightRadius: "0.5rem",
             borderBottomLeftRadius: "0.5rem", borderBottomRightRadius: "0.5rem",
             bgcolor: activeTab === "details" ? "primary.main" : "transparent",
-            color: activeTab === "details" ? "#fff" : "#9ca3af",
-            "&:hover": { bgcolor: activeTab === "details" ? "primary.main" : "#f3f4f6", color: activeTab === "details" ? "#fff" : "#4b5563" },
+            color: activeTab === "details" ? "common.white" : "gray.400",
+            "&:hover": { bgcolor: activeTab === "details" ? "primary.main" : "gray.100", color: activeTab === "details" ? "common.white" : "gray.600" },
           }}
         >
           Details
@@ -302,12 +310,12 @@ export default function LogActivityModal({
             onClick={() => setActiveTab("nextAction")}
             disableRipple
             sx={{
-              px: 2, py: 1, fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
+              typography: "caption", px: 2, py: 1, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
               borderTopLeftRadius: "0.5rem", borderTopRightRadius: "0.5rem",
               borderBottomLeftRadius: "0.5rem", borderBottomRightRadius: "0.5rem",
               bgcolor: activeTab === "nextAction" ? "primary.main" : "transparent",
-              color: activeTab === "nextAction" ? "#fff" : "#9ca3af",
-              "&:hover": { bgcolor: activeTab === "nextAction" ? "primary.main" : "#f3f4f6", color: activeTab === "nextAction" ? "#fff" : "#4b5563" },
+              color: activeTab === "nextAction" ? "common.white" : "gray.400",
+              "&:hover": { bgcolor: activeTab === "nextAction" ? "primary.main" : "gray.100", color: activeTab === "nextAction" ? "common.white" : "gray.600" },
             }}
           >
             Next Action *
@@ -371,7 +379,7 @@ export default function LogActivityModal({
               fullWidth
               size="small"
             >
-              {ACTIVITY_TYPES.map((t) => (
+              {activityTypes.map((t) => (
                 <MenuItem key={t.value} value={t.value}>{t.label}</MenuItem>
               ))}
             </TextField>
@@ -407,9 +415,9 @@ export default function LogActivityModal({
             {opportunityId && (
               <Box
                 sx={{
-                  px: 1.5, py: 1, borderRadius: "0.75rem", fontSize: "10px", fontWeight: 900,
+                  typography: "tiny", px: 1.5, py: 1, borderRadius: "0.75rem", fontWeight: 900,
                   textTransform: "uppercase", letterSpacing: "0.05em",
-                  bgcolor: "#eff6ff", color: "primary.main",
+                  bgcolor: "blue.50", color: "primary.main",
                 }}
               >
                 Linked to this opportunity
@@ -433,13 +441,13 @@ export default function LogActivityModal({
             )}
             {mustClose && (
               <Alert severity="warning">
-                <Typography sx={{ fontSize: "0.8125rem", mb: 1 }}>
+                <Typography sx={{ typography: "body3", mb: 1 }}>
                   {loggedForName
                     ? `${loggedForName} has ${blockingReminders.length > 1 ? "open next actions" : "an open next action"} on this Opportunity. Close ${blockingReminders.length > 1 ? "them" : "it"}, saying what happened, instead of logging a new activity.`
                     : `You have ${blockingReminders.length > 1 ? "open next actions" : "an open next action"} on this Opportunity. Close ${blockingReminders.length > 1 ? "them" : "it"}, saying what happened, instead of logging a new activity.`}
                 </Typography>
                 {blockingReminders.map((r) => (
-                  <Typography key={r.id} sx={{ fontSize: "0.75rem", mt: 0.5, whiteSpace: "pre-line" }}>
+                  <Typography key={r.id} sx={{ typography: "caption", mt: 0.5, whiteSpace: "pre-line" }}>
                     {r.reminder_text} — due {new Date(r.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                   </Typography>
                 ))}
@@ -481,9 +489,9 @@ export default function LogActivityModal({
             {projectId && (
               <Box
                 sx={{
-                  px: 1.5, py: 1, borderRadius: "0.75rem", fontSize: "10px", fontWeight: 900,
+                  typography: "tiny", px: 1.5, py: 1, borderRadius: "0.75rem", fontWeight: 900,
                   textTransform: "uppercase", letterSpacing: "0.05em",
-                  bgcolor: "#eff6ff", color: "primary.main",
+                  bgcolor: "blue.50", color: "primary.main",
                 }}
               >
                 {projectName ? `Project: ${projectName}` : "Linked to this project"}
