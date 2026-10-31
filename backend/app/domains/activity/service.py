@@ -409,6 +409,8 @@ class ReminderService:
         *,
         include_completed: bool = False,
         hospital_level_only: bool = False,
+        assigned_to_user_id: uuid.UUID | None = None,
+        project_id: uuid.UUID | None = None,
         page: int = 1,
         page_size: int = 50,
     ) -> tuple[list[Reminder], int]:
@@ -419,11 +421,17 @@ class ReminderService:
             account_id,
             include_completed=include_completed,
             hospital_level_only=hospital_level_only,
+            assigned_to_user_id=assigned_to_user_id,
+            project_id=project_id,
             offset=offset,
             limit=page_size,
         )
         total = self.repository.count_by_account(
-            account_id, include_completed=include_completed, hospital_level_only=hospital_level_only
+            account_id,
+            include_completed=include_completed,
+            hospital_level_only=hospital_level_only,
+            assigned_to_user_id=assigned_to_user_id,
+            project_id=project_id,
         )
         return items, total
 

@@ -514,19 +514,42 @@ class ReminderRepository(BaseRepository[Reminder]):
         )
         return self.db.scalar(stmt) or 0
 
+    @staticmethod
+    def _narrow_account_list(
+        stmt,
+        *,
+        hospital_level_only: bool,
+        assigned_to_user_id: uuid.UUID | None,
+        project_id: uuid.UUID | None,
+    ):
+        # Optional narrowing of the hospital's list; every one only adds a
+        # WHERE condition, so the query's join count is unchanged.
+        if hospital_level_only:
+            stmt = stmt.where(Activity.opportunity_id.is_(None), Activity.project_id.is_(None))
+        if project_id is not None:
+            # Project level (hospital next-action plan D14): logged on this
+            # Project with no Opportunity -- what blocks Project-level logging.
+            stmt = stmt.where(Activity.project_id == project_id, Activity.opportunity_id.is_(None))
+        if assigned_to_user_id is not None:
+            stmt = stmt.where(Reminder.assigned_to_user_id == assigned_to_user_id)
+        return stmt
+
     def list_by_account(
         self,
         account_id: uuid.UUID,
         *,
         include_completed: bool = False,
         hospital_level_only: bool = False,
+        assigned_to_user_id: uuid.UUID | None = None,
+        project_id: uuid.UUID | None = None,
         offset: int = 0,
         limit: int = 50,
     ) -> list[Reminder]:
         # Hospital next-action plan D7/D8: everyone's next actions at the
         # hospital, at every level; hospital_level_only keeps just those
         # with neither an Opportunity nor a Project (the ones that block
-        # hospital-level logging, D1).
+        # hospital-level logging, D1). D14: assigned_to_user_id and
+        # project_id let the pop-ups ask for just one person's, at one level.
         stmt = (
             select(Reminder)
             .options(*_reminder_display_options(include_completed))
@@ -534,8 +557,12 @@ class ReminderRepository(BaseRepository[Reminder]):
             .where(Activity.account_id == account_id)
             .where(Reminder.is_completed == include_completed)
         )
-        if hospital_level_only:
-            stmt = stmt.where(Activity.opportunity_id.is_(None), Activity.project_id.is_(None))
+        stmt = self._narrow_account_list(
+            stmt,
+            hospital_level_only=hospital_level_only,
+            assigned_to_user_id=assigned_to_user_id,
+            project_id=project_id,
+        )
         stmt = stmt.order_by(*_REMINDER_ORDER).offset(offset).limit(limit)
         return list(self.db.scalars(stmt).all())
 
@@ -545,6 +572,8 @@ class ReminderRepository(BaseRepository[Reminder]):
         *,
         include_completed: bool = False,
         hospital_level_only: bool = False,
+        assigned_to_user_id: uuid.UUID | None = None,
+        project_id: uuid.UUID | None = None,
     ) -> int:
         stmt = (
             select(func.count(Reminder.id))
@@ -552,6 +581,10 @@ class ReminderRepository(BaseRepository[Reminder]):
             .where(Activity.account_id == account_id)
             .where(Reminder.is_completed == include_completed)
         )
-        if hospital_level_only:
-            stmt = stmt.where(Activity.opportunity_id.is_(None), Activity.project_id.is_(None))
+        stmt = self._narrow_account_list(
+            stmt,
+            hospital_level_only=hospital_level_only,
+            assigned_to_user_id=assigned_to_user_id,
+            project_id=project_id,
+        )
         return self.db.scalar(stmt) or 0

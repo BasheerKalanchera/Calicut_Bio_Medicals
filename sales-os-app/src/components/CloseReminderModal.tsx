@@ -5,7 +5,7 @@ import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import dayjs from "dayjs";
 import FormModal from "./FormModal";
 import QuickLeadModal from "./QuickLeadModal";
-import { completeReminder, listOpportunityReminders } from "../services/activities";
+import { completeReminder, listAccountReminders, listOpportunityReminders } from "../services/activities";
 import { listUsers } from "../services/masterData";
 import { getOpportunity } from "../services/opportunities";
 import { useAuth } from "../contexts/AuthContext";
@@ -28,7 +28,8 @@ interface Props {
   // Plan D22: Log Activity with two or more open next actions on the
   // Opportunity -- `reminder` is left out and the rep ticks which of these
   // to close (at least one). Without it, the form offers the same person's
-  // other open ones on the Opportunity as "Also close".
+  // other open ones at the same level -- the Opportunity, or with none the
+  // Project or hospital (plan D13) -- as "Also close".
   closeChoices?: ReminderResponse[];
   // Plan D14/D15: the "Why this change?" pop-up after the Opportunity Edit
   // form's Save. `reminder` is ignored; the changer picks one of their own
@@ -150,9 +151,30 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
     enabled: isOpen && plainClose && !closeChoices && !!reminderProp && !!opportunityId,
     queryFn: () => listOpportunityReminders(opportunityId!, false),
   });
+  // Hospital-next-action plan D13: with no Opportunity, the same person's
+  // other open ones at the same level -- the Project, or the hospital with
+  // no Project. Same key as Log Activity's fetch, so it's usually cached.
+  const levelAccountId = reminderProp?.activity.account?.id;
+  const levelProjectId = reminderProp?.activity.project?.id;
+  // Plan D14: the server returns only that person's, at that level.
+  const levelPersonId = reminderProp?.assigned_to_user_id;
+  const { data: openAtLevel = [] } = useQuery({
+    queryKey: ["account-reminders", levelAccountId, "level", levelProjectId ?? "hospital", levelPersonId],
+    enabled: isOpen && plainClose && !closeChoices && !!reminderProp && !opportunityId
+      && !!levelAccountId && !!levelPersonId,
+    queryFn: () => listAccountReminders(levelAccountId!, {
+      assignedToUserId: levelPersonId,
+      ...(levelProjectId ? { projectId: levelProjectId } : { hospitalLevelOnly: true }),
+    }),
+  });
+  const sameLevelChoices = (reminderProp && !opportunityId
+    ? openAtLevel.filter((r) => !r.is_completed && r.id !== reminderProp.id)
+    : []);
   const tickChoices = closeChoices ?? (reminderProp
-    ? openOnOpportunity.filter((r) => !r.is_completed && r.id !== reminderProp.id
-        && r.assigned_to_user_id === reminderProp.assigned_to_user_id)
+    ? (opportunityId
+      ? openOnOpportunity.filter((r) => !r.is_completed && r.id !== reminderProp.id
+          && r.assigned_to_user_id === reminderProp.assigned_to_user_id)
+      : sameLevelChoices)
     : []);
   // Everything being closed: the pressed one, if any, and the ticked ones.
   const closingFor = (ids: string[]) => [

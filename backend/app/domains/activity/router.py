@@ -268,15 +268,21 @@ def list_account_reminders(
     account_id: uuid.UUID,
     include_completed: bool = Query(False),
     hospital_level: bool = Query(False),
+    assigned_to_user_id: uuid.UUID | None = Query(None),
+    project_id: uuid.UUID | None = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
     current_user: UserProfile = Depends(get_current_user),
     service: ReminderService = Depends(_get_reminder_service),
 ) -> APIResponse[PaginatedResponse[ReminderResponse]]:
+    # assigned_to_user_id: only that person's. project_id: only those logged
+    # on that Project with no Opportunity (plan D14).
     items, total = service.list_for_account(
         account_id,
         include_completed=include_completed,
         hospital_level_only=hospital_level,
+        assigned_to_user_id=assigned_to_user_id,
+        project_id=project_id,
         page=page,
         page_size=page_size,
     )

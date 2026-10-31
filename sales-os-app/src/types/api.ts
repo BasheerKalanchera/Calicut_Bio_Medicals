@@ -8631,6 +8631,8 @@ export interface operations {
             query?: {
                 include_completed?: boolean;
                 hospital_level?: boolean;
+                assigned_to_user_id?: string | null;
+                project_id?: string | null;
                 page?: number;
                 page_size?: number;
             };

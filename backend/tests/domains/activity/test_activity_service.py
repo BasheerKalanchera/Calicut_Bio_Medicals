@@ -1269,10 +1269,12 @@ class TestListForAccount:
         svc.list_for_account(ACCOUNT_ID, page=1, page_size=50)
 
         repo.list_by_account.assert_called_once_with(
-            ACCOUNT_ID, include_completed=False, hospital_level_only=False, offset=0, limit=50
+            ACCOUNT_ID, include_completed=False, hospital_level_only=False,
+            assigned_to_user_id=None, project_id=None, offset=0, limit=50,
         )
         repo.count_by_account.assert_called_once_with(
-            ACCOUNT_ID, include_completed=False, hospital_level_only=False
+            ACCOUNT_ID, include_completed=False, hospital_level_only=False,
+            assigned_to_user_id=None, project_id=None,
         )
 
     def test_hospital_level_only_and_completed_forwarded(self):
@@ -1284,10 +1286,28 @@ class TestListForAccount:
         )
 
         repo.list_by_account.assert_called_once_with(
-            ACCOUNT_ID, include_completed=True, hospital_level_only=True, offset=50, limit=25
+            ACCOUNT_ID, include_completed=True, hospital_level_only=True,
+            assigned_to_user_id=None, project_id=None, offset=50, limit=25,
         )
         repo.count_by_account.assert_called_once_with(
-            ACCOUNT_ID, include_completed=True, hospital_level_only=True
+            ACCOUNT_ID, include_completed=True, hospital_level_only=True,
+            assigned_to_user_id=None, project_id=None,
+        )
+
+    def test_person_and_project_filters_forwarded(self):
+        repo = _make_reminder_repo()
+        svc = ReminderService(repository=repo, activity_repository=_make_activity_repo())
+        person, project = uuid.uuid4(), uuid.uuid4()
+
+        svc.list_for_account(ACCOUNT_ID, assigned_to_user_id=person, project_id=project)
+
+        repo.list_by_account.assert_called_once_with(
+            ACCOUNT_ID, include_completed=False, hospital_level_only=False,
+            assigned_to_user_id=person, project_id=project, offset=0, limit=50,
+        )
+        repo.count_by_account.assert_called_once_with(
+            ACCOUNT_ID, include_completed=False, hospital_level_only=False,
+            assigned_to_user_id=person, project_id=project,
         )
 
 

@@ -420,6 +420,50 @@ class TestNextActionRuleQueries:
         assert "activity.opportunity_id is null" in sql
         assert "activity.project_id is null" in sql
 
+    def test_list_by_account_assigned_to_one_person_only(self):
+        person = uuid.uuid4()
+        sql = self._list_sql(lambda repo: repo.list_by_account(uuid.uuid4(), assigned_to_user_id=person))
+
+        assert f"reminder.assigned_to_user_id = '{person}'" in sql
+
+    def test_list_by_account_without_a_person_filter_has_none(self):
+        sql = self._list_sql(lambda repo: repo.list_by_account(uuid.uuid4()))
+
+        assert "reminder.assigned_to_user_id =" not in sql
+
+    def test_list_by_account_project_means_that_project_with_no_opportunity(self):
+        project = uuid.uuid4()
+        sql = self._list_sql(lambda repo: repo.list_by_account(uuid.uuid4(), project_id=project))
+
+        assert f"activity.project_id = '{project}'" in sql
+        assert "activity.opportunity_id is null" in sql
+
+    def test_list_by_account_filters_do_not_add_joins(self):
+        plain = self._list_sql(lambda repo: repo.list_by_account(uuid.uuid4()))
+        narrowed = self._list_sql(
+            lambda repo: repo.list_by_account(
+                uuid.uuid4(), assigned_to_user_id=uuid.uuid4(), project_id=uuid.uuid4()
+            )
+        )
+
+        assert narrowed.count(" join ") == plain.count(" join ")
+
+    def test_count_by_account_applies_the_person_and_project_filters(self):
+        person, project = uuid.uuid4(), uuid.uuid4()
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 2
+        repo = ReminderRepository(mock_db)
+
+        assert repo.count_by_account(uuid.uuid4(), assigned_to_user_id=person, project_id=project) == 2
+        sql = str(
+            mock_db.scalar.call_args.args[0].compile(
+                dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True}
+            )
+        ).lower()
+        assert f"reminder.assigned_to_user_id = '{person}'" in sql
+        assert f"activity.project_id = '{project}'" in sql
+        assert "activity.opportunity_id is null" in sql
+
     def test_list_by_account_completed_flag_and_paging(self):
         sql = self._list_sql(
             lambda repo: repo.list_by_account(uuid.uuid4(), include_completed=True, offset=100, limit=25)

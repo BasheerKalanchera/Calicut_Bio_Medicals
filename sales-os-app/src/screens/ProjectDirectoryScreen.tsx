@@ -425,6 +425,7 @@ export default function ProjectDirectoryScreen({
     return (
       <>
         <ProjectDetailView
+          key={selectedProject.id}
           project={selectedProject}
           onBack={() => {
             setSelectedProject(null);

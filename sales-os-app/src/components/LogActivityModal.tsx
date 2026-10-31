@@ -172,17 +172,22 @@ export default function LogActivityModal({
     : projectId ? "Project"
     : resolvedAccountId ? "hospital"
     : null;
-  const { data: openAccountReminders = [] } = useQuery({
-    queryKey: ["account-reminders", resolvedAccountId, level === "hospital"],
-    enabled: isOpen && !!resolvedAccountId && (level === "hospital" || level === "Project"),
-    queryFn: () => listAccountReminders(resolvedAccountId, { hospitalLevelOnly: level === "hospital" }),
+  // Plan D14: the server returns only this person's, at this level, so the
+  // pop-up downloads a handful of rows, not the whole hospital's. Same key
+  // as the Close pop-up's "Also close" fetch, so they share the cache.
+  const { data: ownAccountReminders = [] } = useQuery({
+    queryKey: ["account-reminders", resolvedAccountId, "level", level === "hospital" ? "hospital" : projectId, loggedForUserId],
+    enabled: isOpen && !!resolvedAccountId && !!loggedForUserId && (level === "hospital" || level === "Project"),
+    queryFn: () => listAccountReminders(resolvedAccountId, {
+      assignedToUserId: loggedForUserId,
+      ...(level === "hospital" ? { hospitalLevelOnly: true } : { projectId }),
+    }),
   });
   const ownOpen = (rs: ReminderResponse[]) =>
     rs.filter((r) => !r.is_completed && r.assigned_to_user_id === loggedForUserId);
   const blockingReminders =
     level === "Opportunity" ? ownOpen(openOpportunityReminders)
-    : level === "Project" ? ownOpen(openAccountReminders).filter((r) => r.activity.project?.id === projectId && !r.activity.opportunity)
-    : level === "hospital" ? ownOpen(openAccountReminders)
+    : level === "Project" || level === "hospital" ? ownAccountReminders
     : [];
   const mustClose = blockingReminders.length > 0;
   const loggedForName = loggedForUserId === currentUserId
