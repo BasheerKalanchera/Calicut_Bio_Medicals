@@ -5,6 +5,7 @@ import {
   Box,
   Typography,
   Button,
+  CircularProgress,
   IconButton,
   TextField,
   MenuItem,
@@ -309,7 +310,7 @@ export default function TargetPlanningScreen({
   });
   const myAnnualGrandTotal = myAnnualBySbu.reduce((sum, b) => sum + b.total, 0);
 
-  const { data: pendingApproval = [], isSuccess: pendingLoaded, isError: pendingFailed, isFetching: pendingFetching } = useQuery({
+  const { data: pendingApproval = [], isSuccess: pendingLoaded, isError: pendingFailed, isFetching: pendingFetching, refetch: refetchPending } = useQuery({
     queryKey: ["target-plans", "pending-approval"],
     queryFn: listPendingApproval,
     // A manager often leaves this screen open; without polling, a newly
@@ -409,11 +410,14 @@ export default function TargetPlanningScreen({
   // A failed approval list must not leave the screen blank: open on Team
   // Plans, as if nothing were waiting.
   const approvalListReady = (pendingLoaded || pendingFailed) && !pendingFetching;
-  if (isActive && openingTab === null && (!showRollup || approvalListReady)) {
+  // A "plan submitted" click opens the approval tab without waiting for the
+  // list: the list in memory may be up to 30 seconds old and not yet hold
+  // that plan, so it is refreshed below instead of trusted.
+  if (isActive && openingTab === null && (!showRollup || focus?.kind === "submitted" || approvalListReady)) {
     let opening: PlanTabId;
     if (!showRollup) opening = "my-plan";
     else if (focus?.kind === "decided") opening = showMyTarget ? "my-plan" : "team-plans";
-    else if (focus) opening = pendingApproval.some((p) => p.id === focus.planId) ? "approval" : "team-plans";
+    else if (focus) opening = "approval";
     else opening = pendingApproval.length > 0 ? "approval" : "team-plans";
     setOpeningTab(opening);
   }
@@ -426,6 +430,10 @@ export default function TargetPlanningScreen({
       setFocus(null);
     }
   }
+  const submittedPlanId = isActive && showRollup && focus?.kind === "submitted" ? focus.planId : null;
+  useEffect(() => {
+    if (submittedPlanId) void refetchPending();
+  }, [submittedPlanId, refetchPending]);
   // A tab that has gone (Team Targets in a quarter with no team) falls back
   // to the opening tab.
   const wanted = chosenTab ?? openingTab;
@@ -532,6 +540,11 @@ export default function TargetPlanningScreen({
 
       {/* Scrollable content -- keyed on the tab so each opens at its top. */}
       <Box key={activeTab ?? "loading"} sx={{ flex: 1, overflowY: "auto", minHeight: 0, px: { xs: 1.5, sm: 3 }, pb: 3, display: "flex", flexDirection: "column", gap: 3 }}>
+        {activeTab === null && showRollup && (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+            <CircularProgress size={28} />
+          </Box>
+        )}
         {activeTab === "my-plan" && showMyTarget && (
         <Box sx={CARD_SX}>
           <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5 }}>My Plan</Typography>
