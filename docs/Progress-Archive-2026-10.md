@@ -5787,3 +5787,152 @@ moved to after the restart (Basheer).
   filter the fetch for the rep asking for it?", my recommendation had been
   to defer, and the better fix was to do it now (D14). No tracker line:
   none could be stopped by a tool check.
+
+## 2026-10-30 — Target vs Actuals E2E parked at 6 of 40; Annual Target Part 2 E2E J and K done (Build & Test)
+
+- **Target vs Actuals E2E parked** by Basheer after P1–P5 and A1 (6 of 40):
+  "not simple and intuitive enough". His asks, none approved to build: drop
+  the row of boxes on the Year and Quarter views (the table repeats them);
+  add PO received and Likely finish to the table; show a Company Likely
+  finish as the two SBUs added up. Only one SBU is fetched at a time
+  (`TargetVsActualsSection.tsx:54–57`), so the Company figure needs a
+  server change. Redesign goes to Plan & Chore.
+- **Annual Target Part 2 E2E (`docs/Annual-Target-Planning-Manual-E2E-Test-Plan.md`):**
+  J 11 Pass, 1 Skipped (J9); K 10 of 10 Pass; L not started (L7 waits for
+  the redesign). Total 21 Pass, 1 Skipped, of 33.
+- **Findings:**
+  - The notification bell is a red dot only, never a number
+    (`NotificationBell.tsx:141`); a person with unread items sees no change,
+    so the new line has to be looked for at the top of the list.
+  - J5 and J7 were reworded to "Raised the amount" (the original note
+    claimed a second hospital that did not exist).
+  - J9 skipped: the server lets the GM approve any plan but his own, but
+    his "Needs Your Approval" list shows only direct reports and
+    manager-less people, so he can't reach Vivek's plan on screen
+    (Backlog, under "Target Planning: GM can't change a target set below
+    them").
+  - Overlap reminder ("…also planned new customer this quarter") shown
+    when adding a hospital Fahad's SBU colleague also planned (J8).
+  - K1: past quarters of a Jan–Dec 2026 brand read "Not set" (D46a);
+    the even ₹100 L billing split is a separate thing (D68).
+  - K5: the screen shows lakhs to one decimal (`formatter.ts:4`), so
+    ₹25.01 and ₹25.00 look the same; Claude read Dev read-only (scratchpad
+    `k5_maquet_check.py`) before and after. Saved ₹100.01 gave billing
+    25.00 / 25.00 / 25.00 / 25.01 and Oct–Dec target 25.01; put back to
+    ₹100 L gave 25.00 each. Test data left as found: Maquet ₹100 L, Medion
+    ₹100 L with Oct–Dec ₹40 L and Jan–Mar 2027 ₹10 L.
+- **Ideas to Backlog (Plan & Chore):** one tab per section on Target &
+  Coverage Planning, like My Work (would need L1–L3 re-tested); "Rollout:
+  when planning starts to count" (Basheer: July–Sep deals entered on UAT
+  without system targets; Oct–Dec planning won't be proper either).
+  Claude's recommendation, for Basheer to decide: Oct–Dec 2026 a pilot,
+  first accountable quarter Jan–Mar 2027.
+- **Uncommitted code, for the small-fixes `fix:` commit after the E2E:**
+  My Work scroll-to-top and D42 reset (Basheer confirmed on Fazal's
+  login), and the two-decimal percentages (may be moot after the
+  redesign).
+- **Retro — corrections from Basheer this session: 10.** (1) Why not make
+  P4 check the new Overdue tab (plan was stale). (2) "P1 merge was done
+  yesterday night… What is P2?" (asked about something already settled).
+  (3) A1 plan's Company row figure wrong (₹465 L). (4) P2/P4 mix-up.
+  (5) J1: told him to note a bell "number". (6) J1: offered an SBU choice
+  to a rep. (7) J5: a note faking a second hospital. (8) J9: step
+  impossible, Haroon can't see Vivek's plan. (9) K1: plan named a
+  "seasonal targets" field that doesn't exist. (10) K5: asked him to judge
+  ₹25.01 on a one-decimal screen. Common thread: steps given without
+  first checking what the screen shows or who can see it (existing P2,
+  accepted as a judgement slip). No tracker line: none touched live data
+  or UAT, lost work, or could be caught by a tool check.
+
+## 2026-10-31 — UAT backup; Target vs Actuals and Target & Coverage Planning redesign planning starts (Plan & Chore)
+
+- UAT backup `cabio_uat_2026-10-31_0659.dump` (826 KB, 535 TOC entries),
+  `C:\Backups\CabioUAT\DB_Backups`; pruned `cabio_uat_2026-10-16_0647.dump`
+  (14 kept, 17–31 Oct). Docker Desktop needed a forced close (harmless).
+  Basheer copies it to Google Drive by hand.
+- Two plans Approved (Basheer agreed mock-up v26,
+  https://claude.ai/artifact/XR3ftVbahPshwicQ9Vxsd5):
+  `docs/Target-vs-Actuals-Simpler-Table-Implementation-Plan.md` (D1–D10:
+  no boxes on Quarter/Year, PO received column, no Likely finish anywhere)
+  and `docs/Target-Coverage-Planning-Tabs-Implementation-Plan.md`
+  (D1–D11: one tab per section, bell opens the matching tab). Built in
+  that order by `/build`.
+- E2E plans written ahead of the build: redesign E2E sections A–C
+  rewritten and its 30 Oct results cleared (restarts from P1); Annual
+  Target E2E L1–L3 rewritten for the tabs; new
+  `docs/Target-Coverage-Planning-Tabs-Manual-E2E-Test-Plan.md` (24 steps).
+- Backlog entry "Target & Coverage Planning: one tab per section, like
+  My Work" (30 Oct) moved here — now that plan.
+- Documentation tidy-up: found 8, fixed 6, 2 left with Basheer (log
+  `docs/Doc-Integrity-Sweep-Log.md`).
+- MUI round 1 fixes moved to Build & Test's item 4, after `/build`'s
+  merge (Basheer). Salesperson Performance: overlap with My Work, Target
+  vs Actuals and Insights tabs written up (discussion paper section 9);
+  nothing built until Haroon answers Q1.
+- **Session retro.** Corrections from Basheer this session: **1** — he
+  had to ask whether the E2E test plan needed updating after Likely
+  finish was removed (Claude should have raised it). Not counted, caught
+  by Claude: said nothing shows salesperson figures side by side (the
+  Insights Pipeline, Team Activity and Overdue tabs already do); called
+  the 16 Oct page decision a "preference". No tracker line (no guard
+  fits; no live data or UAT touched).
+
+## 2026-10-31 — My Work small fixes shipped (`374a2a8`, pushed) (Build & Test)
+
+- One `fix:` batch commit `374a2a8`, pushed with `0ae8e29`: My Work
+  "Back to Insights" bar when opened from Insights' Overdue tab (plan D43);
+  lists scroll to top on tab / small-tab change; leaving Opportunities
+  resets the days box and 70 %+ tick (D42); Target vs Actuals percentages
+  show two decimals (may be moot after its redesign). Basheer chose both
+  recommended options for the bar (clears on a main-tab tap; wording "Back
+  to Insights" only).
+- Found in use: the first version returned to Insights' first tab (Target
+  vs Actuals) because Insights resets itself whenever it is hidden. Fixed in
+  the same batch: the back bar now asks Insights to open on Overdue
+  (`startRequest` prop); the side menu still opens Target vs Actuals.
+- Checks before commit: type check clean, lint 0 errors (133 warnings, not
+  compared with before), Tailwind and MUI checks pass. No front-end tests
+  exist. E2E step H13 added and marked Pass for the bar and the return to
+  Overdue; its "bar stays after opening a hospital" and "gone after a menu
+  tap" halves were not separately reported.
+
+## 2026-10-31 — Manager Note for managers only shipped (`843c552`, pushed) (Build & Test)
+
+- `fix:` commit `843c552` (BR-ACT-02): the server refuses a Manager Note
+  from anyone but Admin, General Manager, SBU Manager and Area Manager (403,
+  nothing saved); Log Activity hides "Manager Note" from other roles. 7 new
+  backend tests; full run 1,449 pass; type check, ruff and lint clean.
+  Earlier Manager Notes stay as they are.
+- The first commit attempt was stopped by the MUI-standard check: 12 old
+  breaches in the Log Activity pop-up (hex colours, typed text sizes). Basheer
+  chose to fix them in the same commit (theme colours and text sizes).
+- Dev roles read-only 31 Oct: Rudrappa and Fahad = Sales Staff; Shruthi and
+  Fazal = Area Manager; Basheer K = SBU Manager. The old test plan called
+  Rudrappa a "rep" and had him log a Manager Note (TC-13) — no longer
+  possible.
+- E2E section G (TC-16 to TC-21) in
+  `Manager-Note-Notification-Manual-E2E-Test-Plan.md`: 6 of 6 Pass, 31 Oct.
+  TC-18 and TC-21 were run as Haroon Sidheeq (General Manager) in place of
+  Shruthi; TC-20 accepted on the backend tests. One Manager Note left on Dev
+  (Al Shifa Hospital, to Rudrappa).
+- Pre-E2E `/code-review` (medium) of `843c552`: no blocker. One cosmetic
+  fix (a mis-indented test line, in the next small-fixes commit); the Manager
+  Note role list now sits in three places (two backend, one screen) — left as
+  it is, same pattern as Marketing Leads; the new text style may make Log
+  Activity tab buttons a pixel or two taller (TC-21 looked, no complaint).
+- Parked by Basheer (31 Oct) until the parallel Build session's hospital
+  next-action rule is merged: the "Hospital" → "Customer" / "deal" →
+  "Opportunity" wording sweep (still needs his yes to the A/B/C split and
+  the renames "Rate Customers", "My customers") and the "Are you sure?"
+  pop-up before file deletes. Why: the Build branch edits the same screens
+  and adds about 101 new lines mentioning "hospital" or "deal" (estimate,
+  not sorted); editing the Opportunity screen (179 MUI-standard breaches)
+  or the Catalogue screen (29) forces a whole-file migration. A trial merge
+  of the Build branch into `main` showed no code conflicts from `843c552`.
+- **Retro, Build & Test 31 Oct — corrections from Basheer: 3.** (1) The
+  "Back to Insights" bar returned to the wrong tab; he found it in use.
+  (2) I committed the Manager Note fix without its E2E cases; he asked for
+  them. (3) I proposed the wording sweep without checking the parallel
+  Build session; he asked for the implications. No tracker line: none is
+  guard-stoppable. Habit going forward: write the E2E cases in the same turn
+  as the fix; check the Build worktree before proposing any wide change.

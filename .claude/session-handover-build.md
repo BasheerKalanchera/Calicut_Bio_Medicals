@@ -13,55 +13,58 @@ session edits this note._
   hotfix-branch route (`docs/Deployment-Topology.md` "Fix to UAT ahead
   of a full promotion").
 
-## Now: My Work E2E (Weekly Follow-up plan, steps 2–5) — before Part 2
-- Merged `b704b56`; review fixes `048c741`, Stagnant 500 fix `4deb68c`
-  (pushed 28 Oct). Archive 28 and 29 Oct has the detail.
-- 29 Oct: tabs + Summary `c7977f2`; small-tab/Summary-look fixes (D34–D41,
-  Next actions small tabs, taller pinned tabs, emoji icons, Rep dropdown on
-  Stagnant Opportunities) committed and pushed as `676a05d` (tsc, lint,
-  MUI check clean; own diff read, not the formal /code-review).
-- E2E finished 29 Oct: every step Pass (55 of 55, my count). Red "N days
-  overdue" hospital badge not exercised (no overdue next action on Dev).
-- Docs UNCOMMITTED: plan (D38–D41, Status line), test plan (results),
-  Progress-Archive-2026-10 entry, this note. One docs commit awaits
-  Basheer's approval (shown first).
-- Retro written in the archive entry (5 corrections), in the same docs
-  batch. Next: the Plan & Chore build order (Basheer decides): Part 2 E2E resumes at I9 (paused),
-  or the Target vs Actuals redesign plan.
-- Idea raised by Basheer: widen Backlog "Front-end consistency audit" into a
+## 31 OCT — small-fixes batch shipped
+- `374a2a8` (My Work small fixes incl. Back to Insights bar) committed and
+  pushed 31 Oct together with `0ae8e29`; main = origin/main. Detail in
+  Progress-Archive 31 Oct. Docs edits (plan Status line, archive entry,
+  this note) are uncommitted, for the next docs batch.
+- Next: nothing queued for this session. Target vs Actuals redesign is with
+  Plan & Chore; Annual Target section L and the Target vs Actuals E2E stay
+  parked until then. Next-action plan (hospital, D6–D8) is `/build`'s.
+
+## 31 OCT — three Backlog small fixes (Basheer picked 1, 2, 3)
+- 1 Manager Note for managers only: DONE — `843c552` pushed, pre-E2E review
+  done, E2E section G 6 of 6 Pass. Docs batch committed 31 Oct (hash in
+  `git log`). Retro written (3 corrections).
+- 2 "Hospital" → "Customer" wording + "deal" → "Opportunity": Basheer chose
+  (31 Oct) to WAIT until `/build`'s hospital next-action rule is merged and
+  tested, then sweep once (Backlog entry has the timing). Still waiting for
+  his yes to the A / B / C split and the renames "Rate Customers",
+  "My customers".
+- 3 "Are you sure?" before file deletes (Catalogue link, Opportunity
+  Documents): PARKED by Basheer (31 Oct) until `/build` merges (whole-file
+  MUI migration of two screens would clash). Shared `ConfirmDialog`.
+- 4 MUI round 1 fixes (MUI plan step 5, was due 1 Nov): Basheer (31 Oct,
+  via Plan & Chore) — do them together with 2 and 3, after `/build`
+  merges. Five findings listed in the plan's step 5 (Stakeholders card on
+  a phone, Daily Activity Report filter names, Account Management zone
+  filter, Log Activity contact box, typed colours in 7 screens — check
+  what `843c552` already did for Log Activity). Then the 21 "after"
+  screenshots and the before-and-after page.
+
+## Now: Annual Target Part 2 E2E, sections J–L (Target vs Actuals E2E parked)
+- Dev at migration 0064 (head). Target vs Actuals E2E run 6 of 40, PARKED
+  (redesign with Plan & Chore). The small-fixes batch shipped `374a2a8`.
+- Annual Target E2E (`docs/Annual-Target-Planning-Manual-E2E-Test-Plan.md`):
+  21 Pass, 1 Skipped of 33. **Section L (11 steps, three widths) PARKED
+  30 Oct** until a few screens are redesigned; re-read against the new
+  screens before running. Load `cabio-e2e-testing`; Basheer signs in as
+  each user. Dev test data left as found (Maquet ₹100 L; Medion ₹100 L,
+  Oct–Dec ₹40 L, Jan–Mar 2027 ₹10 L). Detail: Progress-Archive 28–30 Oct.
+- Idea from Basheer: widen Backlog "Front-end consistency audit" into a
   convention audit (expensive job — show scope/cost first).
 
-## Paused: Part 2 step 7 E2E (Annual Target plan step 7)
-- Part 2 screens plan steps 1–6 shipped; step 6 (bell) `5b5ad0c`,
-  pushed 27 Oct (archive 27 Oct evening). Migration 0064 on Dev = head.
-- UAT moves after this E2E (Basheer, 26 Oct, D6).
-- 28 Oct: pre-E2E review of the 6 commits since 25 Oct (10 points).
-  Fixes 1, 2 (A), 3, 4, 6, 7, 9 committed `e33f35c` (pushed 28 Oct);
-  fix 5 closed, no change (Basheer). Archive entry written.
-  After-push checkpoint for `e33f35c` done 28 Oct (session start).
-- E2E PAUSED 28 Oct (Basheer) until Plan & Chore fixes the test plan
-  (`docs/Annual-Target-Planning-Manual-E2E-Test-Plan.md`, committed and
-  pushed 28 Oct as `111c399`; findings and retro (6 corrections) in
-  Progress-Archive, pushed as `e131fe2`: section L added, K10 reworded, P7/P8 recorded, I1–I7 recorded,
-  I2–I5 and I7 reworded). Run so far: 11 of 52 (P6–P8, I1–I7); I8
-  open (upcoming year shows no SBU/Company row — design silent; the
-  plan says to keep or show "Target not set"). Mismatches handed to
-  Plan & Chore: I2–I5, I7 wording, I8 design gap, line 100 stale
-  Basheer K figure, I4 has no per-quarter Team plans line.
-- Resume at I9 (as Fazal, Basheer signs in), then J, K (1 of 10 done),
-  L. Load `cabio-e2e-testing` first. Dev servers: Basheer runs them
-  (app on 5173 as of 28 Oct). Re-read the plan before resuming — it
-  will have changed. Post-commit checklist and Part 2's UAT move after.
+## After the Annual Target Part 2 E2E (sections I–K done, L left)
+- Part 2 screens steps 1–6 shipped (bell `5b5ad0c`); pre-E2E review fixes
+  `e33f35c`, pushed 28 Oct. Migration 0064 on Dev = head. Sections I–K
+  detail: Progress-Archive 28–30 Oct.
+- UAT moves after the E2E (Basheer, 26 Oct, D6), then the post-commit
+  checklist. Dev servers: Basheer runs them.
 - Lesson (21 Oct): review lists sorted by what users notice, screen first.
 
-## From Plan & Chore (added 25 Oct at Basheer's request, `393beee`)
-- My Work: D18–D22 decided (Weekly Follow-up plan); D18 = build it
-  straight after Part 2's E2E. Test plan written ahead of the build.
-- Small-fixes batch adds (Backlog): "+ Add Customer", "Are you sure?"
-  before file deletes, "deal" → "Opportunity" incl. "Stagnant
-  Opportunities" (Basheer tells Haroon).
-- Manager Note for managers only (BR-ACT-02, Backlog): decided, its own
-  `fix:` commit, no plan needed.
+## From Plan & Chore (25 Oct)
+- Small-fixes Backlog adds still open: "+ Add Customer"; "deal" →
+  "Opportunity" incl. "Stagnant Opportunities" (Basheer tells Haroon).
 
 ## Not yet scheduled
 - The other 6 rule gaps: Backlog "Business rules vs code — 6 gaps

@@ -117,31 +117,11 @@ to decide: change the code, or change the rule.
 - BR-OP-06: Stalled status not built. Reworded 2026-10-14 (Basheer) in
   `docs/Business-Rules.md` to time in stage, switched off during adoption;
   see "Stuck in stage" below. "Nobody has visited" is now BR-OP-20.
-- BR-ACT-02: any role can log a Manager Note. **Decided 2026-10-25
-  (Basheer): change the code** — the rule stands; see "Log Activity:
-  Manager Note for managers only" below.
 - BR-ACT-07: rule text predates company-wide product visibility.
 - BR-PROJ-01: no bid-submission-date check.
 - BR-ACC-01: Account Health not built.
 - **Close** when each has a decision recorded in Business-Rules (and the
   matrix, same commit) or a build entry of its own.
-
-### Log Activity: Manager Note for managers only — decided, ready to build (2026-10-25)
-
-- **Found (Log Activity help wording, 2026-10-25):** the Type list in
-  Log Activity shows **Manager Note** to everyone, Sales Reps included,
-  and the server accepts it from any role (`LogActivityModal.tsx`
-  `ACTIVITY_TYPES`; no role check in `activity/service.py`). BR-ACT-02
-  says Manager Notes are for managers; a rep's "Manager Note" misleads
-  whoever reads it.
-- **Decided (Basheer, 2026-10-25):** hide it from people who aren't
-  managers, and have the server refuse it too.
-- **Decided (Basheer, 2026-10-25):** managers are Admin, General
-  Manager, SBU Manager and Area Manager — the same four as the Marketing
-  Leads review queue (`marketing_lead/service.py:36` `_MANAGER_ROLES`).
-  Manager Notes already logged by others stay (Activities can't be
-  changed). No plan needed: Build & Test, its own `fix:` commit (it
-  changes who can save what), alongside the small-fixes batch.
 
 ### Wording: "Hospital" → "Customer" across the app — decided, not started (2026-10-25, widened 2026-10-26)
 
@@ -167,6 +147,15 @@ to decide: change the code, or change the rule.
 - **Decided (Basheer, 2026-10-26):** done together with "deal" →
   "Opportunity" below — one pass, one commit (same screens, manual and
   help).
+- **Timing decided (Basheer, 2026-10-31):** the sweep waits until the
+  parallel Build session's hospital next-action rule is merged into `main`
+  and tested, so one pass also covers the new wording that branch adds
+  (about 101 lines mention "hospital" or "deal", an estimate, not sorted)
+  and the many shared files merge without clashes. Not started until then;
+  start by re-running the search of the screens on the merged code. The
+  A (change) / B (keep internal names) / C (keep real hospital wording)
+  split and the renames "Rate Customers" and "My customers" are still
+  waiting for Basheer's yes.
 
 ### File deletes: ask "Are you sure?" first — not started (2026-10-25)
 
@@ -177,6 +166,12 @@ to decide: change the code, or change the rule.
   brochure's delete in Product Catalogue (`ProductCatalogScreen.tsx:214`;
   Admin, GM). The server removes the stored file and its row
   (`document/service.py:123–127`), so there is no undo.
+- **Parked (Basheer, 2026-10-31):** both wait until the parallel Build
+  session's hospital next-action rule is merged. Reason: committing an
+  edit to `OpportunityDetailScreen.tsx` (179 MUI-standard breaches, 2,127
+  lines) or `ProductCatalogScreen.tsx` (29) forces a whole-file move to the
+  theme, and Build's branch has also edited the Opportunity screen. Counts
+  from `check-mui-standard.js --all`, 31 Oct.
 - **Decided (Basheer, 2026-10-25):** ask "Delete this file? This can't
   be undone." before both. The stakeholder "×" on an Opportunity stays as
   it is (it only removes the link; easy to add back); removing a person's
@@ -233,6 +228,49 @@ G4 (Shruthi under Basheer K, Dev). Cabio has no SBU Manager today, so
 the GM's card already lists every Area Manager he sets. Possible fix when
 needed: each row on the GM's card opens to the people under that person,
 each with Change. Basheer, 2026-10-24: leave it for now.
+The same gap for approvals: the server lets the GM approve or reject any
+plan except his own (`service.py:435`), but his "Needs Your Approval" list
+shows only his direct reports and people with no manager
+(`repository.py:110–114`), so he can't approve Vivek's plan on screen.
+Found in Annual Target E2E J9, 2026-10-30; skipped there.
+
+
+### Rollout: when planning starts to count — Plan & Chore to plan, nothing decided (2026-10-30)
+
+Basheer, 2026-10-30, during Annual Target E2E K1. Reality on UAT: Cabio
+Sales entered and closed many Opportunities in July–September; the
+Target & Coverage Planning feature wasn't there, so those quarters' team
+targets exist on paper only. The feature soft-launched on UAT in October
+and is still being tuned, so Oct–Dec 2026 planning in the system won't be
+done properly either. A team can't be asked to start on the first day of
+a quarter or year, so how are the old and the new process run together?
+
+What the system does today: the Year view counts only from the first
+quarter whose targets count; earlier quarters read "No target that
+quarter, so not counted" (Annual Target D66, E2E I2). A brand's year that
+began before Oct–Dec 2026 saves only its quarters from Oct–Dec 2026 on
+(D46a; SonoScape's Dev example: ₹280 L of ₹800 L counts), and "Brands
+Billing to Cabio" shows an even split of the brand's own figure (D68).
+Not yet read: whether the first quarter that counts is a setting or
+follows from whichever targets are saved.
+
+General rollout practice (Claude's own knowledge, not checked against a
+source): keep actuals (Opportunities, Won) in the system from day one,
+since they need no target; start targets and plans from a named first
+full period; don't type old paper targets in as if planned in the system
+(optionally one line per SBU, marked "imported from paper"); show "no
+target set", not 0 %, before go-live; run the pilot quarter next to
+paper with written exit criteria, then retire paper.
+
+Options: A — accountable from Oct–Dec 2026 (today's design); B — Oct–Dec
+2026 a pilot, first accountable quarter Jan–Mar 2027 (Claude's
+recommendation: brands' 2027 years start in January, so no partial brand
+year); C — wait for Apr–Jun 2027, the start of the Indian financial year.
+Risks: paper and system disagree (name which is authoritative per
+quarter); FY 2026-27 Year view is a partial year; pilot never ends
+without exit criteria. Touches the parked Target vs Actuals redesign (how
+a pilot quarter shows) and Backlog "Target & Coverage Planning: one tab
+per section". Likely an ADR. Basheer decides the option.
 
 ### User Directory: org tree view — not started (2026-10-24)
 
@@ -287,11 +325,11 @@ cards.
 ### Target vs Actuals: follow-ups after the combined E2E — not started (2026-10-12)
 
 Moved from the handover note 2026-10-12; none of these blocks the E2E.
-- **Card layout (plan step 6d):** chosen 2026-10-10 (plan decision "Card
-  layout"; mockup `docs/Target-vs-Actuals-Layout-Mockup-2026-10-10.html`), not
-  built. The E2E
-  resumed at G3 without it. Also open from that review: the Company row
-  has no Likely finish.
+- **Card layout (plan step 6d):** replaced by the Target vs Actuals
+  redesign (built 29 Oct, `3bafbc0`) and
+  `docs/Target-vs-Actuals-Simpler-Table-Implementation-Plan.md` (Approved
+  31 Oct); Likely finish leaves the card (simpler table D5), so the
+  Company row point is closed.
 - **Indicative Value vs products (found at G2, 2026-10-10):** "New USG
   m/c" said ₹2L while its products totalled ₹1L. BR-FIN-03 says they must
   match, but only the screen keeps them in step. Repaired on Dev by

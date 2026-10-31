@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Backdrop, Box, Button, IconButton, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useAuth } from "./contexts/AuthContext";
 import ErrorBoundary from "./components/ErrorBoundary";
 import QuickLeadModal from "./components/QuickLeadModal";
@@ -140,6 +141,11 @@ export default function DemoApp() {
   const [isSidebarOpen, setIsSidebarOpen]       = useState(false);
   // Insights' Overdue tab opening My Work on one person's list.
   const [myWorkRequest, setMyWorkRequest]       = useState<MyWorkRequest | null>(null);
+  // My Work D43: true while My Work is showing because of that request; drives
+  // the "Back to Insights" bar. A main-tab tap (navigate) clears it.
+  const [myWorkFromInsights, setMyWorkFromInsights] = useState(false);
+  // Back from My Work: Insights reopens on its Overdue tab, not Target vs Actuals.
+  const [insightsRequest, setInsightsRequest] = useState<{ tabId: "overdue"; nonce: number } | null>(null);
   // Sidebar sections collapse independently -- Sales Execution open by
   // default (daily-use), Reports/Administration start collapsed since most
   // sessions don't touch them every visit. Remembered per-browser so a
@@ -341,6 +347,7 @@ export default function DemoApp() {
 
   function navigate(viewId: string) {
     setView(viewId);
+    setMyWorkFromInsights(false);
     setSelectedAccount(null);
     setSelectedOpportunity(null);
     setSelectedProject(null);
@@ -843,6 +850,22 @@ export default function DemoApp() {
                 My Work
               </Typography>
             </Box>
+            {myWorkFromInsights && (
+              <Box sx={{ px: 2, py: 0.5, bgcolor: "background.paper", borderBottom: 1, borderColor: "gray.100", flexShrink: 0 }}>
+                <Button
+                  size="small"
+                  startIcon={<ArrowBackIcon fontSize="small" />}
+                  onClick={() => {
+                    setMyWorkFromInsights(false);
+                    setInsightsRequest({ tabId: "overdue", nonce: Date.now() });
+                    setView("insights");
+                  }}
+                  sx={{ textTransform: "none" }}
+                >
+                  Back to Insights
+                </Button>
+              </Box>
+            )}
             <MyWorkScreen
               isActive={view === "myWork"}
               onSelectAccount={handleSelectAccount}
@@ -887,8 +910,10 @@ export default function DemoApp() {
             </Box>
             <InsightsDashboardScreen
               isActive={view === "insights"}
+              startRequest={insightsRequest}
               onOpenMyWork={(request) => {
                 setMyWorkRequest({ ...request, nonce: Date.now() });
+                setMyWorkFromInsights(true);
                 setView("myWork");
               }}
             />

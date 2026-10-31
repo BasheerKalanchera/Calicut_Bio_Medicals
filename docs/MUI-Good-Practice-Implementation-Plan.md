@@ -1,7 +1,11 @@
 # MUI Good Practice on Phone, Tablet and Laptop — Implementation Plan
 
 **Status:** Approved 2026-10-26 (Basheer) — every decision below answered
-by him the same day. Step 1 done; step 2 with Build & Test.
+by him the same day. Steps 1–4 done: the automatic check and shared parts
+(`2e3ddd7`, `64b5fef`, `eb1b2c6`), My Work built to the standard, round 1
+review (`10010f2`). Step 5 (round 1 fixes) is with Build & Test, moved
+from Sun 1 Nov to after `/build`'s hospital next-action merge, done with
+the wording sweep and delete confirmations (Basheer, 2026-10-31).
 **Traceability rows:** 14.1, 14.2 "Responsive Web App (iOS/Android), simple
 UI minimizing manual entry" (already Done; this plan keeps it true).
 **Design / discussion:** Backlog "MUI good practice on phone, tablet and
@@ -45,7 +49,10 @@ laptop" (raised by Build & Test 26 Oct, handed to Plan & Chore).
 - D13. The standard and the automatic check land today, 26 Oct; the
   standard applies to every screen commit from today. Round 1 is done by
   Sun 1 Nov 2026; every other screen is cleaned up when it is next
-  changed (D10), with no separate round 2 — Basheer, 2026-10-26
+  changed (D10), with no separate round 2 — Basheer, 2026-10-26.
+  *Changed 2026-10-31 (Basheer): round 1 moves to after `/build`'s
+  hospital next-action merge, done with the wording sweep and delete
+  confirmations.*
   (replaces "all MUI changes this week", same day)
 - D14. My Work is built to the standard — Basheer, 2026-10-26
 - D15. Round 1 is tested with one combined E2E — Basheer, 2026-10-26
@@ -114,7 +121,7 @@ separately, so screens slowly drift apart. This plan does three things:
    next to the existing lint. A commit that changes a screen is refused
    unless the whole screen follows the standard (D10) — so any screen
    touched for any reason gets cleaned up in full at that point.
-3. **Cleans up the screens.** Round 1, by Sun 1 Nov, covers the screens
+3. **Cleans up the screens.** Round 1, after `/build`'s next merge (D13), covers the screens
    reps use most, from the UAT usage analysis (D9). Each is photographed
    at phone, tablet and laptop width, the findings are ranked by what
    users would notice, and fixes go in one screen at a time. Every other
@@ -161,7 +168,8 @@ My Work, which is about to be built, follows the new rules from the start.
    Customer 360 is "Al Shifa Hospital Perinthalmanna", Opportunity
    Detail is its "ICU Monitor"; Daily Activity Report shows the empty
    day (no Dev activity on 14 or 23 Oct).
-5. **Round 1 fixes (Build & Test), by Sun 1 Nov.** One screen per
+5. **Round 1 fixes (Build & Test), after `/build`'s hospital next-action
+   merge** (was Sun 1 Nov; Basheer, 2026-10-31). One screen per
    commit; one combined E2E for round 1 at the end (D15). Findings from
    step 4, most noticeable first:
    1. **Customer 360 → Stakeholders tab, phone:** the stakeholder card

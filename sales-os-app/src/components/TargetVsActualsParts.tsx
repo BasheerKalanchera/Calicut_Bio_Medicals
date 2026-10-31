@@ -36,14 +36,14 @@ const barWidth = (v: string | null): string => `${v === null ? 0 : Math.max(0, M
 export function WonBar({ wonPct, likelyPct, basis }: { wonPct: string | null; likelyPct?: string | null; basis?: string }) {
   if (wonPct === null) return <Box component="span" sx={{ color: "text.secondary" }}>{DASH}</Box>;
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 140, flex: 1 }}>
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 130, flex: 1 }}>
       <Box sx={{ position: "relative", flex: 1, height: 8, borderRadius: "4px", bgcolor: "gray.200", overflow: "hidden" }}>
         {likelyPct != null && (
           <Box sx={{ position: "absolute", inset: 0, width: barWidth(likelyPct), bgcolor: "report.bar", opacity: 0.35 }} />
         )}
         <Box sx={{ position: "absolute", inset: 0, width: barWidth(wonPct), bgcolor: "report.bar" }} />
       </Box>
-      <Box sx={{ minWidth: 44, textAlign: "right", fontVariantNumeric: "tabular-nums", fontWeight: 700 }}>
+      <Box sx={{ minWidth: 62, textAlign: "right", fontVariantNumeric: "tabular-nums", fontWeight: 700 }}>
         {percent(wonPct)}
         {basis && <Box component="span" sx={{ display: "block", ...noteSx, fontWeight: 400, whiteSpace: "nowrap" }}>{basis}</Box>}
       </Box>

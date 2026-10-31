@@ -50,8 +50,10 @@ the build branch, and reaches `main` at the merge (Basheer, 2026-10-17)._
 - **Uncommitted docs (for the docs batch):** plan D13 + D14, E2E case D4 /
   P4 note, Backlog (over-fetch entry removed), this note. Still to add:
   E2E case for D14, plan Status line, Progress-Archive note, retro.
-- **Next:** the docs batch + retro (shown first), then on Basheer's go the
-  merge.
+- **Docs batch `7618fbb`, pushed (31 Oct):** plan Status, E2E plan D4 and
+  D5, Progress-Archive entry with the retro (4 corrections), this note.
+- **Next:** on Basheer's go the merge (below); nothing else is pending on
+  the branch.
   The retro (count of Basheer's corrections) goes in the Progress-Archive
   31 Oct entry just before the merge. The E2E itself is `/test`'s (or
   Build & Test's if `/test` isn't running) after the merge; the Dev

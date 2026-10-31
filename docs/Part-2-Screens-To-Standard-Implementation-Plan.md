@@ -1,6 +1,6 @@
 # Annual Target Part 2 Screens to the Full Standard — Implementation Plan
 
-**Status:** Approved, 2026-10-26 (D1–D11 answered by Basheer). Step 5 shipped `65ab36a` (2026-10-27). Step 6 (bell) shipped `5b5ad0c` (2026-10-27). Pre-E2E review fixes of the late commits `e33f35c` (2026-10-28); step 7 E2E next.
+**Status:** Approved, 2026-10-26 (D1–D11 answered by Basheer). Step 5 shipped `65ab36a` (2026-10-27). Step 6 (bell) shipped `5b5ad0c` (2026-10-27). Pre-E2E review fixes of the late commits `e33f35c` (2026-10-28); step 7 E2E under way: sections J and K passed 30 Oct (`0ae8e29`); section L is waiting for the Target & Coverage Planning tabs build.
 **Traceability rows:** 14.1, 14.2 "Responsive Web App (iOS/Android), simple
 UI minimizing manual entry"; Annual Target Planning's rows (unchanged in
 what they do).

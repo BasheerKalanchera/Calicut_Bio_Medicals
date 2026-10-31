@@ -11,7 +11,7 @@ export function lakhs(v: string | null): string {
   return v === null ? DASH : formatLakhs(parseFloat(v));
 }
 export function percent(v: string | null): string {
-  return v === null ? DASH : `${parseFloat(v).toFixed(0)}%`;
+  return v === null ? DASH : `${parseFloat(v).toFixed(2)}%`;
 }
 // a as a percent of b, as the server sends percents (a string); null when b
 // is missing or zero.

@@ -5,7 +5,8 @@ and the shape. Nothing built. Q2 answered and a Finance download asked for,
 2026-10-07 — see section 7. Parked by Basheer 2026-10-07 while Target vs
 Actuals is finished. **2026-10-16:** Q3 and Q4 answered; the Finance
 download (7.2–7.4) parked for Phase 2 — see section 8. Still open with
-Haroon: Q1, the measures.
+Haroon: Q1, the measures. **2026-10-31:** overlap with My Work and Target
+vs Actuals checked; nothing built until Q1 is answered — section 9.
 **Participants:** Basheer (decisions), Haroon / Cabio leadership (business
 sign-off), Claude (options and analysis).
 **Origin:** Basheer, 2026-10-03: "Is a report of a salesperson's performance
@@ -304,3 +305,47 @@ moved to UAT before the first report is due.
   - How often the file goes to Finance: undecided; Basheer leans
     quarterly. A question for Haroon in Phase 2.
 - **Still open:** Q1, the measures — on Backlog "Waiting on people".
+
+## 9. What we already have, now that My Work exists — 2026-10-31
+
+Basheer asked (31 Oct): isn't this the same as My Work? Do we need
+another screen?
+
+**Not the same.** My Work is one person's to-do list for *today*: which
+Opportunities to chase, which hospitals to visit, which next actions are
+overdue or due this week. It doesn't look back at a past month and
+doesn't put people side by side. This page is a report card for a chosen
+month or quarter, people side by side.
+
+**Already covered, measure by measure** (section 2's list against the
+screens, read 31 Oct):
+
+| Section 2 measure | Where it is today |
+|---|---|
+| Target, Won, % of target, per person | Target vs Actuals (Insights Dashboard), any quarter or year — its arrows step back to past ones |
+| High-priority Opportunities | My Work, one person, today only |
+| Overdue next actions, per person | Insights Dashboard → Overdue tab, people side by side, today only (managers) |
+| Open pipeline value, weighted forecast, per person | Insights Dashboard → Pipeline tab, grouped by Rep, today only |
+| Win rate, Lost count, top loss reasons, per person | nothing |
+| Activities logged, per person | Insights Dashboard → Team Activity tab: one total per person, last 30 days only, not split into visits, calls and demos (managers) |
+| Beat-plan compliance | partly: My Work's "My hospitals this quarter", one person |
+| Any past **month** | nothing (Target vs Actuals goes by quarter and year) |
+
+**Recommendation (Claude, agreed by Basheer 31 Oct):** build nothing now.
+Once Haroon answers Q1:
+- if he wants only a few measures beyond what's covered → the lighter
+  option (section 4): add those columns to Target vs Actuals or the
+  Sales Report, no new page;
+- if he wants all four groups side by side, by month → the dedicated
+  page decided on 16 Oct (section 8, Q3).
+
+So the 16 Oct page decision is looked at again once Q1 is answered; it
+stands until then — Basheer, 2026-10-31.
+
+**Technical addendum.** My Work: `MyWorkScreen.tsx` Summary tab (lines
+331–350: My hospitals, Opportunities, Next actions groups). Target vs
+Actuals: `TargetVsActualsSection.tsx:40, 109–116` (`period` state,
+previous/next quarter or year arrows). Insights tabs:
+`InsightsDashboardScreen.tsx:38–43` (`TABS`), Pipeline `groupBy` "rep"
+(lines 27–34, 126), Team Activity `getActivityLevels` over the last 30
+days (lines 153, 266), Overdue (lines 307–313).
