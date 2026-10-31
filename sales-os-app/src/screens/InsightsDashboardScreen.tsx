@@ -48,6 +48,9 @@ interface Props {
   isActive: boolean;
   // Overdue tab (Redesign D5/D11): opens My Work at one person's list.
   onOpenMyWork: (request: Omit<MyWorkRequest, "nonce">) => void;
+  // My Work's "Back to Insights" bar (My Work D43): a new nonce opens this
+  // screen on the tab it came from.
+  startRequest?: { tabId: TabId; nonce: number } | null;
 }
 
 // A red mark that opens My Work when there is something to see; grey and
@@ -66,7 +69,7 @@ function OverdueMark({ count, text, label, onOpen }: { count: number; text: stri
   );
 }
 
-export default function InsightsDashboardScreen({ isActive, onOpenMyWork }: Props) {
+export default function InsightsDashboardScreen({ isActive, onOpenMyWork, startRequest }: Props) {
   const { userProfile } = useAuth();
   const isManagerTier = MANAGER_TIER_ROLES.has((userProfile as { role_name?: string } | null)?.role_name ?? "");
   const tabs = TABS.filter((t) => isManagerTier || !t.managerOnly);
@@ -100,9 +103,25 @@ export default function InsightsDashboardScreen({ isActive, onOpenMyWork }: Prop
     if (!isActive) setActiveTab("target");
   }
 
+  // Declared after the reset above, so on the render that shows the screen
+  // again this request wins over the reset.
+  const [handledNonce, setHandledNonce] = useState<number | null>(startRequest?.nonce ?? null);
+  if (isActive && startRequest && startRequest.nonce !== handledNonce) {
+    setHandledNonce(startRequest.nonce);
+    setActiveTab(startRequest.tabId);
+  }
+
   useEffect(() => {
     if (!isActive) centerTab("target", "auto");
   }, [isActive, centerTab]);
+
+  // Centre the chip once per request, not on every later visit.
+  const centredNonce = useRef<number | null>(startRequest?.nonce ?? null);
+  useEffect(() => {
+    if (!isActive || !startRequest || centredNonce.current === startRequest.nonce) return;
+    centredNonce.current = startRequest.nonce;
+    centerTab(startRequest.tabId);
+  }, [isActive, startRequest, centerTab]);
 
   const [groupBy, setGroupBy] = useState<PipelineGroupBy>(isManagerTier ? "rep" : "stage");
 

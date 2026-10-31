@@ -90,13 +90,17 @@ export default function MyWorkScreen({ isActive, onSelectAccount, onSelectOpport
 
   // Opens a tab at its top, or at one list when listId is given (D33, D34,
   // D38: on Opportunities and Next actions that means its small tab).
+  const scrollListsToTop = useCallback(() => {
+    setTimeout(() => listsRef.current?.scrollTo({ top: 0 }), 50);
+  }, []);
+
   const openTab = useCallback((tabId: TabId, listId?: string) => {
     setActiveTab(tabId);
     if (tabId === "opportunities" && listId) setOppList(listId as OppListId);
     if (tabId === "next-actions" && listId) setNextList(listId as NextListId);
     centerTab(tabId);
-    setTimeout(() => listsRef.current?.scrollTo({ top: 0 }), 50);
-  }, [centerTab]);
+    scrollListsToTop();
+  }, [centerTab, scrollListsToTop]);
 
   // Redesign D11: Insights' Overdue tab opens this screen on one person's
   // list. A new request (new nonce) sets who is shown, the tab and its small
@@ -118,6 +122,17 @@ export default function MyWorkScreen({ isActive, onSelectAccount, onSelectOpport
       setStart(null);
       setOppList("high-priority");
       setNextList("this-week");
+    }
+  }
+
+  // D42: the days box and the tick belong to the Opportunities tab; leaving it
+  // puts both back to default so the Summary never carries a hidden filter.
+  const [prevTab, setPrevTab] = useState(activeTab);
+  if (activeTab !== prevTab) {
+    setPrevTab(activeTab);
+    if (prevTab === "opportunities") {
+      setIdleText(String(DEFAULT_IDLE_DAYS));
+      setHighChanceOnly(false);
     }
   }
 
@@ -258,7 +273,7 @@ export default function MyWorkScreen({ isActive, onSelectAccount, onSelectOpport
           {activeTab === "opportunities" && (
             <SubTabs
               value={oppList}
-              onChange={setOppList}
+              onChange={(id) => { setOppList(id); scrollListsToTop(); }}
               tabs={[
                 { id: "high-priority", label: highPriorityTitle },
                 { id: "closing-date-passed", label: "Closing date passed" },
@@ -269,7 +284,7 @@ export default function MyWorkScreen({ isActive, onSelectAccount, onSelectOpport
           {activeTab === "next-actions" && (
             <SubTabs
               value={nextList}
-              onChange={setNextList}
+              onChange={(id) => { setNextList(id); scrollListsToTop(); }}
               tabs={[
                 { id: "this-week", label: "Next actions due this week" },
                 { id: "overdue", label: "Overdue next actions" },
