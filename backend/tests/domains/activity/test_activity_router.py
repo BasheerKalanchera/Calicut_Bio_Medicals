@@ -71,6 +71,61 @@ def _teardown_overrides() -> None:
     app.dependency_overrides.clear()
 
 
+class TestListAccountReminders:
+    """Hospital next-action plan D14: the router must pass the person and
+    Project filters through, or the pop-ups silently get the whole list."""
+
+    def _get(self, client: TestClient, mock_db: MagicMock, **params):
+        _setup_overrides(mock_db, role_name="Admin")
+        try:
+            return client.get(f"/api/v1/accounts/{ACCOUNT_ID}/reminders", params=params)
+        finally:
+            _teardown_overrides()
+
+    @staticmethod
+    def _sql_of(call) -> str:
+        from sqlalchemy.dialects import postgresql
+
+        return str(
+            call.args[0].compile(dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True})
+        ).lower()
+
+    def test_person_and_project_filters_reach_the_query(self, client: TestClient) -> None:
+        person, project = uuid.uuid4(), uuid.uuid4()
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 1
+        mock_db.scalars.return_value.all.return_value = []
+
+        response = self._get(client, mock_db, assigned_to_user_id=str(person), project_id=str(project))
+
+        assert response.status_code == 200
+        sql = self._sql_of(mock_db.scalars.call_args)
+        assert f"reminder.assigned_to_user_id = '{person}'" in sql
+        assert f"activity.project_id = '{project}'" in sql
+        assert "activity.opportunity_id is null" in sql
+
+    def test_without_filters_the_query_has_neither(self, client: TestClient) -> None:
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 1
+        mock_db.scalars.return_value.all.return_value = []
+
+        response = self._get(client, mock_db)
+
+        assert response.status_code == 200
+        sql = self._sql_of(mock_db.scalars.call_args)
+        assert "reminder.assigned_to_user_id =" not in sql
+        assert "activity.project_id =" not in sql
+
+    def test_hospital_level_with_a_project_is_refused(self, client: TestClient) -> None:
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 1
+
+        response = self._get(client, mock_db, hospital_level="true", project_id=str(uuid.uuid4()))
+
+        assert response.status_code >= 400
+        mock_db.scalars.assert_not_called()
+
+
 class TestListDailyActivityReport:
     def test_unauthenticated_returns_401(self, client: TestClient) -> None:
         response = client.get("/api/v1/activities", params={"report_date": "2026-08-06"})

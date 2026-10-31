@@ -1294,6 +1294,15 @@ class TestListForAccount:
             assigned_to_user_id=None, project_id=None,
         )
 
+    def test_hospital_level_with_a_project_is_refused(self):
+        repo = _make_reminder_repo()
+        svc = ReminderService(repository=repo, activity_repository=_make_activity_repo())
+
+        with pytest.raises(BusinessRuleViolation):
+            svc.list_for_account(ACCOUNT_ID, hospital_level_only=True, project_id=uuid.uuid4())
+
+        repo.list_by_account.assert_not_called()
+
     def test_person_and_project_filters_forwarded(self):
         repo = _make_reminder_repo()
         svc = ReminderService(repository=repo, activity_repository=_make_activity_repo())

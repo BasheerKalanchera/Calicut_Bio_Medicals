@@ -414,6 +414,10 @@ class ReminderService:
         page: int = 1,
         page_size: int = 50,
     ) -> tuple[list[Reminder], int]:
+        if hospital_level_only and project_id is not None:
+            # "No Project" and "on this Project" contradict -- say so rather
+            # than return an empty list that reads as "nothing blocks you".
+            raise BusinessRuleViolation("Choose either hospital-level only or one Project, not both.")
         if not self.repository.account_exists(account_id):
             raise NotFoundError(f"Account {account_id} not found")
         offset = (page - 1) * page_size
