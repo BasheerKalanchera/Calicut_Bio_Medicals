@@ -1240,6 +1240,7 @@ class TargetVsActualService:
             target_run: Decimal | None = None
             target_gap = False
             won_run = _ZERO
+            po_run = _ZERO
             for p in counted:
                 row = own.get(p)
                 if row is None or by_period[p].quarter_state is QuarterState.FUTURE:
@@ -1249,6 +1250,7 @@ class TargetVsActualService:
                 else:
                     target_run = (target_run or _ZERO) + row.target_lakhs
                 won_run += row.won_lakhs
+                po_run += row.po_received_lakhs
             target_so_far = None if target_gap else target_run
             people.append(
                 TargetVsActualYearPerson(
@@ -1256,6 +1258,7 @@ class TargetVsActualService:
                     display_name=name,
                     manager_id=manager_id,
                     target_lakhs=target_so_far,
+                    po_received_lakhs=po_run,
                     won_lakhs=won_run,
                     percent_of_target=_percent_of_target(won_run, target_so_far),
                 )

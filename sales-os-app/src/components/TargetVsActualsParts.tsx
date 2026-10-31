@@ -30,17 +30,14 @@ export function TileCell({ wide = false, children }: { wide?: boolean; children:
 
 const barWidth = (v: string | null): string => `${v === null ? 0 : Math.max(0, Math.min(100, parseFloat(v)))}%`;
 
-// Won (dark) and, where there is one, Likely finish (light) as a share of
-// the same base as the % beside it; `basis` says which ("of plan", "of
-// target") so the two aren't confused. A dash when there is nothing to compare with.
-export function WonBar({ wonPct, likelyPct, basis }: { wonPct: string | null; likelyPct?: string | null; basis?: string }) {
+// Won as a share of the same base as the % beside it; `basis` says which
+// ("of plan", "of target") so the two aren't confused (Simpler Table D6: no
+// Likely finish part). A dash when there is nothing to compare with.
+export function WonBar({ wonPct, basis }: { wonPct: string | null; basis?: string }) {
   if (wonPct === null) return <Box component="span" sx={{ color: "text.secondary" }}>{DASH}</Box>;
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 130, flex: 1 }}>
       <Box sx={{ position: "relative", flex: 1, height: 8, borderRadius: "4px", bgcolor: "gray.200", overflow: "hidden" }}>
-        {likelyPct != null && (
-          <Box sx={{ position: "absolute", inset: 0, width: barWidth(likelyPct), bgcolor: "report.bar", opacity: 0.35 }} />
-        )}
         <Box sx={{ position: "absolute", inset: 0, width: barWidth(wonPct), bgcolor: "report.bar" }} />
       </Box>
       <Box sx={{ minWidth: 62, textAlign: "right", fontVariantNumeric: "tabular-nums", fontWeight: 700 }}>

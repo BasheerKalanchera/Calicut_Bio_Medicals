@@ -672,6 +672,39 @@ def test_person_with_a_quarter_so_far_without_a_target_has_no_year_target(monkey
     assert (p.target_lakhs, p.percent_of_target, p.won_lakhs) == (None, None, Decimal("40.00"))
 
 
+def test_person_year_po_received_adds_up_the_quarters_so_far(monkeypatch):
+    # Simpler Table D4: a person's PO received so far, as Won already is.
+    rep = uuid.uuid4()
+    repo = _repo(roster=[(rep, "Vivek")])
+    repo.po_received_by_person.side_effect = _by_window(
+        [(rep, "Vivek", Decimal("30.00"))], [(rep, "Vivek", Decimal("12.50"))]
+    )
+    (p,) = _run_year(repo, date(2027, 2, 1), monkeypatch).people
+    assert p.po_received_lakhs == Decimal("42.50")
+
+
+def test_person_year_po_received_still_adds_up_when_a_quarter_has_no_target(monkeypatch):
+    # A missing target (D81) leaves the year target unset, not PO received.
+    rep = uuid.uuid4()
+    repo = _repo(roster=[(rep, "Vivek")])
+    repo.person_targets.side_effect = _by_period({"2026-Q3": {rep: Decimal("90")}}, {})
+    repo.po_received_by_person.side_effect = _by_window(
+        [(rep, "Vivek", Decimal("30.00"))], [(rep, "Vivek", Decimal("12.50"))]
+    )
+    (p,) = _run_year(repo, date(2027, 2, 1), monkeypatch).people
+    assert (p.target_lakhs, p.po_received_lakhs) == (None, Decimal("42.50"))
+
+
+def test_person_year_po_received_leaves_out_a_quarter_still_to_come(monkeypatch):
+    rep = uuid.uuid4()
+    repo = _repo(roster=[(rep, "Vivek")])
+    repo.po_received_by_person.side_effect = _by_window(
+        [(rep, "Vivek", Decimal("30.00"))], [(rep, "Vivek", Decimal("12.50"))]
+    )
+    (p,) = _run_year(repo, IN_QUARTER, monkeypatch).people
+    assert p.po_received_lakhs == Decimal("30.00")
+
+
 def test_person_upcoming_quarter_without_a_target_keeps_the_year_target(monkeypatch):
     # D81 is about quarters so far: Jan-Mar still to come adds nothing.
     rep = uuid.uuid4()

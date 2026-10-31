@@ -3,16 +3,16 @@ import { useQuery } from "@tanstack/react-query";
 import { Box, ButtonBase, IconButton, MenuItem, TextField } from "@mui/material";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import { LoadingOrEmpty, SectionCard, StatTile } from "./ReportingUI";
+import { LoadingOrEmpty, SectionCard } from "./ReportingUI";
 import TableOrCards, { TocCell, TocRow } from "./TableOrCards";
-import { NoPoDateNote, TileCell, TileGrid, WonBar } from "./TargetVsActualsParts";
+import { NoPoDateNote, WonBar } from "./TargetVsActualsParts";
 import TargetVsActualsPerson from "./TargetVsActualsPerson";
 import TargetVsActualsYear from "./TargetVsActualsYear";
 import { useAuth } from "../contexts/AuthContext";
 import { listSbus } from "../services/masterData";
 import { getTargetVsActual, getTargetVsActualYear } from "../services/targetPlanning";
 import type { QuarterState } from "../types/targetPlanning";
-import { DASH, headlineTarget, lakhs, noteSx, numCellSx, percent, ratio, summaryLines } from "../utils/targetVsActuals";
+import { lakhs, noteSx, numCellSx, summaryLines } from "../utils/targetVsActuals";
 import { formatFiscalYear, formatPlanningPeriod, getCurrentPlanningPeriod, getFiscalYearOfPeriod, shiftPlanningPeriod } from "../utils/formatter";
 import { asTree } from "../utils/reportingTree";
 
@@ -119,10 +119,6 @@ export default function TargetVsActualsSection() {
     </Box>
   );
 
-  const headline = data ? headlineTarget(data.sbu_row, data.team_row, data.people) : null;
-  const wonPct = data ? ratio(data.won_lakhs, headline) : null;
-  const likelyPct = data ? ratio(data.likely_finish_lakhs, headline) : null;
-
   return (
     <SectionCard title="Target vs Actuals" action={picker} stackActionOnPhone>
       <LoadingOrEmpty
@@ -148,26 +144,6 @@ export default function TargetVsActualsSection() {
             {isTeamView && " · Totals show only your team members' shares of shared Opportunities"}
           </Box>
 
-          <TileGrid columns={4}>
-            <TileCell><StatTile inGrid label="Target" value={lakhs(headline)} /></TileCell>
-            <TileCell>
-              <StatTile inGrid label="Won (paid)" value={lakhs(data.won_lakhs)} sublabel={`PO received ${lakhs(data.po_received_lakhs)}`} />
-            </TileCell>
-            <TileCell>
-              <StatTile inGrid label="Won % of target" value={percent(wonPct)}>
-                <WonBar wonPct={wonPct} />
-              </StatTile>
-            </TileCell>
-            <TileCell>
-              <StatTile
-                inGrid
-                label="Likely finish"
-                value={lakhs(data.likely_finish_lakhs)}
-                sublabel={likelyPct === null ? undefined : `${percent(likelyPct)} of target`}
-              />
-            </TileCell>
-          </TileGrid>
-
           {/* One block per row on a phone, a person's pushed in under their manager. */}
           <Box sx={{ overflowX: "auto" }}>
             <TableOrCards
@@ -175,7 +151,7 @@ export default function TargetVsActualsSection() {
                 { label: "Who" },
                 { label: "Target", align: "right" },
                 { label: "Won (paid)", align: "right" },
-                { label: "Likely finish", align: "right" },
+                { label: "PO received", align: "right" },
                 { label: "Won %" },
               ]}
             >
@@ -186,7 +162,7 @@ export default function TargetVsActualsSection() {
                     {row.target_lakhs === null ? <Box component="span" sx={noteSx}>{notSet}</Box> : lakhs(row.target_lakhs)}
                   </TocCell>
                   <TocCell label="Won (paid)" align="right" sx={numCellSx}>{lakhs(row.won_lakhs)}</TocCell>
-                  <TocCell label="Likely finish" align="right" sx={numCellSx}>{DASH}</TocCell>
+                  <TocCell label="PO received" align="right" sx={numCellSx}>{lakhs(row.po_received_lakhs)}</TocCell>
                   <TocCell label="Won %"><WonBar wonPct={row.percent_of_target} basis="of target" /></TocCell>
                 </TocRow>
               ))}
@@ -203,9 +179,9 @@ export default function TargetVsActualsSection() {
                   </TocCell>
                   <TocCell label="Target" align="right" sx={numCellSx}>{lakhs(p.target_lakhs)}</TocCell>
                   <TocCell label="Won (paid)" align="right" sx={numCellSx}>{lakhs(p.won_lakhs)}</TocCell>
-                  <TocCell label="Likely finish" align="right" sx={numCellSx}>{lakhs(p.likely_finish_lakhs)}</TocCell>
+                  <TocCell label="PO received" align="right" sx={numCellSx}>{lakhs(p.po_received_lakhs)}</TocCell>
                   <TocCell label="Won %">
-                    <WonBar wonPct={p.percent_of_target} likelyPct={ratio(p.likely_finish_lakhs, p.planned_lakhs)} basis="of plan" />
+                    <WonBar wonPct={p.percent_of_target} basis="of plan" />
                   </TocCell>
                 </TocRow>
               ))}

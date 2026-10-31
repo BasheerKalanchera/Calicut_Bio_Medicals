@@ -274,6 +274,8 @@ export interface TargetVsActualYearPerson {
   display_name: string;
   manager_id: string | null;
   target_lakhs: string | null;
+  // PO received so far (Simpler Table D4).
+  po_received_lakhs: string;
   won_lakhs: string;
   percent_of_target: string | null;
 }

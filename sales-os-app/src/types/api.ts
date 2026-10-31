@@ -5977,6 +5977,8 @@ export interface components {
             manager_id?: string | null;
             /** Target Lakhs */
             target_lakhs: string | null;
+            /** Po Received Lakhs */
+            po_received_lakhs: string;
             /** Won Lakhs */
             won_lakhs: string;
             /** Percent Of Target */

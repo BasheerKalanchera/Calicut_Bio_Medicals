@@ -5,11 +5,11 @@ import { StatTile } from "./ReportingUI";
 import TableOrCards, { TocCell, TocRow } from "./TableOrCards";
 import { NoPoDateNote, TileCell, TileGrid, WonBar } from "./TargetVsActualsParts";
 import type { TargetVsActualPerson } from "../types/targetPlanning";
-import { lakhs, noteSx, numCellSx, percent, plural, ratio } from "../utils/targetVsActuals";
+import { lakhs, noteSx, numCellSx, percent, ratio } from "../utils/targetVsActuals";
 
 // One person's own screen in Target vs Actuals' Quarter view (Redesign D4,
-// D10): their four boxes, By hospital and By brand (Planned against Won), and
-// the notes on Opportunities with a missing date.
+// D10; Simpler Table D7): their three boxes, By hospital and By brand
+// (Planned against Won), and the note on Opportunities with no PO date.
 
 // A name column plus Planned and Won, ending in a Total line.
 function PlannedWonTable({ heading, rows, totalPlanned, totalWon }: {
@@ -50,7 +50,6 @@ export default function TargetVsActualsPerson({
   onBack: () => void;
 }) {
   const wonPct = ratio(person.won_lakhs, person.target_lakhs);
-  const likelyPct = ratio(person.likely_finish_lakhs, person.target_lakhs);
   // A name sits on a line of its own so a long one wraps rather than pushing the button.
   const section = (title: string, body: ReactNode) => (
     <Box>
@@ -69,23 +68,15 @@ export default function TargetVsActualsPerson({
         <Box sx={noteSx}>{periodLabel}</Box>
       </Box>
 
-      <TileGrid columns={4}>
+      <TileGrid columns={3}>
         <TileCell><StatTile inGrid label="Target" value={lakhs(person.target_lakhs)} /></TileCell>
         <TileCell>
           <StatTile inGrid label="Won (paid)" value={lakhs(person.won_lakhs)} sublabel={`PO received ${lakhs(person.po_received_lakhs)}`} />
         </TileCell>
-        <TileCell>
+        <TileCell wide>
           <StatTile inGrid label="Won % of target" value={percent(wonPct)}>
             <WonBar wonPct={wonPct} />
           </StatTile>
-        </TileCell>
-        <TileCell>
-          <StatTile
-            inGrid
-            label="Likely finish"
-            value={lakhs(person.likely_finish_lakhs)}
-            sublabel={likelyPct === null ? undefined : `${percent(likelyPct)} of target`}
-          />
         </TileCell>
       </TileGrid>
 
@@ -119,15 +110,8 @@ export default function TargetVsActualsPerson({
         <Box sx={noteSx}>No planned hospitals or brands to show for this quarter.</Box>
       )}
 
-      {(person.undated_opportunity_count > 0 || person.no_po_date_count > 0) && (
-        <Box sx={{ ...noteSx, borderTop: 1, borderColor: "divider", pt: 1.5, display: "flex", flexDirection: "column", gap: 0.5 }}>
-          {person.undated_opportunity_count > 0 && (
-            <Box>
-              {person.undated_opportunity_count} open{" "}
-              {plural(person.undated_opportunity_count, "Opportunity has", "Opportunities have")} no expected closure date, so{" "}
-              {plural(person.undated_opportunity_count, "it isn't", "they aren't")} counted in Likely finish.
-            </Box>
-          )}
+      {person.no_po_date_count > 0 && (
+        <Box sx={{ ...noteSx, borderTop: 1, borderColor: "divider", pt: 1.5 }}>
           <NoPoDateNote count={person.no_po_date_count} />
         </Box>
       )}

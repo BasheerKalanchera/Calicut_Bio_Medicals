@@ -46,18 +46,6 @@ export function summaryLines(
   return lines;
 }
 
-// The target the boxes at the top are measured against: the narrowest summary
-// row (team, else SBU); a rep, who has no summary row, their own.
-export function headlineTarget(
-  sbuRow: TargetVsActualSummaryRow | null,
-  teamRow: TargetVsActualSummaryRow | null,
-  people: { target_lakhs: string | null }[],
-): string | null {
-  const row = teamRow ?? sbuRow;
-  if (row) return row.target_lakhs;
-  return people.length === 1 ? people[0].target_lakhs : null;
-}
-
 export function plural(n: number, one: string, many: string): string {
   return n === 1 ? one : many;
 }
