@@ -223,22 +223,6 @@ shows only his direct reports and people with no manager
 (`repository.py:110–114`), so he can't approve Vivek's plan on screen.
 Found in Annual Target E2E J9, 2026-10-30; skipped there.
 
-### Target & Coverage Planning: one tab per section, like My Work — Plan & Chore to take next, design not started (2026-10-30)
-
-The screen (`TargetPlanningScreen.tsx`) stacks its sections one under the
-other: My Plan, Needs Your Approval, Team Plans, and (from the Annual
-Target plan) the SBU Target box and Team Targets, quarterly and annual.
-Basheer, 2026-10-30, during Annual Target E2E J3 (a bell click has to land
-on Fahad's plan inside that long page): give each section its own tab, as
-My Work has (Weekly Follow-up plan D11, D31), for a simpler screen.
-Points to decide in a plan: which sections become tabs; which tab each
-role opens on (a rep: My Plan; a manager: Needs Your Approval); whether a
-bell click opens the matching tab, as My Work's counts do. Needs a plan
-and a mock-up before any build. Touches Annual Target E2E section L steps
-1–3 (the three-width look), which would need re-testing after it. Separate
-from the Target vs Actuals redesign Basheer parked the same day
-(`docs/Target-vs-Actuals-Redesign-Implementation-Plan.md`, E2E stopped at
-6 of 40); Plan & Chore decides the order.
 
 ### Rollout: when planning starts to count — Plan & Chore to plan, nothing decided (2026-10-30)
 
@@ -330,11 +314,11 @@ cards.
 ### Target vs Actuals: follow-ups after the combined E2E — not started (2026-10-12)
 
 Moved from the handover note 2026-10-12; none of these blocks the E2E.
-- **Card layout (plan step 6d):** chosen 2026-10-10 (plan decision "Card
-  layout"; mockup `docs/Target-vs-Actuals-Layout-Mockup-2026-10-10.html`), not
-  built. The E2E
-  resumed at G3 without it. Also open from that review: the Company row
-  has no Likely finish.
+- **Card layout (plan step 6d):** replaced by the Target vs Actuals
+  redesign (built 29 Oct, `3bafbc0`) and
+  `docs/Target-vs-Actuals-Simpler-Table-Implementation-Plan.md` (Approved
+  31 Oct); Likely finish leaves the card (simpler table D5), so the
+  Company row point is closed.
 - **Indicative Value vs products (found at G2, 2026-10-10):** "New USG
   m/c" said ₹2L while its products totalled ₹1L. BR-FIN-03 says they must
   match, but only the screen keeps them in step. Repaired on Dev by

@@ -7,9 +7,17 @@ session edits this note._
 
 - Forecast plan (untracked, written by Antigravity — Basheer 27 Oct): commit it, and by which session? Open. At review, line 110 → BR-FIN-09.
 
+## Target vs Actuals simpler table + Target & Coverage Planning tabs — 31 Oct
+
+- Both plans Approved 31 Oct (mock-up v26); E2E plans written (redesign
+  A–C rewritten, Annual Target L1–L3, new tabs plan). Doc tidy-up,
+  archive entry and retro done; all in the 31 Oct Plan & Chore docs
+  commit (pushed). **Next:** `/build` builds the simpler table, then the
+  tabs. Harness review still due (run or skip?); 31 Oct UAT dump to Drive.
+
 ## Rollout: when planning counts — to plan (Basheer, 30 Oct)
 
-- Planning in the system won't be done properly in Oct–Dec; July–Sep deals
+- Planning in the system won't be done properly in Oct–Dec; July–Sep Opportunities
   were entered without targets (paper only). Plan the go-live quarter,
   pilot quarter, exit criteria, paper targets. Backlog "Rollout: when
   planning starts to count". **Next:** read the Backlog entry, then plan.
@@ -22,20 +30,13 @@ session edits this note._
 
 ## Hospital next-action rule — 28 Oct
 
-- Plan (Approved, D1–D5) and its E2E test plan pushed `eec66c2`. D6–D8
-  (show all next actions; Customer 360 Next Actions tab) added 30 Oct,
-  build step 3, E2E section G; pushed `1afc50d` with the 30 Oct archive
-  entry and retro.
-  **Next:** `/build` starts step 1 now (Basheer, 30 Oct); this session
-  pauses so only two run. UAT reports 30 Oct shared with Haroon, moved
-  to the main reports folder.
+- Plan Approved (D1–D8, `eec66c2`, `1afc50d`); `/build` is building it
+  (Basheer, 30 Oct).
 
 ## MUI clean-up plan — started 26 Oct
 
-- `docs/MUI-Good-Practice-Implementation-Plan.md` (Approved; history in
-  the archive 26 Oct). **Next:** Build & Test runs the Part 2 E2E, then
-  MUI step 5 (fixes by Sun 1 Nov, then before-and-after page) — Basheer,
-  27 Oct.
+- Steps 1–4 done; step 5 (round 1 fixes) is Build & Test's, after
+  `/build` merges (Basheer, 31 Oct) — in their note, item 4.
 
 ## After the UAT move (25 Oct, details in the archive)
 

@@ -652,17 +652,25 @@ element inside a card with `scrollWidth > clientWidth` runs past it. No
 step saves anything. Screen names and wording read from the code on
 2026-10-28; the Part 2 screens plan (D3) lists what is in scope.
 
-1. [Complex: all three widths] Target & Coverage Planning, as Haroon: SBU
-   Target box, Team Targets (quarter and annual), Team Plans.
-   **Expected:** on a phone each person is a card, pushed in under their
-   manager; on tablet and laptop tables, with the row under the mouse lit
-   on a laptop. —
-2. [Complex: phone] Open a plan from Team Plans. **Expected:** its
+Steps 1–3 rewritten 2026-10-31 for the tabs
+(`docs/Target-Coverage-Planning-Tabs-Implementation-Plan.md` D11); run
+after that build. Step 7's Target vs Actuals look is covered by the
+redesign E2E's phone steps (A6, B5, C6) — run it there, not here.
+
+1. [Complex: all three widths] Target & Coverage Planning, as Haroon:
+   the header (SBU choice beside Quarter/Year, period arrows), then each
+   tab — My Plan, Needs Your Approval, Team Targets (quarter and annual),
+   Team Plans. **Expected:** on a phone the tabs sit in one row that
+   scrolls sideways when they don't fit, as on My Work; in each tab each
+   person is a card, pushed in under their manager; on tablet and laptop
+   tables, with the row under the mouse lit on a laptop. —
+2. [Complex: phone] Team Plans tab: open a plan. **Expected:** its
    hospitals show as lines inside the person's card, not cards inside a
    card. —
-3. [Complex: pop-ups, all widths] Open the plan pop-up and the
-   approve/reject pop-up (no save). **Expected:** each fills the phone
-   screen; the laptop shows a normal pop-up. —
+3. [Complex: pop-ups, all widths] From the Team Plans tab, open the plan
+   pop-up; from the Needs Your Approval tab, open the approve/reject
+   pop-up (no save). **Expected:** each fills the phone screen; the
+   laptop shows a normal pop-up. —
 4. [Complex: all three widths] Rate Hospitals. **Expected:** on a phone
    the search is on its own line with 🔍 and an ✕ once typed in, "Zone"
    and "Rating" are on line 2, and each hospital is a card with its notes

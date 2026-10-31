@@ -5763,6 +5763,39 @@ moved to after the restart (Basheer).
   accepted as a judgement slip). No tracker line: none touched live data
   or UAT, lost work, or could be caught by a tool check.
 
+## 2026-10-31 — UAT backup; Target vs Actuals and Target & Coverage Planning redesign planning starts (Plan & Chore)
+
+- UAT backup `cabio_uat_2026-10-31_0659.dump` (826 KB, 535 TOC entries),
+  `C:\Backups\CabioUAT\DB_Backups`; pruned `cabio_uat_2026-10-16_0647.dump`
+  (14 kept, 17–31 Oct). Docker Desktop needed a forced close (harmless).
+  Basheer copies it to Google Drive by hand.
+- Two plans Approved (Basheer agreed mock-up v26,
+  https://claude.ai/artifact/XR3ftVbahPshwicQ9Vxsd5):
+  `docs/Target-vs-Actuals-Simpler-Table-Implementation-Plan.md` (D1–D10:
+  no boxes on Quarter/Year, PO received column, no Likely finish anywhere)
+  and `docs/Target-Coverage-Planning-Tabs-Implementation-Plan.md`
+  (D1–D11: one tab per section, bell opens the matching tab). Built in
+  that order by `/build`.
+- E2E plans written ahead of the build: redesign E2E sections A–C
+  rewritten and its 30 Oct results cleared (restarts from P1); Annual
+  Target E2E L1–L3 rewritten for the tabs; new
+  `docs/Target-Coverage-Planning-Tabs-Manual-E2E-Test-Plan.md` (24 steps).
+- Backlog entry "Target & Coverage Planning: one tab per section, like
+  My Work" (30 Oct) moved here — now that plan.
+- Documentation tidy-up: found 8, fixed 6, 2 left with Basheer (log
+  `docs/Doc-Integrity-Sweep-Log.md`).
+- MUI round 1 fixes moved to Build & Test's item 4, after `/build`'s
+  merge (Basheer). Salesperson Performance: overlap with My Work, Target
+  vs Actuals and Insights tabs written up (discussion paper section 9);
+  nothing built until Haroon answers Q1.
+- **Session retro.** Corrections from Basheer this session: **1** — he
+  had to ask whether the E2E test plan needed updating after Likely
+  finish was removed (Claude should have raised it). Not counted, caught
+  by Claude: said nothing shows salesperson figures side by side (the
+  Insights Pipeline, Team Activity and Overdue tabs already do); called
+  the 16 Oct page decision a "preference". No tracker line (no guard
+  fits; no live data or UAT touched).
+
 ## 2026-10-31 — My Work small fixes shipped (`374a2a8`, pushed) (Build & Test)
 
 - One `fix:` batch commit `374a2a8`, pushed with `0ae8e29`: My Work

@@ -44,6 +44,8 @@ a phone) and D81 (a target so far with a missing quarter is not shown).
   target, Plan for year, Still to win and the "haven't submitted a plan"
   note. Annual Target D81 still holds for what remains. Replaces Annual
   Target D31, D67 and D78 — Basheer, 2026-10-28.
+  *Changed 31 Oct by `docs/Target-vs-Actuals-Simpler-Table-Implementation-Plan.md`
+  D2, D4: no boxes; PO received so far gets its own column.*
 - D3 (was D84). The Quarter view takes the same shape (mock-up
   "Proposed — simple Quarter view"). Boxes: Target; Won (paid) with "PO
   received ₹X" as a small line under it; Won % of target; Likely finish
@@ -60,6 +62,9 @@ a phone) and D81 (a target so far with a missing quarter is not shown).
   plan and its status stay on Target & Coverage Planning. Changes Annual
   Target D79's "stay in the Quarter view" for the zone and brand tables —
   Basheer, 2026-10-28.
+  *Changed 31 Oct by `docs/Target-vs-Actuals-Simpler-Table-Implementation-Plan.md`
+  D2, D3, D5, D6: no boxes, PO received has its own column, no Likely
+  finish.*
 - D4 (was D85). Clicking a person's name in the Quarter view opens a
   screen of their own, not a row that opens underneath (mock-up
   "Proposed — a person's own screen"): the four boxes for that person, a
@@ -67,6 +72,9 @@ a phone) and D81 (a target so far with a missing quarter is not shown).
   notes on Opportunities with no closing date or no PO date. No such
   screen for the SBU row. Names in the Year view are not links (D2) —
   Basheer, 2026-10-28.
+  *Changed 31 Oct by `docs/Target-vs-Actuals-Simpler-Table-Implementation-Plan.md`
+  D7, D10: three boxes (no Likely finish); the no-closing-date note goes,
+  the no-PO-date note stays.*
 - D5 (was D86). The red "N past closing date" mark leaves Target vs
   Actuals altogether; Target vs Actuals carries no to-dos. Managers find
   late Opportunities instead in the Insights Dashboard's manager-only
@@ -113,6 +121,10 @@ a phone) and D81 (a target so far with a missing quarter is not shown).
     closing date" count and its value side by side. A count above zero
     is a red mark that can be tapped (opens My Work, D5); zero is grey
     and can't be tapped.
+  *Changed 31 Oct by `docs/Target-vs-Actuals-Simpler-Table-Implementation-Plan.md`
+  (its "On a phone"): no boxes on the Quarter and Year views; blocks show
+  Target, Won (paid) and PO received, no Likely finish; a person's own
+  screen has three boxes.*
 - D11. On the Overdue tab (D5) both of a person's counts open My Work
   with that person chosen in "Showing", straight at the matching list on
   My Work's tabs (My Work D30, D33), as a Summary box does: "Past closing
