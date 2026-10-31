@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Box, Button, ButtonBase, Checkbox, FormControlLabel, Link, MenuItem, TextField } from "@mui/material";
-import CheckIcon from "@mui/icons-material/Check";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import dayjs from "dayjs";
 import TableOrCards, { TocCell, TocRow } from "../components/TableOrCards";
+import ChipTabs from "../components/ChipTabs";
+import { centerChip } from "../utils/centerChip";
 import { LoadingOrEmpty, SectionCard } from "../components/ReportingUI";
 import CloseReminderModal from "../components/CloseReminderModal";
 import LogActivityModal from "../components/LogActivityModal";
@@ -76,16 +77,7 @@ export default function MyWorkScreen({ isActive, onSelectAccount, onSelectOpport
   const listsRef = useRef<HTMLDivElement>(null);
 
   const centerTab = useCallback((tabId: TabId, behavior: ScrollBehavior = "smooth") => {
-    setTimeout(() => {
-      const container = chipBarRef.current;
-      if (container) {
-        const chip = container.querySelector(`[data-tab="${tabId}"]`) as HTMLElement | null;
-        if (chip) {
-          const scrollLeft = chip.offsetLeft - container.offsetWidth / 2 + chip.offsetWidth / 2;
-          container.scrollTo({ left: scrollLeft, behavior });
-        }
-      }
-    }, 50);
+    setTimeout(() => centerChip(chipBarRef.current, tabId, behavior), 50);
   }, []);
 
   // Opens a tab at its top, or at one list when listId is given (D33, D34,
@@ -230,40 +222,7 @@ export default function MyWorkScreen({ isActive, onSelectAccount, onSelectOpport
       )}
 
       {/* Tab chip bar -- stays put while the tab content scrolls */}
-      <Box sx={{ position: "relative", px: 2, pt: 2, pb: 1.5, flexShrink: 0 }}>
-        <Box
-          ref={chipBarRef}
-          sx={{
-            display: "flex", gap: 1, overflowX: "auto", pb: 0.5,
-            "&::-webkit-scrollbar": { display: "none" },
-            scrollbarWidth: "none",
-            pr: "50vw",
-          }}
-        >
-          {TABS.map((tab) => {
-            const isOpen = activeTab === tab.id;
-            return (
-              <Button
-                key={tab.id}
-                data-tab={tab.id}
-                onClick={() => openTab(tab.id)}
-                sx={{
-                  flexShrink: 0, display: "flex", alignItems: "center", gap: 0.75, px: 2, py: 1,
-                  borderRadius: "9999px", typography: "body2", fontWeight: 700, whiteSpace: "nowrap",
-                  transition: "all 0.2s", border: "1px solid", textTransform: "none",
-                  ...(isOpen
-                    ? { bgcolor: "primary.main", color: "common.white", borderColor: "primary.main", boxShadow: shadows.sm }
-                    : { bgcolor: "background.paper", color: "gray.500", borderColor: "gray.200", "&:hover": { borderColor: "blue.300", color: "primary.main" } }),
-                }}
-              >
-                {isOpen && <CheckIcon fontSize="inherit" sx={{ flexShrink: 0 }} />}
-                {tab.label}
-              </Button>
-            );
-          })}
-        </Box>
-        <Box sx={{ position: "absolute", right: 0, top: 0, height: "100%", width: 40, pointerEvents: "none", background: (theme) => `linear-gradient(to left, ${theme.palette.background.default}, transparent)` }} />
-      </Box>
+      <ChipTabs tabs={TABS} value={activeTab} onChange={(id) => openTab(id)} barRef={chipBarRef} />
 
       {/* D34, D40: small tabs pick the Opportunities / Next actions list and
           stay put, like the tab bar above, while the list scrolls; the days

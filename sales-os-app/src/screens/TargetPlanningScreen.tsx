@@ -1,4 +1,4 @@
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Alert,
@@ -19,6 +19,8 @@ import SbuTargetBox, { AnnualSbuTargetCard } from "../components/SbuTargetBox";
 import TeamTargetsPanel, { AnnualTeamTargetsCard, YourTargetLine } from "../components/TeamTargetsPanel";
 import TargetPlanDetails from "../components/TargetPlanDetails";
 import TargetPlanDialog from "../components/TargetPlanDialog";
+import ChipTabs from "../components/ChipTabs";
+import { centerChip } from "../utils/centerChip";
 import { useAuth } from "../contexts/AuthContext";
 import { ApiError } from "../lib/api";
 import { listSbus } from "../services/masterData";
@@ -28,6 +30,7 @@ import {
   listPendingApproval,
   listTeamTargets,
   getTargetRoster,
+  getTeamTargets,
   approveTargetPlan,
   rejectTargetPlan,
 } from "../services/targetPlanning";
@@ -193,12 +196,21 @@ interface AnnualSbuBlock {
   byQuarter: Record<string, TargetPlan | undefined>;
 }
 
+// One tab per section (Target-Coverage-Planning-Tabs plan D2).
+type PlanTabId = "my-plan" | "approval" | "team-targets" | "team-plans";
+
 export default function TargetPlanningScreen({
   initialFocus = null,
+  isActive = true,
 }: {
   // Set when a plan notification was clicked: open on that plan's quarter
-  // and SBU with its row open (Annual Target Planning D21).
-  initialFocus?: { period: string; sbuId: string; planId: string } | null;
+  // and SBU with its row open (Annual Target Planning D21), on the tab that
+  // holds the plan (Tabs plan D5, D7). "submitted" is the manager's
+  // notification; "decided" is the owner's approved/rejected one.
+  initialFocus?: { period: string; sbuId: string; planId: string; kind: "submitted" | "decided" } | null;
+  // The screen stays mounted when another is open; the tab goes back to the
+  // opening tab whenever it is left (Tabs plan D10).
+  isActive?: boolean;
 } = {}) {
   const { userProfile } = useAuth();
   const queryClient = useQueryClient();
@@ -297,7 +309,7 @@ export default function TargetPlanningScreen({
   });
   const myAnnualGrandTotal = myAnnualBySbu.reduce((sum, b) => sum + b.total, 0);
 
-  const { data: pendingApproval = [] } = useQuery({
+  const { data: pendingApproval = [], isSuccess: pendingLoaded, isError: pendingFailed, isFetching: pendingFetching } = useQuery({
     queryKey: ["target-plans", "pending-approval"],
     queryFn: listPendingApproval,
     // A manager often leaves this screen open; without polling, a newly
@@ -361,6 +373,72 @@ export default function TargetPlanningScreen({
   const teamAnnualList = Array.from(teamAnnualByUser.values()).sort((a, b) => b.total - a.total);
   const annualRollupTotal = annualRosterQueries.reduce((sum, q) => sum + Number(q.data?.total_lakhs ?? 0), 0);
 
+  // --- Tabs (Target-Coverage-Planning-Tabs plan D2-D10) ---
+  // Team Targets is hidden when it would be empty: the viewer can't see the
+  // SBU target and no one reports to them (D9). The same requests as the
+  // Team Targets card's own, so they are fetched once.
+  const teamTargetQueries = useQueries({
+    queries: (isAnnual ? yearQuarters : [period]).map((q) => ({
+      queryKey: ["planning", "team-targets", rollupSbuId, q],
+      queryFn: () => getTeamTargets(rollupSbuId as string, q),
+      enabled: showRollup && !!rollupSbuId,
+    })),
+  });
+  const canSeeSbuTarget = !!roleName && SBU_TARGET_VIEW_ROLES.has(roleName);
+  const [chosenTab, setChosenTab] = useState<PlanTabId | null>(null);
+  // While another quarter's team is still loading, the tab stays if it is the
+  // one open -- otherwise it would vanish and the screen would jump away and
+  // back on every arrow press.
+  const teamTargetsLoading = chosenTab === "team-targets" && teamTargetQueries.some((q) => q.isPending);
+  const hasTeamTargets = canSeeSbuTarget || teamTargetsLoading || teamTargetQueries.some((q) => (q.data?.reports.length ?? 0) > 0);
+  const showTeamTargetsTab = showRollup && !!rollupSbuId && hasTeamTargets;
+
+  const tabs: { id: PlanTabId; label: string }[] = [];
+  if (showMyTarget) tabs.push({ id: "my-plan", label: "My Plan" });
+  if (showRollup) {
+    tabs.push({ id: "approval", label: pendingApproval.length > 0 ? `Needs Your Approval (${pendingApproval.length})` : "Needs Your Approval" });
+    if (showTeamTargetsTab) tabs.push({ id: "team-targets", label: "Team Targets" });
+    tabs.push({ id: "team-plans", label: "Team Plans" });
+  }
+
+  // The opening tab is worked out once the approval list has loaded (D4,
+  // D5, D7) and then kept, so a plan arriving while the screen is open does
+  // not move the manager to another tab.
+  const [focus, setFocus] = useState(initialFocus);
+  const [openingTab, setOpeningTab] = useState<PlanTabId | null>(null);
+  // A failed approval list must not leave the screen blank: open on Team
+  // Plans, as if nothing were waiting.
+  const approvalListReady = (pendingLoaded || pendingFailed) && !pendingFetching;
+  if (isActive && openingTab === null && (!showRollup || approvalListReady)) {
+    let opening: PlanTabId;
+    if (!showRollup) opening = "my-plan";
+    else if (focus?.kind === "decided") opening = showMyTarget ? "my-plan" : "team-plans";
+    else if (focus) opening = pendingApproval.some((p) => p.id === focus.planId) ? "approval" : "team-plans";
+    else opening = pendingApproval.length > 0 ? "approval" : "team-plans";
+    setOpeningTab(opening);
+  }
+  const [wasActive, setWasActive] = useState(isActive);
+  if (isActive !== wasActive) {
+    setWasActive(isActive);
+    if (!isActive) {
+      setOpeningTab(null);
+      setChosenTab(null);
+      setFocus(null);
+    }
+  }
+  // A tab that has gone (Team Targets in a quarter with no team) falls back
+  // to the opening tab.
+  const wanted = chosenTab ?? openingTab;
+  const activeTab: PlanTabId | null = wanted && tabs.some((t) => t.id === wanted) ? wanted : openingTab;
+
+  const tabBarRef = useRef<HTMLDivElement>(null);
+  const showTabBar = tabs.length > 1 && activeTab !== null;
+  useEffect(() => {
+    if (!showTabBar || !activeTab) return;
+    const timer = setTimeout(() => centerChip(tabBarRef.current, activeTab), 50);
+    return () => clearTimeout(timer);
+  }, [showTabBar, activeTab]);
+
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ["target-plans"] });
     // The Insights Dashboard's Target vs Actuals card shows plan statuses too.
@@ -421,20 +499,40 @@ export default function TargetPlanningScreen({
             <Box component="span">▶</Box>
           </IconButton>
         </Box>
-        <ToggleButtonGroup
-          size="small"
-          exclusive
-          value={viewMode}
-          onChange={(_e, v) => { if (v) setViewMode(v); }}
-        >
-          <ToggleButton value="quarterly">Quarterly</ToggleButton>
-          <ToggleButton value="annual">Annual</ToggleButton>
-        </ToggleButtonGroup>
+        <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1.5 }}>
+          {/* Admin/GM's SBU choice, for both Team Targets and Team Plans (D75, Tabs plan D8). */}
+          {showRollup && needsSbuChoice && (
+            <TextField
+              select
+              size="small"
+              label="SBU"
+              value={rollupSbuId ?? ""}
+              onChange={(e) => setSelectedSbuId(e.target.value)}
+              sx={{ minWidth: "12rem", bgcolor: "background.paper" }}
+            >
+              {sbus.map((s) => (
+                <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>
+              ))}
+            </TextField>
+          )}
+          <ToggleButtonGroup
+            size="small"
+            exclusive
+            value={viewMode}
+            onChange={(_e, v) => { if (v) setViewMode(v); }}
+          >
+            <ToggleButton value="quarterly">Quarterly</ToggleButton>
+            <ToggleButton value="annual">Annual</ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
       </Box>
 
-      {/* Scrollable content */}
-      <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0, px: { xs: 1.5, sm: 3 }, pb: 3, display: "flex", flexDirection: "column", gap: 3 }}>
-        {showMyTarget && (
+      {/* One tab per section; a rep has only My Plan, so no tab bar (D3). */}
+      {showTabBar && activeTab && <ChipTabs tabs={tabs} value={activeTab} onChange={setChosenTab} barRef={tabBarRef} />}
+
+      {/* Scrollable content -- keyed on the tab so each opens at its top. */}
+      <Box key={activeTab ?? "loading"} sx={{ flex: 1, overflowY: "auto", minHeight: 0, px: { xs: 1.5, sm: 3 }, pb: 3, display: "flex", flexDirection: "column", gap: 3 }}>
+        {activeTab === "my-plan" && showMyTarget && (
         <Box sx={CARD_SX}>
           <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5 }}>My Plan</Typography>
           {!isAnnual ? (
@@ -514,15 +612,18 @@ export default function TargetPlanningScreen({
         </Box>
         )}
 
-        {staleNotice && (
+        {activeTab === "approval" && staleNotice && (
           <Alert severity="warning" onClose={() => setStaleNotice(null)}>
             {staleNotice}
           </Alert>
         )}
 
-        {pendingApproval.length > 0 && (
+        {activeTab === "approval" && (
           <Box sx={CARD_SX}>
             <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5 }}>Needs Your Approval</Typography>
+            {pendingApproval.length === 0 ? (
+              <Typography color="text.secondary">Nothing waiting for your approval</Typography>
+            ) : (
             <TableOrCards
               columns={[{ toggle: true }, { label: "Rep" }, { label: "Period" }, { label: "Hospitals", align: "right" }, { label: "Amount" }, { label: "Actions", align: "right" }]}
             >
@@ -564,34 +665,19 @@ export default function TargetPlanningScreen({
                 );
               })}
             </TableOrCards>
+            )}
           </Box>
         )}
 
-        {/* Admin/GM's SBU choice, for both Team Targets and Team Plans below (D75). */}
-        {showRollup && needsSbuChoice && (
-          <TextField
-            select
-            size="small"
-            label="SBU"
-            value={rollupSbuId ?? ""}
-            onChange={(e) => setSelectedSbuId(e.target.value)}
-            sx={{ minWidth: "12rem", alignSelf: "flex-start", bgcolor: "background.paper", mt: 1 }}
-          >
-            {sbus.map((s) => (
-              <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>
-            ))}
-          </TextField>
-        )}
-
         {/* Its own card, above Team Targets (D75). */}
-        {showRollup && rollupSbuId && roleName && SBU_TARGET_VIEW_ROLES.has(roleName) && (isAnnual ? (
+        {activeTab === "team-targets" && showRollup && rollupSbuId && canSeeSbuTarget && (isAnnual ? (
           <AnnualSbuTargetCard key={`sbu-target-${rollupSbuId}-${fyStartYear}`} sbuId={rollupSbuId} quarters={yearQuarters} yearLabel={periodLabel} />
         ) : (
           <SbuTargetBox sbuId={rollupSbuId} period={period} />
         ))}
 
         {/* Its own card, above Team Plans (D75); hidden when no one reports to the viewer. */}
-        {showRollup && rollupSbuId && (isAnnual ? (
+        {activeTab === "team-targets" && showRollup && rollupSbuId && (isAnnual ? (
           <AnnualTeamTargetsCard
             key={`team-targets-${rollupSbuId}-${fyStartYear}`}
             sbuId={rollupSbuId}
@@ -603,7 +689,7 @@ export default function TargetPlanningScreen({
           <TeamTargetsPanel key={`team-targets-${rollupSbuId}-${period}`} sbuId={rollupSbuId} period={period} isCompanyWide={isCompanyWide} />
         ))}
 
-        {showRollup && (
+        {activeTab === "team-plans" && showRollup && (
           <Box sx={CARD_SX}>
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1, mb: 1.5 }}>
               {/* The SBU target and team targets have their own cards above (D75). */}

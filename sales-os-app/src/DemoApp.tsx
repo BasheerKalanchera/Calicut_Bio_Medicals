@@ -137,7 +137,7 @@ export default function DemoApp() {
   const [view, setView] = useState(() => (isMarketingUser ? "marketingLeads" : "myWork"));
   // The plan a bell click asked to open; nonce re-mounts Target & Coverage
   // Planning even when the same plan is clicked twice.
-  const [targetPlanFocus, setTargetPlanFocus] = useState<{ period: string; sbuId: string; planId: string; nonce: number } | null>(null);
+  const [targetPlanFocus, setTargetPlanFocus] = useState<{ period: string; sbuId: string; planId: string; kind: "submitted" | "decided"; nonce: number } | null>(null);
   const [isSidebarOpen, setIsSidebarOpen]       = useState(false);
   // Insights' Overdue tab opening My Work on one person's list.
   const [myWorkRequest, setMyWorkRequest]       = useState<MyWorkRequest | null>(null);
@@ -974,7 +974,7 @@ export default function DemoApp() {
             </Box>
             {/* Re-mounted on each plan notification click so it opens on
                 that plan's quarter and SBU (Annual Target Planning D21). */}
-            <TargetPlanningScreen key={targetPlanFocus?.nonce ?? 0} initialFocus={targetPlanFocus} />
+            <TargetPlanningScreen key={targetPlanFocus?.nonce ?? 0} initialFocus={targetPlanFocus} isActive={view === "targetPlanning"} />
           </Box>
 
           <Box sx={{ flex: 1, overflow: "hidden", display: view === "brandTargetTracking" ? "flex" : "none", flexDirection: "column" }}>
