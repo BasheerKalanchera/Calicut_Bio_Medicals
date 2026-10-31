@@ -5936,3 +5936,30 @@ moved to after the restart (Basheer).
   Build session; he asked for the implications. No tracker line: none is
   guard-stoppable. Habit going forward: write the E2E cases in the same turn
   as the fix; check the Build worktree before proposing any wide change.
+
+## 2026-10-31 — Target & Coverage Planning tabs step 1 and Target vs Actuals simpler table steps 1–2 built, pushed (Build, parallel)
+
+- Both built in the `worktree-build` branch, merge into `main` still to come
+  (after `/test` runs the E2E). Neither plan needs a migration.
+- Tabs step 1, the screen: commit `7a8a201`, pushed. Pre-commit
+  `/code-review` found two real problems, fixed before the commit: a blank
+  screen if the approval list fails to load, and the Team Targets tab
+  flickering while stepping through quarters.
+- Simpler Table steps 1–2, server and screens: commit `c490eb9`, pushed.
+  Quarter and Year views are one table each (boxes gone); Year gains a
+  "PO received so far" column from the server; Likely finish no longer
+  shown anywhere on the card (the server still sends it, D3); phone uses the
+  standard cards, one line per figure (Basheer, 31 Oct). `/code-review`
+  (medium) gave 7 findings: 1 taken (a test for PO received when a quarter
+  has no target), 6 dismissed after reading the code. Planning tests 258
+  pass, type check clean, lint 0 errors (135 warnings, as before), ruff
+  clean. Not run in a browser.
+- Order: Basheer asked for Tabs first, then Simpler Table; the two plans
+  share no files. Tabs plan D1 amended to say so; Simpler Table D1 ("built
+  first") to be corrected in the docs batch.
+- **Retro, Build (parallel) 31 Oct — corrections from Basheer: 1.** He did
+  not understand the review finding "Team Targets content jumps while
+  stepping through quarters" and asked for a proper explanation (counted
+  from the 23 genuine messages in the session log). His phone-layout answer
+  was a decision on an open question, not a correction. No tracker line:
+  nothing guard-stoppable, no live data, UAT or lost work.

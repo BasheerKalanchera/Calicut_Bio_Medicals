@@ -1,6 +1,9 @@
 # Target vs Actuals: Simpler Table — Implementation Plan
 
 **Status:** Approved, 2026-10-31 — Basheer agreed the mock-up.
+**Build progress:** steps 1–2 (server and screens) built 2026-10-31, commit
+`c490eb9`, pushed; step 3 (docs, pre-E2E review, E2E) pending. Merge into
+`main` pending the E2E. No migration.
 **Traceability rows:** signed 3.2 ("Real-time actual-vs-target via
 role-specific dashboards").
 **Design / discussion:** follows `docs/Target-vs-Actuals-Redesign-Implementation-Plan.md`
@@ -14,8 +17,9 @@ under "31 Oct — simpler table" — agreed by Basheer, 2026-10-31.
 
 - D1. Two plans, decided in one round: this one (Target vs Actuals), and
   `docs/Target-Coverage-Planning-Tabs-Implementation-Plan.md`. This one is
-  built first, because Annual Target Part 2 goes to UAT only with the
-  Target vs Actuals redesign (Redesign D8) — Basheer, 2026-10-31.
+  built second (Basheer asked for the tabs first; the two share no
+  files). Annual Target Part 2 still goes to UAT only with the Target vs
+  Actuals redesign (Redesign D8) — Basheer, 2026-10-31.
 - D2. The boxes at the top go from both the Quarter and the Year view;
   the table's Company, SBU and team rows already show the same figures.
   The small "This quarter · as of …" line stays. A person's own screen
@@ -85,9 +89,10 @@ Target Part 2 and the redesign (D8).
 ### On a phone
 
 No boxes at the top. Each row is a stacked block as today (Annual Target
-D76): name (a rep's indented, "reports to <manager>"), then Target, Won
-(paid) and PO received side by side, then the bar and %. Company and SBU
-blocks shaded. A person's own screen: three boxes, two to a row, the third
+D76): name (a rep's indented, "reports to <manager>"), then one line each
+for Target, Won (paid), PO received and Won %, as every table on a phone
+does (Basheer, 2026-10-31: standard cards, no side by side). Company and
+SBU blocks shaded. A person's own screen: three boxes, two to a row, the third
 across the full width.
 
 ## 2. Build order

@@ -8,7 +8,7 @@ Also covers `docs/Target-vs-Actuals-Simpler-Table-Implementation-Plan.md`
 (D2–D7, D10): sections A–C rewritten 2026-10-31 for the simpler table —
 no boxes on the Quarter and Year views, a PO received column, no Likely
 finish anywhere, three boxes on a person's own screen.
-**Built:** redesign merged 29 Oct (`3bafbc0`); the simpler table not yet.
+**Built:** redesign merged 29 Oct (`3bafbc0`); the simpler table `c490eb9` on `worktree-build`, pushed, not yet merged.
 **Where:** Dev, after `/build` merges the simpler table into `main`.
 **Restart (Simpler table D9):** the run parked at 6 of 40 on 30 Oct
 (Progress-Archive 2026-10, 30 Oct). Its results are cleared here and the
@@ -158,8 +158,9 @@ beside it in brackets. This plan creates none.
 6. [Complex: phone layout] Year view at 390, 768 and 1280 px, FY 2026-27
    and FY 2027-28. **Expected (390):** header on three lines (title; SBU
    choice with Quarter/Year; period with arrows); no boxes; Company and
-   SBU as shaded blocks, each person a block — name, then Target so far,
-   Won so far and PO received so far side by side, then the bar and %;
+   SBU as shaded blocks, each person a block — name, then one line each
+   for Target so far, Won (paid) so far, PO received so far and Won % of
+   target;
    each rep's block indented with "reports to <manager>"; 768 and 1280
    as tables. Nothing runs past the card. —
 
@@ -186,8 +187,8 @@ beside it in brackets. This plan creates none.
    Opportunities. —
 5. [Complex: phone layout] Quarter view at 390, 768 and 1280 px.
    **Expected (390):** no boxes; Company and SBU shaded blocks; each
-   person a block — name, then Target, Won (paid), PO received side by
-   side, then the bar and %; reps indented with "reports to <manager>";
+   person a block — name, then one line each for Target, Won (paid),
+   PO received and Won %; reps indented with "reports to <manager>";
    768 and 1280 as tables. Nothing runs past the card. —
 
 ## C — A person's own screen (D4; Simpler table D7, D10)

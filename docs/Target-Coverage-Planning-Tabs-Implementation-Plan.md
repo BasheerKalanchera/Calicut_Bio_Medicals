@@ -1,6 +1,8 @@
 # Target & Coverage Planning: One Tab per Section — Implementation Plan
 
 **Status:** Approved, 2026-10-31 — Basheer agreed the mock-up.
+**Build progress:** step 1 (the screen) built 2026-10-31, commit `7a8a201`,
+pushed; merge into `main` pending the E2E. No server change, no migration.
 **Traceability rows:** signed 3.1 ("Sales target configuration:
 individual, team, regional" — 6.4 Target Management; layout only, row
 stays Done).
@@ -12,8 +14,9 @@ agreed by Basheer, 2026-10-31.
 
 ## Decisions
 
-- D1. Its own plan, built after `docs/Target-vs-Actuals-Simpler-Table-Implementation-Plan.md`
-  — Basheer, 2026-10-31.
+- D1. Its own plan. Built before `docs/Target-vs-Actuals-Simpler-Table-Implementation-Plan.md`;
+  the two share no files, so the order doesn't matter — Basheer,
+  2026-10-31.
 - D2. The screen's sections become tabs: **My Plan**, **Needs Your
   Approval (N)**, **Team Targets** (the SBU target and the team's
   targets), **Team Plans**. The Quarter/Year switch and the period arrows
@@ -132,6 +135,7 @@ File and line numbers re-read at build.
 - `initialFocus {period, sbuId, planId}` gains which tab to open:
   `NotificationBell.tsx:80–91` knows the notification `type`
   (`TARGET_PLAN_SUBMITTED` / `_APPROVED` / `_REJECTED`).
-- `SubTabs` (local to `MyWorkScreen.tsx:456`) moves to a shared
-  component (D10).
+- The pill row (`ChipTabs`, taken out of `MyWorkScreen.tsx`) is now the
+  shared component `components/ChipTabs.tsx` (D10); `SubTabs` stays in
+  My Work.
 - No server change, no migration.

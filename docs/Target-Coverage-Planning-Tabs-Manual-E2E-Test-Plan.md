@@ -4,7 +4,7 @@
 **Covers:** `docs/Target-Coverage-Planning-Tabs-Implementation-Plan.md`
 (D2–D10). Annual Target E2E L1–L3 (look at three widths) are rewritten
 for the tabs there (D11) and run with this plan.
-**Built:** not yet — commit hashes filled in after the build.
+**Built:** `7a8a201` on `worktree-build`, pushed; not yet merged into `main`.
 **Where:** Dev, after `/build` merges the tabs into `main`.
 
 ## Checked against live data

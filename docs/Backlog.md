@@ -268,9 +268,9 @@ recommendation: brands' 2027 years start in January, so no partial brand
 year); C — wait for Apr–Jun 2027, the start of the Indian financial year.
 Risks: paper and system disagree (name which is authoritative per
 quarter); FY 2026-27 Year view is a partial year; pilot never ends
-without exit criteria. Touches the parked Target vs Actuals redesign (how
-a pilot quarter shows) and Backlog "Target & Coverage Planning: one tab
-per section". Likely an ADR. Basheer decides the option.
+without exit criteria. Touches the Target vs Actuals redesign (how
+a pilot quarter shows) and the Target & Coverage Planning tabs (built,
+awaiting merge). Likely an ADR. Basheer decides the option.
 
 ### User Directory: org tree view — not started (2026-10-24)
 
