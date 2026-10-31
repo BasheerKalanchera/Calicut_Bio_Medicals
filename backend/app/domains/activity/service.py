@@ -427,6 +427,26 @@ class ReminderService:
         )
         return items, total
 
+    def list_for_project(
+        self,
+        project_id: uuid.UUID,
+        *,
+        include_completed: bool = False,
+        page: int = 1,
+        page_size: int = 50,
+    ) -> tuple[list[Reminder], int]:
+        if not self.repository.project_exists(project_id):
+            raise NotFoundError(f"Project {project_id} not found")
+        offset = (page - 1) * page_size
+        items = self.repository.list_by_project(
+            project_id,
+            include_completed=include_completed,
+            offset=offset,
+            limit=page_size,
+        )
+        total = self.repository.count_by_project(project_id, include_completed=include_completed)
+        return items, total
+
     def create_reminder(
         self,
         data: ReminderCreate,

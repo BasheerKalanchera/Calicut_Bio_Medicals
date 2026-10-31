@@ -309,6 +309,9 @@ class ReminderRepository(BaseRepository[Reminder]):
     def account_exists(self, account_id: uuid.UUID) -> bool:
         return (self.db.scalar(select(1).where(Account.id == account_id)) or 0) > 0
 
+    def project_exists(self, project_id: uuid.UUID) -> bool:
+        return (self.db.scalar(select(1).where(Project.id == project_id)) or 0) > 0
+
     def has_open_for_user_on_opportunity(self, opportunity_id: uuid.UUID, user_id: uuid.UUID) -> bool:
         # BR-ACT-11: only next actions assigned to this person count, and
         # only those whose creating Activity is on this Opportunity (same
@@ -461,6 +464,52 @@ class ReminderRepository(BaseRepository[Reminder]):
             select(func.count(Reminder.id))
             .join(Activity, Reminder.activity_id == Activity.id)
             .where(Activity.opportunity_id == opportunity_id)
+            .where(Reminder.is_completed == include_completed)
+        )
+        return self.db.scalar(stmt) or 0
+
+    @staticmethod
+    def _on_project(project_id: uuid.UUID):
+        # Hospital next-action plan D9: a next action belongs to a Project when
+        # its Activity was logged on the Project, or on one of the Project's
+        # Opportunities (an Activity logged from the Opportunity screen carries
+        # no Project of its own). The Opportunity half is a subquery, not a
+        # join, so the reminder list stays within its query-size guard.
+        return or_(
+            Activity.project_id == project_id,
+            Activity.opportunity_id.in_(select(Opportunity.id).where(Opportunity.project_id == project_id)),
+        )
+
+    def list_by_project(
+        self,
+        project_id: uuid.UUID,
+        *,
+        include_completed: bool = False,
+        offset: int = 0,
+        limit: int = 50,
+    ) -> list[Reminder]:
+        stmt = (
+            select(Reminder)
+            .options(*_reminder_display_options(include_completed))
+            .join(Activity, Reminder.activity_id == Activity.id)
+            .where(self._on_project(project_id))
+            .where(Reminder.is_completed == include_completed)
+            .order_by(*_REMINDER_ORDER)
+            .offset(offset)
+            .limit(limit)
+        )
+        return list(self.db.scalars(stmt).all())
+
+    def count_by_project(
+        self,
+        project_id: uuid.UUID,
+        *,
+        include_completed: bool = False,
+    ) -> int:
+        stmt = (
+            select(func.count(Reminder.id))
+            .join(Activity, Reminder.activity_id == Activity.id)
+            .where(self._on_project(project_id))
             .where(Reminder.is_completed == include_completed)
         )
         return self.db.scalar(stmt) or 0

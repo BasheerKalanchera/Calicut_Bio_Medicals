@@ -1291,6 +1291,42 @@ class TestListForAccount:
         )
 
 
+class TestListForProject:
+    def test_raises_not_found_when_project_missing(self):
+        repo = _make_reminder_repo()
+        repo.project_exists.return_value = False
+        svc = ReminderService(repository=repo, activity_repository=_make_activity_repo())
+
+        with pytest.raises(NotFoundError):
+            svc.list_for_project(uuid.uuid4(), page=1, page_size=50)
+        repo.list_by_project.assert_not_called()
+
+    def test_returns_items_and_total(self):
+        repo = _make_reminder_repo()
+        reminders = [_make_reminder()]
+        repo.list_by_project.return_value = reminders
+        repo.count_by_project.return_value = 1
+        svc = ReminderService(repository=repo, activity_repository=_make_activity_repo())
+
+        items, total = svc.list_for_project(uuid.uuid4(), page=1, page_size=50)
+
+        assert items == reminders
+        assert total == 1
+
+    def test_pending_by_default_and_paging_forwarded(self):
+        repo = _make_reminder_repo()
+        svc = ReminderService(repository=repo, activity_repository=_make_activity_repo())
+        project_id = uuid.uuid4()
+
+        svc.list_for_project(project_id, page=3, page_size=25)
+        svc.list_for_project(project_id, include_completed=True, page=1, page_size=50)
+
+        repo.list_by_project.assert_any_call(project_id, include_completed=False, offset=50, limit=25)
+        repo.count_by_project.assert_any_call(project_id, include_completed=False)
+        repo.list_by_project.assert_any_call(project_id, include_completed=True, offset=0, limit=50)
+        repo.count_by_project.assert_any_call(project_id, include_completed=True)
+
+
 class TestListForOpportunity:
     def test_raises_not_found_when_opportunity_missing(self):
         repo = _make_reminder_repo()

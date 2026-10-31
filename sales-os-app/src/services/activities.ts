@@ -148,6 +148,17 @@ export async function listOpportunityReminders(
   });
 }
 
+// Hospital-next-action plan D9: every next action on a Project -- its own and
+// those on the Opportunities under it.
+export async function listProjectReminders(
+  projectId: string,
+  includeCompleted = false,
+): Promise<ReminderResponse[]> {
+  return fetchAllReminderPages(`/projects/${projectId}/reminders`, {
+    include_completed: includeCompleted,
+  });
+}
+
 // Hospital-next-action plan: every open next action at a hospital -- or, with
 // hospitalLevelOnly, just those with no Opportunity and no Project.
 export async function listAccountReminders(

@@ -275,6 +275,21 @@ class TestReminderListQuerySize:
         self._assert_only_displayed_tables(sql)
         assert sql.count(" join ") == 8
 
+    # Project list (hospital next-action plan D9): same joins as the
+    # Opportunity list -- the Opportunity half of its filter is a subquery.
+    def test_list_by_project_pending_has_eight_joins(self):
+        sql = self._compiled(lambda repo: repo.list_by_project(uuid.uuid4()))
+        self._assert_only_displayed_tables(sql)
+        assert sql.count(" join ") == 8
+
+    def test_list_by_project_completed_has_fourteen_joins(self):
+        sql = self._compiled(lambda repo: repo.list_by_project(uuid.uuid4(), include_completed=True))
+        self._assert_only_displayed_tables(sql)
+        assert sql.count(" join ") == 14
+
+    def test_list_by_project_order_is_due_date_then_logged_then_id(self):
+        self._assert_stable_order(self._compiled(lambda repo: repo.list_by_project(uuid.uuid4())))
+
     # Completed list: every row has a closing activity the screen shows, so
     # it joins in the same statement (6 more joins).
     def test_list_for_user_completed_joins_closing_activity(self):
@@ -428,6 +443,45 @@ class TestNextActionRuleQueries:
         assert f"activity.account_id = '{account_id}'" in sql
         assert "activity.opportunity_id is null" in sql
         assert "activity.project_id is null" in sql
+
+    def test_list_by_project_matches_the_projects_own_and_its_opportunities_next_actions(self):
+        project_id = uuid.uuid4()
+        sql = self._list_sql(lambda repo: repo.list_by_project(project_id))
+
+        assert f"activity.project_id = '{project_id}'" in sql
+        assert f"opportunity.project_id = '{project_id}'" in sql
+        assert "activity.opportunity_id in (select opportunity.id" in sql
+        assert " or " in sql
+        assert "reminder.is_completed = false" in sql
+
+    def test_list_by_project_completed_flag_and_paging(self):
+        sql = self._list_sql(
+            lambda repo: repo.list_by_project(uuid.uuid4(), include_completed=True, offset=100, limit=25)
+        )
+
+        assert "reminder.is_completed = true" in sql
+        assert "limit 25 offset 100" in sql
+
+    def test_count_by_project_filters_like_the_list(self):
+        project_id = uuid.uuid4()
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 4
+        repo = ReminderRepository(mock_db)
+
+        assert repo.count_by_project(project_id) == 4
+        sql = str(
+            mock_db.scalar.call_args.args[0].compile(
+                dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True}
+            )
+        ).lower()
+        assert f"activity.project_id = '{project_id}'" in sql
+        assert f"opportunity.project_id = '{project_id}'" in sql
+        assert "reminder.is_completed = false" in sql
+
+    def test_project_exists_true_when_row_found(self):
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 1
+        assert ReminderRepository(mock_db).project_exists(uuid.uuid4()) is True
 
     def test_get_opportunity_status_code_joins_status(self):
         opp_id = uuid.uuid4()

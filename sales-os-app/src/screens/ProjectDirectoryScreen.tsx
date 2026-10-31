@@ -13,6 +13,8 @@ import { useAuth } from "../contexts/AuthContext";
 import FormModal from "../components/FormModal";
 import QuickLeadModal from "../components/QuickLeadModal";
 import ActivityTimeline from "../components/ActivityTimeline";
+import NextActionsPanel from "../components/NextActionsPanel";
+import { listProjectReminders } from "../services/activities";
 import useDebouncedValue from "../hooks/useDebouncedValue";
 
 const SHADOW_SM = "0 1px 2px rgba(0,0,0,0.05)";
@@ -22,6 +24,7 @@ const DETAIL_TABS = [
   { id: "overview", label: "Overview" },
   { id: "opportunities", label: "Opportunities" },
   { id: "activity", label: "Activity" },
+  { id: "next-actions", label: "Next Actions" },
 ];
 
 // Minimal shape DemoApp.tsx's selectedProject state actually needs — this
@@ -205,6 +208,17 @@ function ProjectDetailView({
           <Box sx={{ bgcolor: "#fff", borderRadius: "1.5rem", boxShadow: SHADOW_SM, border: "1px solid #f3f4f6", p: 2.5 }}>
             <ActivityTimeline projectId={p.id} onLogActivity={() => openLogActivityRef?.current?.()} />
           </Box>
+          )}
+
+          {/* Next Actions -- the Project's own and those on its Opportunities (plan D9) */}
+          {activeTab === "next-actions" && (
+            <NextActionsPanel
+              queryKeyPrefix={["project-reminders", p.id]}
+              fetchReminders={(includeCompleted) => listProjectReminders(p.id, includeCompleted)}
+              emptyPendingMessage="No pending next actions on this Project."
+              currentUserId={(userProfile as any)?.id}
+              onSelectOpportunity={onSelectOpportunity}
+            />
           )}
         </Box>
       </Box>
