@@ -147,6 +147,15 @@ to decide: change the code, or change the rule.
 - **Decided (Basheer, 2026-10-26):** done together with "deal" →
   "Opportunity" below — one pass, one commit (same screens, manual and
   help).
+- **Timing decided (Basheer, 2026-10-31):** the sweep waits until the
+  parallel Build session's hospital next-action rule is merged into `main`
+  and tested, so one pass also covers the new wording that branch adds
+  (about 101 lines mention "hospital" or "deal", an estimate, not sorted)
+  and the many shared files merge without clashes. Not started until then;
+  start by re-running the search of the screens on the merged code. The
+  A (change) / B (keep internal names) / C (keep real hospital wording)
+  split and the renames "Rate Customers" and "My customers" are still
+  waiting for Basheer's yes.
 
 ### File deletes: ask "Are you sure?" first — not started (2026-10-25)
 
@@ -157,6 +166,12 @@ to decide: change the code, or change the rule.
   brochure's delete in Product Catalogue (`ProductCatalogScreen.tsx:214`;
   Admin, GM). The server removes the stored file and its row
   (`document/service.py:123–127`), so there is no undo.
+- **Parked (Basheer, 2026-10-31):** both wait until the parallel Build
+  session's hospital next-action rule is merged. Reason: committing an
+  edit to `OpportunityDetailScreen.tsx` (179 MUI-standard breaches, 2,127
+  lines) or `ProductCatalogScreen.tsx` (29) forces a whole-file move to the
+  theme, and Build's branch has also edited the Opportunity screen. Counts
+  from `check-mui-standard.js --all`, 31 Oct.
 - **Decided (Basheer, 2026-10-25):** ask "Delete this file? This can't
   be undone." before both. The stakeholder "×" on an Opportunity stays as
   it is (it only removes the link; easy to add back); removing a person's

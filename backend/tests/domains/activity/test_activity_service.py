@@ -492,7 +492,7 @@ class TestLogActivity:
             next_action_due_date=None,
         )
 
-    @pytest.mark.parametrize("role_name", ["Sales Executive", "Marketing User", "Not a real role"])
+    @pytest.mark.parametrize("role_name", ["Sales Staff", "Marketing User", "Not a real role"])
     def test_manager_note_refused_for_non_manager_roles(self, role_name):
         activity_repo = _make_activity_repo()
         svc = self._svc(activity_repo=activity_repo)
@@ -587,7 +587,7 @@ class TestLogActivity:
                     next_action_due_date=None,
                 ),
                 created_by=ACTOR_ID,
-            role_name="Sales Executive",
+                role_name="Sales Executive",
             )
 
     def test_user_id_defaults_to_created_by_when_not_provided(self):

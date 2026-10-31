@@ -13,7 +13,8 @@ and in-app help (merge-time catch-up). E2E test plan written 2026-10-25
 28–29 Oct (Basheer, Fahad / Fazal / Vivek / Marketing User) — every
 step recorded Pass; fixes during the run: `048c741`, `4deb68c` (Stagnant
 500), `c7977f2` (tabs + Summary, D30–D33), `676a05d` (small tabs, Summary
-look, Rep dropdown, D34–D41). One thing not exercised: the red "N days
+look, Rep dropdown, D34–D41), `374a2a8` (31 Oct: D42 reset, scroll-to-top,
+"Back to Insights" bar D43; E2E step H13 Pass). One thing not exercised: the red "N days
 overdue" badge on a hospital (no overdue next action on Dev).
 **Traceability rows:** 11.1 Weekly Follow-up Report (Not started). Also
 touches 6.1 Beat Planning (Not started) once hospital-wise planning is on

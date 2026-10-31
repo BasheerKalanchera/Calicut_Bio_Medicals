@@ -7,6 +7,13 @@ confirmed resolved: that commit's own "KNOWN ISSUE, NOT YET DEBUGGED" (
 urgent popup/bell red-dot not reliably firing on a fresh login) — fired
 correctly on every fresh-login repro this pass (TC-8, TC-12).
 
+**Added 31 Oct 2026:** section G (TC-16 to TC-21) tests "Manager Note for
+managers only" (BR-ACT-02), built in `843c552`. Run 31 Oct 2026: 6 of 6 Pass. Two
+older cases change meaning from that commit: TC-13 can no longer be
+repeated with a rep (Rudrappa), since a rep is now refused — repeat it with
+a manager (Shruthi) logging against herself; TC-2 and TC-3 need a manager
+login to see the Manager Note choice at all.
+
 ## Setup
 
 - A Sales Staff rep (**R**) and their manager (**M**) — reuse the
@@ -128,6 +135,67 @@ it actually fires.
   `entity_type="activity"` join or the widened `onSelectOpportunity`/new
   `onSelectAccount` props.
 
+## G. Manager Note for managers only (BR-ACT-02, commit `843c552`, 31 Oct 2026)
+
+Logins (Dev, read 31 Oct from the user list): **Rudrappa** — Sales Staff
+(Imaging; manager Shruthi); **Shruthi** and **Fazal** — Area Manager;
+**Basheer K** — SBU Manager; one active **Admin** and one active **General
+Manager**; two active **Marketing User** logins. The managers are the
+Admin, General Manager, SBU Manager and Area Manager roles. TC-18 saves one
+Manager Note, and Activities cannot be deleted, so that note stays on Dev
+for good (the same as TC-4 did).
+
+- [x] **TC-16 — [Simple] A Sales Staff login does not see Manager Note.**
+  Log in as Rudrappa. Open Log Activity from Customer 360 (any account he
+  can see), then again from inside one of his own Opportunities' Activity
+  tab, and open the **Type** list each time.
+  **Expect:** "📋 Manager Note" is not in the list either time. If a Marketing User can
+  open Log Activity, repeat once as one of the Marketing User logins:
+  same result.
+
+- [x] **TC-17 — [Simple] All four manager roles do see it.** Log in as, in
+  turn, Shruthi (Area Manager), Basheer K (SBU Manager), the Admin login
+  and the General Manager login. Open Log Activity and open the **Type**
+  list. Do not save.
+  **Expect:** "📋 Manager Note" is in the list for all four.
+
+- [x] **TC-18 — [Simple] A manager can still save one.** As Shruthi, from
+  Customer 360 on Al Shifa Hospital, log a Manager Note against Rudrappa
+  (Urgent unticked), save. Then open Al Shifa Hospital's Activity tab.
+  **Expect:** saved with no error and shown in the Activity tab. (Rudrappa
+  gets the usual bell notification, as in TC-5.)
+
+- [x] **TC-19 — [Simple] A Sales Staff login can still log everything
+  else.** As Rudrappa, open Log Activity and open the **Type** list.
+  **Expect:** the other types are all still there (Call, Visit and the
+  rest), Call is still the one chosen when the form opens, and logging a
+  Call works as before. Save nothing new unless a Call is needed for
+  another case.
+
+- [x] **TC-20 — [Complex: server check] The server refuses it even if the
+  screen is bypassed.** Verified by the backend tests
+  `test_manager_note_refused_for_non_manager_roles` (Sales Staff,
+  Marketing User and an unknown role are refused, nothing is saved) and
+  `test_manager_note_allowed_for_the_four_manager_roles`, the same way TC-14
+  was covered. The refusal reaches the screen as a "forbidden" error with
+  the message "Only Admin, General Manager, SBU Manager or Area Manager can
+  log a Manager Note."
+  **Expect:** both tests pass in the full backend run.
+
+- [x] **TC-21 — [Complex: phone layout] Log Activity looks the same.** The
+  form's colours and text sizes moved to the theme in the same commit. As
+  Shruthi, at 390, 768 and 1280 px, open Log Activity (a) from Customer 360,
+  (b) from inside an Opportunity's Activity tab (the "Linked to this
+  opportunity" label shows), (c) from inside a Project, if one is
+  available (the "Linked to this project" label shows), and (d) on an
+  Opportunity where Shruthi herself has an open next action (the yellow
+  "Close it, saying what happened…" warning shows). Click both tabs,
+  **Details** and **Next Action ***, each time.
+  **Expect:** nothing runs past the pop-up, the active tab is blue with
+  white text and the other grey, the labels are small blue-on-pale-blue
+  capitals, and the warning text is readable. Any change from before
+  (tab buttons about 1 pixel taller or shorter is expected, nothing more).
+
 ---
 
 ## Results log
@@ -152,3 +220,9 @@ to `docs/Progress-Archive-2026-09.md` once the full pass is complete.
 | 13 | Pass   | Rudrappa logged Manager Note against himself -- saved, no notification, bell unchanged |
 | 14 | Pass   | Verified via backend test `test_is_urgent_on_non_manager_note_raises` (schema-level, same rule a raw API call would hit) instead of a manual REST call |
 | 15 | Pass   | Reassigned Opportunity "Good Marketing lead" to Rudrappa -- correct plain-assignment copy, no urgent popup, click-through landed on Overview tab (not Activity), read-receipt cleared -- no regression from the new entity_type="activity" join |
+| 16 | Pass   | 31 Oct 2026, Rudrappa (Sales Staff): no Manager Note in the Type list, from Customer 360's Activity tab and from an Opportunity's Activity tab |
+| 17 | Pass   | 31 Oct 2026, Basheer reported Pass: Manager Note in the Type list for Area Manager, SBU Manager, Admin and General Manager (per-login detail not itemised) |
+| 18 | Pass   | 31 Oct 2026, run as Haroon Sidheeq (General Manager), not Shruthi: Manager Note saved from Al Shifa Hospital's Activity tab; note stays on Dev |
+| 19 | Pass   | 31 Oct 2026, Rudrappa (Sales Staff): the other activity types are all still in the Type list |
+| 20 | Pass   | 31 Oct 2026: Basheer accepted the backend tests as the pass (208 in the activity folder; 1,449 in the full run) |
+| 21 | Pass   | 31 Oct 2026, run as Haroon Sidheeq (General Manager): Log Activity looks right at 390, 768 and 1280 px, from Customer 360 and from an Opportunity; the Project and open-next-action-warning variants were not itemised |

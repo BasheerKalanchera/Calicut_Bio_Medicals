@@ -5762,3 +5762,63 @@ moved to after the restart (Basheer).
   first checking what the screen shows or who can see it (existing P2,
   accepted as a judgement slip). No tracker line: none touched live data
   or UAT, lost work, or could be caught by a tool check.
+
+## 2026-10-31 — My Work small fixes shipped (`374a2a8`, pushed) (Build & Test)
+
+- One `fix:` batch commit `374a2a8`, pushed with `0ae8e29`: My Work
+  "Back to Insights" bar when opened from Insights' Overdue tab (plan D43);
+  lists scroll to top on tab / small-tab change; leaving Opportunities
+  resets the days box and 70 %+ tick (D42); Target vs Actuals percentages
+  show two decimals (may be moot after its redesign). Basheer chose both
+  recommended options for the bar (clears on a main-tab tap; wording "Back
+  to Insights" only).
+- Found in use: the first version returned to Insights' first tab (Target
+  vs Actuals) because Insights resets itself whenever it is hidden. Fixed in
+  the same batch: the back bar now asks Insights to open on Overdue
+  (`startRequest` prop); the side menu still opens Target vs Actuals.
+- Checks before commit: type check clean, lint 0 errors (133 warnings, not
+  compared with before), Tailwind and MUI checks pass. No front-end tests
+  exist. E2E step H13 added and marked Pass for the bar and the return to
+  Overdue; its "bar stays after opening a hospital" and "gone after a menu
+  tap" halves were not separately reported.
+
+## 2026-10-31 — Manager Note for managers only shipped (`843c552`, pushed) (Build & Test)
+
+- `fix:` commit `843c552` (BR-ACT-02): the server refuses a Manager Note
+  from anyone but Admin, General Manager, SBU Manager and Area Manager (403,
+  nothing saved); Log Activity hides "Manager Note" from other roles. 7 new
+  backend tests; full run 1,449 pass; type check, ruff and lint clean.
+  Earlier Manager Notes stay as they are.
+- The first commit attempt was stopped by the MUI-standard check: 12 old
+  breaches in the Log Activity pop-up (hex colours, typed text sizes). Basheer
+  chose to fix them in the same commit (theme colours and text sizes).
+- Dev roles read-only 31 Oct: Rudrappa and Fahad = Sales Staff; Shruthi and
+  Fazal = Area Manager; Basheer K = SBU Manager. The old test plan called
+  Rudrappa a "rep" and had him log a Manager Note (TC-13) — no longer
+  possible.
+- E2E section G (TC-16 to TC-21) in
+  `Manager-Note-Notification-Manual-E2E-Test-Plan.md`: 6 of 6 Pass, 31 Oct.
+  TC-18 and TC-21 were run as Haroon Sidheeq (General Manager) in place of
+  Shruthi; TC-20 accepted on the backend tests. One Manager Note left on Dev
+  (Al Shifa Hospital, to Rudrappa).
+- Pre-E2E `/code-review` (medium) of `843c552`: no blocker. One cosmetic
+  fix (a mis-indented test line, in the next small-fixes commit); the Manager
+  Note role list now sits in three places (two backend, one screen) — left as
+  it is, same pattern as Marketing Leads; the new text style may make Log
+  Activity tab buttons a pixel or two taller (TC-21 looked, no complaint).
+- Parked by Basheer (31 Oct) until the parallel Build session's hospital
+  next-action rule is merged: the "Hospital" → "Customer" / "deal" →
+  "Opportunity" wording sweep (still needs his yes to the A/B/C split and
+  the renames "Rate Customers", "My customers") and the "Are you sure?"
+  pop-up before file deletes. Why: the Build branch edits the same screens
+  and adds about 101 new lines mentioning "hospital" or "deal" (estimate,
+  not sorted); editing the Opportunity screen (179 MUI-standard breaches)
+  or the Catalogue screen (29) forces a whole-file migration. A trial merge
+  of the Build branch into `main` showed no code conflicts from `843c552`.
+- **Retro, Build & Test 31 Oct — corrections from Basheer: 3.** (1) The
+  "Back to Insights" bar returned to the wrong tab; he found it in use.
+  (2) I committed the Manager Note fix without its E2E cases; he asked for
+  them. (3) I proposed the wording sweep without checking the parallel
+  Build session; he asked for the implications. No tracker line: none is
+  guard-stoppable. Habit going forward: write the E2E cases in the same turn
+  as the fix; check the Build worktree before proposing any wide change.
