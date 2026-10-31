@@ -5942,6 +5942,16 @@ moved to after the restart (Basheer).
 - **Approved.** Basheer said "yes to all" to the seven open decisions in
   `docs/Activity-Type-Table-Implementation-Plan.md` (D4 Outcome/Learning
   column, D7 everyone signed in reads the table, D8 the database's hospital
+- **Hospital & Project next-action E2E, 31 Oct — Completed lists order fix.**
+  Basheer found it hard to see where a new item landed on a Next Actions tab.
+  Every reminder list sorted by due date, soonest first. Pending stays so;
+  Completed now sorts most recently closed first (`reminder.updated_at` desc,
+  then due date, then id; the database trigger bumps it on close, so no new
+  column or join). Four list functions in
+  `backend/app/domains/activity/repository.py`; 5 new repository tests; activity
+  folder 260 passed, ruff clean. Uncommitted, goes in the end-of-E2E small-fixes
+  batch with the Customer 360 tab reorder.
+
   check reads the table, D9 Note icon for a type with none, D10 vendor
   pipeline script left alone, D11 Dev then the next normal UAT move, D12
   changing an existing type's answers stays a developer change). The
@@ -5972,3 +5982,37 @@ moved to after the restart (Basheer).
   the paid Starter tier.
 - **Handover pruned** to its limit (build queue merged into one section;
   MUI step 5 left to Build & Test's note).
+
+### Hospital & Project next-action E2E, 31 Oct — result and what was committed
+
+- **Result:** 37 of 37 steps recorded in
+  `docs/Hospital-Next-Action-Rule-Manual-E2E-Test-Plan.md`: 34 Pass; G6
+  (Dev has 16 open rows, under the old cap of 50), D4 and D5's Project half
+  not tested for lack of Dev data. Phone, tablet and laptop (F1–F4) Pass
+  (Basheer). Before the run: pytest 1496, ruff, tsc, lint clean; after the
+  fixes: pytest 1501.
+- **Finding G2 (SBU boundary):** Basheer K (Imaging) correctly does not see
+  Nishad K V's Critical Care next action "Call him next week"; Haroon (GM)
+  sees all 8. The plan's expected count was corrected from 8 to 7 for
+  Basheer K.
+- **Finding, Completed order:** fixed and pushed as `268570f` (see the entry
+  above).
+- **Finding, Customer 360 tab position:** Next Actions tab moved right after
+  Activity. The edit is in the working tree only: the pre-commit MUI check
+  refuses any commit touching `Customer360Screen.tsx` (165 typed colour and
+  text-size hits, same count as MUI plan step 5 item 5), so it rides in
+  Customer 360's MUI round 1 commit (Basheer, 31 Oct).
+
+- **Retro, Build & Test (hospital & Project next-action E2E), 31 Oct —
+  corrections from Basheer this session: 3.** (1) I told him "left menu
+  Projects" for H1/H4; there is no such item, Projects is a sub-tab of
+  Account Management. (2) C4 said "A1 again"; he asked if C3 was meant, and
+  I reworded it. (3) After the push I wrote as if the backend commit had
+  not happened ("I thought I asked you to commit the backend files first"):
+  it had, as `268570f`; my message was unclear. Counted from the messages
+  visible after the context summary plus the summary's list of his
+  messages. No tracker line: none was a slip a tool check could stop, and
+  none touched live data. Process note (not a correction): I proposed a
+  commit with `Customer360Screen.tsx` before running the MUI check, which
+  refused it; I committed the two backend files without re-showing the
+  shortened message, as I had said I would.
