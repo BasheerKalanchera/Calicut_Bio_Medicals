@@ -30,11 +30,32 @@ the build branch, and reaches `main` at the merge (Basheer, 2026-10-17)._
   Log Activity forms refresh `["project-reminders"]`; `api.ts`
   regenerated. Checks: pytest 1478 passed (10 new), ruff, tsc clean, lint
   0 errors. Not run in a browser (E2E after merge). No migration.
-- **Next:** docs batch for steps 4–5 (this note, plan Status/progress,
-  Progress-Archive entry, and the E2E plan's Project-screen cases for
-  D9, D10, D12 — load `cabio-e2e-testing` before touching the test plan),
-  shown to Basheer before committing. Then step 6: check in before it; the
-  E2E itself runs after the merge (`/test`, or Build & Test).
+- **Docs batch `c310575`, pushed (31 Oct):** this note, plan Status,
+  Progress-Archive entry, E2E plan sections H, E3, F4 (D9, D10, D12).
+  P4 still has to check which Opportunities sit under "Another new
+  project" and "Project 2".
+- **Code review of `2b5a113`…`406adcd` done (31 Oct):** nothing broken. At
+  Basheer's call two changes followed, **committed `1119312`, pushed
+  (31 Oct):** D13 (Close pop-up offers "Also close:" at hospital and
+  Project level; `key` on `ProjectDetailView` so each Project opens on
+  Overview) and D14 (`GET /accounts/{id}/reminders` takes
+  `assigned_to_user_id` and `project_id`; Log Activity and the Close
+  pop-up use them; tabs unchanged). pytest 1484 passed, ruff, tsc, lint
+  0 errors, `api.ts` regenerated.
+- **Code review of `1119312` done (31 Oct):** one real finding fixed in
+  `e9418e9`, pushed: the account list now refuses `hospital_level` +
+  `project_id` together (was a silent empty list); router tests added.
+  Five other findings dismissed after reading the code. activity tests
+  247 passed, ruff clean; full suite, tsc, lint not re-run (backend-only).
+- **Uncommitted docs (for the docs batch):** plan D13 + D14, E2E case D4 /
+  P4 note, Backlog (over-fetch entry removed), this note. Still to add:
+  E2E case for D14, plan Status line, Progress-Archive note, retro.
+- **Next:** the docs batch + retro (shown first), then on Basheer's go the
+  merge.
+  The retro (count of Basheer's corrections) goes in the Progress-Archive
+  31 Oct entry just before the merge. The E2E itself is `/test`'s (or
+  Build & Test's if `/test` isn't running) after the merge; the Dev
+  backend must be restarted first.
 - Merge, when Basheer says go: bring `main` into the branch, settle shared
   docs (Backlog, Progress-Archive: keep both sides), rebuild `api.ts`,
   re-run tests, then merge into `main`; no migration to apply.

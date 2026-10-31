@@ -123,7 +123,9 @@ next action (E3). Activities can't be deleted.
   2" (Aster MIMS Calicut) — in particular whether "zz NA E2E – project"
   (Aster MIMS Calicut) is under "Another new project" — and any open
   next action on them. Not yet checked: H3, H4 and H6 are worded for
-  both answers and corrected here once P4 has them. —
+  both answers and corrected here once P4 has them. For D4: any Dev user
+  with two or more open Project-level next actions (no Opportunity) on one
+  Project. —
 
 ## A — Hospital level (D1, D3)
 
@@ -223,6 +225,30 @@ next action (E3). Activities can't be deleted.
    "Test due-today…", follow-up "zz E2E HR D3 follow-up", fill "What was
    done? *", "Complete". Basheer clicks. **Expected:** both closed, one
    follow-up added; D1 again lists only the D2 and D3 follow-ups. —
+4. [Complex: data-dependent, save] D13. Only if P4 found a user with two
+   or more open next actions of their own on one Project and no
+   Opportunity (the Log Activity rule stops anyone creating a second on
+   Dev, so it can't be made here); otherwise "Not tested on Dev — no such
+   data". As that user, the Project's Next Actions tab → "Mark to
+   complete" on one. **Expected:** "Also close:" lists only that user's
+   other open Project-level next actions on this Project; nothing from
+   the hospital level, another Project, an Opportunity, or another
+   person. Tick one, follow-up "zz E2E HR D4 follow-up", fill "What was
+   done? *", "Complete". Basheer clicks. **Expected (read back):** both
+   closed by the same activity, one follow-up added. —
+5. [Complex: data-dependent, cross-person] D14 (the pop-ups ask the
+   server for only the right person's, at the right level). Needs, from
+   P4, one hospital where a different Dev user also has an open
+   hospital-level next action, and one Project where a different user has
+   an open Project-level one; otherwise "Not tested on Dev — no such
+   data". As Basheer K: Log Activity, that hospital, "None —
+   hospital-level", type 📞 Call. **Expected:** the "must close" list holds
+   only Basheer K's own hospital-level next actions, none of the other
+   user's. Repeat on that Project (Log Activity from the Project screen).
+   **Expected:** only Basheer K's own Project-level ones, none from the
+   hospital level, an Opportunity, or the other user. Then in the "Also
+   close:" list of step 3 or 4 again look for the other user's rows.
+   **Expected:** none. —
 
 ## E — A visit that produced a new Opportunity (D5)
 

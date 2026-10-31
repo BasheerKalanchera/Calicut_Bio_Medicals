@@ -2,11 +2,14 @@
 
 **Status:** Approved 2026-10-28 (Basheer), D1–D5; D6–D8 added
 2026-10-30 (Basheer); D9–D12 added 2026-10-30 (Basheer, Project screen).
+D13 and D14 added 2026-10-31 (Basheer, after the code review).
 Steps 1–5 built on branch `worktree-build` (31 Oct: `2b5a113`, `421fc63`,
-`f129bb0`, `0e99f99`, `406adcd`), pushed, not yet merged into `main`;
+`f129bb0`, `0e99f99`, `406adcd`), plus D13 and D14 (`1119312`) and a
+review fix (`e9418e9`), all pushed, not yet merged into `main`;
 step 6 (E2E on Dev) follows the merge. E2E test plan written 2026-10-28,
 section G added 2026-10-30, section H, E3 and F4 (D9, D10, D12) added
-2026-10-31 (`docs/Hospital-Next-Action-Rule-Manual-E2E-Test-Plan.md`).
+2026-10-31, D4 and D5 (D13, D14) added 2026-10-31
+(`docs/Hospital-Next-Action-Rule-Manual-E2E-Test-Plan.md`).
 **Traceability rows:** Activity logging / Next Actions rows (unchanged in
 what they cover; this tightens BR-ACT-11).
 **Design / discussion:** `docs/Next-Action-Rules-Implementation-Plan.md`
@@ -70,6 +73,23 @@ the gap).
   the new Opportunity lands under the Project. A Project can start with
   no Opportunity and gain several later, each blocking only itself (D3)
   — Basheer, 2026-10-30
+- D13. Pressing Close on a hospital-level or Project-level next action
+  offers the same "Also close:" tick list as on an Opportunity (Opportunity
+  plan D22): the same person's other open next actions at the same
+  hospital (no Opportunity, no Project) or the same Project (no
+  Opportunity), closed together with one "what happened" note. The server
+  already accepts this (step 1). Added after the code review of steps 1–5;
+  the team already knows the Opportunity flow, live on UAT — Basheer,
+  2026-10-31
+- D14. The hospital next-actions list on the server (`GET
+  /accounts/{id}/reminders`) gains two optional filters, "assigned to this
+  person" and "on this Project (no Opportunity)", so Log Activity's "close
+  first" check and the Close pop-up's "Also close:" download only the
+  rows they need, not the whole hospital's for the browser to filter. The
+  filters add a condition only, so the query-size guard is unchanged. The
+  Customer 360, Project and Opportunity Next Actions tabs are left as
+  they are, everyone's, every row (D6–D9); revisit with a "Show more" only
+  if a hospital's list grows large — Basheer, 2026-10-31
 
 ## Figures and sources
 

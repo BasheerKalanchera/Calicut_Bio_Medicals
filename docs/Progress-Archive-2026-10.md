@@ -5754,3 +5754,36 @@ moved to after the restart (Basheer).
   (a Project-level close that produces a new Opportunity, D12) and F4
   (phone layout) added. Which Opportunities sit under "Another new
   project" and "Project 2" is not yet checked on Dev; P4 does it.
+
+### Code review of steps 1–5, D13, D14, review fix (31 Oct, Build, parallel)
+
+- Medium `/code-review` of `2b5a113`…`406adcd`: ten findings, no broken
+  behaviour. Three acted on: Basheer's call (D13) that the Close pop-up
+  offers "Also close:" at hospital and Project level like on an
+  Opportunity; a `key` on the Project detail so each Project opens on
+  Overview; and the Log Activity pop-up over-fetch. The rest dismissed
+  after reading the code.
+- D14 (Basheer, "leave the tabs for now"): `GET /accounts/{id}/reminders`
+  takes `assigned_to_user_id` and `project_id` (Project level = no
+  Opportunity). Log Activity and the Close pop-up use them. Only WHERE
+  conditions added, so the join counts (8 pending, 14 completed) are
+  unchanged. Tabs still fetch everyone's rows, every page (D6); add a
+  "Show more" only if a hospital's list grows large. `1119312`, pushed:
+  pytest 1484 passed, ruff, tsc, lint 0 errors, `api.ts` regenerated.
+- Medium `/code-review` of `1119312`: six findings, one real. `hospital_level`
+  plus `project_id` together returned a silent empty list (it reads as
+  "nothing blocks you"); now refused, router tests added: `e9418e9`,
+  pushed, activity tests 247 passed, ruff clean. Five dismissed: server
+  already returns only open rows; the empty-while-loading gap pre-dates
+  the change; key naming is tidiness; the server always loads each
+  reminder's Project and hospital.
+- Order slip: the step 4–5 docs batch (`c310575`) was committed before the
+  code review; Basheer noted it should have been after.
+- **Retro, corrections from Basheer this session: 4** — (1) code review
+  should have come before the docs batch commit; (2) asked me to explain
+  the hospital/Project Close pop-up finding, which I had written too
+  tersely; (3) asked "What is this — Backlog: I added the Log Activity
+  over-fetch entry?", plain language again missed; (4) "Why can't we
+  filter the fetch for the rep asking for it?", my recommendation had been
+  to defer, and the better fix was to do it now (D14). No tracker line:
+  none could be stopped by a tool check.
