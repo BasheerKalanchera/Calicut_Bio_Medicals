@@ -277,6 +277,17 @@ def _activity_display_options(relationship, loader=joinedload):
 # longer); id as the last tie-break so the order is identical on every load.
 _REMINDER_ORDER = (Reminder.due_date.asc(), Reminder.created_at.asc(), Reminder.id.asc())
 
+# Completed lists: the one closed most recently first, so a next action just
+# closed is at the top. A reminder has no completed-on column; the database
+# bumps updated_at on every update (trigger trg_updated_at), so for a closed
+# one it is the moment it was closed. Several closed in one go (the "Also
+# close" tick list) share a time -> soonest due first, then id.
+_COMPLETED_REMINDER_ORDER = (Reminder.updated_at.desc(), Reminder.due_date.asc(), Reminder.id.asc())
+
+
+def _reminder_order(include_completed: bool):
+    return _COMPLETED_REMINDER_ORDER if include_completed else _REMINDER_ORDER
+
 
 def _reminder_display_options(include_completed: bool):
     # Without these, each reminder pulls ~118 joined tables in one statement
@@ -413,7 +424,7 @@ class ReminderRepository(BaseRepository[Reminder]):
             stmt = stmt.where(Reminder.due_date >= due_after)
         if due_before is not None:
             stmt = stmt.where(Reminder.due_date <= due_before)
-        stmt = stmt.order_by(*_REMINDER_ORDER).offset(offset).limit(limit)
+        stmt = stmt.order_by(*_reminder_order(include_completed)).offset(offset).limit(limit)
         return list(self.db.scalars(stmt).all())
 
     def count_for_user(
@@ -448,7 +459,7 @@ class ReminderRepository(BaseRepository[Reminder]):
             .join(Activity, Reminder.activity_id == Activity.id)
             .where(Activity.opportunity_id == opportunity_id)
             .where(Reminder.is_completed == include_completed)
-            .order_by(*_REMINDER_ORDER)
+            .order_by(*_reminder_order(include_completed))
             .offset(offset)
             .limit(limit)
         )
@@ -494,7 +505,7 @@ class ReminderRepository(BaseRepository[Reminder]):
             .join(Activity, Reminder.activity_id == Activity.id)
             .where(self._on_project(project_id))
             .where(Reminder.is_completed == include_completed)
-            .order_by(*_REMINDER_ORDER)
+            .order_by(*_reminder_order(include_completed))
             .offset(offset)
             .limit(limit)
         )
@@ -563,7 +574,7 @@ class ReminderRepository(BaseRepository[Reminder]):
             assigned_to_user_id=assigned_to_user_id,
             project_id=project_id,
         )
-        stmt = stmt.order_by(*_REMINDER_ORDER).offset(offset).limit(limit)
+        stmt = stmt.order_by(*_reminder_order(include_completed)).offset(offset).limit(limit)
         return list(self.db.scalars(stmt).all())
 
     def count_by_account(

@@ -262,6 +262,39 @@ class TestReminderListQuerySize:
             self._compiled(lambda repo: repo.list_by_opportunity(uuid.uuid4()))
         )
 
+    # Completed lists: most recently closed first (updated_at desc), then
+    # soonest due, then id. All four list functions share the one order.
+    def _assert_completed_order(self, sql: str) -> None:
+        clause = self._order_by(sql)
+        closed = clause.index("reminder.updated_at desc")
+        due = clause.index("reminder.due_date asc")
+        row_id = clause.index("reminder.id")
+        assert closed < due < row_id
+        assert "reminder.created_at" not in clause
+
+    def test_list_for_user_completed_order_is_most_recently_closed_first(self):
+        self._assert_completed_order(
+            self._compiled(lambda repo: repo.list_for_user(uuid.uuid4(), include_completed=True))
+        )
+
+    def test_list_by_opportunity_completed_order_is_most_recently_closed_first(self):
+        self._assert_completed_order(
+            self._compiled(lambda repo: repo.list_by_opportunity(uuid.uuid4(), include_completed=True))
+        )
+
+    def test_list_by_project_completed_order_is_most_recently_closed_first(self):
+        self._assert_completed_order(
+            self._compiled(lambda repo: repo.list_by_project(uuid.uuid4(), include_completed=True))
+        )
+
+    def test_list_by_account_completed_order_is_most_recently_closed_first(self):
+        self._assert_completed_order(
+            self._compiled(lambda repo: repo.list_by_account(uuid.uuid4(), include_completed=True))
+        )
+
+    def test_list_by_account_pending_order_is_due_date_then_logged_then_id(self):
+        self._assert_stable_order(self._compiled(lambda repo: repo.list_by_account(uuid.uuid4())))
+
     # Pending list: the closing activity is a separate lookup (no joins of
     # its own in the main statement). list_by_opportunity has one extra join
     # for its own Activity filter.
