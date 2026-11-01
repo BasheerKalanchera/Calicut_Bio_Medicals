@@ -19,7 +19,7 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import FormModal from "../components/FormModal";
 import SbuTargetBox, { AnnualSbuTargetCard } from "../components/SbuTargetBox";
-import TeamTargetsPanel, { AnnualTeamTargetsCard, YourTargetLine } from "../components/TeamTargetsPanel";
+import TeamTargetsPanel, { AnnualTeamTargetsCard, YourAnnualTargetLine, YourTargetLine } from "../components/TeamTargetsPanel";
 import TargetPlanDetails from "../components/TargetPlanDetails";
 import TargetPlanDialog from "../components/TargetPlanDialog";
 import ChipTabs from "../components/ChipTabs";
@@ -295,12 +295,17 @@ export default function TargetPlanningScreen({
     enabled: showMyTarget,
   });
 
-  const myPeriodTargets = myTargets.filter((t) => t.planning_period === period);
+  // Admin/GM's SBU choice applies to My Plan too: only the chosen SBU's row
+  // (Tabs plan D13). Everyone else sees all of their own SBUs, as before.
+  const planSbus: TargetPlanSbu[] = showRollup && needsSbuChoice && rollupSbuId ? mySbus.filter((s) => s.id === rollupSbuId) : mySbus;
+  const planSbuIds = new Set(planSbus.map((s) => s.id));
+
+  const myPeriodTargets = myTargets.filter((t) => t.planning_period === period && planSbuIds.has(t.sbu_id));
   const mySbuIdsWithTarget = new Set(myPeriodTargets.map((t) => t.sbu_id));
-  const myAvailableSbus = mySbus.filter((s) => !mySbuIdsWithTarget.has(s.id));
+  const myAvailableSbus = planSbus.filter((s) => !mySbuIdsWithTarget.has(s.id));
   const myPeriodTotal = myPeriodTargets.reduce((sum, t) => sum + countedLakhs(t), 0);
 
-  const myAnnualBySbu: AnnualSbuBlock[] = mySbus.map((sbu) => {
+  const myAnnualBySbu: AnnualSbuBlock[] = planSbus.map((sbu) => {
     const byQuarter: Record<string, TargetPlan | undefined> = {};
     let total = 0;
     for (const q of yearQuarters) {
@@ -312,13 +317,23 @@ export default function TargetPlanningScreen({
   });
   const myAnnualGrandTotal = myAnnualBySbu.reduce((sum, b) => sum + b.total, 0);
 
-  const { data: pendingApproval = [], isSuccess: pendingLoaded, isError: pendingFailed, isFetching: pendingFetching, refetch: refetchPending } = useQuery({
+  const { data: pendingAll = [], isSuccess: pendingLoaded, isError: pendingFailed, isFetching: pendingFetching, refetch: refetchPending } = useQuery({
     queryKey: ["target-plans", "pending-approval"],
     queryFn: listPendingApproval,
     // A manager often leaves this screen open; without polling, a newly
     // submitted plan only appeared after a reload or window refocus.
     refetchInterval: 60_000,
   });
+  // The server sends every plan waiting for this approver, in any period and
+  // SBU. The list and its tab count show only the chosen period (the year,
+  // in Annual view) and, for Admin/GM, the chosen SBU (Tabs plan D12); the
+  // rest are counted under the list so nothing is hidden.
+  const pendingApproval = pendingAll.filter(
+    (t) =>
+      (isAnnual ? yearQuarters.includes(t.planning_period) : t.planning_period === period) &&
+      (!(showRollup && needsSbuChoice) || t.sbu_id === rollupSbuId),
+  );
+  const pendingElsewhere = pendingAll.length - pendingApproval.length;
 
   // Quarter view: everyone in the viewer's scope, plan or not, and the same
   // total the Target vs Actuals card shows (Target-Coverage-Roster plan).
@@ -400,8 +415,8 @@ export default function TargetPlanningScreen({
   if (showMyTarget) tabs.push({ id: "my-plan", label: "My Plan" });
   if (showRollup) {
     tabs.push({ id: "approval", label: pendingApproval.length > 0 ? `Needs Your Approval (${pendingApproval.length})` : "Needs Your Approval" });
-    if (showTeamTargetsTab) tabs.push({ id: "team-targets", label: "Team Targets" });
     tabs.push({ id: "team-plans", label: "Team Plans" });
+    if (showTeamTargetsTab) tabs.push({ id: "team-targets", label: "Team Targets" });
   }
 
   // The opening tab is worked out once the approval list has loaded (D4,
@@ -411,7 +426,9 @@ export default function TargetPlanningScreen({
   const [openingTab, setOpeningTab] = useState<PlanTabId | null>(null);
   // A failed approval list must not leave the screen blank: open on Team
   // Plans, as if nothing were waiting.
-  const approvalListReady = (pendingLoaded || pendingFailed) && !pendingFetching;
+  // Admin/GM: also wait for the SBU list, since "waiting" means in the chosen
+  // SBU (D12, D15) and none is chosen until it has loaded.
+  const approvalListReady = (pendingLoaded || pendingFailed) && !pendingFetching && (!(showRollup && needsSbuChoice) || !!rollupSbuId);
   // A "plan submitted" click opens the approval tab without waiting for the
   // list: the list in memory may be up to 30 seconds old and not yet hold
   // that plan, so it is refreshed below instead of trusted.
@@ -512,7 +529,7 @@ export default function TargetPlanningScreen({
           </IconButton>
         </Box>
         <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1.5 }}>
-          {/* Admin/GM's SBU choice, for both Team Targets and Team Plans (D75, Tabs plan D8). */}
+          {/* Admin/GM's SBU choice, for every tab (D75, Tabs plan D8, D13). */}
           {showRollup && needsSbuChoice && (
             <TextField
               select
@@ -555,7 +572,7 @@ export default function TargetPlanningScreen({
           {!isAnnual ? (
             <>
               {!isCompanyWide && userProfile?.sbu && <YourTargetLine sbuId={userProfile.sbu.id} period={period} />}
-              {mySbus.length > 1 && (
+              {planSbus.length > 1 && (
                 <Typography sx={{ mb: 1.5 }}>
                   Total across SBUs: <strong>{formatLakhs(myPeriodTotal)}</strong>
                 </Typography>
@@ -588,6 +605,7 @@ export default function TargetPlanningScreen({
             </>
           ) : (
             <>
+              {!isCompanyWide && userProfile?.sbu && <YourAnnualTargetLine sbuId={userProfile.sbu.id} quarters={yearQuarters} yearLabel={periodLabel} />}
               {myAnnualBySbu.length > 1 && (
                 <Typography sx={{ mb: 1.5 }}>
                   Grand Total across SBUs: <strong>{formatLakhs(myAnnualGrandTotal)}</strong>
@@ -639,7 +657,9 @@ export default function TargetPlanningScreen({
           <Box sx={CARD_SX}>
             <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5 }}>Needs Your Approval</Typography>
             {pendingApproval.length === 0 ? (
-              <Typography color="text.secondary">Nothing waiting for your approval</Typography>
+              <Typography color="text.secondary">
+                {pendingElsewhere > 0 ? `Nothing waiting for your approval in ${periodLabel}` : "Nothing waiting for your approval"}
+              </Typography>
             ) : (
             <TableOrCards
               columns={[{ toggle: true }, { label: "Rep" }, { label: "Period" }, { label: "Hospitals", align: "right" }, { label: "Amount" }, { label: "Actions", align: "right" }]}
@@ -682,6 +702,12 @@ export default function TargetPlanningScreen({
                 );
               })}
             </TableOrCards>
+            )}
+            {pendingElsewhere > 0 && (
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
+                {pendingElsewhere} more waiting in {pendingElsewhere === 1 ? "another" : "other"}{" "}
+                {needsSbuChoice ? (pendingElsewhere === 1 ? "period or SBU" : "periods or SBUs") : pendingElsewhere === 1 ? "period" : "periods"}
+              </Typography>
             )}
           </Box>
         )}

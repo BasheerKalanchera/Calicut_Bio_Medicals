@@ -31,6 +31,33 @@ export function YourTargetLine({ sbuId, period }: { sbuId: string; period: strin
   );
 }
 
+// Annual view of the line above (Tabs plan D16): the four quarterly targets
+// added up, as the SBU Target card does (Annual Target Planning D47). The
+// same requests as the quarter line's, so nothing extra is fetched.
+export function YourAnnualTargetLine({ sbuId, quarters, yearLabel }: { sbuId: string; quarters: string[]; yearLabel: string }) {
+  const results = useQueries({
+    queries: quarters.map((q) => ({
+      queryKey: ["planning", "team-targets", sbuId, q],
+      queryFn: () => getTeamTargets(sbuId, q),
+    })),
+  });
+  if (results.some((r) => r.isError || !r.data)) return null;
+  const set = results
+    .map((r) => r.data!.own_target_lakhs)
+    .filter((v) => v !== null)
+    .map(Number);
+  return (
+    <Typography sx={{ mb: 1.5 }}>
+      Your target for {yearLabel}:{" "}
+      {set.length > 0 ? (
+        <strong>{formatLakhs(set.reduce((a, b) => a + b, 0))}</strong>
+      ) : (
+        <Typography component="span" color="text.secondary">Not set yet</Typography>
+      )}
+    </Typography>
+  );
+}
+
 // Each manager divides their own quarterly target among the people who
 // report to them, one figure per person, with a warning while the figures
 // don't add up (D33). Admin/GM divide the SBU target among the people at the
