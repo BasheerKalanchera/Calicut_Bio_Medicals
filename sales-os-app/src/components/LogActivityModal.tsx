@@ -417,19 +417,20 @@ export default function LogActivityModal({
             )}
             <TextField
               select
-              // Unlabeled for every other activity type (unchanged) -- but
+              // "Logged For" for every other activity type (named 1 Nov 2026,
+              // MUI round 1; it was unlabeled) -- but
               // Manager Note is the one type where this field ("logged
               // against," BR-ACT-04) genuinely differs from who's writing
               // it, and silently defaulting to yourself here means "no one
               // to notify." A real label makes it unmissable specifically
               // for that type (2026-09-08 live testing: two managers each
               // left this on themselves, expecting the rep to be notified).
-              label={isManagerNote ? "This Note Is For *" : undefined}
+              label={isManagerNote ? "This Note Is For *" : "Logged For"}
               value={userId}
               onChange={(e) => setUserId(e.target.value)}
               fullWidth
               size="small"
-              slotProps={{ select: { displayEmpty: true } }}
+              slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
             >
               <MenuItem value="">Me (default)</MenuItem>
               {users.map((u) => (
