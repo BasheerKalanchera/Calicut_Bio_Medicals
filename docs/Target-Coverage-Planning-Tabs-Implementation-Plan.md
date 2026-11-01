@@ -57,8 +57,7 @@ agreed by Basheer, 2026-10-31.
   waiting outside them, e.g. "3 more waiting in other periods", so
   nothing is hidden. Until now the list showed every plan waiting in any
   period (4 for Haroon on 1 Nov: Oct–Dec 2026, Jan–Mar 2027, Apr–Jun
-  2027 ×2). D4's opening-tab rule then looks at the chosen period and
-  SBU. A bell click on a "submitted" plan still opens that plan (D5,
+  2027 ×2). The opening tab does not narrow the same way (D15). A bell click on a "submitted" plan still opens that plan (D5,
   D7), in its own period — Basheer, 2026-11-01.
 - D13. Found at A5. The SBU choice (Admin and GM) now applies to every
   tab: My Plan shows only the chosen SBU's row, as Team Targets and Team
@@ -69,9 +68,13 @@ agreed by Basheer, 2026-10-31.
   Team Targets (Team Plans moves above Team Targets), so both tabs the
   screen opens on sit next to My Plan. Replaces the order in D2 —
   Basheer, 2026-11-01.
-- D15. Opening tab stays as D4 (Needs Your Approval when something is
-  waiting, else Team Plans; D12 narrows "waiting" to the chosen period
-  and SBU) — Basheer, 2026-11-01.
+- D15. Opening tab as D4: Needs Your Approval when anything is waiting
+  for the viewer **in any period or SBU** (not narrowed to the chosen
+  ones, so a plan in another quarter is not missed), else Team Plans.
+  The tab's count and list follow D12; with none in the chosen period it
+  says so and the "more waiting in other periods" line shows — Basheer,
+  2026-11-01 (reworded the same day; the first wording narrowed "waiting"
+  to the chosen period and SBU).
 - D16. Found at A2. My Plan in the Annual view gains a "Your target for
   FY 2026-27: ₹X" line: the four quarterly targets added up, as the SBU
   Target card does (Annual Target D47); "Not set yet" when none is set.

@@ -426,9 +426,7 @@ export default function TargetPlanningScreen({
   const [openingTab, setOpeningTab] = useState<PlanTabId | null>(null);
   // A failed approval list must not leave the screen blank: open on Team
   // Plans, as if nothing were waiting.
-  // Admin/GM: also wait for the SBU list, since "waiting" means in the chosen
-  // SBU (D12, D15) and none is chosen until it has loaded.
-  const approvalListReady = (pendingLoaded || pendingFailed) && !pendingFetching && (!(showRollup && needsSbuChoice) || !!rollupSbuId);
+  const approvalListReady = (pendingLoaded || pendingFailed) && !pendingFetching;
   // A "plan submitted" click opens the approval tab without waiting for the
   // list: the list in memory may be up to 30 seconds old and not yet hold
   // that plan, so it is refreshed below instead of trusted.
@@ -437,7 +435,10 @@ export default function TargetPlanningScreen({
     if (!showRollup) opening = "my-plan";
     else if (focus?.kind === "decided") opening = showMyTarget ? "my-plan" : "team-plans";
     else if (focus) opening = "approval";
-    else opening = pendingApproval.length > 0 ? "approval" : "team-plans";
+    // Anything waiting for this approver, in any period or SBU (Tabs plan
+    // D15), so a plan in another quarter is not missed; the tab itself
+    // says how many are waiting elsewhere.
+    else opening = pendingAll.length > 0 ? "approval" : "team-plans";
     setOpeningTab(opening);
   }
   const [wasActive, setWasActive] = useState(isActive);
