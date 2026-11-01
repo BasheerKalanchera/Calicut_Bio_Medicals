@@ -421,7 +421,7 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
         disableEnforceFocus={showNewOpportunity}
       >
         {firstActivity && (
-          <Typography sx={{ fontSize: "0.75rem", color: "#4b5563" }}>
+          <Typography sx={{ typography: "caption", color: "gray.600" }}>
             Every new Opportunity starts with the conversation that led to it, and a next action. Create saves all three together.
           </Typography>
         )}
@@ -450,13 +450,13 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
           </TextField>
         )}
         {noteOnly && (
-          <Typography sx={{ fontSize: "0.75rem", color: "#4b5563" }}>
+          <Typography sx={{ typography: "caption", color: "gray.600" }}>
             You have no open next action on this Opportunity, so this is saved as a Note.
           </Typography>
         )}
         {reminder && ownReminders.length <= 1 && !closeChoices && (
-          <Box sx={{ px: 1.5, py: 1, borderRadius: "0.75rem", bgcolor: "#f9fafb", fontSize: "0.75rem", color: "#4b5563" }}>
-            <Box sx={{ fontWeight: 700, color: "#374151" }}>
+          <Box sx={{ px: 1.5, py: 1, borderRadius: "0.75rem", bgcolor: "gray.50", typography: "caption", color: "gray.600" }}>
+            <Box sx={{ fontWeight: 700, color: "gray.700" }}>
               {/* "your" only in stage-change mode: Close can be for someone else's (loggedForUserId). */}
               Closing {stageChange ? "your" : "this"} next action (due {dayjs(reminder.due_date).format("D MMM")}):
             </Box>
@@ -465,8 +465,8 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
         )}
         {/* Plan D22: close several of one person's at once; none start ticked. */}
         {tickChoices.length > 0 && (
-          <Box sx={{ px: 1.5, py: 1, borderRadius: "0.75rem", bgcolor: "#f9fafb", fontSize: "0.75rem", color: "#4b5563" }}>
-            <Box sx={{ fontWeight: 700, color: "#374151" }}>
+          <Box sx={{ px: 1.5, py: 1, borderRadius: "0.75rem", bgcolor: "gray.50", typography: "caption", color: "gray.600" }}>
+            <Box sx={{ fontWeight: 700, color: "gray.700" }}>
               {closeChoices ? "Next actions to close *" : "Also close:"}
             </Box>
             {[...tickChoices]
@@ -484,7 +484,7 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
                     />
                   }
                   label={
-                    <Typography sx={{ fontSize: "0.75rem", whiteSpace: "pre-line" }}>
+                    <Typography sx={{ typography: "caption", whiteSpace: "pre-line" }}>
                       {r.reminder_text} — due {dayjs(r.due_date).format("D MMM YYYY")}
                     </Typography>
                   }
@@ -501,12 +501,12 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
             onClick={() => setActiveTab("details")}
             disableRipple
             sx={{
-              px: 2, py: 1, fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
+              typography: "caption", px: 2, py: 1, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
               borderTopLeftRadius: "0.5rem", borderTopRightRadius: "0.5rem",
               borderBottomLeftRadius: "0.5rem", borderBottomRightRadius: "0.5rem",
               bgcolor: activeTab === "details" ? "primary.main" : "transparent",
-              color: activeTab === "details" ? "#fff" : "#9ca3af",
-              "&:hover": { bgcolor: activeTab === "details" ? "primary.main" : "#f3f4f6", color: activeTab === "details" ? "#fff" : "#4b5563" },
+              color: activeTab === "details" ? "common.white" : "gray.400",
+              "&:hover": { bgcolor: activeTab === "details" ? "primary.main" : "gray.100", color: activeTab === "details" ? "common.white" : "gray.600" },
             }}
           >
             Details
@@ -516,12 +516,12 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
             onClick={() => setActiveTab("followUp")}
             disableRipple
             sx={{
-              px: 2, py: 1, fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
+              typography: "caption", px: 2, py: 1, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
               borderTopLeftRadius: "0.5rem", borderTopRightRadius: "0.5rem",
               borderBottomLeftRadius: "0.5rem", borderBottomRightRadius: "0.5rem",
               bgcolor: activeTab === "followUp" ? "primary.main" : "transparent",
-              color: activeTab === "followUp" ? "#fff" : "#9ca3af",
-              "&:hover": { bgcolor: activeTab === "followUp" ? "primary.main" : "#f3f4f6", color: activeTab === "followUp" ? "#fff" : "#4b5563" },
+              color: activeTab === "followUp" ? "common.white" : "gray.400",
+              "&:hover": { bgcolor: activeTab === "followUp" ? "primary.main" : "gray.100", color: activeTab === "followUp" ? "common.white" : "gray.600" },
             }}
           >
             Follow-up{followUpRequired ? " *" : ""}
@@ -564,7 +564,7 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
                     ? "e.g. Demo done, the radiologist approved; quote requested"
                     : "e.g. Called the customer, confirmed demo date for next week"}
               />
-              <Typography sx={{ fontSize: "10px", color: "#9ca3af" }}>
+              <Typography sx={{ typography: "tiny", color: "gray.400" }}>
                 {firstActivity
                   ? "Required — saved as this Opportunity's first activity."
                   : stageChange
@@ -589,7 +589,7 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
                 />
               )}
               {producedNewOpportunity ? (
-                <Typography sx={{ fontSize: "0.75rem", color: "#4b5563" }}>
+                <Typography sx={{ typography: "caption", color: "gray.600" }}>
                   {producedOpportunityId
                     ? "The new Opportunity is saved. Press Complete to close this next action."
                     : "Press Complete to add the new Opportunity. This next action closes once it's saved, with no follow-up."}
@@ -630,7 +630,7 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
                       <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>
                     ))}
                   </TextField>
-                  <Typography sx={{ fontSize: "10px", color: "#9ca3af" }}>
+                  <Typography sx={{ typography: "tiny", color: "gray.400" }}>
                     {firstActivity
                       ? "Required — every new Opportunity starts with a next action."
                       : followUpExempt
