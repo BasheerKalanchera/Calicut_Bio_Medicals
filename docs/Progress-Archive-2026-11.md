@@ -203,3 +203,45 @@ to click a name that is not a link. No tracker line: none was a slip a
 tool check could stop, and none touched live data. Pattern for the watch:
 (5), (8) and (9) are plan steps written without checking the built screen
 (rule "take labels and the order of checks from the code", 2026-09-30).
+
+## 2026-11-01 (afternoon) — weekly Harness Engineering review; three checks built (Plan & Chore)
+
+**Review** (tracker `docs/Process-Improvements.md`, Reviews line
+2026-11-01). Corrections counted from the retros: 126 in 24 sessions
+21–27 Oct (5.2 a session) vs 79 in 21 sessions 28 Oct–1 Nov (3.8).
+Counting measures but does not stop a slip; the drops came where a tool
+check went in. Basheer chose to build all three proposed checks:
+- **P98 session clock:** after each successful push, a note tells Claude
+  the session's real running time and Basheer's message count, read from
+  the session transcript. First live use on `277efa7`: 6 h 4 min, 8
+  messages (the time includes breaks).
+- **P77 gap:** an inline edit script fed to python named through a shell
+  variable (`$P - <<EOF`, the 28 Oct archive edit) is now refused.
+- **P102 docs-batch reminder:** a commit with only docs/`.claude` files
+  staged gets a reminder to check for code fixes still awaiting their
+  pre-E2E review. Never a block. Basheer turned down a blocking design
+  as over-complicated. First live check: this docs batch.
+Tests: 18 of 18 passed (scratch script). 27 watch-list lines past 14 days
+deleted. Committed and pushed `277efa7`.
+
+**"← Back" check (item 4):** read against the code: not built.
+`check-mui-standard.js` has no ◀ or "← Back" rule. The only typed ◀ ▶
+left in `src` are Brand Target Tracking's year arrows (lines 384, 388).
+Fix: two new rules in the check and chevron icons on that screen; ▶ in
+Territory Admin stays. Basheer: /build builds it after its MUI round 1
+fixes. Still to do, waiting for his yes: Backlog entry (owner, and
+"quarter" → "year") and /build's note line saying it waits on Plan & Chore.
+Not looked at: /build's report that the check prints "no staged .ts/.tsx
+files" with three staged.
+
+**Session retro:** 4 corrections:
+(1) "I don't understand the issue here — Docs committed before the code
+review": the P102 explanation was unclear.
+(2) "Why unnecessarily complicate this": the P102 check was designed to
+block, when a reminder was enough.
+(3) "I am saying check the code for 4": answered from the Backlog and
+notes, not the code.
+(4) "Which screen are we talking about here?": the item 4 explanation
+didn't say it was the commit check, not a screen.
+No tracker line: all four are judgement slips no tool check could stop,
+and none touched live data.

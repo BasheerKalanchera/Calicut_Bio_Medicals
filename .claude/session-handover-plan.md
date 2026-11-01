@@ -54,9 +54,9 @@ session edits this note._
 
 - Weekly review done 1 Nov (tracker Reviews line): P98 session clock,
   P77 gap, P102 docs-batch reminder built, tests 18/18; 27 watch-list
-  lines deleted. **Not committed** — harness commit to propose
-  (`.claude/hooks/session_clock.py`, `session-clock.sh`, `shell_guard.py`,
-  `shell-guard.sh`, `settings.json`, tracker). "← Back" check: /build
+  lines deleted. Committed and pushed `277efa7`; the session clock
+  fired live on that push. Docs-batch reminder not yet seen live: check
+  it at the next docs-only commit. "← Back" check: /build
   after its MUI round 1 fixes (Basheer) — Backlog entry and /build's note
   still to update (quarter → year wording too). /build reported the MUI
   check printing "no staged .ts/.tsx files" with three staged: not looked
