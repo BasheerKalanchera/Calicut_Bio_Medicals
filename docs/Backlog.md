@@ -156,6 +156,12 @@ to decide: change the code, or change the rule.
   A (change) / B (keep internal names) / C (keep real hospital wording)
   split and the renames "Rate Customers" and "My customers" are still
   waiting for Basheer's yes.
+- **Now "Part 2" (Basheer, 1 Nov):** the MUI round 1 restyle is Part 1 and
+  comes first, with no wording changes (steps 1–3 pushed, `6a417cb`,
+  `f8c61b3`; see Progress-Archive-2026-11). This sweep follows it, after
+  `/build`'s Target vs Actuals simpler table and Target & Coverage Planning
+  tabs plans merge (they edit the same screens). One pass, one commit, the
+  manual and help text in the same commit, with its own plan and E2E.
 
 ### File deletes: ask "Are you sure?" first — not started (2026-10-25)
 
@@ -178,6 +184,11 @@ to decide: change the code, or change the rule.
   target stays without a question (Annual Target plan D74).
 - The app has no confirm pop-up yet — one small shared one. Build &
   Test, in the next batch of small fixes.
+- **Progress (Basheer, 1 Nov: done inside MUI round 1 Part 1):** the shared
+  pop-up `ConfirmDialog.tsx` is built (`6a417cb`); Opportunity Detail
+  Documents tab now asks first (`f8c61b3`, not yet seen in a browser).
+  Product Catalogue brochure delete is still to do (Part 1 step 4); remove
+  this entry when it ships and its E2E passes.
 
 ### Projects: track the requirements that go to dealer partners — not started, future (2026-10-30)
 
@@ -635,6 +646,9 @@ table must fit a phone, not *how*.
   while measuring the New Stakeholder pop-up for the MUI plan's commit;
   that screen isn't in the plan's change, so not fixed there (Basheer,
   2026-10-26). Fix when the screen is next changed or in the sweep.
+  **Built 1 Nov (`6a417cb`, MUI round 1 Part 1 step 2):** the card stacks
+  on a phone and the buttons wrap. Not yet seen on a phone; remove this
+  entry after the phone-width check (390 px) in the combined round 1 E2E.
 
 ### Front-end consistency audit — parked, undecided (raised 2026-09-30)
 
