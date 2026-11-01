@@ -78,6 +78,7 @@ export default function TargetVsActualsSection() {
           <TextField
             select
             size="small"
+            label="SBU"
             value={sbuId ?? ""}
             onChange={(e) => {
               setSelectedSbuId(e.target.value);
@@ -93,13 +94,13 @@ export default function TargetVsActualsSection() {
         <TextField
           select
           size="small"
+          label="View"
           value={view}
           onChange={(e) => {
             setView(e.target.value as View);
             setPersonId(null);
           }}
           sx={{ minWidth: 110 }}
-          slotProps={{ htmlInput: { "aria-label": "Quarter or Year" } }}
         >
           <MenuItem value="QUARTER">Quarter</MenuItem>
           <MenuItem value="YEAR">Year</MenuItem>

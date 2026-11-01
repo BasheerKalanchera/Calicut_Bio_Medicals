@@ -13,6 +13,8 @@ import {
   ToggleButton,
   ToggleButtonGroup,
 } from "@mui/material";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import FormModal from "../components/FormModal";
@@ -495,16 +497,18 @@ export default function TargetPlanningScreen({
             size="small"
             onClick={() => setPeriod((p) => shiftPlanningPeriod(p, isAnnual ? -4 : -1))}
             title={isAnnual ? "Previous fiscal year" : "Previous quarter"}
+            aria-label={isAnnual ? "Previous fiscal year" : "Previous quarter"}
           >
-            <Box component="span">◀</Box>
+            <ChevronLeftIcon fontSize="small" />
           </IconButton>
           <Typography sx={{ fontWeight: 700, minWidth: "6rem", textAlign: "center" }}>{periodLabel}</Typography>
           <IconButton
             size="small"
             onClick={() => setPeriod((p) => shiftPlanningPeriod(p, isAnnual ? 4 : 1))}
             title={isAnnual ? "Next fiscal year" : "Next quarter"}
+            aria-label={isAnnual ? "Next fiscal year" : "Next quarter"}
           >
-            <Box component="span">▶</Box>
+            <ChevronRightIcon fontSize="small" />
           </IconButton>
         </Box>
         <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1.5 }}>

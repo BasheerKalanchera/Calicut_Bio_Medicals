@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Box, Button } from "@mui/material";
+import { Box, IconButton } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { StatTile } from "./ReportingUI";
 import TableOrCards, { TocCell, TocRow } from "./TableOrCards";
@@ -61,9 +61,13 @@ export default function TargetVsActualsPerson({
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
-        <Button size="small" startIcon={<ArrowBackIcon fontSize="small" />} onClick={onBack} sx={{ textTransform: "none" }}>
-          Back
-        </Button>
+        <IconButton
+          onClick={onBack}
+          aria-label="Back"
+          sx={{ width: 40, height: 40, color: "gray.600", "&:hover": { bgcolor: "gray.200" } }}
+        >
+          <ArrowBackIcon fontSize="small" />
+        </IconButton>
         <Box sx={{ typography: "body1", fontWeight: 700 }}>{person.display_name}</Box>
         <Box sx={noteSx}>{periodLabel}</Box>
       </Box>
