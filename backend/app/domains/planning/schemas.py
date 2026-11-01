@@ -341,6 +341,8 @@ class TargetVsActualYearPerson(BaseModel):
     manager_id: uuid.UUID | None = None
     # Target so far; None when a quarter so far has no target for them (D81).
     target_lakhs: Decimal | None
+    # PO received so far (Simpler Table D4): added up over the same quarters.
+    po_received_lakhs: Decimal
     won_lakhs: Decimal
     percent_of_target: Decimal | None
 

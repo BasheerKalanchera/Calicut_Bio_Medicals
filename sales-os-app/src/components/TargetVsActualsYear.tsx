@@ -1,16 +1,15 @@
 import { Box } from "@mui/material";
 import dayjs from "dayjs";
-import { StatTile } from "./ReportingUI";
 import TableOrCards, { TocCell, TocRow } from "./TableOrCards";
-import { TileCell, TileGrid, WonBar } from "./TargetVsActualsParts";
+import { WonBar } from "./TargetVsActualsParts";
 import type { TargetVsActualYearResponse } from "../types/targetPlanning";
 import { formatFiscalYear, formatPlanningPeriod, getCurrentPlanningPeriod, getFiscalYearOfPeriod } from "../utils/formatter";
 import { asTree } from "../utils/reportingTree";
-import { headlineTarget, lakhs, noteSx, numCellSx, percent, ratio, summaryLines } from "../utils/targetVsActuals";
+import { lakhs, noteSx, numCellSx, summaryLines } from "../utils/targetVsActuals";
 
 // Target vs Actuals, Year view (Redesign D2, D6; Annual Target Planning D66,
-// D81): three boxes and one table of running totals from the year's first
-// counted quarter. Names are not links here (Redesign D4).
+// D81; Simpler Table D2, D4): one table of running totals from the year's
+// first counted quarter. Names are not links here (Redesign D4).
 
 export default function TargetVsActualsYear({ data, isTeamView }: { data: TargetVsActualYearResponse; isTeamView: boolean }) {
   // D6: a year that hasn't started has nothing to show but when it does.
@@ -29,8 +28,6 @@ export default function TargetVsActualsYear({ data, isTeamView }: { data: Target
   const thisYear = getFiscalYearOfPeriod(getCurrentPlanningPeriod());
   const yearState = data.fiscal_year === thisYear ? "This year" : data.fiscal_year < thisYear ? "Past year" : "Upcoming year";
   const tree = asTree(data.people);
-  const target = headlineTarget(data.sbu_row, data.team_row, data.people);
-  const wonPct = ratio(data.won_lakhs, target);
   const lines = summaryLines(data.company_row, data.sbu_row, data.team_row);
 
   return (
@@ -41,16 +38,6 @@ export default function TargetVsActualsYear({ data, isTeamView }: { data: Target
         {isTeamView && " · Totals show only your team members' shares of shared Opportunities"}
       </Box>
 
-      <TileGrid columns={3}>
-        <TileCell><StatTile inGrid label="Target so far" value={lakhs(target)} /></TileCell>
-        <TileCell><StatTile inGrid label="Won (paid) so far" value={lakhs(data.won_lakhs)} /></TileCell>
-        <TileCell wide>
-          <StatTile inGrid label="Won % of target" value={percent(wonPct)}>
-            <WonBar wonPct={wonPct} />
-          </StatTile>
-        </TileCell>
-      </TileGrid>
-
       {/* One block per row on a phone, a person's pushed in under their manager. */}
       <Box sx={{ overflowX: "auto" }}>
         <TableOrCards
@@ -58,6 +45,7 @@ export default function TargetVsActualsYear({ data, isTeamView }: { data: Target
             { label: "Who" },
             { label: "Target so far", align: "right" },
             { label: "Won (paid) so far", align: "right" },
+            { label: "PO received so far", align: "right" },
             { label: "Won % of target" },
           ]}
         >
@@ -68,6 +56,7 @@ export default function TargetVsActualsYear({ data, isTeamView }: { data: Target
                 {row.target_lakhs === null ? <Box component="span" sx={noteSx}>{notSet}</Box> : lakhs(row.target_lakhs)}
               </TocCell>
               <TocCell label="Won (paid) so far" align="right" sx={numCellSx}>{lakhs(row.won_lakhs)}</TocCell>
+              <TocCell label="PO received so far" align="right" sx={numCellSx}>{lakhs(row.po_received_lakhs)}</TocCell>
               <TocCell label="Won % of target"><WonBar wonPct={row.percent_of_target} /></TocCell>
             </TocRow>
           ))}
@@ -79,6 +68,7 @@ export default function TargetVsActualsYear({ data, isTeamView }: { data: Target
               </TocCell>
               <TocCell label="Target so far" align="right" sx={numCellSx}>{lakhs(p.target_lakhs)}</TocCell>
               <TocCell label="Won (paid) so far" align="right" sx={numCellSx}>{lakhs(p.won_lakhs)}</TocCell>
+              <TocCell label="PO received so far" align="right" sx={numCellSx}>{lakhs(p.po_received_lakhs)}</TocCell>
               <TocCell label="Won % of target"><WonBar wonPct={p.percent_of_target} /></TocCell>
             </TocRow>
           ))}

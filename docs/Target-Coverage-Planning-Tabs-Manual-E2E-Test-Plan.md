@@ -4,7 +4,7 @@
 **Covers:** `docs/Target-Coverage-Planning-Tabs-Implementation-Plan.md`
 (D2–D10). Annual Target E2E L1–L3 (look at three widths) are rewritten
 for the tabs there (D11) and run with this plan.
-**Built:** not yet — commit hashes filled in after the build.
+**Built:** `7a8a201` on `worktree-build`, pushed; not yet merged into `main`. Pre-E2E review fix `03ac0ea`; the quarter/year chevron arrows (C4), `3937558` (1 Nov), pushed.
 **Where:** Dev, after `/build` merges the tabs into `main`.
 
 ## Checked against live data
@@ -127,6 +127,11 @@ looks off.
    Critical Care (Arun Adarsh, Vivek, Nishad K V). —
 3. [Simple] Each tab's content. **Expected:** the same as the old card
    it replaces — same headings, columns and buttons; nothing lost. —
+4. [Simple] As Haroon: the arrows either side of the period name at the
+   top. **Expected:** chevron icons, not typed ◀ ▶ (Frontend standards
+   §6.11 rule 8). Hover over them: "Previous quarter" and "Next quarter";
+   switch to Annual and they read "Previous fiscal year" and "Next fiscal
+   year". —
 
 ## D — The bell lands on the right tab (D5, D7)
 

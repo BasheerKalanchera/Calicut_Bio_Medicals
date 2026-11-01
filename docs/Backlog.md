@@ -306,9 +306,9 @@ recommendation: brands' 2027 years start in January, so no partial brand
 year); C — wait for Apr–Jun 2027, the start of the Indian financial year.
 Risks: paper and system disagree (name which is authoritative per
 quarter); FY 2026-27 Year view is a partial year; pilot never ends
-without exit criteria. Touches the parked Target vs Actuals redesign (how
-a pilot quarter shows) and Backlog "Target & Coverage Planning: one tab
-per section". Likely an ADR. Basheer decides the option.
+without exit criteria. Touches the Target vs Actuals redesign (how
+a pilot quarter shows) and the Target & Coverage Planning tabs (built,
+awaiting merge). Likely an ADR. Basheer decides the option.
 
 ### MUI-standard check: refuse typed ◀ and "← Back" — not started (2026-11-01)
 
@@ -633,12 +633,8 @@ table must fit a phone, not *how*.
   Plan & Chore to plan (Basheer, 2026-10-26); built in Build & Test. Overlaps the
   front-end consistency audit below and `statusColors.ts` — fold them into
   one plan.
-- **Found 28 Oct (Part 2 pre-E2E review): one shared screen header.**
-  The white strip at the top of each screen with its name (size, bold,
-  colour, line under it) is written out 13 times in `DemoApp.tsx`
-  (grep count, 28 Oct; the h2 with `typography: "h5", fontWeight: 800`).
-  A small shared header part would hold it once, so a later style change
-  can't miss a copy. No change for users. For the sweep (Basheer, 28 Oct).
+- **Found 28 Oct (Part 2 pre-E2E review): one shared screen header** —
+  moved to "Front-end standardisation fixes, by screen" below (1 Nov).
 - **Found 26 Oct: Customer 360 → Stakeholders tab doesn't fit a phone.**
   The "1 Opportunities" button on each stakeholder's card runs past the
   card's right edge (measured on Dev at 390 px, Al Shifa Hospital
@@ -649,6 +645,82 @@ table must fit a phone, not *how*.
   **Built 1 Nov (`6a417cb`, MUI round 1 Part 1 step 2):** the card stacks
   on a phone and the buttons wrap. Not yet seen on a phone; remove this
   entry after the phone-width check (390 px) in the combined round 1 E2E.
+
+### Front-end standardisation fixes, by screen — not started (Basheer, 2026-11-01)
+
+One list of what each screen still owes the Frontend standards (§6.6 item
+7 back button, §6.11 rules 1–9). A screen is fixed **whole** the next time
+it is committed — the commit check refuses a changed screen otherwise
+(MUI plan D10) — so use this list to see what a screen's commit will have
+to clear. Remove a screen from here when it is committed clean.
+- **How to refresh the counts:** `node scripts/check-mui-standard.js --all`
+  in `sales-os-app/` (report only). Counts below are from 1 Nov 2026,
+  `.ts`/`.tsx` files only. Customer 360 is left out: its MUI round 1 is
+  with another session (Basheer, 2026-11-01).
+- **Not seen by the check, so listed by hand:** the back button and arrow
+  rules (§6.6 item 7, §6.11 rules 8–9), a filter's name above its box, a
+  label on every drop-down. Plan & Chore was asked (1 Nov) to add the
+  arrow checks to the commit check.
+
+**Opportunity Detail** (`OpportunityDetailScreen.tsx`)
+- 97 typed colours, 75 typed text sizes — including the back arrow's
+  `fontSize: 20`, which becomes `fontSize="small"`, and its hex button
+  colours, which become `gray.600` / `gray.200`.
+
+**Opportunity Pipeline** (`OpportunityPipelineScreen.tsx`)
+- 49 typed colours, 26 typed text sizes.
+- Row chevron at line 260 has `#9ca3af` (§6.11 rule 9, theme colour).
+- Zone filter at line 479 is named "All Zones"; it should be named "Zone"
+  with "All Zones" inside the box (Rate Hospitals' `ZonePicker` is the
+  model).
+
+**Account Management → Customers list** (`CustomerDirectoryScreen.tsx`)
+- 20 typed colours, 7 typed text sizes.
+- Row chevron at line 263 has `#9ca3af`.
+- Zone filter at line 147 is named "All Zones"; same fix as the Pipeline.
+
+**Account Management → Projects list** (`ProjectDirectoryScreen.tsx`)
+- 41 typed colours, 25 typed text sizes.
+- Row chevron at line 556 has `#9ca3af`.
+
+**Product Catalog** (`ProductCatalogScreen.tsx`)
+- 23 typed colours, 6 typed text sizes.
+- Row chevron at line 588 has `#9ca3af`.
+
+**Brand Target Tracking** (`BrandTargetTrackingScreen.tsx`)
+- Quarter arrows at lines 384 and 388 are typed ◀ ▶ characters; switch to
+  chevron icons in `IconButton`s with "Previous quarter" / "Next quarter"
+  labels (§6.11 rule 8). No other breach found by the check.
+
+**Territory Admin** (`TerritoryAdminScreen.tsx`)
+- 2 typed text sizes. The ▶ at line 205 marks an expandable row, not
+  previous/next, so it can stay.
+
+**Old screens in `App.jsx`** (not checked by the script, which reads
+`.ts`/`.tsx` only)
+- Three "← Back to …" links (lines 3487, 7789, 8161 on 1 Nov) in the old
+  Tailwind-era file; not checked whether any is still live.
+
+**Screen header, `DemoApp.tsx`**
+- The white title strip is written out 13 times (grep, 28 Oct) — one
+  shared header part (moved here from the MUI good-practice entry above).
+
+**Other screens** (typed colours / typed text sizes)
+- Marketing Lead Review Queue 15 / 11; Daily Activity Report 13 / 11;
+  Marketing Lead Entry 9 / 7; Next Actions 8 / 4; Opportunities On Hold
+  report 7 / 4; Audit Log 1 / 5; Product Performance report 3 / 3;
+  User Directory 0 / 1.
+
+**Shared parts and helpers** (typed colours / typed text sizes)
+- Quick Lead pop-up 16 / 10; Activity Timeline 14 / 11; Close Reminder
+  pop-up 13 / 10; Reminder row 15 / 7; Activity comment thread 8 / 7 and
+  Marketing Lead comment thread 8 / 7; Help drawer 8 / 6; Opportunity
+  Items list 8 / 6; Opportunity Item Add row 9 / 3; Next Actions panel
+  6 / 4; Urgent Notification dialog 5 / 4 (+ one `style`); Error boundary
+  5 / 4; Login screen 3 / 2; Marketing Lead Reassign pop-up 1 / 1;
+  Business Potential chip 0 / 1.
+- Helper files, colours only: `utils/activityTypes.ts` 13,
+  `utils/businessPotential.ts` 4, `utils/marketingLeadMilestone.ts` 4.
 
 ### Front-end consistency audit — parked, undecided (raised 2026-09-30)
 
@@ -2375,6 +2447,10 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   `Customer360Screen.tsx`, `ProductCatalogScreen.jsx`,
   `ProjectDirectoryScreen.jsx` when they migrate. Do as its own small refactor,
   or fold into the second of these files to migrate.
+  **Low priority (Basheer, 2026-11-01):** the standard (§6.6 item 7) now
+  stands without the shared component. Screens that still differ are
+  listed under their screen in "Front-end standardisation fixes, by
+  screen" (Parked initiatives above).
 - **§6.7 enforcement gap** (Frontend-Implementation-Standards.md). No mechanical
   guard against hardcoded hex colors drifting back into per-component `sx`
   props (theme should be single source of truth). Post-demo, not blocking.

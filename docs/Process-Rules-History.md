@@ -284,3 +284,6 @@ The backstory below is copied verbatim from each memory note's **Why:**.
 
 - **Rule:** E2E testing — Claude drives the browser only for very complex steps (can't be judged by eye or described plainly); Basheer runs Simple and most Complex steps from exact instructions (`cabio-e2e-testing` skill, E2E test plan template).
   **Why:** 2026-10-29 — Basheer, before the My Work tabs browser check: "Lets limit your browser checks to very complex testing steps only. I want to conserve usage credits." Extended the same day, at his yes, to the 2026-10-25 before-handover phone-width check: Basheer now does the 390/768/1280 px look in the E2E's phone layout step, and Claude measures only when something looks off.
+
+- **Rule:** Commit order of a build — build, then the pre-E2E review and its fixes, then one docs batch for the whole build (`build` skill, `cabio-e2e-testing` skill, CLAUDE.md "Batch docs-only commits").
+  **Why:** 2026-10-31 — Tabs step 1 and Simpler Table steps 1–2 got a docs batch (`2c440ec`) before the review; the review then produced fix `03ac0ea`, which needed the plans, E2E plans, archive and handover touched again. Basheer agreed the docs should wait for the review.

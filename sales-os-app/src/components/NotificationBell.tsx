@@ -38,7 +38,7 @@ export default function NotificationBell({
   onSelectMarketingLead: () => void;
   // Plan submitted / approved / rejected: opens Target & Coverage Planning
   // on that plan's quarter and SBU, its row open (Annual Target Planning D21).
-  onSelectTargetPlan: (focus: { period: string; sbuId: string; planId: string }) => void;
+  onSelectTargetPlan: (focus: { period: string; sbuId: string; planId: string; kind: "submitted" | "decided" }) => void;
 }) {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const queryClient = useQueryClient();
@@ -82,7 +82,14 @@ export default function NotificationBell({
       // activity below. A plan deleted since has no quarter: just mark it.
       markNotificationRead("target_plan", n.entity_id);
       if (n.plan_period && n.plan_sbu_id) {
-        onSelectTargetPlan({ period: n.plan_period, sbuId: n.plan_sbu_id, planId: n.entity_id });
+        // Submitted goes to the manager, approved/rejected to the plan's owner:
+        // the screen opens the tab that holds the plan (Tabs plan D5, D7).
+        onSelectTargetPlan({
+          period: n.plan_period,
+          sbuId: n.plan_sbu_id,
+          planId: n.entity_id,
+          kind: n.type === "TARGET_PLAN_SUBMITTED" ? "submitted" : "decided",
+        });
       }
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
