@@ -8,8 +8,8 @@ Also covers `docs/Target-vs-Actuals-Simpler-Table-Implementation-Plan.md`
 (D2–D7, D10): sections A–C rewritten 2026-10-31 for the simpler table —
 no boxes on the Quarter and Year views, a PO received column, no Likely
 finish anywhere, three boxes on a person's own screen.
-**Built:** redesign merged 29 Oct (`3bafbc0`); the simpler table `c490eb9` on `worktree-build`, pushed, not yet merged; pre-E2E review fix `03ac0ea`; the person screen's round Back arrow and the two drop-down names, `3937558` (1 Nov), pushed.
-**Where:** Dev, after `/build` merges the simpler table into `main`.
+**Built:** redesign merged 29 Oct (`3bafbc0`); the simpler table `c490eb9`, merged into `main` 1 Nov (`515a2f2`); pre-E2E review fix `03ac0ea`; the person screen's round Back arrow and the two drop-down names, `3937558` (1 Nov), pushed.
+**Where:** Dev (`main`).
 **Restart (Simpler table D9):** the run parked at 6 of 40 on 30 Oct
 (Progress-Archive 2026-10, 30 Oct). Its results are cleared here and the
 whole plan runs again from P1 once the simpler table is merged.
@@ -114,23 +114,39 @@ beside it in brackets. This plan creates none.
 ## Pre-flight
 
 - P1. [Simple] Dev backend restarted since the simpler table's server
-  change (PO received on the Year view's person rows). —
+  change (PO received on the Year view's person rows). **Result 1 Nov —
+  Pass (Basheer).** —
 - P2. [Simple] App running on Dev; Basheer can sign in as Haroon
-  Sidheeq, Fazal, Shruthi and Fahad. —
+  Sidheeq, Fazal, Shruthi and Fahad. **Result 1 Nov — Pass (Basheer).** —
 - P3. [Complex: Claude — reading values the screen doesn't show] Re-run
   the 30 Oct read-only query and the P8 figures; update "Existing
   values" and the expected figures below if they moved. Also read PO
   received per person for Oct–Dec 2026 and for the year so far (not yet
   checked; A2 and B2 need them), and the number of Opportunities with no
-  PO date per person (C3). —
+  PO date per person (C3). **Result 1 Nov — Pass with changes (Claude,
+  Dev read-only, the app's own Target vs Actuals and Overdue code run as
+  Haroon and Fazal, all three RLS settings verified).** Unchanged:
+  Imaging ₹280.0 L / Won ₹34.0 L / PO ₹16.0 L / 12.14 %; Company
+  ₹465.0 L / ₹34.0 L / ₹16.0 L / 7.31 %; Critical Care ₹185.0 L / 0;
+  Rudrappa ₹100.0 L target (P5 as before). **PO received, Oct–Dec 2026
+  and the year so far (same):** Basheer K ₹5.0 L, Fahad ₹11.0 L, everyone
+  else 0. Fahad's Won % is 44.00 % of his ₹25.0 L plan (quarter) and
+  7.86 % of his ₹140.0 L target (year); Basheer K 41.82 % of plan. As
+  Fazal: team row ₹160.0 L / ₹11.0 L / ₹11.0 L / 6.88 %, Fazal and Fahad
+  only. **Moved:** Overdue total 30 (was 31): Basheer K 11 (was 15),
+  Haroon 7 (was 6), and a new row "Test - Area Manager" 2 / 0 — an
+  inactive test account (reports to the inactive "Test - General
+  Manager"); the Overdue tab lists it, see D9. Fazal's tab total is 4. —
 - P4. [Simple] As Fazal: My Work → "Showing" on "Me" → Next actions →
   "Overdue next actions". Note the number of rows. **Expected:** 2 (Dev,
   29 Oct). D2 compares the Overdue tab's count with this one, taken from
-  a separate screen. —
+  a separate screen. **Result 1 Nov — Pass (Basheer);** the count is 2,
+  as the Overdue code returns for Fazal (P3). —
 - P5. [Complex: Claude — reading values the screen doesn't show]
   Rudrappa's Oct–Dec 2026 plan, read from Dev at P3. On 30 Oct:
   hospitals — one line, "Not assigned to a hospital", ₹10.0 L; brands —
-  SonoScape ₹10.0 L. Used by C2 and F2. —
+  SonoScape ₹10.0 L. Used by C2 and F2. **Result 1 Nov — Pass (Claude,
+  Dev read-only, with P3):** unchanged. —
 
 ## A — Year view (D2, D6; Simpler table D2, D4, D5)
 
@@ -138,23 +154,34 @@ beside it in brackets. This plan creates none.
    FY 2026-27, the SBU box on its default (Imaging; Haroon's SBU box
    lists only Imaging and Critical Care, there is no "All").
    **Expected:** no boxes above the table (Simpler table D2); the small
-   "This year · as of …" line is still there. —
+   "This year · as of …" line is still there. **Result 1 Nov — Pass
+   (Basheer).** —
 2. [Simple] Same screen, the table. **Expected:** columns Who, Target so
    far, Won (paid) so far, PO received so far, Won % of target with a
    bar. Rows: Company, then Critical Care and Imaging, then each person
    under their manager. Imaging ₹280.0 L / ₹34.0 L / ₹16.0 L / 12.14 %;
    Company ₹465.0 L / ₹34.0 L / 7.31 %; Company's and each person's PO
    received so far as read at P3. Switching the SBU box to Critical Care changes the SBU
-   row to ₹185.0 L / ₹0.0 L / 0.00 % (Dev, 30 Oct). —
+   row to ₹185.0 L / ₹0.0 L / 0.00 % (Dev, 30 Oct). **Result 1 Nov —
+   Pass (Basheer).** Found: the rows are Company, then one row labelled
+   "SBU" at the time of this run (not "Imaging" or "Critical Care"; after
+   the fix `52e8397` it should read the SBU's name, re-check at B2 — the plan's wording was
+   wrong, the screen only ever shows the chosen SBU's row), then the
+   team hierarchy starting with Haroon. Basheer asks for the SBU's name
+   in that row; parked for the small-fixes batch (same on the Quarter
+   view, B2). —
 3. [Simple] Same screen. **Expected:** none of: Likely finish (as a box,
    a column or in the bar), Team plans, Plans vs target, a
    quarter-by-quarter table, Year's target, Plan for year, Still to win,
-   the "haven't submitted a plan" note. —
+   the "haven't submitted a plan" note. **Result 1 Nov — Pass
+   (Basheer).** —
 4. [Simple] Click a person's name, then a Company or SBU row.
-   **Expected:** nothing opens; names aren't links (D2, D4). —
+   **Expected:** nothing opens; names aren't links (D2, D4). **Result 1
+   Nov — Pass (Basheer).** —
 5. [Simple] Arrow forward to FY 2027-28. **Expected:** one line in place
    of the table: "FY 2027-28 starts in Apr 2027 — nothing to show yet."
-   (D6; closes the Annual E2E's open I8). —
+   (D6; closes the Annual E2E's open I8). **Result 1 Nov — Pass
+   (Basheer).** —
 6. [Complex: phone layout] Year view at 390, 768 and 1280 px, FY 2026-27
    and FY 2027-28. **Expected (390):** header on three lines (title; SBU
    choice with Quarter/Year; period with arrows); no boxes; Company and
@@ -162,13 +189,15 @@ beside it in brackets. This plan creates none.
    for Target so far, Won (paid) so far, PO received so far and Won % of
    target;
    each rep's block indented with "reports to <manager>"; 768 and 1280
-   as tables. Nothing runs past the card. —
+   as tables. Nothing runs past the card. **Result 1 Nov — Pass
+   (Basheer).** —
 
 ## B — Quarter view (D3, D5; Simpler table D2, D3, D5, D6)
 
 1. [Simple] As Haroon: Target vs Actuals → Quarter, Oct–Dec 2026, SBU
    "Imaging". **Expected:** no boxes above the table; the small "This
-   quarter · as of …" line is still there. —
+   quarter · as of …" line is still there. **Result 1 Nov — Pass
+   (Basheer).** —
 2. [Simple] Same screen, the table. **Expected:** Company, Imaging, then
    Fazal (with Fahad under him), Shruthi (with Rudrappa), Basheer K;
    columns Who, Target, Won (paid), PO received, Won % with a bar. Imaging
@@ -177,94 +206,143 @@ beside it in brackets. This plan creates none.
    (Simpler table D6). Rudrappa's % is of his ₹10.0 L plan and says "of
    plan" beneath it (Basheer, 2026-10-29: a person's % stays Won ÷
    plan); the Company and Imaging rows say "of target". His own screen
-   (C1) shows Won % of his ₹100.0 L target. —
+   (C1) shows Won % of his ₹100.0 L target. **Result 1 Nov — Pass
+   (Basheer).** Found: a person with no counted plan (Fazal, Shruthi)
+   shows a dash for Won %; Basheer asks for "No plan" there. Quarter
+   view only (the Year view's dash means no target, a different case);
+   parked for the small-fixes batch. —
 3. [Simple] Same screen. **Expected:** none of: Likely finish (as a box,
    a column, a dash or in the bar), Team plans, Expected, Plans vs
    target, plan Status, Rep Plan, the "haven't submitted a plan" note,
-   rows that open underneath, the zone table, the brand table. —
+   rows that open underneath, the zone table, the brand table. **Result
+   1 Nov — Pass (Basheer).** —
 4. [Simple] Same screen, Fazal's and Fahad's rows. **Expected:** no red
    "N past closing date" mark (D5), though both have late
-   Opportunities. —
+   Opportunities. **Result 1 Nov — Pass (Basheer).** —
 5. [Complex: phone layout] Quarter view at 390, 768 and 1280 px.
    **Expected (390):** no boxes; Company and SBU shaded blocks; each
    person a block — name, then one line each for Target, Won (paid),
    PO received and Won %; reps indented with "reports to <manager>";
-   768 and 1280 as tables. Nothing runs past the card. —
+   768 and 1280 as tables. Nothing runs past the card. **Result 1 Nov —
+   Pass (Basheer).** —
 6. [Simple] Same screen, the header. **Expected:** the drop-down that
    holds Quarter / Year shows the name "View" on its box (Frontend
    standards §6.11 rule 7); as Haroon, the SBU drop-down shows "SBU". The
    arrows either side of the period name are chevron icons, not typed
    ◀ ▶ (rule 8). Hover over them: "Previous quarter" and "Next quarter";
-   in Year view, "Previous year" and "Next year". —
+   in Year view, "Previous year" and "Next year". **Result 1 Nov — Fail
+   on the hover names only (Basheer):** the "View" and "SBU" names and the
+   chevron icons pass; hovering the arrows shows nothing. Cause (code
+   read): `TargetVsActualsSection.tsx:110,116` give the arrows a screen-
+   reader label but no hover text; the Planning screen's arrows have both.
+   Small fix, parked for the small-fixes batch; recheck by hovering after. —
 
 ## C — A person's own screen (D4; Simpler table D7, D10)
 
 1. [Simple] As Haroon, Quarter view, Oct–Dec 2026, Imaging: click
    "Rudrappa". **Expected:** a screen of his own, not a row opening
    underneath, with three boxes: Target ₹100.0 L; Won (paid) with "PO
-   received …" under it; Won % of target. No Likely finish box. —
+   received …" under it; Won % of target. No Likely finish box.
+   **Result 1 Nov — Pass (Basheer).** —
 2. [Simple] Same screen, By hospital and By brand. **Expected:** By
    hospital: one line, "Not assigned to a hospital", Planned ₹10.0 L,
    Won 0, then a Total line; By brand: SonoScape, Planned ₹10.0 L, Won 0,
-   then a Total line. Both match P5. —
+   then a Total line. Both match P5. **Result 1 Nov — Pass (Basheer).** —
 3. [Simple] Same screen, bottom. **Expected:** no note about
    Opportunities with no expected closure date (Simpler table D10). If
    P3 found any of his Won Opportunities with no PO date, the "no PO
-   date" note shows (wording as built); otherwise no note at all. —
+   date" note shows (wording as built); otherwise no note at all. P3
+   (1 Nov): Rudrappa has 0 with no PO date, so no note at all.
+   **Result 1 Nov — Pass (Basheer).** —
 4. [Simple] Go back: the control at the top-left, beside his name.
    **Expected:** it is a round button holding only a left arrow, no word
    "Back" (a screen reader says "Back"); clicking it returns to the
    Quarter view, still on Oct–Dec 2026, Imaging (Frontend standards §6.6
-   item 7). —
+   item 7). **Result 1 Nov — Pass (Basheer).** —
 5. [Simple] Click the "Imaging" row and the "Company" row.
-   **Expected:** nothing opens (no SBU screen, D4). —
+   **Expected:** nothing opens (no SBU screen, D4). **Result 1 Nov —
+   Pass (Basheer).** —
 6. [Complex: phone layout] Rudrappa's screen at 390, 768 and 1280 px.
    **Expected (390):** three boxes — Target and Won (paid) side by side,
    Won % of target across the full width; one block per hospital and per
    brand (name, Planned, Won), each list ending in a shaded Total block;
    the "no PO date" note at the bottom if C3 showed one. Nothing runs
-   past the card. —
+   past the card. **Result 1 Nov — Fail on two points, layout otherwise
+   passes (Basheer):** (1) the person screen opens scrolled down, with
+   the Won % box at the top, instead of at the top of the screen; (2)
+   Basheer wants the card's header (the "Target vs Actuals" title, the
+   SBU and View drop-downs, the period arrows) and the person's name row
+   fixed at the top, with only the detail cards scrolling. (1) is a bug,
+   (2) is a new request. **Decided (Basheer, 1 Nov): both apply at all
+   three widths, on a person's own screen only** — it opens at the top
+   (and returns to the top on Back); the title, SBU and View drop-downs
+   and period arrows are hidden there (so nothing can be changed while
+   looking at one person); the name row stays fixed; only the detail
+   cards scroll. The Quarter and Year tables are unchanged. Handed to
+   `/build`. Re-run C1 and C6 at 390, 768 and 1280 px after the fix. —
 
 ## D — Overdue tab (D5)
 
 1. [Simple] As Fazal: Insights Dashboard. **Expected:** the tab is
-   called "Overdue" (not "Overdue Actions"). —
+   called "Overdue" (not "Overdue Actions"). **Result 1 Nov — Pass
+   (Basheer).** —
 2. [Simple] Open it. **Expected:** Fazal — 2 overdue next actions; Past
    closing date 2, ₹24.0 L. Fahad — 2 overdue; Past closing date 1,
-   ₹20.0 L. Fazal's overdue count is the same as P4. —
+   ₹20.0 L. Fazal's overdue count is the same as P4 (P4's number was 2: the
+   rows in My Work → Next actions → "Overdue next actions"). **Result 1
+   Nov — Pass (Basheer).** —
 3. [Simple] Same tab. **Expected:** every count above zero is red and
    can be tapped (Fazal's 2 and 2, Fahad's 2 and 1). The grey zero is
-   checked at step 9, as Haroon. —
+   checked at step 9, as Haroon. **Result 1 Nov — Pass (Basheer).** —
 4. [Complex: cross-screen] Click Fahad's past closing date count.
    **Expected:** My Work opens with "Showing" set to Fahad, on the
    Opportunities tab, at "Closing date passed", which lists "Test Gate
-   override oppotunity (renamed for TC-19/22)" (Maulana) — 1 (D11). —
+   override oppotunity (renamed for TC-19/22)" (Maulana) — 1 (D11). **Result 1 Nov — Pass (Basheer).** —
 5. [Complex: cross-screen] Back to the Overdue tab; click Fazal's
    overdue count "2". **Expected:** My Work opens with "Showing" set to
    Fazal ("Me"), on the Next actions tab, at "Overdue next actions",
-   with 2 rows (D11). —
+   with 2 rows (D11). **Result 1 Nov — Pass (Basheer).** —
 6. [Complex: cross-screen] Back to the Overdue tab; click Fazal's past
    closing date "2". **Expected:** Opportunities tab, "Closing date
    passed" lists "New USG m/c" (aster medicity) and "New oppotunity fast
-   track" (Aster DM); the count matches the Overdue tab's 2 (D11). —
+   track" (Aster DM); the count matches the Overdue tab's 2 (D11). **Result 1 Nov — Pass
+   (Basheer).** —
 7. [Complex: cross-screen] Leave My Work, then open it from the menu.
    **Expected:** "Showing" is back on "Me" and the Summary tab; the
    small tabs are back on "High priority" (Opportunities) and "This week"
-   (Next actions) (My Work D6, D33). —
-8. [Complex: cross-screen] From the Overdue tab, open Fahad in My Work
-   again. **Expected:** view-only, as today when a manager picks a rep
-   (My Work D15). —
-9. [Simple] As Haroon: Overdue tab. **Expected:** Abdul Latheef P 1 / 0;
-   Basheer K 15 / 0; Fazal 2 / 2, ₹24.0 L; Fahad 2 / 1, ₹20.0 L; Haroon
-   Sidheeq 6 / 1, ₹50.0 L; Nishad K V 1 / 0; Shruthi 2 / 0; Vivek
-   2 / 0. Total overdue 31. Arun Adarsh and Rudrappa (0 / 0) are not
-   listed (D11). Shruthi's Past closing date 0 is grey and can't be
-   tapped. —
+   (Next actions) (My Work D6, D33). **Result 1 Nov — Pass (Basheer).** —
+8. [Complex: cross-screen] (Reworded 1 Nov: names on the Overdue tab are
+   plain text, not links; only the counts open My Work.) From the Overdue
+   tab, click Fahad's overdue count "2". **Expected:** My Work opens on
+   Fahad's Next actions, "Overdue next actions". His rows have no "Done"
+   button; on his Opportunities tab ("Closing date passed") there is no
+   "Log Activity" or action button either. View-only, because closing an
+   action records a visit or call as if it happened (My Work D15).
+   **Result 1 Nov — Pass (Basheer), on the reworded step.** —
+9. [Simple] As Haroon: Overdue tab. **Expected (P3, 1 Nov):** Abdul
+   Latheef P 1 / 0; Basheer K 11 / 0; Fazal 2 / 2, ₹24.0 L; Fahad 2 / 1,
+   ₹20.0 L; Haroon Sidheeq 7 / 1, ₹50.0 L; Nishad K V 1 / 0; Shruthi
+   2 / 0; Vivek 2 / 0; and "Test - Area Manager" 2 / 0 (an inactive test
+   account, see P3). Total overdue 30. Arun Adarsh and Rudrappa (0 / 0)
+   are not listed (D11). Shruthi's Past closing date 0 is grey and can't
+   be tapped. **Result 1 Nov — Pass (Basheer), with two suggestions:**
+   (a) show "Overdue" and "Past closing date" once as column headings,
+   with only the numbers on each person's row (today both words repeat
+   on every row); (b) show inactive accounts such as "Test - Area
+   Manager" in a different colour with "Inactive account" beside the
+   name, so Haroon sees that person's pending items and acts on them.
+   Cause for (b) (code read): the list has no active/inactive filter and
+   the server doesn't send an active flag. —
 10. [Complex: phone layout] Overdue tab at 390, 768 and 1280 px, as
    Haroon. **Expected (390):** one block per person — overdue next
    actions, then Past closing date count and value side by side; a
    count above zero a red mark that can be tapped; zero grey. Nothing
-   runs past the card. —
+   runs past the card. **Result 1 Nov — Fail (Basheer):** the rows are
+   not one block per person; all rows sit on one card. Cause (code read):
+   the Overdue list is hand-built rows (`InsightsDashboardScreen.tsx:
+   296-319`), not the shared table-or-cards component the standards
+   require. Same fix as D9 (a): rebuild it as a table with column
+   headings, one block per person on a phone. —
 
 ## E — Who sees what (hide-checks)
 

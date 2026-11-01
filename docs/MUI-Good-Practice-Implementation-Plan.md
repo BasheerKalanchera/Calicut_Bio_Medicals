@@ -195,6 +195,16 @@ My Work, which is about to be built, follows the new rules from the start.
    records, names and widths) into `…\Desktop\cabio\MUI-Round1-After\`
    and builds a before-and-after comparison page for Basheer, one row
    per picture.
+   **Product Catalogue (added to round 1 as Part 1 step 4, not in the
+   26 Oct set) — decided by Basheer, 1 Nov:** Build & Test takes both
+   its "before" and "after" pictures at this step, after the E2Es. The
+   "before" comes from a temporary copy of the code as it was before
+   step 4 (`515a2f2`, the parent of `394444a`), run on a second port
+   against Dev data, read-only, then deleted. Screen at 390, 768 and
+   1280 px, plus the brochure ✕ "Delete this file?" pop-up at 390 px
+   (a deliberate difference, so it gets its own row marked as such).
+   Saved as `11-Product-Catalogue-<width>.png` in the Before and After
+   folders, with its rows on the comparison page. Don't skip it.
 6. **Other screens** — cleaned up when next changed (D10, D13); no
    separate round.
 
