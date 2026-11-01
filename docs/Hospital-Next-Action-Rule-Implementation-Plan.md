@@ -5,8 +5,12 @@
 D13 and D14 added 2026-10-31 (Basheer, after the code review).
 Steps 1–5 built on branch `worktree-build` (31 Oct: `2b5a113`, `421fc63`,
 `f129bb0`, `0e99f99`, `406adcd`), plus D13 and D14 (`1119312`) and a
-review fix (`e9418e9`), all pushed, not yet merged into `main`;
-step 6 (E2E on Dev) follows the merge. E2E test plan written 2026-10-28,
+review fix (`e9418e9`), merged into `main` 31 Oct (`dce73f5`). Step 6
+(E2E on Dev) run 31 Oct: 37 of 37 recorded, 34 Pass, 3 not tested for
+lack of Dev data (G6, D4, D5's Project half); the Completed-lists order
+fix found during it is `268570f` (pushed). The Customer 360 Next Actions
+tab move (after Activity) is edited but uncommitted — it goes in with
+Customer 360's MUI round 1 commit. E2E test plan written 2026-10-28,
 section G added 2026-10-30, section H, E3 and F4 (D9, D10, D12) added
 2026-10-31, D4 and D5 (D13, D14) added 2026-10-31
 (`docs/Hospital-Next-Action-Rule-Manual-E2E-Test-Plan.md`).

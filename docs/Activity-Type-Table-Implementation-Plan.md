@@ -1,6 +1,11 @@
 # Activity Type Table — Implementation Plan
 
-**Status:** Draft, 2026-10-28.
+**Status:** Approved, 2026-10-31 (Basheer; D1–D12 answered). Not built —
+queued for `/build` after the Target vs Actuals simpler table and the
+Target & Coverage Planning tabs. Line references in section 6 were read
+2026-10-28; re-check them at build (the hospital next-action rule and
+`843c552` changed some of these files since). E2E test plan written
+2026-10-31, ahead of the build: `docs/Activity-Type-Table-Manual-E2E-Test-Plan.md`.
 **Traceability rows:** none — an internal clean-up, not a signed requirement.
 **Design / discussion:** Plan & Chore session, 2026-10-28 (Basheer).
 
@@ -18,7 +23,7 @@
   chosen / Optional / Not offered) — Basheer, 2026-10-28.
 - D4. One more answer is needed to retire the code's copy of the six
   training and conference types: "Outcome/Learning must be filled in"
-  (today asked only for those six) — proposed.
+  (today asked only for those six) — Basheer, 2026-10-31.
 - D5. Admin and GM add new activity types, and rename existing ones, on
   the Reference Data screen
   (`docs/Reference-Data-Management-Screen-Implementation-Plan.md`), which
@@ -30,27 +35,27 @@
 - D6. Withdrawn 2026-10-28: not a decision. The list doesn't change; the
   safety lock that refuses an unknown type is in section 6.
 - D7. Everyone signed in can read the table; no row-level limits, same as
-  the lead source list — proposed.
+  the lead source list — Basheer, 2026-10-31.
 - D8. The database's own check that a hospital is chosen reads the
   table's "Hospital must be chosen" answer instead of its own list of the
   six, so a new type added on the Reference Data screen (D5) is checked
-  the same way — proposed.
+  the same way — Basheer, 2026-10-31.
 - D9. The table holds each type's name and its order in the dropdown.
   Icons and colours stay in the app, in one shared function every screen
   calls (today the Log Activity form keeps its own copy) — Basheer,
   2026-10-28. A type with no icon yet (one just added on the Reference
   Data screen) shows the Note icon until a developer gives it one, as an
-  unknown type does today — proposed.
+  unknown type does today — Basheer, 2026-10-31.
 - D10. The vendor pipeline report script (run by Claude on request, not
   in the app) keeps counting Visits and Meetings only for its "last
   visit" column; it is left out of this plan so SonoScape's file doesn't
-  change — proposed.
+  change — Basheer, 2026-10-31.
 - D12. Changing an existing type's answers is not on the Reference Data
   screen: it would change My Work and the Stagnant Opportunities report
   for past activities. That stays a developer change, like Opportunity
-  stages on the same screen — proposed.
+  stages on the same screen — Basheer, 2026-10-31.
 - D11. Built and tested on Dev; reaches UAT with the next normal move from
-  Dev to UAT — proposed.
+  Dev to UAT — Basheer, 2026-10-31.
 
 ## Figures and sources
 
@@ -133,6 +138,8 @@ What each answer controls today:
 yes/no column would add nothing (section 6):
 - a Manager Note can be marked urgent, and is shown as a note for the
   person it is for;
+- a Manager Note can be logged only by Admin, General Manager, SBU
+  Manager and Area Manager (BR-ACT-02, `843c552`, 2026-10-31);
 - Relationship Support needs a description and picks from a different
   Opportunity list;
 - Other Development needs a description;

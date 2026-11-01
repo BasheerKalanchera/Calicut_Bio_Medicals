@@ -14,18 +14,22 @@ session edits this note._
   of a full promotion").
 
 ## 31 OCT — small-fixes batch shipped
-- `374a2a8` (My Work small fixes incl. Back to Insights bar) committed and
-  pushed 31 Oct together with `0ae8e29`; main = origin/main. Detail in
-  Progress-Archive 31 Oct. Docs edits (plan Status line, archive entry,
-  this note) are uncommitted, for the next docs batch.
-- Next: nothing queued for this session. Target vs Actuals redesign is with
-  Plan & Chore; Annual Target section L and the Target vs Actuals E2E stay
-  parked until then. Next-action plan (hospital, D6–D8) is `/build`'s.
+- Hospital & Project next-action E2E DONE 31 Oct: 37 of 37 recorded (34
+  Pass; G6, D4, D5-Project not tested, no Dev data). Completed-order fix
+  pushed as `268570f` (pytest 1501, ruff, tsc, lint clean).
+- NEXT: the docs batch (E2E plan results, this note, Progress-Archive,
+  plan Status line; all uncommitted — needs Basheer's yes), the session
+  retro, then Traceability/scorecard for the passed E2E (check first
+  whether row 19 changes; run `generate_scorecard.py --check`).
+- UNCOMMITTED, carry into Customer 360's MUI round 1 commit (the MUI check
+  refuses any commit touching that file, 165 hits): `Customer360Screen.tsx`
+  Next Actions tab moved right after Activity in `TABS`.
+- Target vs Actuals and Annual Target L stay parked (Plan & Chore).
 
 ## 31 OCT — three Backlog small fixes (Basheer picked 1, 2, 3)
 - 1 Manager Note for managers only: DONE — `843c552` pushed, pre-E2E review
-  done, E2E section G 6 of 6 Pass. Docs batch committed 31 Oct (hash in
-  `git log`). Retro written (3 corrections).
+  done, E2E section G 6 of 6 Pass. Docs batch + retro (3 corrections) committed
+  as `09915b0` (31 Oct), pushed.
 - 2 "Hospital" → "Customer" wording + "deal" → "Opportunity": Basheer chose
   (31 Oct) to WAIT until `/build`'s hospital next-action rule is merged and
   tested, then sweep once (Backlog entry has the timing). Still waiting for
@@ -60,7 +64,6 @@ session edits this note._
   detail: Progress-Archive 28–30 Oct.
 - UAT moves after the E2E (Basheer, 26 Oct, D6), then the post-commit
   checklist. Dev servers: Basheer runs them.
-- Lesson (21 Oct): review lists sorted by what users notice, screen first.
 
 ## From Plan & Chore (25 Oct)
 - Small-fixes Backlog adds still open: "+ Add Customer"; "deal" →

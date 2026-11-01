@@ -5963,3 +5963,83 @@ moved to after the restart (Basheer).
   from the 23 genuine messages in the session log). His phone-layout answer
   was a decision on an open question, not a correction. No tracker line:
   nothing guard-stoppable, no live data, UAT or lost work.
+
+## 2026-10-31 (afternoon) — Plan & Chore: Activity Type table plan Approved, its E2E plan written
+
+- **Approved.** Basheer said "yes to all" to the seven open decisions in
+  `docs/Activity-Type-Table-Implementation-Plan.md` (D4 Outcome/Learning
+  column, D7 everyone signed in reads the table, D8 the database's hospital
+- **Hospital & Project next-action E2E, 31 Oct — Completed lists order fix.**
+  Basheer found it hard to see where a new item landed on a Next Actions tab.
+  Every reminder list sorted by due date, soonest first. Pending stays so;
+  Completed now sorts most recently closed first (`reminder.updated_at` desc,
+  then due date, then id; the database trigger bumps it on close, so no new
+  column or join). Four list functions in
+  `backend/app/domains/activity/repository.py`; 5 new repository tests; activity
+  folder 260 passed, ruff clean. Uncommitted, goes in the end-of-E2E small-fixes
+  batch with the Customer 360 tab reorder.
+
+  check reads the table, D9 Note icon for a type with none, D10 vendor
+  pipeline script left alone, D11 Dev then the next normal UAT move, D12
+  changing an existing type's answers stays a developer change). The
+  Manager Note managers-only rule (`843c552`) joined the rules that stay in
+  the code. Queued for `/build` after the simpler table and the tabs.
+- **D7 asked about:** "who can read" means every logged-in user gets the
+  whole list, with no SBU or role filter as other tables have; reading is
+  not changing (Admin/GM add and rename on the Reference Data screen, D5).
+- **E2E plan written ahead of the build:**
+  `docs/Activity-Type-Table-Manual-E2E-Test-Plan.md`, 35 steps (counted).
+  Users should see no change, so it is mostly before-and-after: a before
+  snapshot of Stagnant Opportunities, My Work and the data-quality script
+  (S), every type's fields and refusals in Log Activity without saving
+  (A, B), only two saves (C), the five closing types (D), the same report
+  numbers after (E), Vivek not offered Manager Note (F, hide-check), icons
+  (G), phone (H).
+- **Dev check, read-only, 31 Oct 15:20 IST** (as Haroon, all three RLS
+  settings verified, rolled back): 139 activities of 11 types, all among
+  the 13; Vivek is Sales Staff (Critical Care); "Mims calicut" (Aster MIMS
+  Calicut) is Basheer K's, Demo, no open next actions, last contact 21 Jul
+  2026 (so on both 30-day "Not visited" lists before C2).
+- **Render, UAT backend:** Render's email said 697 of 750 free instance
+  hours used this month. About 14½ hours were left to the month's reset
+  (believed 1 Nov 00:00 UTC, 05:30 IST; to confirm on Render's Billing
+  page), so no suspension. Note: one always-awake free service (UptimeRobot
+  keeps it up) needs 744 hours in a 31-day month, close to the limit; a
+  second free service would run out before month-end. Prod is planned on
+  the paid Starter tier.
+- **Handover pruned** to its limit (build queue merged into one section;
+  MUI step 5 left to Build & Test's note).
+
+### Hospital & Project next-action E2E, 31 Oct — result and what was committed
+
+- **Result:** 37 of 37 steps recorded in
+  `docs/Hospital-Next-Action-Rule-Manual-E2E-Test-Plan.md`: 34 Pass; G6
+  (Dev has 16 open rows, under the old cap of 50), D4 and D5's Project half
+  not tested for lack of Dev data. Phone, tablet and laptop (F1–F4) Pass
+  (Basheer). Before the run: pytest 1496, ruff, tsc, lint clean; after the
+  fixes: pytest 1501.
+- **Finding G2 (SBU boundary):** Basheer K (Imaging) correctly does not see
+  Nishad K V's Critical Care next action "Call him next week"; Haroon (GM)
+  sees all 8. The plan's expected count was corrected from 8 to 7 for
+  Basheer K.
+- **Finding, Completed order:** fixed and pushed as `268570f` (see the entry
+  above).
+- **Finding, Customer 360 tab position:** Next Actions tab moved right after
+  Activity. The edit is in the working tree only: the pre-commit MUI check
+  refuses any commit touching `Customer360Screen.tsx` (165 typed colour and
+  text-size hits, same count as MUI plan step 5 item 5), so it rides in
+  Customer 360's MUI round 1 commit (Basheer, 31 Oct).
+
+- **Retro, Build & Test (hospital & Project next-action E2E), 31 Oct —
+  corrections from Basheer this session: 3.** (1) I told him "left menu
+  Projects" for H1/H4; there is no such item, Projects is a sub-tab of
+  Account Management. (2) C4 said "A1 again"; he asked if C3 was meant, and
+  I reworded it. (3) After the push I wrote as if the backend commit had
+  not happened ("I thought I asked you to commit the backend files first"):
+  it had, as `268570f`; my message was unclear. Counted from the messages
+  visible after the context summary plus the summary's list of his
+  messages. No tracker line: none was a slip a tool check could stop, and
+  none touched live data. Process note (not a correction): I proposed a
+  commit with `Customer360Screen.tsx` before running the MUI check, which
+  refused it; I committed the two backend files without re-showing the
+  shortened message, as I had said I would.
