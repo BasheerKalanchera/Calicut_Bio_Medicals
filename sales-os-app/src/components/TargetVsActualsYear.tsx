@@ -11,7 +11,7 @@ import { lakhs, noteSx, numCellSx, summaryLines } from "../utils/targetVsActuals
 // D81; Simpler Table D2, D4): one table of running totals from the year's
 // first counted quarter. Names are not links here (Redesign D4).
 
-export default function TargetVsActualsYear({ data, isTeamView }: { data: TargetVsActualYearResponse; isTeamView: boolean }) {
+export default function TargetVsActualsYear({ data, isTeamView, sbuName }: { data: TargetVsActualYearResponse; isTeamView: boolean; sbuName?: string }) {
   // D6: a year that hasn't started has nothing to show but when it does.
   if (data.not_started) {
     return (
@@ -28,7 +28,7 @@ export default function TargetVsActualsYear({ data, isTeamView }: { data: Target
   const thisYear = getFiscalYearOfPeriod(getCurrentPlanningPeriod());
   const yearState = data.fiscal_year === thisYear ? "This year" : data.fiscal_year < thisYear ? "Past year" : "Upcoming year";
   const tree = asTree(data.people);
-  const lines = summaryLines(data.company_row, data.sbu_row, data.team_row);
+  const lines = summaryLines(data.company_row, data.sbu_row, data.team_row, sbuName);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>

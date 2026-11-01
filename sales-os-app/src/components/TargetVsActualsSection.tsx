@@ -50,6 +50,8 @@ export default function TargetVsActualsSection() {
     enabled: !homeSbuId,
   });
   const sbuId = homeSbuId ?? selectedSbuId ?? sbus[0]?.id ?? null;
+  // Names the SBU row: the home SBU's own name, or the one picked above.
+  const sbuName: string | undefined = homeSbuId ? userProfile?.sbu?.name : sbus.find((s) => s.id === sbuId)?.name;
 
   const query = useQuery({
     queryKey: ["planning", "target-vs-actuals", sbuId, period],
@@ -107,13 +109,13 @@ export default function TargetVsActualsSection() {
         </TextField>
       </Box>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flex: { xs: "1 1 100%", sm: "0 0 auto" } }}>
-        <IconButton size="small" aria-label={view === "QUARTER" ? "Previous quarter" : "Previous year"} onClick={() => setPeriod((p) => shiftPlanningPeriod(p, -step))}>
+        <IconButton size="small" aria-label={view === "QUARTER" ? "Previous quarter" : "Previous year"} title={view === "QUARTER" ? "Previous quarter" : "Previous year"} onClick={() => setPeriod((p) => shiftPlanningPeriod(p, -step))}>
           <ChevronLeftIcon fontSize="small" />
         </IconButton>
         <Box sx={{ typography: "body3", fontWeight: 700, minWidth: 96, textAlign: "center" }}>
           {view === "QUARTER" ? formatPlanningPeriod(period) : formatFiscalYear(fiscalYear)}
         </Box>
-        <IconButton size="small" aria-label={view === "QUARTER" ? "Next quarter" : "Next year"} onClick={() => setPeriod((p) => shiftPlanningPeriod(p, step))}>
+        <IconButton size="small" aria-label={view === "QUARTER" ? "Next quarter" : "Next year"} title={view === "QUARTER" ? "Next quarter" : "Next year"} onClick={() => setPeriod((p) => shiftPlanningPeriod(p, step))}>
           <ChevronRightIcon fontSize="small" />
         </IconButton>
       </Box>
@@ -134,7 +136,7 @@ export default function TargetVsActualsSection() {
         errorText="Couldn't load Target vs Actuals."
         onRetry={() => active.refetch()}
       />
-      {yearData && <TargetVsActualsYear data={yearData} isTeamView={isTeamView} />}
+      {yearData && <TargetVsActualsYear data={yearData} isTeamView={isTeamView} sbuName={sbuName} />}
       {data && openPerson && (
         <TargetVsActualsPerson person={openPerson} periodLabel={formatPlanningPeriod(period)} onBack={() => setPersonId(null)} />
       )}
@@ -156,7 +158,7 @@ export default function TargetVsActualsSection() {
                 { label: "Won %" },
               ]}
             >
-              {summaryLines(data.company_row, data.sbu_row, data.team_row).map(({ key, label, row, notSet }) => (
+              {summaryLines(data.company_row, data.sbu_row, data.team_row, sbuName).map(({ key, label, row, notSet }) => (
                 <TocRow key={key} shaded>
                   <TocCell title sx={{ fontWeight: 700 }}>{label}</TocCell>
                   <TocCell label="Target" align="right" sx={numCellSx}>
@@ -182,7 +184,8 @@ export default function TargetVsActualsSection() {
                   <TocCell label="Won (paid)" align="right" sx={numCellSx}>{lakhs(p.won_lakhs)}</TocCell>
                   <TocCell label="PO received" align="right" sx={numCellSx}>{lakhs(p.po_received_lakhs)}</TocCell>
                   <TocCell label="Won %">
-                    <WonBar wonPct={p.percent_of_target} basis="of plan" />
+                    {/* No percent = no counted plan: not started, Draft or Rejected. */}
+                    <WonBar wonPct={p.percent_of_target} basis="of plan" emptyText="No approved plan" />
                   </TocCell>
                 </TocRow>
               ))}

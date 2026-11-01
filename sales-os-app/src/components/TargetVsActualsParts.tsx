@@ -32,9 +32,10 @@ const barWidth = (v: string | null): string => `${v === null ? 0 : Math.max(0, M
 
 // Won as a share of the same base as the % beside it; `basis` says which
 // ("of plan", "of target") so the two aren't confused (Simpler Table D6: no
-// Likely finish part). A dash when there is nothing to compare with.
-export function WonBar({ wonPct, basis }: { wonPct: string | null; basis?: string }) {
-  if (wonPct === null) return <Box component="span" sx={{ color: "text.secondary" }}>{DASH}</Box>;
+// Likely finish part). A dash, or `emptyText` if given, when there is nothing
+// to compare with.
+export function WonBar({ wonPct, basis, emptyText }: { wonPct: string | null; basis?: string; emptyText?: string }) {
+  if (wonPct === null) return <Box component="span" sx={{ color: "text.secondary" }}>{emptyText ?? DASH}</Box>;
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 130, flex: 1 }}>
       <Box sx={{ position: "relative", flex: 1, height: 8, borderRadius: "4px", bgcolor: "gray.200", overflow: "hidden" }}>

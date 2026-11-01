@@ -38,10 +38,12 @@ export function summaryLines(
   companyRow: TargetVsActualSummaryRow | null,
   sbuRow: TargetVsActualSummaryRow | null,
   teamRow: TargetVsActualSummaryRow | null,
+  // The name of the SBU being looked at ("Imaging"); "SBU" until it is known.
+  sbuName?: string,
 ): SummaryLine[] {
   const lines: SummaryLine[] = [];
   if (companyRow) lines.push({ key: "company", label: "Company", row: companyRow, notSet: "Waits for every SBU's target" });
-  if (sbuRow) lines.push({ key: "sbu", label: "SBU", row: sbuRow, notSet: "Target not set" });
+  if (sbuRow) lines.push({ key: "sbu", label: sbuName ?? "SBU", row: sbuRow, notSet: "Target not set" });
   if (teamRow) lines.push({ key: "team", label: "Your team", row: teamRow, notSet: "Target not set" });
   return lines;
 }
