@@ -82,6 +82,9 @@ class OverdueActionRow(BaseModel):
 
     user_id: uuid.UUID
     display_name: str
+    # False for someone whose account is switched off: still listed (their
+    # overdue work still needs a new owner) but shown differently.
+    is_active: bool
     overdue_count: int = 0
     # D5/D11: Active Opportunities they own past their expected closing date.
     past_closing_count: int = 0

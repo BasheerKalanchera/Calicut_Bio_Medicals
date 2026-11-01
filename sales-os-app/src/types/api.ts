@@ -4563,6 +4563,8 @@ export interface components {
             user_id: string;
             /** Display Name */
             display_name: string;
+            /** Is Active */
+            is_active: boolean;
             /**
              * Overdue Count
              * @default 0

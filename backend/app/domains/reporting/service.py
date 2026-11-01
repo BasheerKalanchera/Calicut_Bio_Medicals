@@ -271,7 +271,9 @@ class ReportingService:
         for r in self.repository.past_closing_by_owner(
             current_user, today_ist(), sbu_id=sbu_id, zone_id=zone_id, user_id=user_id
         ):
-            row = by_person.get(r.user_id) or OverdueActionRow(user_id=r.user_id, display_name=r.display_name)
+            row = by_person.get(r.user_id) or OverdueActionRow(
+                user_id=r.user_id, display_name=r.display_name, is_active=r.is_active
+            )
             by_person[r.user_id] = row.model_copy(
                 update={
                     "past_closing_count": r.past_closing_count,

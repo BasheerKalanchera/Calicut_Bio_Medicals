@@ -48,6 +48,8 @@ export interface RepActivityLevelResponse {
 export interface OverdueActionRow {
   user_id: string;
   display_name: string;
+  // False for a switched-off account: still listed, shown differently.
+  is_active: boolean;
   overdue_count: number;
   // Redesign D5/D11: Active Opportunities past their expected closing date
   // (BR-OP-16, same rule as My Work's "Closing date passed"), with their value.

@@ -370,12 +370,13 @@ class ReportingRepository:
             select(
                 UserProfile.id.label("user_id"),
                 UserProfile.display_name.label("display_name"),
+                UserProfile.is_active.label("is_active"),
                 func.count(Reminder.id).label("overdue_count"),
             )
             .select_from(Reminder)
             .join(UserProfile, Reminder.assigned_to_user_id == UserProfile.id)
             .where(Reminder.is_completed == False, Reminder.due_date <= end_of_today)  # noqa: E712
-            .group_by(UserProfile.id, UserProfile.display_name)
+            .group_by(UserProfile.id, UserProfile.display_name, UserProfile.is_active)
         )
         stmt = self._apply_owner_scope(stmt, current_user, user_id)
         if sbu_id is not None:
@@ -407,6 +408,7 @@ class ReportingRepository:
             select(
                 UserProfile.id.label("user_id"),
                 UserProfile.display_name.label("display_name"),
+                UserProfile.is_active.label("is_active"),
                 func.count(Opportunity.id).label("past_closing_count"),
                 # No line items yet counts at 0 value (as My Work).
                 func.coalesce(func.sum(value_subq.c.value_lakhs), 0).label("past_closing_value_lakhs"),
@@ -416,7 +418,7 @@ class ReportingRepository:
             .join(UserProfile, Opportunity.owner_id == UserProfile.id)
             .outerjoin(value_subq, value_subq.c.opportunity_id == Opportunity.id)
             .where(OpportunityStatus.status_code == "ACTIVE", Opportunity.expected_closure_date < today)
-            .group_by(UserProfile.id, UserProfile.display_name)
+            .group_by(UserProfile.id, UserProfile.display_name, UserProfile.is_active)
         )
         stmt = self._apply_owner_scope(stmt, current_user, user_id)
         if sbu_id is not None:

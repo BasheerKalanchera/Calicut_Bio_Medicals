@@ -4,6 +4,7 @@ import { Box, Button, ButtonBase, MenuItem, TextField } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
 import dayjs from "dayjs";
 import { LoadingOrEmpty, MiniBar, SectionCard, StatTile, ZoneTreeNote } from "../components/ReportingUI";
+import TableOrCards, { TocCell, TocRow } from "../components/TableOrCards";
 import TargetVsActualsSection from "../components/TargetVsActualsSection";
 import { useAuth } from "../contexts/AuthContext";
 import { getActivityLevels, getOverdueActions, getPipelineSummary } from "../services/reporting";
@@ -55,9 +56,10 @@ interface Props {
 
 // A red mark that opens My Work when there is something to see; grey and
 // inert at zero (D11).
-function OverdueMark({ count, text, label, onOpen }: { count: number; text: string; label: string; onOpen: () => void }) {
+function OverdueMark({ count, label, onOpen }: { count: number; label: string; onOpen: () => void }) {
   const sx = { typography: "caption", fontWeight: 900, px: 1, py: 0.25, borderRadius: "0.375rem" } as const;
-  if (count === 0) return <Box sx={{ ...sx, bgcolor: "gray.100", color: "gray.400" }}>{text}</Box>;
+  const text = String(count);
+  if (count === 0) return <Box component="span" sx={{ ...sx, display: "inline-block", bgcolor: "gray.100", color: "gray.400" }}>{text}</Box>;
   return (
     <ButtonBase
       onClick={onOpen}
@@ -293,30 +295,46 @@ export default function InsightsDashboardScreen({ isActive, onOpenMyWork, startR
               onRetry={() => overdueQuery.refetch()}
             />
             {overdueRows.length > 0 && (
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
+              // Headings once; a block per person on a phone. Counts above zero
+              // are red and open My Work, zeros are grey and do nothing.
+              <TableOrCards
+                columns={[
+                  { label: "Who" },
+                  { label: "Overdue next actions", align: "right" },
+                  { label: "Past closing date (count)", align: "right" },
+                  { label: "Value", align: "right" },
+                ]}
+              >
                 {overdueRows.map((row) => (
-                  <Box
-                    key={row.user_id}
-                    sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1, py: 0.5 }}
-                  >
-                    <Box sx={{ typography: "body3", fontWeight: 600, color: "text.primary" }}>{row.display_name}</Box>
-                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                  <TocRow key={row.user_id}>
+                    <TocCell title sx={{ fontWeight: 600 }}>
+                      <Box component="span" sx={row.is_active ? undefined : { color: "gray.500" }}>{row.display_name}</Box>
+                      {!row.is_active && (
+                        <Box component="span" sx={{ typography: "caption", fontWeight: 400, color: "gray.500", ml: 1 }}>
+                          Inactive account
+                        </Box>
+                      )}
+                    </TocCell>
+                    <TocCell label="Overdue next actions" align="right">
                       <OverdueMark
                         count={row.overdue_count}
-                        text={`${row.overdue_count} overdue`}
                         label={`${row.display_name}: ${row.overdue_count} overdue next actions`}
                         onOpen={() => onOpenMyWork({ userId: row.user_id, tabId: "next-actions", listId: "overdue" })}
                       />
+                    </TocCell>
+                    <TocCell label="Past closing date (count)" align="right">
                       <OverdueMark
                         count={row.past_closing_count}
-                        text={`Past closing date ${row.past_closing_count} · ${formatLakhs(parseFloat(row.past_closing_value_lakhs))}`}
                         label={`${row.display_name}: ${row.past_closing_count} Opportunities past their closing date`}
                         onOpen={() => onOpenMyWork({ userId: row.user_id, tabId: "opportunities", listId: "closing-date-passed" })}
                       />
-                    </Box>
-                  </Box>
+                    </TocCell>
+                    <TocCell label="Value" align="right" sx={{ typography: "body3", fontVariantNumeric: "tabular-nums", color: row.past_closing_count === 0 ? "gray.400" : "text.primary" }}>
+                      {formatLakhs(parseFloat(row.past_closing_value_lakhs))}
+                    </TocCell>
+                  </TocRow>
                 ))}
-              </Box>
+              </TableOrCards>
             )}
           </SectionCard>
         )}

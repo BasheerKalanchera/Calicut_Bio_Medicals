@@ -234,6 +234,11 @@ class TestOverdueActions:
         sql = _run("overdue_actions", _make_current_user("Admin"), END_OF_TODAY)
         assert "group by user_profile.id" in sql.lower()
 
+    def test_carries_the_active_flag_and_does_not_hide_inactive_accounts(self):
+        sql = _run("overdue_actions", _make_current_user("Admin"), END_OF_TODAY)
+        assert "user_profile.is_active as is_active" in sql.lower()
+        assert "where user_profile.is_active" not in sql.lower() and "and user_profile.is_active" not in sql.lower()
+
     def test_area_manager_scoped_to_team_and_self(self):
         current_user = _make_current_user("Area Manager")
         sql = _run("overdue_actions", current_user, END_OF_TODAY)
@@ -255,6 +260,11 @@ class TestPastClosingByOwner:
         sql = _run("past_closing_by_owner", _make_current_user("Admin"), self.TODAY)
         assert "group by user_profile.id" in sql.lower()
         assert "past_closing_count" in sql and "past_closing_value_lakhs" in sql
+
+    def test_carries_the_active_flag_and_does_not_hide_inactive_accounts(self):
+        sql = _run("past_closing_by_owner", _make_current_user("Admin"), self.TODAY)
+        assert "user_profile.is_active as is_active" in sql.lower()
+        assert "where user_profile.is_active" not in sql.lower() and "and user_profile.is_active" not in sql.lower()
 
     def test_area_manager_scoped_to_team_and_self(self):
         current_user = _make_current_user("Area Manager")
