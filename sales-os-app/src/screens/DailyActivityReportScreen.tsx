@@ -6,6 +6,7 @@ import dayjs, { Dayjs } from "dayjs";
 import { listActivityReport } from "../services/activities";
 import { listUsers } from "../services/masterData";
 import { ACTIVITY_TYPE_CONFIG } from "../utils/activityTypes";
+import { shadows } from "../theme/shadows";
 import type { ActivityReportRow } from "../types/api-aliases";
 
 interface UserOption { id: string; display_name: string }
@@ -26,11 +27,11 @@ function ReportRow({
   const cfg = ACTIVITY_TYPE_CONFIG[row.activity_type] ?? ACTIVITY_TYPE_CONFIG.NOTE;
 
   return (
-    <Box sx={{ bgcolor: "#fff", borderRadius: "1rem", boxShadow: "0 1px 2px rgba(0,0,0,0.05)", border: "1px solid #f3f4f6", p: 2, display: "flex", gap: "0.75rem" }}>
+    <Box sx={{ bgcolor: "common.white", borderRadius: "1rem", boxShadow: shadows.sm, border: "1px solid", borderColor: "gray.100", p: 2, display: "flex", gap: "0.75rem" }}>
       <Box
         sx={{
           width: 32, height: 32, borderRadius: "0.75rem", display: "flex", alignItems: "center",
-          justifyContent: "center", fontSize: "0.875rem", bgcolor: cfg.bg, color: cfg.color, flexShrink: 0,
+          justifyContent: "center", typography: "body2", bgcolor: cfg.bg, color: cfg.color, flexShrink: 0,
         }}
       >
         {cfg.icon}
@@ -41,16 +42,16 @@ function ReportRow({
           <Box
             component="span"
             sx={{
-              fontSize: "10px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
+              typography: "tiny", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
               px: 1, py: 0.25, borderRadius: "0.375rem", bgcolor: cfg.bg, color: cfg.color,
             }}
           >
             {cfg.label}
           </Box>
-          <Box component="span" sx={{ fontSize: "10px", color: "#9ca3af" }}>{formatTime(row.activity_date)}</Box>
+          <Box component="span" sx={{ typography: "tiny", color: "gray.400" }}>{formatTime(row.activity_date)}</Box>
         </Box>
 
-        <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 0.75, fontSize: "11px", color: "#6b7280", fontWeight: 500, mb: 0.5 }}>
+        <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 0.75, typography: "caption2", color: "gray.500", fontWeight: 500, mb: 0.5 }}>
           {/* BR-ACT-09: the six Sales Development Activity types are
               deliberately unattached -- row.account is genuinely null here,
               not just a type technicality. */}
@@ -63,11 +64,11 @@ function ReportRow({
               {row.account.name}
             </Box>
           ) : (
-            <Box component="span" sx={{ color: "#9ca3af" }}>—</Box>
+            <Box component="span" sx={{ color: "gray.400" }}>—</Box>
           )}
           {row.opportunity && (
             <>
-              <Box component="span" sx={{ color: "#d1d5db" }}>•</Box>
+              <Box component="span" sx={{ color: "gray.300" }}>•</Box>
               <Box
                 component="span"
                 onClick={() => onSelectOpportunity?.(row.opportunity!)}
@@ -79,15 +80,15 @@ function ReportRow({
           )}
           {row.project && (
             <>
-              <Box component="span" sx={{ color: "#d1d5db" }}>•</Box>
-              <Box component="span" sx={{ px: 1, py: 0.25, borderRadius: "0.375rem", fontSize: "10px", fontWeight: 700, bgcolor: "#f3f4f6", color: "#4b5563" }}>
+              <Box component="span" sx={{ color: "gray.300" }}>•</Box>
+              <Box component="span" sx={{ px: 1, py: 0.25, borderRadius: "0.375rem", typography: "tiny", fontWeight: 700, bgcolor: "gray.100", color: "gray.600" }}>
                 {row.project.name}
               </Box>
             </>
           )}
         </Box>
 
-        <Box sx={{ fontSize: "10px", fontWeight: 700, color: "#6b7280", mb: (row.notes || row.outcome_notes) ? 0.5 : 0 }}>
+        <Box sx={{ typography: "tiny", fontWeight: 700, color: "gray.500", mb: (row.notes || row.outcome_notes) ? 0.5 : 0 }}>
           {/* row.user is who this is logged AGAINST (BR-ACT-04), not who wrote
               it -- see ActivityTimeline.tsx's matching comment. */}
           {row.created_by_user?.display_name ?? row.user.display_name}
@@ -98,9 +99,9 @@ function ReportRow({
             boxes need telling apart. Every other type has always had just
             one box, unlabeled, and stays that way. */}
         {row.notes && (
-          <Box sx={{ fontSize: "0.75rem", color: "#374151", bgcolor: "background.default", borderRadius: "0.75rem", px: 1.5, py: 1, lineHeight: 1.625, whiteSpace: "pre-wrap", mb: row.outcome_notes ? 0.5 : 0 }}>
+          <Box sx={{ typography: "caption", color: "gray.700", bgcolor: "background.default", borderRadius: "0.75rem", px: 1.5, py: 1, lineHeight: 1.625, whiteSpace: "pre-wrap", mb: row.outcome_notes ? 0.5 : 0 }}>
             {row.outcome_notes && (
-              <Box component="span" sx={{ fontSize: "10px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#9ca3af" }}>
+              <Box component="span" sx={{ typography: "tiny", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "gray.400" }}>
                 Description:{" "}
               </Box>
             )}
@@ -109,9 +110,9 @@ function ReportRow({
         )}
 
         {row.outcome_notes && (
-          <Box sx={{ fontSize: "0.75rem", color: "#374151", bgcolor: cfg.bg, borderRadius: "0.75rem", px: 1.5, py: 1, lineHeight: 1.625, whiteSpace: "pre-wrap" }}>
+          <Box sx={{ typography: "caption", color: "gray.700", bgcolor: cfg.bg, borderRadius: "0.75rem", px: 1.5, py: 1, lineHeight: 1.625, whiteSpace: "pre-wrap" }}>
             {row.notes && (
-              <Box component="span" sx={{ fontSize: "10px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: cfg.color }}>
+              <Box component="span" sx={{ typography: "tiny", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: cfg.color }}>
                 Outcome/Learning:{" "}
               </Box>
             )}
@@ -152,6 +153,7 @@ export default function DailyActivityReportScreen({
     <Box sx={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", bgcolor: "background.default" }}>
       <Box sx={{ px: 2, pt: 2, pb: 1, bgcolor: "background.default", flexShrink: 0, display: "flex", gap: 1 }}>
         <DatePicker
+          label="Date"
           value={reportDate}
           onChange={(newValue) => newValue && setReportDate(newValue)}
           slotProps={{ textField: { size: "small" } }}
@@ -159,11 +161,12 @@ export default function DailyActivityReportScreen({
         />
         <TextField
           select
+          label="Team Member"
           value={userFilter}
           onChange={(e) => setUserFilter(e.target.value)}
           size="small"
           sx={{ flex: 1 }}
-          slotProps={{ select: { displayEmpty: true } }}
+          slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
         >
           <MenuItem value="">All Team Members</MenuItem>
           {users.map((u) => (
@@ -175,7 +178,7 @@ export default function DailyActivityReportScreen({
       <Box sx={{ flex: 1, overflowY: "auto", px: 2, pb: 2, pt: 1 }}>
         {isLoading && (
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", py: 6 }}>
-            <Box sx={{ color: "#9ca3af", fontWeight: 700, fontSize: "0.875rem" }}>Loading activity...</Box>
+            <Box sx={{ color: "gray.400", fontWeight: 700, typography: "body2" }}>Loading activity...</Box>
           </Box>
         )}
 
@@ -190,7 +193,7 @@ export default function DailyActivityReportScreen({
         )}
 
         {!isLoading && !isError && rows.length === 0 && (
-          <Box sx={{ textAlign: "center", py: 6, bgcolor: "#fff", borderRadius: "1.5rem", border: "2px dashed #f3f4f6", fontStyle: "italic", color: "#9ca3af" }}>
+          <Box sx={{ textAlign: "center", py: 6, bgcolor: "common.white", borderRadius: "1.5rem", border: "2px dashed", borderColor: "gray.100", fontStyle: "italic", color: "gray.400" }}>
             No activity logged on this day.
           </Box>
         )}
