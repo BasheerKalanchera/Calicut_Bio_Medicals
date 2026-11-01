@@ -37,6 +37,11 @@ of the build**, after Build & Test's E2E is done and Basheer says go
   first. Claude Code blocks a worktree session from editing files outside
   the worktree, and the other sessions don't need its progress before the
   merge.
+- **Order of a build:** build the code → pre-E2E code review and its
+  fixes → **one** docs batch for the whole build (plan progress, "Built:"
+  lines, Progress-Archive, handover). Don't write a docs batch before the
+  review; the review's fixes would need a second one. A checkpoint commit
+  of code needs no docs batch. *(Basheer, 2026-10-31)*
 - The merge, when Basheer says go: bring `main` into the branch, settle
   any text clashes in shared docs (Backlog, Progress-Archive,
   Process-Improvements — keep both sides' lines), re-run the tests and push

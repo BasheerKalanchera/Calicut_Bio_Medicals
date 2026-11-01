@@ -180,7 +180,9 @@ code or changing structure. On any conflict, the document wins over this file.
   natural pause — end of a task, before a break, or before a session
   restart — not one commit per edit. Feature/fix commits stay separate and
   first; the post-commit checklist may ride in the next docs batch. Each
-  batch still needs its own explicit approval. *(2026-10-03)*  
+  batch still needs its own explicit approval. *(2026-10-03)* For a build
+  that has a pre-E2E review, the docs go in one batch after the review and
+  its fixes, not before. *(2026-10-31)*  
 - **Batch small code fixes:** small fixes found during a feature's code
   review or E2E (wording, labels, messages, comments — a few lines, no
   change to what is saved or how the app behaves) aren't committed one by

@@ -8,7 +8,7 @@ Also covers `docs/Target-vs-Actuals-Simpler-Table-Implementation-Plan.md`
 (D2–D7, D10): sections A–C rewritten 2026-10-31 for the simpler table —
 no boxes on the Quarter and Year views, a PO received column, no Likely
 finish anywhere, three boxes on a person's own screen.
-**Built:** redesign merged 29 Oct (`3bafbc0`); the simpler table `c490eb9` on `worktree-build`, pushed, not yet merged.
+**Built:** redesign merged 29 Oct (`3bafbc0`); the simpler table `c490eb9` on `worktree-build`, pushed, not yet merged; pre-E2E review fix `03ac0ea`; the person screen's round Back arrow and the two drop-down names, `3937558` (1 Nov), pushed.
 **Where:** Dev, after `/build` merges the simpler table into `main`.
 **Restart (Simpler table D9):** the run parked at 6 of 40 on 30 Oct
 (Progress-Archive 2026-10, 30 Oct). Its results are cleared here and the
@@ -190,6 +190,12 @@ beside it in brackets. This plan creates none.
    person a block — name, then one line each for Target, Won (paid),
    PO received and Won %; reps indented with "reports to <manager>";
    768 and 1280 as tables. Nothing runs past the card. —
+6. [Simple] Same screen, the header. **Expected:** the drop-down that
+   holds Quarter / Year shows the name "View" on its box (Frontend
+   standards §6.11 rule 7); as Haroon, the SBU drop-down shows "SBU". The
+   arrows either side of the period name are chevron icons, not typed
+   ◀ ▶ (rule 8). Hover over them: "Previous quarter" and "Next quarter";
+   in Year view, "Previous year" and "Next year". —
 
 ## C — A person's own screen (D4; Simpler table D7, D10)
 
@@ -205,8 +211,11 @@ beside it in brackets. This plan creates none.
    Opportunities with no expected closure date (Simpler table D10). If
    P3 found any of his Won Opportunities with no PO date, the "no PO
    date" note shows (wording as built); otherwise no note at all. —
-4. [Simple] Go back. **Expected:** the Quarter view, still on
-   Oct–Dec 2026, Imaging. —
+4. [Simple] Go back: the control at the top-left, beside his name.
+   **Expected:** it is a round button holding only a left arrow, no word
+   "Back" (a screen reader says "Back"); clicking it returns to the
+   Quarter view, still on Oct–Dec 2026, Imaging (Frontend standards §6.6
+   item 7). —
 5. [Simple] Click the "Imaging" row and the "Company" row.
    **Expected:** nothing opens (no SBU screen, D4). —
 6. [Complex: phone layout] Rudrappa's screen at 390, 768 and 1280 px.
