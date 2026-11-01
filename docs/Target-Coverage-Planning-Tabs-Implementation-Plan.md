@@ -2,7 +2,9 @@
 
 **Status:** Approved, 2026-10-31 — Basheer agreed the mock-up.
 **Build progress:** step 1 (the screen) built 2026-10-31, commit `7a8a201`,
-pushed; merge into `main` pending the E2E. No server change, no migration.
+pushed; merged into `main` 1 Nov (`515a2f2`). E2E started 1 Nov (8 of 25
+steps recorded, one Fail: B1); it found D12–D16, whose fixes (step 3)
+are for `/build`. No migration.
 **Traceability rows:** signed 3.1 ("Sales target configuration:
 individual, team, regional" — 6.4 Target Management; layout only, row
 stays Done).
@@ -49,6 +51,32 @@ agreed by Basheer, 2026-10-31.
 - D11. Annual Target E2E section L steps 1–3 (three-width look of this
   screen) are rewritten for the tabs and run after this build — Basheer,
   2026-10-31.
+- D12. Found at B1 of the E2E (1 Nov). Needs Your Approval, and the
+  count on its tab, follow the Quarter/Year choice and the SBU choice,
+  like the other tabs, and a line under the list says how many more are
+  waiting outside them, e.g. "3 more waiting in other periods", so
+  nothing is hidden. Until now the list showed every plan waiting in any
+  period (4 for Haroon on 1 Nov: Oct–Dec 2026, Jan–Mar 2027, Apr–Jun
+  2027 ×2). D4's opening-tab rule then looks at the chosen period and
+  SBU. A bell click on a "submitted" plan still opens that plan (D5,
+  D7), in its own period — Basheer, 2026-11-01.
+- D13. Found at A5. The SBU choice (Admin and GM) now applies to every
+  tab: My Plan shows only the chosen SBU's row, as Team Targets and Team
+  Plans do. Until now My Plan listed every SBU and Needs Your Approval
+  every pending plan. Replaces the "SBU applies to both" wording of D8 —
+  Basheer, 2026-11-01.
+- D14. Tab order for managers: My Plan, Needs Your Approval, Team Plans,
+  Team Targets (Team Plans moves above Team Targets), so both tabs the
+  screen opens on sit next to My Plan. Replaces the order in D2 —
+  Basheer, 2026-11-01.
+- D15. Opening tab stays as D4 (Needs Your Approval when something is
+  waiting, else Team Plans; D12 narrows "waiting" to the chosen period
+  and SBU) — Basheer, 2026-11-01.
+- D16. Found at A2. My Plan in the Annual view gains a "Your target for
+  FY 2026-27: ₹X" line: the four quarterly targets added up, as the SBU
+  Target card does (Annual Target D47); "Not set yet" when none is set.
+  The Quarter view already has it. Not a regression: the old card had no
+  such line — Basheer, 2026-11-01.
 
 ## Figures and sources
 
@@ -103,6 +131,14 @@ fit, as on My Work. Each tab's content as today (one block per row).
    Annual Target E2E L1–L3 rewritten and this plan's E2E
    (`docs/Target-Coverage-Planning-Tabs-Manual-E2E-Test-Plan.md`) both
    written ahead of the build, 2026-10-31; pre-E2E review; E2E on Dev.
+3. **Fixes found in the E2E (D12–D16), built by `/build` in its copy of
+   the code** (Basheer, 1 Nov), merged once. Screen only (reads the
+   existing lists; check whether the pending list needs a period/SBU
+   filter on the server or can be filtered on the screen). Then the
+   pre-E2E review of the new code; test plan rewritten for it (B1's
+   expected count, C2, A2–A5 order, B-steps for the opening tab, a new
+   Annual "Your target" step, the "more waiting in other periods" line);
+   Build & Test re-runs A–C and runs D–F on the final screen.
 
 ## 3. What could be affected
 
@@ -118,6 +154,8 @@ fit, as on My Work. Each tab's content as today (one block per row).
 - The GM's Needs Your Approval not listing plans two levels down: a
   separate gap (Backlog), not about layout.
 - A number on the bell: separate finding (30 Oct).
+- Found in the E2E on 1 Nov (A2, A5, B1) and decided the same day: see
+  D12–D16 and build step 3 below.
 
 ## 5. Business rules and records to update
 

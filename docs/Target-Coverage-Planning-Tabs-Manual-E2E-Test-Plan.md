@@ -4,8 +4,8 @@
 **Covers:** `docs/Target-Coverage-Planning-Tabs-Implementation-Plan.md`
 (D2–D10). Annual Target E2E L1–L3 (look at three widths) are rewritten
 for the tabs there (D11) and run with this plan.
-**Built:** `7a8a201` on `worktree-build`, pushed; not yet merged into `main`. Pre-E2E review fix `03ac0ea`; the quarter/year chevron arrows (C4), `3937558` (1 Nov), pushed.
-**Where:** Dev, after `/build` merges the tabs into `main`.
+**Built:** `7a8a201` on `worktree-build`, pushed; merged into `main` 1 Nov (`515a2f2`). Pre-E2E review fix `03ac0ea`; the quarter/year chevron arrows (C4), `3937558` (1 Nov), pushed. Fixes D12–D16 found in this E2E: not yet built (`/build`).
+**Where:** Dev (`main`).
 
 ## Checked against live data
 
@@ -30,10 +30,10 @@ before the E2E, since Dev data moves during other E2Es.
   Claude watches".
 - **Existing values:** Oct–Dec 2026 plans (30 Oct): Rudrappa ₹10.0 L
   approved, Basheer K ₹55.0 L pending (manager Haroon), Arun Adarsh
-  ₹50.0 L and Vivek ₹66.0 L approved. Jan–Mar 2027 (21 Oct, not
-  re-checked since): Arun Adarsh ₹30 L pending, Nishad K V ₹10 L
-  pending, Vivek ₹45 L rejected. Fahad's own plans and bell: re-read at
-  P3.
+  ₹50.0 L and Vivek ₹66.0 L approved; Fahad ₹25.0 L and Haroon ₹30.0 L
+  approved (P3, 1 Nov). Jan–Mar 2027 (P3, 1 Nov): Arun Adarsh ₹30 L
+  pending, Nishad K V ₹12.0 L approved, Vivek ₹45 L rejected; Fahad none.
+  Fahad's bell: see P3.
 
 Button labels and headings are taken from the code as it is today: "My
 Plan", "Needs Your Approval", "Team Targets", "SBU Target", "Team Plans",
@@ -88,36 +88,63 @@ looks off.
   the read-only check (all three RLS settings): plans waiting for
   Haroon's and Fazal's approval in Oct–Dec 2026; Fahad's plans and his
   hospitals; Fahad's and Fazal's plan notifications. Update "Existing
-  values" and the expected counts below if they moved. —
+  values" and the expected counts below if they moved. **Result 1 Nov —
+  Pass (Claude, Dev read-only, all three RLS settings verified).**
+  Oct–Dec 2026: only Basheer K's ₹55.0 L waits for Haroon (count 1);
+  nothing waits for Fazal (Fahad's ₹25.0 L is approved) — B1–B3 stand.
+  Fahad has no Jan–Mar 2027 plan, so D1 can submit. His one hospital
+  by zone (Mangalore) is "new customer"; confirm the picker offers it
+  at D1. His bell: one "approved" (unread) and one "rejected" (read),
+  both for his Oct–Dec plan. Fazal's bell: two "submitted" (read), same
+  plan. Moved since the plan was written: Nishad K V's Jan–Mar ₹10 L
+  is now ₹12.0 L approved. —
 
 ## A — Who sees which tab (D3, D6, D9)
 
 1. [Simple] As Fahad (rep): Target & Coverage Planning. **Expected:** My
-   Plan only, no tab bar. —
+   Plan only, no tab bar. **Result 1 Nov — Pass (Basheer).** —
 2. [Simple] As Fazal (Area Manager): same screen. **Expected:** tabs My
-   Plan, Needs Your Approval, Team Targets, Team Plans, in that order. —
+   Plan, Needs Your Approval, Team Targets, Team Plans, in that order.
+   **Result 1 Nov — Pass (Basheer).** Found: Annual My Plan has no "Your
+   target" line, and Team Plans sits last. Decided 1 Nov: the line is
+   added (implementation plan D16) and the order becomes My Plan, Needs
+   Your Approval, Team Plans, Team Targets (D14); the order wording here
+   is rewritten when that is built. —
 3. [Simple] As Nishad K V (Area Manager, no one reports to him).
    **Expected:** My Plan, Needs Your Approval, Team Plans; no Team
-   Targets tab (D9). —
+   Targets tab (D9). **Result 1 Nov — Pass (Basheer).** —
 4. [Simple] As Abdul Latheef P (Admin). **Expected:** Needs Your
-   Approval, Team Targets, Team Plans; no My Plan tab. —
+   Approval, Team Targets, Team Plans; no My Plan tab. **Result 1 Nov —
+   Pass (Basheer).** —
 5. [Simple] As Haroon (GM). **Expected:** all four tabs; the SBU choice
-   sits beside Quarter/Year, above the tabs (D8). —
+   sits beside Quarter/Year, above the tabs (D8). **Result 1 Nov — Pass
+   (Basheer).** Needs Your Approval was highlighted, with plans waiting.
+   Found: the SBU choice changes Team Targets and Team Plans only, not My
+   Plan or Needs Your Approval (as D8 says). Decided 1 Nov: it applies
+   to every tab (implementation plan D13). —
 
 ## B — Opening tab (D4, D10)
 
 1. [Simple] As Haroon, Oct–Dec 2026. **Expected:** opens on Needs Your
    Approval, with a count of 1 (Basheer K's ₹55.0 L plan, if still
-   pending at P3). —
+   pending at P3). **Result 1 Nov — Fail (Basheer).** It opened on Needs
+   Your Approval with a count of 4, not 1. Cause (read-only Dev check, 1
+   Nov): the list is every plan waiting for Haroon in any period, and has
+   never followed the Quarter/Year choice (the old page was the same):
+   Oct–Dec 2026 Basheer K ₹55.0 L; Jan–Mar 2027 Arun Adarsh ₹30.0 L;
+   Apr–Jun 2027 Arun Adarsh ₹30.0 L and Nishad K V ₹10.0 L. The plan's
+   "1" was wrong: P3 looked at two periods only. Decided 1 Nov: the list
+   follows the period and SBU (implementation plan D12); B1's expected
+   value is rewritten when that is built. —
 2. [Simple] As Fazal, Oct–Dec 2026. **Expected:** if nothing waits for
-   him (P3), opens on Team Plans. —
+   him (P3), opens on Team Plans. **Result 1 Nov — Pass (Basheer).** —
 3. [Simple] As Fazal: click Needs Your Approval. **Expected:** "Nothing
    waiting for your approval" (D6), unless P3 found a plan waiting. —
 4. [Complex: cross-screen] As Fazal: pick Team Targets, go to My Work,
    then back to Target & Coverage Planning from the menu. **Expected:**
    back on the opening tab, not Team Targets (D10). —
 
-## C — Quarter/Year, period and SBU apply to every tab (D2, D8)
+## C — Quarter/Year and period apply to every tab; SBU to Team Targets and Team Plans (D2, D8)
 
 1. [Complex: multi-step] As Haroon: on Team Plans, switch to Year, then
    open each tab. **Expected:** every tab shows the year; switch back to
