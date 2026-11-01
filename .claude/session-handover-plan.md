@@ -27,7 +27,7 @@ session edits this note._
   quarter, Jan–Mar 2027 first proper one; in the Backlog entry). App today
   counts from Oct–Dec (`FIRST_SAVED_PERIOD`, service.py:649). Q2 decided:
   (a) "Learning quarter, not counted", fix after Simpler Table merge
-  (today) during its E2E; Backlog + Annual Target D66 updated. After the
+  (merged into main 1 Nov, `515a2f2`) during its E2E; Backlog + Annual Target D66 updated. After the
   merge: add it to Simpler Table plan Decisions, its E2E plan,
   Business-Rules. Q3 decided: paper targets stay on paper (official for
   Jul–Sep, Oct–Dec). **Next:** Q4 (exit criteria); then ADR.
@@ -52,16 +52,19 @@ session edits this note._
 
 ## Harness Engineering
 
-- Weekly review skipped 31 Oct (`.claude/due-today-skipped`); when run:
-  thorough analysis of corrections (tracker "For the next review").
+- Weekly review done 1 Nov (tracker Reviews line): P98 session clock,
+  P77 gap, P102 docs-batch reminder built, tests 18/18; 27 watch-list
+  lines deleted. **Not committed** — harness commit to propose
+  (`.claude/hooks/session_clock.py`, `session-clock.sh`, `shell_guard.py`,
+  `shell-guard.sh`, `settings.json`, tracker). "← Back" check: /build
+  after its MUI round 1 fixes (Basheer) — Backlog entry and /build's note
+  still to update (quarter → year wording too). /build reported the MUI
+  check printing "no staged .ts/.tsx files" with three staged: not looked
+  at yet.
 - Code and UI checks trial (Basheer, 28 Oct, via Build & Test): Backlog
   "Code and UI checks — minimal-effort trial". Cap one day; show scope first.
 
 ## Chores
-
-- MUI-standard check: refuse typed ◀ and "← Back" (Basheer, 1 Nov) —
-  Backlog entry of that name; after today's Build merge. Which session
-  builds it: ask Basheer.
 
 - UAT User Manual still says "SBU Target & Plans" (now three cards;
   archive 23 and 26 Oct, Annual Target plan D75). **On hold** until the

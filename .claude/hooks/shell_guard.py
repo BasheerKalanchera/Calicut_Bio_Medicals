@@ -28,13 +28,27 @@ Two repeat mistakes, each now refused instead of written up again
    those runs and printing ₹ or → failed. Adds `-X utf8` (which `-I` keeps)
    by rewriting the command rather than refusing it.
 
+   Gap closed 2026-11-01 (weekly review): python named through a shell
+   variable (`P=.../python.exe; $P -I -X utf8 - "$F" <<'EOF'`, 28 Oct
+   archive edit) never showed the word "python", so it went through. Simple
+   NAME=value assignments are now expanded before the check.
+
+5. Docs batch before the code review (P102, 2026-11-01). Twice code went
+   unreviewed while docs were committed (28 Oct late commits; 31 Oct docs
+   batch before the review). On a `git commit` whose staged files are all
+   under docs/ or .claude/, adds a reminder for Claude -- never a block:
+   the docs batch goes in after the pre-E2E review of any code fix that
+   deserves one (CLAUDE.md "Batch docs-only commits", 2026-10-31). Whether
+   a fix deserves a review is Claude's judgement, not the tool's.
+
 Reads the hook JSON on stdin; prints a "deny" decision, an "updatedInput"
-rewrite, or nothing. Fails open: the sh wrapper lets the command through if
+rewrite and/or "additionalContext" reminder, or nothing. Fails open: the sh wrapper lets the command through if
 this script errors.
 """
 
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -88,13 +102,47 @@ def commit_says_deal(cmd: str, cwd: str) -> bool:
     return bool(DEAL_RE.search(text))
 
 
+ASSIGN_RE = re.compile(r"(?:^|[;&|\n])\s*([A-Za-z_]\w*)=(\"[^\"]*\"|'[^']*'|[^\s;&|]+)")
+
+
+def expand_python_vars(cmd: str) -> str:
+    """Replaces $NAME / ${NAME} with `python` when NAME=... names a python
+    program in the same command (the 28 Oct gap)."""
+    for name, value in ASSIGN_RE.findall(cmd):
+        if re.search(PY, value.strip("\"'").replace("\\", "/").rsplit("/", 1)[-1]):
+            cmd = re.sub(r"\$\{?" + name + r"\b\}?", "python", cmd)
+    return cmd
+
+
 def inline_edit_script(cmd: str) -> bool:
-    if INLINE_PY_RE.search(cmd) and PY_WRITE_RE.search(cmd):
+    if INLINE_PY_RE.search(expand_python_vars(cmd)) and PY_WRITE_RE.search(cmd):
         return True
     # Text only mentioned -- a heredoc body (e.g. `cat >> doc <<EOF`) or a
     # -m commit message -- is not a sed/perl command being run.
     run = MSG_RE.sub("", HEREDOC_RE.sub("", cmd))
     return bool(INPLACE_RE.search(run)) and not TEMP_RE.search(run)
+
+
+GIT_C_RE = re.compile(r"\bgit\s+-C\s+(\"[^\"]+\"|'[^']+'|\S+)\s+commit\b")
+DOCS_BATCH_NOTE = (
+    "P102 reminder: this is a docs-only commit. Before it goes in, check whether any code fix "
+    "since the last pre-E2E review deserves one; if so, the review and its fixes come first and "
+    "the docs batch after (CLAUDE.md \"Batch docs-only commits\", 2026-10-31). If you need to "
+    "pause, say so to Basheer before committing.")
+
+
+def docs_only_commit(cmd: str, cwd: str) -> bool:
+    if not COMMIT_RE.search(cmd):
+        return False
+    m = GIT_C_RE.search(cmd)
+    where = m.group(1).strip("\"'") if m else cwd
+    try:
+        out = subprocess.run(["git", "-C", where, "diff", "--cached", "--name-only"],
+                             capture_output=True, text=True, timeout=5, check=True).stdout
+    except (OSError, subprocess.SubprocessError):
+        return False
+    staged = [f.strip() for f in out.splitlines() if f.strip()]
+    return bool(staged) and all(f.startswith(("docs/", ".claude/")) for f in staged)
 
 
 def add_utf8(cmd: str) -> str:
@@ -134,12 +182,14 @@ def main() -> None:
             "permissionDecisionReason": reason,
         }}))
         return
+    out = {"hookEventName": "PreToolUse"}
     fixed = add_utf8(cmd)
     if fixed != cmd:
-        print(json.dumps({"hookSpecificOutput": {
-            "hookEventName": "PreToolUse",
-            "updatedInput": {**tool_input, "command": fixed},
-        }}))
+        out["updatedInput"] = {**tool_input, "command": fixed}
+    if docs_only_commit(cmd, data.get("cwd") or "."):
+        out["additionalContext"] = DOCS_BATCH_NOTE
+    if len(out) > 1:
+        print(json.dumps({"hookSpecificOutput": out}))
 
 
 if __name__ == "__main__":
