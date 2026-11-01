@@ -338,7 +338,10 @@ this replan: D8, D12, D12a, D14.
 - D66. FY 2026-27's Year view counts Won from Oct–Dec 2026, not April,
   since that year's targets start there (D38); April–September wins had
   no target to beat. Every later year counts from April (D31) —
-  Basheer, 2026-10-22.
+  Basheer, 2026-10-22. Changed 2026-11-01 (Basheer): Oct–Dec 2026 is a
+  learning quarter, shown labelled "Learning quarter, not counted";
+  FY 2026-27's Year view counts from Jan–Mar 2027 — Backlog "Rollout:
+  when planning starts to count".
 - D67. In the Year view, each person's row shows both their target and
   their plan as running totals, as the Quarter view shows both — Basheer,
   2026-10-22. Changed by D78 (the row shows the whole year; the running

@@ -15,7 +15,7 @@ session edits this note._
   Planning tabs (both Approved 31 Oct, mock-up v26, `43f146e`); Activity
   Type table (Approved 31 Oct, D1–D12; E2E plan
   `docs/Activity-Type-Table-Manual-E2E-Test-Plan.md`, 35 steps, Dev data
-  checked 31 Oct 15:20 IST). Plan & Chore confirms plan and step before
+  checked 31 Oct 15:20 IST; committed `8c7a445`, pushed). Plan & Chore confirms plan and step before
   each `/build` starts.
 
 ## Rollout: when planning counts — to plan (Basheer, 30 Oct)
@@ -23,7 +23,14 @@ session edits this note._
 - Planning in the system won't be done properly in Oct–Dec; July–Sep Opportunities
   were entered without targets (paper only). Plan the go-live quarter,
   pilot quarter, exit criteria, paper targets. Backlog "Rollout: when
-  planning starts to count". **Next:** read the Backlog entry, then plan.
+  planning starts to count". 1 Nov: Q1 decided (B — Oct–Dec learning
+  quarter, Jan–Mar 2027 first proper one; in the Backlog entry). App today
+  counts from Oct–Dec (`FIRST_SAVED_PERIOD`, service.py:649). Q2 decided:
+  (a) "Learning quarter, not counted", fix after Simpler Table merge
+  (today) during its E2E; Backlog + Annual Target D66 updated. After the
+  merge: add it to Simpler Table plan Decisions, its E2E plan,
+  Business-Rules. Q3 decided: paper targets stay on paper (official for
+  Jul–Sep, Oct–Dec). **Next:** Q4 (exit criteria); then ADR.
 
 ## After the UAT move (25 Oct, details in the archive)
 
@@ -51,6 +58,10 @@ session edits this note._
   "Code and UI checks — minimal-effort trial". Cap one day; show scope first.
 
 ## Chores
+
+- MUI-standard check: refuse typed ◀ and "← Back" (Basheer, 1 Nov) —
+  Backlog entry of that name; after today's Build merge. Which session
+  builds it: ask Basheer.
 
 - UAT User Manual still says "SBU Target & Plans" (now three cards;
   archive 23 and 26 Oct, Annual Target plan D75). **On hold** until the
