@@ -156,6 +156,12 @@ to decide: change the code, or change the rule.
   A (change) / B (keep internal names) / C (keep real hospital wording)
   split and the renames "Rate Customers" and "My customers" are still
   waiting for Basheer's yes.
+- **Now "Part 2" (Basheer, 1 Nov):** the MUI round 1 restyle is Part 1 and
+  comes first, with no wording changes (steps 1–3 pushed, `6a417cb`,
+  `f8c61b3`; see Progress-Archive-2026-11). This sweep follows it, after
+  `/build`'s Target vs Actuals simpler table and Target & Coverage Planning
+  tabs plans merge (they edit the same screens). One pass, one commit, the
+  manual and help text in the same commit, with its own plan and E2E.
 
 ### File deletes: ask "Are you sure?" first — not started (2026-10-25)
 
@@ -178,6 +184,11 @@ to decide: change the code, or change the rule.
   target stays without a question (Annual Target plan D74).
 - The app has no confirm pop-up yet — one small shared one. Build &
   Test, in the next batch of small fixes.
+- **Progress (Basheer, 1 Nov: done inside MUI round 1 Part 1):** the shared
+  pop-up `ConfirmDialog.tsx` is built (`6a417cb`); Opportunity Detail
+  Documents tab now asks first (`f8c61b3`, not yet seen in a browser).
+  Product Catalogue brochure delete is still to do (Part 1 step 4); remove
+  this entry when it ships and its E2E passes.
 
 ### Projects: track the requirements that go to dealer partners — not started, future (2026-10-30)
 
@@ -235,7 +246,34 @@ shows only his direct reports and people with no manager
 Found in Annual Target E2E J9, 2026-10-30; skipped there.
 
 
-### Rollout: when planning starts to count — Plan & Chore to plan, nothing decided (2026-10-30)
+### Rollout: when planning starts to count — Plan & Chore to plan, first question decided (2026-10-30, 2026-11-01)
+
+**Decided (Basheer, 2026-11-01): Option B.** Planning started in Oct–Dec
+2026 and carries on, but that quarter is the team's learning quarter —
+it was a third over when planning began, and the planning and tracking
+screens may be tweaked from what the team learns in it. Jan–Mar 2027
+(2026-Q4) is the first quarter the team is expected to plan properly.
+
+**Decided (Basheer, 2026-11-01): Target vs Actuals shows Oct–Dec 2026
+labelled "Learning quarter, not counted"** (option (a); not (b) counted as
+today, not (c) hidden). Its Quarter view works as normal with the label;
+the FY 2026-27 Year view counts from Jan–Mar 2027 and shows Oct–Dec as a
+separate line for reference. Changes Annual Target D66. Built as a
+follow-up fix after the Simpler Table merge (1 Nov), during its E2E —
+not before the merge. After the merge, Plan & Chore adds this to the
+Simpler Table plan's Decisions, its E2E plan and the Business-Rules Year
+view rule (those files have unmerged Build edits until then). Brand
+quarters keep being worked out and saved from Oct–Dec 2026 (D46a
+unchanged).
+
+**Decided (Basheer, 2026-11-01): the Jul–Sep and Oct–Dec 2026 paper
+targets stay on paper** — not typed into the system, not even as one
+"from paper" line per SBU. Paper is the official record of both
+quarters' targets; the system shows nothing for Jul–Sep, and Oct–Dec
+keeps whatever the team saves while learning.
+
+Still open: the exit criteria — what must be true before paper stops
+and who signs it off (question 4, Plan & Chore 2026-11-01).
 
 Basheer, 2026-10-30, during Annual Target E2E K1. Reality on UAT: Cabio
 Sales entered and closed many Opportunities in July–September; the
@@ -271,6 +309,30 @@ quarter); FY 2026-27 Year view is a partial year; pilot never ends
 without exit criteria. Touches the Target vs Actuals redesign (how
 a pilot quarter shows) and the Target & Coverage Planning tabs (built,
 awaiting merge). Likely an ADR. Basheer decides the option.
+
+### MUI-standard check: refuse typed ◀ and "← Back" — not started (2026-11-01)
+
+Harness change requested by Basheer, 2026-11-01 (from the Build
+session). In `sales-os-app/scripts/check-mui-standard.js`, add two rules
+to `RULES` so a staged `.ts`/`.tsx` file is refused if it contains (1)
+the typed arrow ◀, or (2) a "← Back" text button (`←\s*Back`). Both go
+against Frontend standards §6.11 rules 8–9 and §6.6 item 7. Leave ▶
+alone: it marks an expandable row in `TerritoryAdminScreen.tsx`. Then add
+one line to §6.11 saying which rules the check covers and which are left
+to the pre-E2E review (a label on every drop-down, a filter's name above
+its box, the back button's label), and a dated entry in
+`docs/Process-Rules-History.md`.
+
+Files affected (Plan & Chore grep, 1 Nov, both copies): Brand Target
+Tracking ◀ ▶ (`BrandTargetTrackingScreen.tsx` lines 384, 388) — would be
+refused at its next commit, so fix it in the same change; Customer 360's
+error-view "← Back" (still on the Build copy, line 861; already fixed
+but uncommitted in the main folder — the merge must keep the main
+folder's fix); Target & Coverage Planning ◀ (`TargetPlanningScreen.tsx`
+line 413, main folder only — already gone on the Build copy, so the
+merge removes it); the old `App.jsx` (not checked: the script reads
+`.ts`/`.tsx` only). Build after today's Build merge, so the check doesn't
+refuse the merge's own files.
 
 ### User Directory: org tree view — not started (2026-10-24)
 
@@ -580,6 +642,9 @@ table must fit a phone, not *how*.
   while measuring the New Stakeholder pop-up for the MUI plan's commit;
   that screen isn't in the plan's change, so not fixed there (Basheer,
   2026-10-26). Fix when the screen is next changed or in the sweep.
+  **Built 1 Nov (`6a417cb`, MUI round 1 Part 1 step 2):** the card stacks
+  on a phone and the buttons wrap. Not yet seen on a phone; remove this
+  entry after the phone-width check (390 px) in the combined round 1 E2E.
 
 ### Front-end standardisation fixes, by screen — not started (Basheer, 2026-11-01)
 

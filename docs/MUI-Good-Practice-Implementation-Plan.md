@@ -3,9 +3,11 @@
 **Status:** Approved 2026-10-26 (Basheer) — every decision below answered
 by him the same day. Steps 1–4 done: the automatic check and shared parts
 (`2e3ddd7`, `64b5fef`, `eb1b2c6`), My Work built to the standard, round 1
-review (`10010f2`). Step 5 (round 1 fixes) is with Build & Test, moved
-from Sun 1 Nov to after `/build`'s hospital next-action merge, done with
-the wording sweep and delete confirmations (Basheer, 2026-10-31).
+review (`10010f2`). Step 5 (round 1 fixes) is with Build & Test, split by
+Basheer on 1 Nov: Part 1 (restyle + delete confirmations + findings, one
+commit per screen) first — Customer 360 and the shared `ConfirmDialog`
+shipped `6a417cb`, Opportunity Detail `f8c61b3`, steps 4–8 to do — and
+Part 2 (the wording sweep) after `/build`'s current plans merge.
 **Traceability rows:** 14.1, 14.2 "Responsive Web App (iOS/Android), simple
 UI minimizing manual entry" (already Done; this plan keeps it true).
 **Design / discussion:** Backlog "MUI good practice on phone, tablet and

@@ -51,6 +51,8 @@ import { SilentModalError } from "../lib/formErrors";
 import OpportunityItemAddRow from "../components/OpportunityItemAddRow";
 import OpportunityItemsList from "../components/OpportunityItemsList";
 import { useAuth } from "../contexts/AuthContext";
+import { shadows } from "../theme/shadows";
+import ConfirmDialog from "../components/ConfirmDialog";
 import { getTodayIso } from "../utils/formatter";
 
 // Stage display_order thresholds (from Seed-Data.sql) at which each stage-gated
@@ -122,10 +124,10 @@ interface StakeholderOption { id: string; name: string; designation?: string | n
 function Field({ label, value }: { label: string; value?: string | null }) {
   return (
     <Box>
-      <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.25 }}>
+      <Typography sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.25 }}>
         {label}
       </Typography>
-      <Typography sx={{ fontSize: "0.75rem", fontWeight: 500, color: "#1f2937" }}>
+      <Typography sx={{ typography: "caption", fontWeight: 500, color: "gray.800" }}>
         {value ?? "—"}
       </Typography>
     </Box>
@@ -136,9 +138,9 @@ function StageBadge({ name }: { name: string }) {
   return (
     <Box
       component="span"
-      sx={{
-        px: 1, py: 0.5, borderRadius: "0.5rem", bgcolor: "#eff6ff", color: "#1d4ed8",
-        fontSize: "10px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
+      sx={{ typography: "tiny",
+        px: 1, py: 0.5, borderRadius: "0.5rem", bgcolor: "blue.50", color: "blue.700",
+        fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
       }}
     >
       <Box component="span" sx={{ opacity: 0.65, fontWeight: 700, mr: 0.5 }}>Stage:</Box>
@@ -149,19 +151,19 @@ function StageBadge({ name }: { name: string }) {
 
 function StatusBadge({ code, name }: { code: string; name: string }) {
   const colours: Record<string, { bg: string; color: string }> = {
-    ACTIVE:  { bg: "#ecfdf5", color: "#047857" },
-    ON_HOLD: { bg: "#fffbeb", color: "#b45309" },
-    STALLED: { bg: "#f3f4f6", color: "#6b7280" },
-    WON:     { bg: "#eff6ff", color: "#1d4ed8" },
-    LOST:    { bg: "#fef2f2", color: "#dc2626" },
+    ACTIVE:  { bg: "emerald.50", color: "emerald.700" },
+    ON_HOLD: { bg: "amber.50", color: "amber.700" },
+    STALLED: { bg: "gray.100", color: "gray.500" },
+    WON:     { bg: "blue.50", color: "blue.700" },
+    LOST:    { bg: "red.50", color: "red.600" },
   };
   const c = colours[code] ?? colours.STALLED;
   return (
     <Box
       component="span"
-      sx={{
+      sx={{ typography: "tiny",
         px: 1, py: 0.5, borderRadius: "0.5rem", bgcolor: c.bg, color: c.color,
-        fontSize: "10px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
+        fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
       }}
     >
       <Box component="span" sx={{ opacity: 0.65, fontWeight: 700, mr: 0.5 }}>Status:</Box>
@@ -173,9 +175,9 @@ function StatusBadge({ code, name }: { code: string; name: string }) {
 function LoadingPlaceholder() {
   return (
     <Box
-      sx={{
+      sx={{ typography: "caption",
         py: 6, display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: "0.75rem", color: "#d1d5db", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.1em",
+        color: "gray.300", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.1em",
         animation: "opp-detail-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
         "@keyframes opp-detail-pulse": { "0%, 100%": { opacity: 1 }, "50%": { opacity: 0.5 } },
       }}
@@ -187,7 +189,7 @@ function LoadingPlaceholder() {
 
 function EmptyPlaceholder({ message }: { message: string }) {
   return (
-    <Box sx={{ py: 6, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.75rem", color: "#9ca3af", textAlign: "center", px: 4 }}>
+    <Box sx={{ typography: "caption", py: 6, display: "flex", alignItems: "center", justifyContent: "center", color: "gray.400", textAlign: "center", px: 4 }}>
       {message}
     </Box>
   );
@@ -206,18 +208,18 @@ function OverviewTab({
 }) {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      <Box sx={{ bgcolor: "#fff", borderRadius: "1rem", boxShadow: "0 1px 2px rgba(0,0,0,0.05)", border: "1px solid #f3f4f6", p: 2.5 }}>
+      <Box sx={{ bgcolor: "background.paper", borderRadius: "1rem", boxShadow: shadows.sm, border: "1px solid", borderColor: "gray.100", p: 2.5 }}>
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
-          <Typography component="h4" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em" }}>
+          <Typography component="h4" sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.2em" }}>
             Opportunity Details
           </Typography>
           <Button
             onClick={onEdit}
             disableRipple
-            sx={{
-              px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900,
-              textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "#eff6ff",
-              "&:hover": { bgcolor: "#dbeafe" },
+            sx={{ typography: "caption",
+              px: 1.5, py: 0.75, borderRadius: "0.75rem", fontWeight: 900,
+              textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "blue.50",
+              "&:hover": { bgcolor: "blue.100" },
             }}
           >
             Edit
@@ -235,26 +237,26 @@ function OverviewTab({
           <Field label="Referred By"         value={opp.referred_by?.display_name ?? opp.referred_by_note ?? null} />
         </Box>
         {opp.status.status_code === "ON_HOLD" && (
-          <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, mt: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fffbeb", border: "1px solid #fde68a" }}>
+          <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, mt: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "amber.50", border: "1px solid", borderColor: "amber.200" }}>
             <Field label="Hold Reason"       value={holdReasonName ?? null} />
             <Field label="Reactivation Date" value={opp.reactivation_date ?? null} />
           </Box>
         )}
         {opp.status.status_code === "LOST" && (
-          <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, mt: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fef2f2", border: "1px solid #fecaca" }}>
+          <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, mt: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "red.50", border: "1px solid", borderColor: "red.200" }}>
             <Field label="Loss Reason"      value={lossReasonName ?? null} />
             <Field label="Competitor Name"  value={opp.competitor_name ?? null} />
           </Box>
         )}
         {opp.gate_override_approver_id && (
-          <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, mt: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fef2f2", border: "1px solid #fecaca" }}>
+          <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, mt: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "red.50", border: "1px solid", borderColor: "red.200" }}>
             <Field label="Gate Override Approved By" value={opp.gate_override_approver?.display_name ?? null} />
             <Field label="Gate Override Reason"      value={opp.gate_override_reason?.reason_name ?? null} />
             {opp.gate_override_note && <Field label="Gate Override Note" value={opp.gate_override_note} />}
           </Box>
         )}
         {opp.full_payment_confirmed_at && (
-          <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, mt: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#ecfdf5", border: "1px solid #a7f3d0" }}>
+          <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, mt: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "emerald.50", border: "1px solid", borderColor: "emerald.200" }}>
             <Field label="Full Payment Confirmed By" value={opp.full_payment_confirmed_by_user?.display_name ?? null} />
             <Field
               label="Confirmed On"
@@ -263,11 +265,11 @@ function OverviewTab({
             {opp.full_payment_note && <Field label="Payment Note" value={opp.full_payment_note} />}
           </Box>
         )}
-        <Box sx={{ mt: 2, pt: 2, borderTop: "1px solid #f9fafb" }}>
-          <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.25 }}>
+        <Box sx={{ mt: 2, pt: 2, borderTop: "1px solid", borderColor: "gray.50" }}>
+          <Typography sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.25 }}>
             Created
           </Typography>
-          <Typography sx={{ fontSize: "0.75rem", color: "#6b7280" }}>
+          <Typography sx={{ typography: "caption", color: "gray.500" }}>
             {new Date(opp.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
           </Typography>
         </Box>
@@ -388,14 +390,14 @@ function ProductsTab({
     return (
       <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <Typography component="h4" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em" }}>
+          <Typography component="h4" sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.2em" }}>
             Products
           </Typography>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Button
               onClick={() => setEditing(false)}
               disableRipple
-              sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#4b5563", bgcolor: "#f3f4f6", "&:hover": { bgcolor: "#e5e7eb" } }}
+              sx={{ typography: "caption", px: 1.5, py: 0.75, borderRadius: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "gray.600", bgcolor: "gray.100", "&:hover": { bgcolor: "gray.200" } }}
             >
               Cancel
             </Button>
@@ -404,14 +406,14 @@ function ProductsTab({
               disabled={saving}
               variant="contained"
               disableRipple
-              sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em" }}
+              sx={{ typography: "caption", px: 1.5, py: 0.75, borderRadius: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em" }}
             >
               {saving ? "Saving…" : "Save"}
             </Button>
           </Box>
         </Box>
 
-        {saveError && <Alert severity="error" sx={{ fontSize: "0.75rem" }}>{saveError}</Alert>}
+        {saveError && <Alert severity="error" sx={{ typography: "caption",  }}>{saveError}</Alert>}
 
         <OpportunityItemsList
           items={editItems}
@@ -430,13 +432,13 @@ function ProductsTab({
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
-        <Typography component="h4" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em" }}>
+        <Typography component="h4" sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.2em" }}>
           Products ({items?.length ?? 0})
         </Typography>
         <Button
           onClick={openEdit}
           disableRipple
-          sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "#eff6ff", "&:hover": { bgcolor: "#dbeafe" } }}
+          sx={{ typography: "caption", px: 1.5, py: 0.75, borderRadius: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "blue.50", "&:hover": { bgcolor: "blue.100" } }}
         >
           {items?.length ? "Edit" : "+ Add"}
         </Button>
@@ -446,25 +448,25 @@ function ProductsTab({
       ) : (
         <>
           {items.map((item) => (
-            <Box key={item.id} sx={{ bgcolor: item.line_type === "BUYBACK" ? "#fef2f2" : "background.default", borderRadius: "1rem", p: 1.5, display: "flex", flexDirection: "column", gap: 0.25 }}>
+            <Box key={item.id} sx={{ bgcolor: item.line_type === "BUYBACK" ? "red.50" : "background.default", borderRadius: "1rem", p: 1.5, display: "flex", flexDirection: "column", gap: 0.25 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-                <Typography sx={{ fontWeight: 700, fontSize: "0.75rem", color: "#1f2937", whiteSpace: "pre-wrap" }}>{item.description || item.product?.name}</Typography>
+                <Typography sx={{ typography: "caption", fontWeight: 700, color: "gray.800", whiteSpace: "pre-wrap" }}>{item.description || item.product?.name}</Typography>
                 {item.product?.product_type === "REFURBISHED" && <Chip label="Refurbished" size="small" color="warning" />}
                 {item.line_type === "BUYBACK" && <Chip label="Buyback" size="small" color="error" />}
               </Box>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, fontSize: "10px", color: "#6b7280" }}>
+              <Box sx={{ typography: "tiny", display: "flex", alignItems: "center", gap: 1.5, color: "gray.500" }}>
                 <Box component="span">Qty: {item.quantity}</Box>
                 <Box component="span">₹{parseFloat(item.unit_price_lakhs).toFixed(2)}L each</Box>
                 {parseFloat(item.discount_lakhs) > 0 && (
-                  <Box component="span" sx={{ color: "#ef4444" }}>−₹{parseFloat(item.discount_lakhs).toFixed(2)}L disc</Box>
+                  <Box component="span" sx={{ color: "red.500" }}>−₹{parseFloat(item.discount_lakhs).toFixed(2)}L disc</Box>
                 )}
               </Box>
-              <Typography sx={{ fontSize: "10px", fontWeight: 900, color: item.line_type === "BUYBACK" ? "#dc2626" : "#059669" }}>
+              <Typography sx={{ typography: "tiny", fontWeight: 900, color: item.line_type === "BUYBACK" ? "red.600" : "emerald.600" }}>
                 {item.line_type === "BUYBACK" ? "−" : ""}₹{parseFloat(item.extended_value_lakhs).toFixed(2)}L
               </Typography>
             </Box>
           ))}
-          <Typography sx={{ textAlign: "right", fontSize: "0.75rem", fontWeight: 900, color: "#374151", pt: 1, borderTop: "1px solid #f3f4f6" }}>
+          <Typography sx={{ typography: "caption", textAlign: "right", fontWeight: 900, color: "gray.700", pt: 1, borderTop: "1px solid", borderColor: "gray.100" }}>
             Total: ₹{items.reduce((s, i) => s + (i.line_type === "BUYBACK" ? -1 : 1) * parseFloat(i.extended_value_lakhs), 0).toFixed(2)}L
           </Typography>
         </>
@@ -559,10 +561,10 @@ function SplitsTab({ opportunityId, statusCode, ownerId }: { opportunityId: stri
       <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Typography component="h4" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em" }}>
+            <Typography component="h4" sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.2em" }}>
               Splits
             </Typography>
-            <Box component="span" sx={{ fontSize: "10px", fontWeight: 900, color: isAllocationBalanced(total, 100, 2) ? "#059669" : "#f59e0b" }}>
+            <Box component="span" sx={{ typography: "tiny", fontWeight: 900, color: isAllocationBalanced(total, 100, 2) ? "emerald.600" : "amber.500" }}>
               {total.toFixed(0)}%
             </Box>
           </Box>
@@ -570,7 +572,7 @@ function SplitsTab({ opportunityId, statusCode, ownerId }: { opportunityId: stri
             <Button
               onClick={() => { setEditing(false); setSaveError(null); }}
               disableRipple
-              sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#4b5563", bgcolor: "#f3f4f6", "&:hover": { bgcolor: "#e5e7eb" } }}
+              sx={{ typography: "caption", px: 1.5, py: 0.75, borderRadius: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "gray.600", bgcolor: "gray.100", "&:hover": { bgcolor: "gray.200" } }}
             >
               Cancel
             </Button>
@@ -579,36 +581,36 @@ function SplitsTab({ opportunityId, statusCode, ownerId }: { opportunityId: stri
               disabled={saving}
               variant="contained"
               disableRipple
-              sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em" }}
+              sx={{ typography: "caption", px: 1.5, py: 0.75, borderRadius: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em" }}
             >
               {saving ? "Saving…" : "Save"}
             </Button>
           </Box>
         </Box>
 
-        {saveError && <Alert severity="error" sx={{ fontSize: "0.75rem" }}>{saveError}</Alert>}
+        {saveError && <Alert severity="error" sx={{ typography: "caption",  }}>{saveError}</Alert>}
 
         {editSplits.map((s, i) => (
-          <Box key={s.user_id} sx={{ display: "flex", alignItems: "center", gap: 1.5, bgcolor: "#fff", px: 1.5, py: 1.25, borderRadius: "1rem", border: "1px solid #f3f4f6" }}>
-            <Typography sx={{ flex: 1, fontSize: "0.75rem", fontWeight: 700, color: "#1f2937" }}>{s.display_name}</Typography>
+          <Box key={s.user_id} sx={{ display: "flex", alignItems: "center", gap: 1.5, bgcolor: "background.paper", px: 1.5, py: 1.25, borderRadius: "1rem", border: "1px solid", borderColor: "gray.100" }}>
+            <Typography sx={{ typography: "caption", flex: 1, fontWeight: 700, color: "gray.800" }}>{s.display_name}</Typography>
             <TextField
               type="number"
               size="small"
               value={s.split_percentage}
               onChange={(e) => setEditSplits(editSplits.map((sp, j) => j === i ? { ...sp, split_percentage: Number(e.target.value) } : sp))}
               slotProps={{ htmlInput: { min: 0, max: 100, step: "any", style: { textAlign: "right" } } }}
-              sx={{ width: "4rem", "& input": { color: "primary.main", fontWeight: 900, fontSize: "0.75rem" } }}
+              sx={{ width: "4rem", "& input": { typography: "caption", color: "primary.main", fontWeight: 900  } }}
             />
-            <Typography sx={{ fontSize: "0.75rem", color: "#9ca3af" }}>%</Typography>
-            <IconButton size="small" onClick={() => setEditSplits(editSplits.filter((_, j) => j !== i))} sx={{ color: "#f87171", "&:hover": { color: "#dc2626" } }}>
-              <Box component="span" sx={{ fontWeight: 900, fontSize: "1.125rem", lineHeight: 1 }}>×</Box>
+            <Typography sx={{ typography: "caption", color: "gray.400" }}>%</Typography>
+            <IconButton size="small" onClick={() => setEditSplits(editSplits.filter((_, j) => j !== i))} sx={{ color: "red.400", "&:hover": { color: "red.600" } }}>
+              <Box component="span" sx={{ typography: "lead", fontWeight: 900, lineHeight: 1 }}>×</Box>
             </IconButton>
           </Box>
         ))}
 
         {/* Add contributor row */}
-        <Box sx={{ bgcolor: "#fff", p: 1.5, borderRadius: "1rem", border: "1px solid #f3f4f6", display: "flex", flexDirection: "column", gap: 1 }}>
-          <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+        <Box sx={{ bgcolor: "background.paper", p: 1.5, borderRadius: "1rem", border: "1px solid", borderColor: "gray.100", display: "flex", flexDirection: "column", gap: 1 }}>
+          <Typography sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.05em" }}>
             Add Contributor
           </Typography>
           <TextField
@@ -639,10 +641,10 @@ function SplitsTab({ opportunityId, statusCode, ownerId }: { opportunityId: stri
             disabled={!addUserId || !addPct}
             fullWidth
             disableRipple
-            sx={{
-              py: 1, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
-              color: "primary.main", bgcolor: "#eff6ff", "&:hover": { bgcolor: "#dbeafe" },
-              "&.Mui-disabled": { opacity: 0.4, color: "primary.main", bgcolor: "#eff6ff" },
+            sx={{ typography: "caption",
+              py: 1, borderRadius: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
+              color: "primary.main", bgcolor: "blue.50", "&:hover": { bgcolor: "blue.100" },
+              "&.Mui-disabled": { opacity: 0.4, color: "primary.main", bgcolor: "blue.50" },
             }}
           >
             + Add Contributor
@@ -656,14 +658,14 @@ function SplitsTab({ opportunityId, statusCode, ownerId }: { opportunityId: stri
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
-        <Typography component="h4" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em" }}>
+        <Typography component="h4" sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.2em" }}>
           Splits ({splits?.length ?? 0})
         </Typography>
         {canEdit && (
           <Button
             onClick={openEdit}
             disableRipple
-            sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "#eff6ff", "&:hover": { bgcolor: "#dbeafe" } }}
+            sx={{ typography: "caption", px: 1.5, py: 0.75, borderRadius: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "blue.50", "&:hover": { bgcolor: "blue.100" } }}
           >
             {splits?.length ? "Edit" : "+ Add"}
           </Button>
@@ -674,8 +676,8 @@ function SplitsTab({ opportunityId, statusCode, ownerId }: { opportunityId: stri
       ) : (
         splits.map((s) => (
           <Box key={s.user_id} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", bgcolor: "background.default", borderRadius: "1rem", px: 1.5, py: 1.25 }}>
-            <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, color: "#1f2937" }}>{s.user.display_name}</Typography>
-            <Typography sx={{ fontSize: "0.75rem", fontWeight: 900, color: "primary.main" }}>{parseFloat(s.split_percentage).toFixed(0)}%</Typography>
+            <Typography sx={{ typography: "caption", fontWeight: 700, color: "gray.800" }}>{s.user.display_name}</Typography>
+            <Typography sx={{ typography: "caption", fontWeight: 900, color: "primary.main" }}>{parseFloat(s.split_percentage).toFixed(0)}%</Typography>
           </Box>
         ))
       )}
@@ -787,13 +789,13 @@ function StakeholdersTab({ opportunityId, accountId }: { opportunityId: string; 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
-        <Typography component="h4" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em" }}>
+        <Typography component="h4" sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.2em" }}>
           Stakeholders ({(links ?? []).length})
         </Typography>
         <Button
           onClick={openAdd}
           disableRipple
-          sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#7c3aed", bgcolor: "#f5f3ff", "&:hover": { bgcolor: "#ede9fe" } }}
+          sx={{ typography: "caption", px: 1.5, py: 0.75, borderRadius: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "violet.600", bgcolor: "violet.50", "&:hover": { bgcolor: "violet.100" } }}
         >
           + Link
         </Button>
@@ -802,11 +804,11 @@ function StakeholdersTab({ opportunityId, accountId }: { opportunityId: string; 
       {!links?.length && !showAdd && <EmptyPlaceholder message="No stakeholders linked to this opportunity." />}
 
       {links?.map((lnk) => (
-        <Box key={lnk.stakeholder_id} sx={{ bgcolor: "#fff", borderRadius: "1rem", px: 1.5, py: 1.25, border: "1px solid #f3f4f6" }}>
+        <Box key={lnk.stakeholder_id} sx={{ bgcolor: "background.paper", borderRadius: "1rem", px: 1.5, py: 1.25, border: "1px solid", borderColor: "gray.100" }}>
           {editingId === lnk.stakeholder_id ? (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-              <Typography sx={{ fontWeight: 700, fontSize: "0.75rem", color: "#1f2937" }}>{lnk.stakeholder.name}</Typography>
-              {editError && <Alert severity="error" sx={{ fontSize: "0.75rem" }}>{editError}</Alert>}
+              <Typography sx={{ typography: "caption", fontWeight: 700, color: "gray.800" }}>{lnk.stakeholder.name}</Typography>
+              {editError && <Alert severity="error" sx={{ typography: "caption",  }}>{editError}</Alert>}
               <TextField
                 select
                 label="Influence Level"
@@ -844,7 +846,7 @@ function StakeholdersTab({ opportunityId, accountId }: { opportunityId: string; 
                   onClick={() => setEditingId(null)}
                   fullWidth
                   disableRipple
-                  sx={{ py: 1, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#4b5563", bgcolor: "#f3f4f6", "&:hover": { bgcolor: "#e5e7eb" } }}
+                  sx={{ typography: "caption", py: 1, borderRadius: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "gray.600", bgcolor: "gray.100", "&:hover": { bgcolor: "gray.200" } }}
                 >
                   Cancel
                 </Button>
@@ -854,7 +856,7 @@ function StakeholdersTab({ opportunityId, accountId }: { opportunityId: string; 
                   variant="contained"
                   fullWidth
                   disableRipple
-                  sx={{ py: 1, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em" }}
+                  sx={{ typography: "caption", py: 1, borderRadius: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em" }}
                 >
                   {editSaving ? "Saving…" : "Save"}
                 </Button>
@@ -863,14 +865,14 @@ function StakeholdersTab({ opportunityId, accountId }: { opportunityId: string; 
           ) : (
             <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1 }}>
               <Box sx={{ minWidth: 0 }}>
-                <Typography sx={{ fontWeight: 700, fontSize: "0.75rem", color: "#1f2937" }}>{lnk.stakeholder.name}</Typography>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.25, fontSize: "10px", color: "#6b7280" }}>
+                <Typography sx={{ typography: "caption", fontWeight: 700, color: "gray.800" }}>{lnk.stakeholder.name}</Typography>
+                <Box sx={{ typography: "tiny", display: "flex", alignItems: "center", gap: 1, mt: 0.25, color: "gray.500" }}>
                   {lnk.influence_level && (
                     <Box
                       component="span"
                       sx={{
                         fontWeight: 900, textTransform: "uppercase",
-                        color: lnk.influence_level === "HIGH" ? "#ef4444" : lnk.influence_level === "MEDIUM" ? "#f59e0b" : "#9ca3af",
+                        color: lnk.influence_level === "HIGH" ? "red.500" : lnk.influence_level === "MEDIUM" ? "amber.500" : "gray.400",
                       }}
                     >
                       {lnk.influence_level}
@@ -878,22 +880,22 @@ function StakeholdersTab({ opportunityId, accountId }: { opportunityId: string; 
                   )}
                   {lnk.decision_role && <Box component="span">{lnk.decision_role}</Box>}
                 </Box>
-                {lnk.notes && <Typography sx={{ fontSize: "10px", color: "#9ca3af", fontStyle: "italic", mt: 0.25 }}>{lnk.notes}</Typography>}
+                {lnk.notes && <Typography sx={{ typography: "tiny", color: "gray.400", fontStyle: "italic", mt: 0.25 }}>{lnk.notes}</Typography>}
               </Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexShrink: 0 }}>
                 <Button
                   onClick={() => openEditLink(lnk)}
                   disableRipple
-                  sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "#eff6ff", "&:hover": { bgcolor: "#dbeafe" } }}
+                  sx={{ typography: "caption", px: 1.5, py: 0.75, borderRadius: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "blue.50", "&:hover": { bgcolor: "blue.100" } }}
                 >
                   Edit
                 </Button>
                 <IconButton
                   size="small"
                   onClick={() => handleUnlink(lnk.stakeholder_id)}
-                  sx={{ color: "#f87171", "&:hover": { color: "#dc2626" } }}
+                  sx={{ color: "red.400", "&:hover": { color: "red.600" } }}
                 >
-                  <Box component="span" sx={{ fontWeight: 900, fontSize: "1.125rem", lineHeight: 1 }}>×</Box>
+                  <Box component="span" sx={{ typography: "lead", fontWeight: 900, lineHeight: 1 }}>×</Box>
                 </IconButton>
               </Box>
             </Box>
@@ -902,11 +904,11 @@ function StakeholdersTab({ opportunityId, accountId }: { opportunityId: string; 
       ))}
 
       {showAdd && (
-        <Box sx={{ bgcolor: "#fff", p: 1.5, borderRadius: "1rem", border: "1px solid #f3f4f6", display: "flex", flexDirection: "column", gap: 1 }}>
-          <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+        <Box sx={{ bgcolor: "background.paper", p: 1.5, borderRadius: "1rem", border: "1px solid", borderColor: "gray.100", display: "flex", flexDirection: "column", gap: 1 }}>
+          <Typography sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.05em" }}>
             Link Stakeholder
           </Typography>
-          {linkError && <Alert severity="error" sx={{ fontSize: "0.75rem" }}>{linkError}</Alert>}
+          {linkError && <Alert severity="error" sx={{ typography: "caption",  }}>{linkError}</Alert>}
           <TextField
             select
             value={addStakeholderId}
@@ -957,7 +959,7 @@ function StakeholdersTab({ opportunityId, accountId }: { opportunityId: string; 
               onClick={() => { setShowAdd(false); setLinkError(null); }}
               fullWidth
               disableRipple
-              sx={{ py: 1, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#4b5563", bgcolor: "#f3f4f6", "&:hover": { bgcolor: "#e5e7eb" } }}
+              sx={{ typography: "caption", py: 1, borderRadius: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "gray.600", bgcolor: "gray.100", "&:hover": { bgcolor: "gray.200" } }}
             >
               Cancel
             </Button>
@@ -966,10 +968,10 @@ function StakeholdersTab({ opportunityId, accountId }: { opportunityId: string; 
               disabled={!addStakeholderId || linking}
               fullWidth
               disableRipple
-              sx={{
-                py: 1, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
-                color: "#7c3aed", bgcolor: "#f5f3ff", "&:hover": { bgcolor: "#ede9fe" },
-                "&.Mui-disabled": { opacity: 0.4, color: "#7c3aed", bgcolor: "#f5f3ff" },
+              sx={{ typography: "caption",
+                py: 1, borderRadius: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
+                color: "violet.600", bgcolor: "violet.50", "&:hover": { bgcolor: "violet.100" },
+                "&.Mui-disabled": { opacity: 0.4, color: "violet.600", bgcolor: "violet.50" },
               }}
             >
               {linking ? "Linking…" : "Link"}
@@ -1008,6 +1010,8 @@ function DocumentsTab({ opportunityId }: { opportunityId: string }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [previewDoc, setPreviewDoc] = useState<{ url: string; fileName: string; fileType: string } | null>(null);
+  // The file the user clicked × on; the "Are you sure?" pop-up is open while set.
+  const [docToDelete, setDocToDelete] = useState<DocumentResponse | null>(null);
 
   const { data: documents = [], isLoading } = useQuery({
     queryKey: ["opp-documents", opportunityId],
@@ -1026,6 +1030,7 @@ function DocumentsTab({ opportunityId }: { opportunityId: string }) {
   const deleteMutation = useMutation({
     mutationFn: (documentId: string) => deleteDocument(documentId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["opp-documents", opportunityId] }),
+    onSettled: () => setDocToDelete(null),
   });
 
   // Opens an in-app preview modal (iframe/img on the signed URL) rather than
@@ -1064,14 +1069,14 @@ function DocumentsTab({ opportunityId }: { opportunityId: string }) {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
-        <Typography component="h4" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em" }}>
+        <Typography component="h4" sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.2em" }}>
           Documents ({documents.length})
         </Typography>
         <Button
           onClick={() => fileInputRef.current?.click()}
           disabled={uploadMutation.isPending}
           disableRipple
-          sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "#eff6ff", "&:hover": { bgcolor: "#dbeafe" } }}
+          sx={{ typography: "caption", px: 1.5, py: 0.75, borderRadius: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "blue.50", "&:hover": { bgcolor: "blue.100" } }}
         >
           {uploadMutation.isPending ? "Uploading…" : "+ Add"}
         </Button>
@@ -1086,7 +1091,7 @@ function DocumentsTab({ opportunityId }: { opportunityId: string }) {
         />
       </Box>
 
-      {uploadError && <Alert severity="error" sx={{ fontSize: "0.75rem" }}>{uploadError}</Alert>}
+      {uploadError && <Alert severity="error" sx={{ typography: "caption",  }}>{uploadError}</Alert>}
 
       {!documents.length ? (
         <EmptyPlaceholder message="No documents uploaded yet." />
@@ -1095,7 +1100,7 @@ function DocumentsTab({ opportunityId }: { opportunityId: string }) {
           <Box key={doc.id} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1.5, bgcolor: "background.default", borderRadius: "1rem", px: 1.5, py: 1.25 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0, flex: 1 }}>
               <span>{documentIcon(doc.file_type)}</span>
-              <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, color: "#1f2937", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <Typography sx={{ typography: "caption", fontWeight: 700, color: "gray.800", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {doc.file_name}
               </Typography>
             </Box>
@@ -1107,16 +1112,16 @@ function DocumentsTab({ opportunityId }: { opportunityId: string }) {
                 aria-label="View"
                 sx={{ color: "primary.main" }}
               >
-                <VisibilityIcon sx={{ fontSize: 16 }} />
+                <VisibilityIcon fontSize="small" />
               </IconButton>
               <IconButton
                 size="small"
-                onClick={() => deleteMutation.mutate(doc.id)}
+                onClick={() => setDocToDelete(doc)}
                 disabled={deleteMutation.isPending && deleteMutation.variables === doc.id}
                 aria-label="Delete"
-                sx={{ color: "#f87171", "&:hover": { color: "#dc2626" } }}
+                sx={{ color: "red.400", "&:hover": { color: "red.600" } }}
               >
-                <Box component="span" sx={{ fontWeight: 900, fontSize: "1.125rem", lineHeight: 1 }}>×</Box>
+                <Box component="span" sx={{ typography: "lead", fontWeight: 900, lineHeight: 1 }}>×</Box>
               </IconButton>
             </Box>
           </Box>
@@ -1124,6 +1129,15 @@ function DocumentsTab({ opportunityId }: { opportunityId: string }) {
       )}
 
       <DocumentPreviewModal doc={previewDoc} onClose={() => setPreviewDoc(null)} />
+
+      <ConfirmDialog
+        open={docToDelete !== null}
+        title="Delete this file?"
+        message="This can't be undone."
+        busy={deleteMutation.isPending}
+        onConfirm={() => { if (docToDelete) deleteMutation.mutate(docToDelete.id); }}
+        onCancel={() => setDocToDelete(null)}
+      />
     </Box>
   );
 }
@@ -1140,7 +1154,7 @@ function DocumentPreviewModal({
       <DialogTitle component="h3" sx={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
         {doc?.fileName}
       </DialogTitle>
-      <DialogContent sx={{ display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "#f3f4f6", p: 0 }}>
+      <DialogContent sx={{ display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "gray.100", p: 0 }}>
         {doc && doc.fileType === "application/pdf" ? (
           <Box component="iframe" src={doc.url} title={doc.fileName} sx={{ width: "100%", height: "70vh", border: "none" }} />
         ) : doc ? (
@@ -1677,26 +1691,26 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
       {/* Header */}
       <Box sx={{ px: 2, pt: 2, bgcolor: "background.default", flexShrink: 0 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
-          <IconButton onClick={onBack} aria-label="Back" sx={{ width: 40, height: 40, color: "#4b5563", flexShrink: 0, "&:hover": { bgcolor: "#e5e7eb" } }}>
-            <ArrowBackIcon sx={{ fontSize: 20 }} />
+          <IconButton onClick={onBack} aria-label="Back" sx={{ width: 40, height: 40, color: "gray.600", flexShrink: 0, "&:hover": { bgcolor: "gray.200" } }}>
+            <ArrowBackIcon fontSize="small" />
           </IconButton>
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography component="h2" sx={{ fontWeight: 800, fontSize: "1.25rem", color: "#1f2937", letterSpacing: "-0.025em", lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <Typography component="h2" sx={{ typography: "h6", fontWeight: 800, color: "gray.800", letterSpacing: "-0.025em", lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {opp.name}
             </Typography>
-            <Typography sx={{ fontSize: "0.75rem", fontWeight: 500, color: "#6b7280", mt: 0.25, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <Typography sx={{ typography: "caption", fontWeight: 500, color: "gray.500", mt: 0.25, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {opp.account.name}
             </Typography>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.75, flexWrap: "wrap" }}>
               <StageBadge name={opp.stage.stage_name} />
               <StatusBadge code={opp.status.status_code} name={opp.status.status_name} />
               {isReactivationOverdue(opp.status.status_code, opp.reactivation_date) && (
-                <Box component="span" sx={{ px: 1.25, py: 0.5, borderRadius: "0.5rem", fontSize: "10px", fontWeight: 900, border: "1px solid #fecaca", bgcolor: "#fef2f2", color: "#dc2626" }}>
+                <Box component="span" sx={{ typography: "tiny", px: 1.25, py: 0.5, borderRadius: "0.5rem", fontWeight: 900, border: "1px solid", borderColor: "red.200", bgcolor: "red.50", color: "red.600" }}>
                   Reactivation Overdue
                 </Box>
               )}
               {opp.is_high_priority && (
-                <Box component="span" sx={{ px: 1.25, py: 0.5, borderRadius: "0.5rem", fontSize: "10px", fontWeight: 900, border: "1px solid #fed7aa", bgcolor: "#fff7ed", color: "#c2410c" }}>
+                <Box component="span" sx={{ typography: "tiny", px: 1.25, py: 0.5, borderRadius: "0.5rem", fontWeight: 900, border: "1px solid", borderColor: "orange.200", bgcolor: "orange.50", color: "orange.700" }}>
                   High Priority
                 </Box>
               )}
@@ -1705,35 +1719,35 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
         </Box>
 
         {/* Stats strip */}
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-around", bgcolor: "#fff", borderRadius: "1rem", boxShadow: "0 1px 2px rgba(0,0,0,0.05)", border: "1px solid #f3f4f6", px: 2, py: 1.5, mb: 2 }}>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-around", bgcolor: "background.paper", borderRadius: "1rem", boxShadow: shadows.sm, border: "1px solid", borderColor: "gray.100", px: 2, py: 1.5, mb: 2 }}>
           <Box sx={{ textAlign: "center" }}>
-            <Typography sx={{
-              fontSize: "1.25rem", fontWeight: 900,
-              color: parseFloat(opp.win_probability) >= 70 ? "#059669" : parseFloat(opp.win_probability) >= 40 ? "#f59e0b" : "#ef4444",
+            <Typography sx={{ typography: "h6",
+              fontWeight: 900,
+              color: parseFloat(opp.win_probability) >= 70 ? "emerald.600" : parseFloat(opp.win_probability) >= 40 ? "amber.500" : "red.500",
             }}>
               {parseFloat(opp.win_probability).toFixed(0)}%
             </Typography>
-            <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", mt: 0.25 }}>Win Prob</Typography>
+            <Typography sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.05em", mt: 0.25 }}>Win Prob</Typography>
           </Box>
-          <Box sx={{ width: "1px", height: 32, bgcolor: "#f3f4f6" }} />
+          <Box sx={{ width: "1px", height: 32, bgcolor: "gray.100" }} />
           <Box sx={{ textAlign: "center" }}>
-            <Typography sx={{ fontSize: "1.25rem", fontWeight: 900, color: "#059669" }}>
+            <Typography sx={{ typography: "h6", fontWeight: 900, color: "emerald.600" }}>
               {opp.indicative_value ? `₹${parseFloat(opp.indicative_value).toFixed(1)}L` : "—"}
             </Typography>
-            <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", mt: 0.25 }}>Value</Typography>
+            <Typography sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.05em", mt: 0.25 }}>Value</Typography>
           </Box>
-          <Box sx={{ width: "1px", height: 32, bgcolor: "#f3f4f6" }} />
+          <Box sx={{ width: "1px", height: 32, bgcolor: "gray.100" }} />
           <Box sx={{ textAlign: "center" }}>
-            <Typography sx={{ fontSize: "0.875rem", fontWeight: 900, color: "#374151", lineHeight: 1.2, wordBreak: "break-word", maxWidth: "90px" }}>
+            <Typography sx={{ typography: "body2", fontWeight: 900, color: "gray.700", lineHeight: 1.2, wordBreak: "break-word", maxWidth: "90px" }}>
               {opp.owner.display_name}
             </Typography>
-            <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", mt: 0.25 }}>Owner</Typography>
+            <Typography sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.05em", mt: 0.25 }}>Owner</Typography>
           </Box>
         </Box>
 
         {/* BR-OP-19 notice (plan D14): never blocks anything; covers Opportunities nobody re-saves. */}
         {breaksHighChanceRule(opp.status.status_code, opp.stage.display_order, opp.win_probability, opp.expected_closure_date) && (
-          <Alert severity="warning" sx={{ fontSize: "0.75rem", mb: 2 }}>{HIGH_CHANCE_NEEDS_CLOSURE_DATE_MSG}</Alert>
+          <Alert severity="warning" sx={{ typography: "caption", mb: 2 }}>{HIGH_CHANCE_NEEDS_CLOSURE_DATE_MSG}</Alert>
         )}
 
         {/* Tab chip bar */}
@@ -1753,27 +1767,28 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
                   data-tab={tab.id}
                   onClick={() => handleTabChange(tab.id)}
                   disableRipple
-                  sx={{
+                  sx={{ typography: "body2",
                     flexShrink: 0, display: "flex", alignItems: "center", gap: 0.75, px: 2, py: 1,
-                    borderRadius: "9999px", fontSize: "0.875rem", fontWeight: 700, whiteSpace: "nowrap",
-                    bgcolor: isActive ? "primary.main" : "#fff",
-                    color: isActive ? "#fff" : "#4b5563",
-                    border: isActive ? "none" : "1px solid #e5e7eb",
-                    boxShadow: isActive ? "0 1px 2px rgba(0,0,0,0.05)" : "none",
+                    borderRadius: "9999px", fontWeight: 700, whiteSpace: "nowrap",
+                    bgcolor: isActive ? "primary.main" : "background.paper",
+                    color: isActive ? "common.white" : "gray.600",
+                    border: isActive ? "none" : "1px solid",
+                    borderColor: "gray.200",
+                    boxShadow: isActive ? shadows.sm : "none",
                     "&:hover": {
-                      borderColor: isActive ? "transparent" : "#93c5fd",
-                      color: isActive ? "#fff" : "primary.main",
-                      bgcolor: isActive ? "primary.main" : "#fff",
+                      borderColor: isActive ? "transparent" : "blue.300",
+                      color: isActive ? "common.white" : "primary.main",
+                      bgcolor: isActive ? "primary.main" : "background.paper",
                     },
                   }}
                 >
-                  {isActive && <CheckIcon sx={{ fontSize: 14, flexShrink: 0 }} />}
+                  {isActive && <CheckIcon fontSize="inherit" sx={{ flexShrink: 0 }} />}
                   {tab.label}
                 </Button>
               );
             })}
           </Box>
-          <Box sx={{ position: "absolute", right: 0, top: 0, height: "100%", width: 40, pointerEvents: "none", background: "linear-gradient(to left, #f9fafb, transparent)" }} />
+          <Box sx={{ position: "absolute", right: 0, top: 0, height: "100%", width: 40, pointerEvents: "none", background: (theme) => `linear-gradient(to left, ${theme.palette.background.default}, transparent)` }} />
         </Box>
       </Box>
 
@@ -1857,10 +1872,10 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
           </TextField>
         </Box>
         {editStatusCode === "WON" && opp.status.status_code !== "WON" && (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, p: 1.5, borderRadius: "0.75rem", bgcolor: "#ecfdf5", border: "1px solid #a7f3d0" }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, p: 1.5, borderRadius: "0.75rem", bgcolor: "emerald.50", border: "1px solid", borderColor: "emerald.200" }}>
             <FormControlLabel
               control={<Checkbox color="primary" checked={editConfirmFullPayment} onChange={(e) => setEditConfirmFullPayment(e.target.checked)} />}
-              label={<Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#374151" }}>I confirm full payment has been received *</Typography>}
+              label={<Typography sx={{ typography: "body2", fontWeight: 700, color: "gray.700" }}>I confirm full payment has been received *</Typography>}
             />
             <TextField
               label="Payment Note" value={editFullPaymentNote} onChange={(e) => setEditFullPaymentNote(e.target.value)}
@@ -1884,7 +1899,7 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
           <Box>
             <FormControlLabel
               control={<Checkbox color="primary" checked={editIsExternalReferrer} onChange={(e) => { setEditIsExternalReferrer(e.target.checked); setEditReferredByUserId(""); setEditReferredByNote(""); }} />}
-              label={<Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#374151" }}>External referrer (not Cabio staff)</Typography>}
+              label={<Typography sx={{ typography: "body2", fontWeight: 700, color: "gray.700" }}>External referrer (not Cabio staff)</Typography>}
             />
             {editIsExternalReferrer ? (
               <TextField label="Referred By" value={editReferredByNote} onChange={(e) => setEditReferredByNote(e.target.value)} placeholder="e.g. Dr. Menon, referring physician" fullWidth size="small" />
@@ -1925,16 +1940,16 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
         {editStageOrder <= STAGE_ORDER_DEMO ? (
           <FormControlLabel
             control={<Checkbox color="primary" checked={editHighPriorityManual} onChange={(e) => setEditHighPriorityManual(e.target.checked)} />}
-            label={<Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#374151" }}>High Priority</Typography>}
+            label={<Typography sx={{ typography: "body2", fontWeight: 700, color: "gray.700" }}>High Priority</Typography>}
           />
         ) : (
-          <Typography sx={{ fontSize: "0.75rem", fontWeight: 600, color: "#c2410c" }}>
+          <Typography sx={{ typography: "caption", fontWeight: 600, color: "orange.700" }}>
             Automatically High Priority — this deal is past Demo stage
           </Typography>
         )}
         <FormControlLabel
           control={<Checkbox color="primary" checked={gateOverrideChecked} onChange={(e) => setGateOverrideChecked(e.target.checked)} />}
-          label={<Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#374151" }}>Fast-Track this Opportunity</Typography>}
+          label={<Typography sx={{ typography: "body2", fontWeight: 700, color: "gray.700" }}>Fast-Track this Opportunity</Typography>}
         />
         {((editStageOrder >= STAGE_ORDER_DEMO && editLeadSourceCode !== "REPEAT_ORDER") || editDemoStart !== "") && !gateOverrideChecked && (
           <TextField label="Demo Start Date" type="date" value={editDemoStart} onChange={(e) => setEditDemoStart(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
@@ -1948,7 +1963,7 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
           <TextField label="Expected Closure Date" type="date" value={editClosureDate} onChange={(e) => setEditClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
         )}
         {gateOverrideChecked && (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fef2f2", border: "1px solid #fecaca" }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "red.50", border: "1px solid", borderColor: "red.200" }}>
             <TextField
               select
               label={editGateOverrideApproverId ? "Approved By *" : "Approved By"}
@@ -1995,7 +2010,7 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
           </>
         )}
         {editStatusCode === "ON_HOLD" && (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fffbeb", border: "1px solid #fde68a" }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "amber.50", border: "1px solid", borderColor: "amber.200" }}>
             <TextField
               select label="Hold Reason *" value={editHoldReasonId} onChange={(e) => setEditHoldReasonId(e.target.value)}
               fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
@@ -2010,7 +2025,7 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
           </Box>
         )}
         {editStatusCode === "LOST" && (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fef2f2", border: "1px solid #fecaca" }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "red.50", border: "1px solid", borderColor: "red.200" }}>
             <TextField
               select label="Loss Reason *" value={editLossReasonId} onChange={(e) => setEditLossReasonId(e.target.value)}
               fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}

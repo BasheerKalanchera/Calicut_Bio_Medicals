@@ -13,38 +13,30 @@ session edits this note._
   hotfix-branch route (`docs/Deployment-Topology.md` "Fix to UAT ahead
   of a full promotion").
 
-## 31 OCT — small-fixes batch shipped
-- Hospital & Project next-action E2E DONE 31 Oct: 37 of 37 recorded (34
-  Pass; G6, D4, D5-Project not tested, no Dev data). Completed-order fix
-  pushed as `268570f` (pytest 1501, ruff, tsc, lint clean).
-- NEXT: the docs batch (E2E plan results, this note, Progress-Archive,
-  plan Status line; all uncommitted — needs Basheer's yes), the session
-  retro, then Traceability/scorecard for the passed E2E (check first
-  whether row 19 changes; run `generate_scorecard.py --check`).
-- UNCOMMITTED, carry into Customer 360's MUI round 1 commit (the MUI check
-  refuses any commit touching that file, 165 hits): `Customer360Screen.tsx`
-  Next Actions tab moved right after Activity in `TABS`.
+## Done 31 Oct (detail: Progress-Archive)
+- Hospital next-action E2E 37 of 37 recorded; fix `268570f`; docs `c9c44f5`.
 - Target vs Actuals and Annual Target L stay parked (Plan & Chore).
 
-## 31 OCT — three Backlog small fixes (Basheer picked 1, 2, 3)
-- 1 Manager Note for managers only: DONE — `843c552` pushed, pre-E2E review
-  done, E2E section G 6 of 6 Pass. Docs batch + retro (3 corrections) committed
-  as `09915b0` (31 Oct), pushed.
-- 2 "Hospital" → "Customer" wording + "deal" → "Opportunity": Basheer chose
-  (31 Oct) to WAIT until `/build`'s hospital next-action rule is merged and
-  tested, then sweep once (Backlog entry has the timing). Still waiting for
-  his yes to the A / B / C split and the renames "Rate Customers",
-  "My customers".
-- 3 "Are you sure?" before file deletes (Catalogue link, Opportunity
-  Documents): PARKED by Basheer (31 Oct) until `/build` merges (whole-file
-  MUI migration of two screens would clash). Shared `ConfirmDialog`.
-- 4 MUI round 1 fixes (MUI plan step 5, was due 1 Nov): Basheer (31 Oct,
-  via Plan & Chore) — do them together with 2 and 3, after `/build`
-  merges. Five findings listed in the plan's step 5 (Stakeholders card on
-  a phone, Daily Activity Report filter names, Account Management zone
-  filter, Log Activity contact box, typed colours in 7 screens — check
-  what `843c552` already did for Log Activity). Then the 21 "after"
-  screenshots and the before-and-after page.
+## 1 NOV — MUI round 1 "Part 1" APPROVED by Basheer, in progress
+- Scope (Basheer, 1 Nov): restyle + file-delete "Are you sure?" ONLY, one
+  commit per screen, no wording changes. The "hospital"/"deal" wording
+  sweep is Part 2, separate, AFTER Part 1 and after `/build`'s current
+  plans (Target vs Actuals table, Target & Coverage tabs) merge — they
+  edit DemoApp, My Work, Target screens (clash). A/B/C split, "Rate
+  Customers", "My customers" still unanswered; ask at Part 2.
+- Order: 1 `ConfirmDialog` + 2 Customer 360 — DONE, committed and pushed
+  1 Nov as `6a417cb` (tab move, colours/sizes onto theme names 165 → 0
+  breaches, Stakeholders card and account-load-error Back fit a phone;
+  ConfirmDialog not used yet; not yet seen in a browser — phone check is
+  in the combined E2E); 3 Opportunity Detail
+  + file-delete question — DONE, committed and pushed 1 Nov as `f8c61b3`
+  (172 → 0 breaches, colours round-trip identical; Documents tab "×" asks
+  via ConfirmDialog; not seen in a browser). NEXT: step 4; 4 Product Catalogue + file-delete question;
+  5 Account Management (zone filter name); 6 Daily Activity Report
+  (filter names); 7 Close Next Action, Next Actions (Log Activity shows 0
+  breaches now — contact-box name still to check); 8 21 "after"
+  screenshots + before-and-after page + one E2E (MUI plan step 5).
+- Check report 1 Nov: 33 files / 862 lines; round 1 files ≈ 452.
 
 ## Now: Annual Target Part 2 E2E, sections J–L (Target vs Actuals E2E parked)
 - Dev at migration 0064 (head). Target vs Actuals E2E run 6 of 40, PARKED
