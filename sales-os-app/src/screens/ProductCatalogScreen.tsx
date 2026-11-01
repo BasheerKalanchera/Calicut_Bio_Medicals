@@ -23,6 +23,8 @@ import { listSbus } from "../services/masterData";
 import { useAuth } from "../contexts/AuthContext";
 import useDebouncedValue from "../hooks/useDebouncedValue";
 import FormModal from "../components/FormModal";
+import ConfirmDialog from "../components/ConfirmDialog";
+import { shadows } from "../theme/shadows";
 import type { ProductListResponse, ProductResponse, DocumentResponse, BrandResponse, CategoryResponse, ModelResponse } from "../types/api-aliases";
 
 const CATALOG_WRITE_ROLES = new Set(["General Manager", "Admin"]);
@@ -68,8 +70,8 @@ const EMPTY_LINK_FORM = { file_name: "", file_type: "BROCHURE", storage_path: ""
 // and Critical Care get distinct badge colors so SBU is scannable at a glance.
 function sbuChipSx(sbuName: string) {
   return sbuName === "Imaging"
-    ? { bgcolor: "#eef2ff", color: "#4338ca", borderColor: "#c7d2fe" }
-    : { bgcolor: "#fff1f2", color: "#be123c", borderColor: "#fecdd3" };
+    ? { bgcolor: "indigo.50", color: "indigo.700", borderColor: "indigo.200" }
+    : { bgcolor: "rose.50", color: "rose.700", borderColor: "rose.200" };
 }
 
 function CollateralLinksCard({ productId, canEdit }: { productId: string; canEdit: boolean }) {
@@ -77,6 +79,7 @@ function CollateralLinksCard({ productId, canEdit }: { productId: string; canEdi
   const [showAddLink, setShowAddLink] = useState(false);
   const [form, setForm] = useState(EMPTY_LINK_FORM);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [linkToDelete, setLinkToDelete] = useState<DocumentResponse | null>(null);
 
   const { data: documents = [], isLoading } = useQuery({
     queryKey: ["product-documents", productId],
@@ -96,6 +99,7 @@ function CollateralLinksCard({ productId, canEdit }: { productId: string; canEdi
   const deleteLinkMutation = useMutation({
     mutationFn: (documentId: string) => deleteDocument(documentId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["product-documents", productId] }),
+    onSettled: () => setLinkToDelete(null),
   });
 
   function set(field: keyof typeof EMPTY_LINK_FORM, value: string) {
@@ -120,7 +124,7 @@ function CollateralLinksCard({ productId, canEdit }: { productId: string; canEdi
   const isValid = form.file_name.trim() && form.storage_path.trim();
 
   return (
-    <Box sx={{ bgcolor: "background.paper", borderRadius: "1rem", boxShadow: "0 1px 2px rgba(0,0,0,0.05)", border: "1px solid #f3f4f6", p: 2.5, mt: 2 }}>
+    <Box sx={{ bgcolor: "background.paper", borderRadius: "1rem", boxShadow: shadows.sm, border: "1px solid", borderColor: "gray.100", p: 2.5, mt: 2 }}>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
         <Typography variant="overline" sx={{ color: "text.secondary", fontWeight: 800, letterSpacing: "0.15em" }}>
           Collateral Links
@@ -136,7 +140,7 @@ function CollateralLinksCard({ productId, canEdit }: { productId: string; canEdi
         <Box
           component="form"
           onSubmit={handleAddLink}
-          sx={{ display: "flex", flexDirection: "column", gap: 1.5, mb: 2, p: 2, bgcolor: "#f9fafb", borderRadius: "0.75rem" }}
+          sx={{ display: "flex", flexDirection: "column", gap: 1.5, mb: 2, p: 2, bgcolor: "gray.50", borderRadius: "0.75rem" }}
         >
           {saveError && <Alert severity="error">{saveError}</Alert>}
           <TextField
@@ -194,7 +198,7 @@ function CollateralLinksCard({ productId, canEdit }: { productId: string; canEdi
             return (
               <Box
                 key={doc.id}
-                sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1.5, px: 1.5, py: 1.25, bgcolor: "#f9fafb", borderRadius: "0.75rem" }}
+                sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1.5, px: 1.5, py: 1.25, bgcolor: "gray.50", borderRadius: "0.75rem" }}
               >
                 <Box
                   component="a"
@@ -211,7 +215,7 @@ function CollateralLinksCard({ productId, canEdit }: { productId: string; canEdi
                 {canEdit && (
                   <IconButton
                     size="small"
-                    onClick={() => deleteLinkMutation.mutate(doc.id)}
+                    onClick={() => setLinkToDelete(doc)}
                     disabled={deleteLinkMutation.isPending && deleteLinkMutation.variables === doc.id}
                     aria-label="Remove link"
                   >
@@ -223,6 +227,15 @@ function CollateralLinksCard({ productId, canEdit }: { productId: string; canEdi
           })}
         </Box>
       )}
+
+      <ConfirmDialog
+        open={linkToDelete !== null}
+        title="Delete this file?"
+        message="This can't be undone."
+        busy={deleteLinkMutation.isPending}
+        onConfirm={() => { if (linkToDelete) deleteLinkMutation.mutate(linkToDelete.id); }}
+        onCancel={() => setLinkToDelete(null)}
+      />
     </Box>
   );
 }
@@ -245,7 +258,7 @@ function ProductDetail({
 
   if (isLoading) {
     return (
-      <Box sx={{ flex: 1, overflow: "auto", p: 2, bgcolor: "#f9fafb" }}>
+      <Box sx={{ flex: 1, overflow: "auto", p: 2, bgcolor: "gray.50" }}>
         <Typography variant="body2" color="text.secondary" sx={{ textAlign: "center", py: 6 }}>
           Loading product...
         </Typography>
@@ -255,7 +268,7 @@ function ProductDetail({
 
   if (isError || !product) {
     return (
-      <Box sx={{ flex: 1, overflow: "auto", p: 2, bgcolor: "#f9fafb" }}>
+      <Box sx={{ flex: 1, overflow: "auto", p: 2, bgcolor: "gray.50" }}>
         <IconButton onClick={onBack} sx={{ mb: 2 }} aria-label="Back">
           <ArrowBackIcon />
         </IconButton>
@@ -278,7 +291,7 @@ function ProductDetail({
   ];
 
   return (
-    <Box sx={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", bgcolor: "#f9fafb" }}>
+    <Box sx={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", bgcolor: "gray.50" }}>
       <Box sx={{ px: 2, pt: 2 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
           <IconButton onClick={onBack} aria-label="Back">
@@ -302,7 +315,7 @@ function ProductDetail({
       </Box>
 
       <Box sx={{ flex: 1, overflow: "auto", px: 2, pb: 2 }}>
-        <Box sx={{ bgcolor: "background.paper", borderRadius: "1rem", boxShadow: "0 1px 2px rgba(0,0,0,0.05)", border: "1px solid #f3f4f6", p: 2.5 }}>
+        <Box sx={{ bgcolor: "background.paper", borderRadius: "1rem", boxShadow: shadows.sm, border: "1px solid", borderColor: "gray.100", p: 2.5 }}>
           <Typography variant="overline" sx={{ color: "text.secondary", fontWeight: 800, letterSpacing: "0.15em", display: "block", mb: 2 }}>
             Product Details
           </Typography>
@@ -440,7 +453,7 @@ export default function ProductCatalogScreen() {
   }
 
   return (
-    <Box sx={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", bgcolor: "#f9fafb" }}>
+    <Box sx={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", bgcolor: "gray.50" }}>
       <Box sx={{ px: 2, pt: 2 }}>
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
           <Typography variant="h5" sx={{ fontWeight: 800 }}>Product Catalog</Typography>
@@ -449,7 +462,7 @@ export default function ProductCatalogScreen() {
           )}
         </Box>
 
-        <Box sx={{ display: "flex", gap: 1.5, mb: 3, bgcolor: "background.paper", p: 2, borderRadius: "1rem", boxShadow: "0 1px 2px rgba(0,0,0,0.05)", border: "1px solid #f3f4f6" }}>
+        <Box sx={{ display: "flex", gap: 1.5, mb: 3, bgcolor: "background.paper", p: 2, borderRadius: "1rem", boxShadow: shadows.sm, border: "1px solid", borderColor: "gray.100" }}>
           <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 1.5 }}>
             <TextField
               placeholder="Search by product, brand or SBU..."
@@ -523,17 +536,18 @@ export default function ProductCatalogScreen() {
                     bgcolor: "background.paper",
                     p: 2.5,
                     borderRadius: "1rem",
-                    boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-                    border: "1px solid #f3f4f6",
+                    boxShadow: shadows.sm,
+                    border: "1px solid",
+                    borderColor: "gray.100",
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
                     cursor: "pointer",
                     transition: "all 0.15s",
-                    "&:hover": { borderColor: "#60a5fa", boxShadow: "0 4px 6px rgba(0,0,0,0.07)" },
-                    "&:hover [data-part='product-name']": { color: "#1e3a8a" },
-                    "&:hover [data-part='product-avatar']": { bgcolor: "#d97706", color: "#fff" },
-                    "&:hover [data-part='product-chevron-box']": { bgcolor: "#eff6ff" },
+                    "&:hover": { borderColor: "blue.400", boxShadow: shadows.md },
+                    "&:hover [data-part='product-name']": { color: "blue.900" },
+                    "&:hover [data-part='product-avatar']": { bgcolor: "amber.600", color: "common.white" },
+                    "&:hover [data-part='product-chevron-box']": { bgcolor: "blue.50" },
                     "&:hover [data-part='product-chevron-icon']": { color: "primary.main" },
                   }}
                 >
@@ -543,15 +557,15 @@ export default function ProductCatalogScreen() {
                       sx={{
                         width: 36,
                         height: 36,
-                        bgcolor: "#fffbeb",
-                        color: "#d97706",
+                        bgcolor: "amber.50",
+                        color: "amber.600",
                         borderRadius: "0.75rem",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                         fontWeight: 900,
-                        fontSize: "0.875rem",
-                        boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                        typography: "body2",
+                        boxShadow: shadows.sm,
                         flexShrink: 0,
                         transition: "background-color 0.15s, color 0.15s",
                       }}
@@ -559,17 +573,17 @@ export default function ProductCatalogScreen() {
                       {product.name.charAt(0).toUpperCase()}
                     </Box>
                     <Box>
-                      <Typography data-part="product-name" sx={{ fontWeight: 700, fontSize: "0.875rem", color: "#1f2937", transition: "color 0.15s" }}>{product.name}</Typography>
+                      <Typography data-part="product-name" variant="body2" sx={{ fontWeight: 700, color: "gray.800", transition: "color 0.15s" }}>{product.name}</Typography>
                       <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 0.75, mt: 0.5 }}>
                         {product.sbu && (
-                          <Chip label={product.sbu.name} size="small" variant="outlined" sx={{ ...sbuChipSx(product.sbu.name), height: 20, fontSize: "0.6875rem" }} />
+                          <Chip label={product.sbu.name} size="small" variant="outlined" sx={{ ...sbuChipSx(product.sbu.name), height: 20, typography: "caption2" }} />
                         )}
                         {product.product_type !== "NEW_EQUIPMENT" && (
                           <Chip
                             label={PRODUCT_TYPES.find((t) => t.value === product.product_type)?.label ?? product.product_type}
                             size="small"
                             color={product.product_type === "REFURBISHED" ? "warning" : "secondary"}
-                            sx={{ height: 20, fontSize: "0.6875rem" }}
+                            sx={{ height: 20, typography: "caption2" }}
                           />
                         )}
                         {product.brand?.name && (
@@ -579,13 +593,13 @@ export default function ProductCatalogScreen() {
                           <Typography variant="caption" color="text.secondary">{product.model.name}</Typography>
                         )}
                         {product.category?.name && (
-                          <Chip label={product.category.name} size="small" variant="outlined" sx={{ height: 20, fontSize: "0.6875rem" }} />
+                          <Chip label={product.category.name} size="small" variant="outlined" sx={{ height: 20, typography: "caption2" }} />
                         )}
                       </Box>
                     </Box>
                   </Box>
                   <Box data-part="product-chevron-box" sx={{ bgcolor: "background.default", p: 1, borderRadius: "0.75rem", flexShrink: 0, ml: 1, transition: "background-color 0.15s" }}>
-                    <ChevronRightIcon data-part="product-chevron-icon" sx={{ fontSize: 18, color: "#9ca3af", transition: "color 0.15s" }} />
+                    <ChevronRightIcon data-part="product-chevron-icon" sx={{ width: 18, height: 18, color: "gray.400", transition: "color 0.15s" }} />
                   </Box>
                 </Box>
               ))}
@@ -796,7 +810,7 @@ function ProductFormFields({
       />
       {canManageCatalog && form.brand_id && (
         addingModel ? (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, p: 1.5, bgcolor: "#f9fafb", borderRadius: "0.75rem" }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, p: 1.5, bgcolor: "gray.50", borderRadius: "0.75rem" }}>
             {modelError && <Alert severity="error" onClose={() => setModelError(null)}>{modelError}</Alert>}
             <TextField
               label="New model name"
