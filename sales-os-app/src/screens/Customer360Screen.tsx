@@ -52,6 +52,7 @@ import { listProducts } from "../services/products";
 import { listActivitiesByAccount, listAccountReminders } from "../services/activities";
 import { isReactivationOverdue } from "../utils/opportunityStatus";
 import { useAuth } from "../contexts/AuthContext";
+import { shadows } from "../theme/shadows";
 import useDebouncedValue from "../hooks/useDebouncedValue";
 import FormModal from "../components/FormModal";
 import ActivityTimeline from "../components/ActivityTimeline";
@@ -83,14 +84,12 @@ interface Props {
 const TABS = [
   { id: "overview", label: "Overview" },
   { id: "activity", label: "Activity" },
+  { id: "next-actions", label: "Next Actions" },
   { id: "stakeholders", label: "Stakeholders" },
   { id: "projects", label: "Projects" },
   { id: "opportunities", label: "Opportunities" },
-  { id: "next-actions", label: "Next Actions" },
   { id: "installed", label: "Installed Base" },
 ];
-
-const SHADOW_SM = "0 1px 2px rgba(0,0,0,0.05)";
 
 // ---------------------------------------------------------------------------
 // Small presentational components
@@ -98,13 +97,13 @@ const SHADOW_SM = "0 1px 2px rgba(0,0,0,0.05)";
 function PayerBadge({ behavior }: { behavior?: string | null }) {
   if (!behavior) return null;
   const styles: Record<string, { bg: string; color: string; border: string }> = {
-    GOOD: { bg: "#ecfdf5", color: "#047857", border: "#a7f3d0" },
-    PROBLEMATIC: { bg: "#fef2f2", color: "#b91c1c", border: "#fecaca" },
-    UNKNOWN: { bg: "#f9fafb", color: "#4b5563", border: "#e5e7eb" },
+    GOOD: { bg: "emerald.50", color: "emerald.700", border: "emerald.200" },
+    PROBLEMATIC: { bg: "red.50", color: "red.700", border: "red.200" },
+    UNKNOWN: { bg: "gray.50", color: "gray.600", border: "gray.200" },
   };
   const s = styles[behavior] ?? styles.UNKNOWN;
   return (
-    <Box component="span" sx={{ px: 1.25, py: 0.5, borderRadius: "0.5rem", fontSize: "10px", fontWeight: 900, border: "1px solid", borderColor: s.border, bgcolor: s.bg, color: s.color }}>
+    <Box component="span" sx={{ typography: "tiny", px: 1.25, py: 0.5, borderRadius: "0.5rem", fontWeight: 900, border: "1px solid", borderColor: s.border, bgcolor: s.bg, color: s.color }}>
       {behavior}
     </Box>
   );
@@ -122,32 +121,31 @@ function formatEnumLabel(value?: string | null): string {
 function SentimentBadge({ sentiment }: { sentiment?: string | null }) {
   if (!sentiment) return null;
   const config: Record<string, { label: string; bg: string; color: string; border: string }> = {
-    PROMOTER: { label: "Promoter", bg: "#ecfdf5", color: "#047857", border: "#a7f3d0" },
-    NEUTRAL: { label: "Neutral", bg: "#fffbeb", color: "#b45309", border: "#fde68a" },
-    DETRACTOR: { label: "Detractor", bg: "#fef2f2", color: "#b91c1c", border: "#fecaca" },
+    PROMOTER: { label: "Promoter", bg: "emerald.50", color: "emerald.700", border: "emerald.200" },
+    NEUTRAL: { label: "Neutral", bg: "amber.50", color: "amber.700", border: "amber.200" },
+    DETRACTOR: { label: "Detractor", bg: "red.50", color: "red.700", border: "red.200" },
   };
-  const c = config[sentiment] ?? { label: sentiment, bg: "#f9fafb", color: "#4b5563", border: "#e5e7eb" };
+  const c = config[sentiment] ?? { label: sentiment, bg: "gray.50", color: "gray.600", border: "gray.200" };
   return (
-    <Box component="span" sx={{ px: 1, py: 0.25, borderRadius: "0.375rem", fontSize: "10px", fontWeight: 900, border: "1px solid", borderColor: c.border, bgcolor: c.bg, color: c.color }}>
+    <Box component="span" sx={{ typography: "tiny", px: 1, py: 0.25, borderRadius: "0.375rem", fontWeight: 900, border: "1px solid", borderColor: c.border, bgcolor: c.bg, color: c.color }}>
       {c.label}
     </Box>
   );
 }
 
 function NpsIndicator({ score }: { score?: number | null }) {
-  if (score == null) return <Box component="span" sx={{ color: "#d1d5db", fontSize: "0.75rem" }}>—</Box>;
-  const color = score >= 50 ? "#059669" : score >= 0 ? "#d97706" : "#dc2626";
-  return <Box component="span" sx={{ fontWeight: 900, fontSize: "1.125rem", color }}>{score}</Box>;
+  if (score == null) return <Box component="span" sx={{ typography: "caption", color: "gray.300"  }}>—</Box>;
+  const color = score >= 50 ? "emerald.600" : score >= 0 ? "amber.600" : "red.600";
+  return <Box component="span" sx={{ typography: "lead", fontWeight: 900, color }}>{score}</Box>;
 }
 
 function LoadingRow({ label = "Loading..." }: { label?: string }) {
   return (
     <Box sx={{ textAlign: "center", py: 6 }}>
       <Box
-        sx={{
-          color: "#9ca3af",
+        sx={{ typography: "body2",
+          color: "gray.400",
           fontWeight: 700,
-          fontSize: "0.875rem",
           animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
           "@keyframes pulse": { "0%, 100%": { opacity: 1 }, "50%": { opacity: 0.5 } },
         }}
@@ -181,7 +179,7 @@ function OverviewTab({
         <Box>
           <BusinessPotentialChip value={account.business_potential} />
           {account.business_potential_notes && (
-            <Box sx={{ fontSize: "0.75rem", color: "#6b7280", mt: 0.75, whiteSpace: "pre-wrap" }}>
+            <Box sx={{ typography: "caption", color: "gray.500", mt: 0.75, whiteSpace: "pre-wrap" }}>
               {account.business_potential_notes}
             </Box>
           )}
@@ -207,14 +205,14 @@ function OverviewTab({
   const childAccounts: { id: string; name: string }[] = account.child_accounts || [];
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      <Box sx={{ bgcolor: "#fff", borderRadius: "1rem", boxShadow: SHADOW_SM, border: "1px solid #f3f4f6", p: 2.5 }}>
+      <Box sx={{ bgcolor: "background.paper", borderRadius: "1rem", boxShadow: shadows.sm, border: "1px solid", borderColor: "gray.100", p: 2.5 }}>
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
-          <Typography component="h4" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em" }}>
+          <Typography component="h4" sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.2em" }}>
             Account Details
           </Typography>
           <Button
             onClick={onEdit}
-            sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "#eff6ff", "&:hover": { bgcolor: "#dbeafe" } }}
+            sx={{ typography: "caption", px: 1.5, py: 0.75, borderRadius: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "blue.50", "&:hover": { bgcolor: "blue.100" } }}
           >
             Edit
           </Button>
@@ -222,17 +220,17 @@ function OverviewTab({
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           {fields.map((f) => (
             <Box key={f.label}>
-              <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.5 }}>
+              <Typography sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.5 }}>
                 {f.label}
               </Typography>
-              <Box sx={{ fontWeight: 700, color: "#1f2937" }}>{f.value || "—"}</Box>
+              <Box sx={{ fontWeight: 700, color: "gray.800" }}>{f.value || "—"}</Box>
             </Box>
           ))}
         </Box>
       </Box>
       {childAccounts.length > 0 && (
-        <Box sx={{ bgcolor: "#fff", borderRadius: "1rem", boxShadow: SHADOW_SM, border: "1px solid #f3f4f6", p: 2.5 }}>
-          <Typography component="h4" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em", mb: 2 }}>
+        <Box sx={{ bgcolor: "background.paper", borderRadius: "1rem", boxShadow: shadows.sm, border: "1px solid", borderColor: "gray.100", p: 2.5 }}>
+          <Typography component="h4" sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.2em", mb: 2 }}>
             Child Accounts ({childAccounts.length})
           </Typography>
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
@@ -241,16 +239,15 @@ function OverviewTab({
                 key={c.id}
                 component="span"
                 onClick={() => onSelectAccount?.(c)}
-                sx={{
+                sx={{ typography: "caption",
                   px: 1.5,
                   py: 0.75,
                   borderRadius: "0.75rem",
-                  fontSize: "0.75rem",
                   fontWeight: 700,
                   color: "primary.main",
-                  bgcolor: "#eff6ff",
+                  bgcolor: "blue.50",
                   cursor: "pointer",
-                  "&:hover": { bgcolor: "#dbeafe" },
+                  "&:hover": { bgcolor: "blue.100" },
                 }}
               >
                 {c.name}
@@ -279,53 +276,53 @@ function StakeholdersTab({
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
-        <Typography component="h4" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em" }}>
+        <Typography component="h4" sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.2em" }}>
           Stakeholders ({stakeholders.length})
         </Typography>
         <Button
           onClick={onAdd}
-          sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#7c3aed", bgcolor: "#f5f3ff", "&:hover": { bgcolor: "#ede9fe" } }}
+          sx={{ typography: "caption", px: 1.5, py: 0.75, borderRadius: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "violet.600", bgcolor: "violet.50", "&:hover": { bgcolor: "violet.100" } }}
         >
           + Add
         </Button>
       </Box>
       {stakeholders.length === 0 ? (
-        <Box sx={{ textAlign: "center", py: 6, bgcolor: "#fff", borderRadius: "1.5rem", border: "2px dashed #f3f4f6", fontStyle: "italic", color: "#9ca3af" }}>
+        <Box sx={{ textAlign: "center", py: 6, bgcolor: "background.paper", borderRadius: "1.5rem", border: "2px dashed", borderColor: "gray.100", fontStyle: "italic", color: "gray.400" }}>
           No stakeholders found for this account.
         </Box>
       ) : (
         stakeholders.map((s) => (
-          <Box key={s.id} sx={{ bgcolor: "#fff", p: 2, borderRadius: "1rem", boxShadow: SHADOW_SM, border: "1px solid #f3f4f6", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-              <Box sx={{ width: 40, height: 40, bgcolor: "#f5f3ff", color: "#7c3aed", borderRadius: "0.75rem", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: "0.875rem", boxShadow: SHADOW_SM }}>
+          <Box key={s.id} sx={{ bgcolor: "background.paper", p: 2, borderRadius: "1rem", boxShadow: shadows.sm, border: "1px solid", borderColor: "gray.100", display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: { xs: "stretch", sm: "center" }, justifyContent: "space-between", gap: 1.5 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, minWidth: 0 }}>
+              <Box sx={{ typography: "body2", width: 40, height: 40, bgcolor: "violet.50", color: "violet.600", borderRadius: "0.75rem", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, boxShadow: shadows.sm }}>
                 {s.name.charAt(0)}
               </Box>
-              <Box>
-                <Box sx={{ fontWeight: 700, color: "#1f2937" }}>{s.name}</Box>
-                {s.designation && <Box sx={{ fontSize: "0.75rem", color: "#6b7280", mt: 0.25 }}>{s.designation}</Box>}
+              <Box sx={{ minWidth: 0, overflowWrap: "anywhere" }}>
+                <Box sx={{ fontWeight: 700, color: "gray.800" }}>{s.name}</Box>
+                {s.designation && <Box sx={{ typography: "caption", color: "gray.500", mt: 0.25 }}>{s.designation}</Box>}
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5 }}><SentimentBadge sentiment={s.sentiment} /></Box>
                 {(s.email || s.phone) && (
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mt: 0.5 }}>
-                    {s.email && <Box component="span" sx={{ fontSize: "10px", color: "#9ca3af" }}>{s.email}</Box>}
-                    {s.phone && <Box component="span" sx={{ fontSize: "10px", color: "#9ca3af" }}>{s.phone}</Box>}
+                  <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", columnGap: 1.5, mt: 0.5 }}>
+                    {s.email && <Box component="span" sx={{ typography: "tiny", color: "gray.400" }}>{s.email}</Box>}
+                    {s.phone && <Box component="span" sx={{ typography: "tiny", color: "gray.400" }}>{s.phone}</Box>}
                   </Box>
                 )}
               </Box>
             </Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: { xs: "space-between", sm: "flex-start" }, gap: 2 }}>
               <Box sx={{ textAlign: "center" }}>
-                <Typography sx={{ fontSize: "9px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.25 }}>NPS</Typography>
+                <Typography sx={{ typography: "micro", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.25 }}>NPS</Typography>
                 <NpsIndicator score={s.nps_score} />
               </Box>
               <Button
                 onClick={() => onViewOpportunities(s)}
-                sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "#eff6ff", "&:hover": { bgcolor: "#dbeafe" } }}
+                sx={{ typography: "caption", px: 1.5, py: 0.75, borderRadius: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "blue.50", "&:hover": { bgcolor: "blue.100" } }}
               >
                 {opportunityCounts[s.id]?.opportunity_count ?? 0} Opportunities
               </Button>
               <Button
                 onClick={() => onEdit(s)}
-                sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#7c3aed", bgcolor: "#f5f3ff", "&:hover": { bgcolor: "#ede9fe" } }}
+                sx={{ typography: "caption", px: 1.5, py: 0.75, borderRadius: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "violet.600", bgcolor: "violet.50", "&:hover": { bgcolor: "violet.100" } }}
               >
                 Edit
               </Button>
@@ -368,7 +365,7 @@ function StakeholderOpportunitiesModal({
         {isLoading ? (
           <LoadingRow />
         ) : opportunities.length === 0 ? (
-          <Box sx={{ textAlign: "center", py: 6, fontStyle: "italic", color: "#9ca3af" }}>
+          <Box sx={{ textAlign: "center", py: 6, fontStyle: "italic", color: "gray.400" }}>
             No linked opportunities.
           </Box>
         ) : (
@@ -391,18 +388,18 @@ function StakeholderOpportunitiesModal({
                   px: 2,
                   py: 1.5,
                   borderRadius: "0.75rem",
-                  bgcolor: "#fff",
-                  border: "1px solid #f3f4f6",
-                  boxShadow: SHADOW_SM,
-                  "&:hover": { bgcolor: "#f9fafb" },
+                  bgcolor: "background.paper",
+                  border: "1px solid", borderColor: "gray.100",
+                  boxShadow: shadows.sm,
+                  "&:hover": { bgcolor: "gray.50" },
                 }}
               >
-                <Box sx={{ fontWeight: 700, color: "#1f2937" }}>{o.name}</Box>
+                <Box sx={{ fontWeight: 700, color: "gray.800" }}>{o.name}</Box>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Box component="span" sx={{ px: 1.25, py: 0.5, borderRadius: "0.5rem", fontSize: "10px", fontWeight: 900, border: "1px solid #fde68a", bgcolor: "#fffbeb", color: "#b45309" }}>
+                  <Box component="span" sx={{ typography: "tiny", px: 1.25, py: 0.5, borderRadius: "0.5rem", fontWeight: 900, border: "1px solid", borderColor: "amber.200", bgcolor: "amber.50", color: "amber.700" }}>
                     {o.stage.stage_name}
                   </Box>
-                  <Box component="span" sx={{ px: 1.25, py: 0.5, borderRadius: "0.5rem", fontSize: "10px", fontWeight: 900, border: "1px solid #bfdbfe", bgcolor: "#eff6ff", color: "#1d4ed8" }}>
+                  <Box component="span" sx={{ typography: "tiny", px: 1.25, py: 0.5, borderRadius: "0.5rem", fontWeight: 900, border: "1px solid", borderColor: "blue.200", bgcolor: "blue.50", color: "blue.700" }}>
                     {o.status.status_name}
                   </Box>
                 </Box>
@@ -422,18 +419,18 @@ function ProjectsTab({ projects, onAdd, onEdit, onSelectProject }: { projects: a
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
-        <Typography component="h4" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em" }}>
+        <Typography component="h4" sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.2em" }}>
           Projects ({projects.length})
         </Typography>
         <Button
           onClick={onAdd}
-          sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "#eff6ff", "&:hover": { bgcolor: "#dbeafe" } }}
+          sx={{ typography: "caption", px: 1.5, py: 0.75, borderRadius: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "blue.50", "&:hover": { bgcolor: "blue.100" } }}
         >
           + Add
         </Button>
       </Box>
       {projects.length === 0 ? (
-        <Box sx={{ textAlign: "center", py: 6, bgcolor: "#fff", borderRadius: "1.5rem", border: "2px dashed #f3f4f6", fontStyle: "italic", color: "#9ca3af" }}>
+        <Box sx={{ textAlign: "center", py: 6, bgcolor: "background.paper", borderRadius: "1.5rem", border: "2px dashed", borderColor: "gray.100", fontStyle: "italic", color: "gray.400" }}>
           No projects found for this account.
         </Box>
       ) : (
@@ -441,25 +438,25 @@ function ProjectsTab({ projects, onAdd, onEdit, onSelectProject }: { projects: a
           <Box
             key={p.id}
             onClick={() => onSelectProject?.(p)}
-            sx={{ bgcolor: "#fff", p: 2, borderRadius: "1rem", boxShadow: SHADOW_SM, border: "1px solid #f3f4f6", cursor: onSelectProject ? "pointer" : "default", "&:hover": onSelectProject ? { borderColor: "#d1d5db" } : undefined }}
+            sx={{ bgcolor: "background.paper", p: 2, borderRadius: "1rem", boxShadow: shadows.sm, border: "1px solid", borderColor: "gray.100", cursor: onSelectProject ? "pointer" : "default", "&:hover": onSelectProject ? { borderColor: "gray.300" } : undefined }}
           >
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
-              <Box sx={{ fontWeight: 700, color: "#1f2937" }}>{p.name}</Box>
+              <Box sx={{ fontWeight: 700, color: "gray.800" }}>{p.name}</Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Box component="span" sx={{ px: 1.25, py: 0.5, borderRadius: "0.5rem", fontSize: "10px", fontWeight: 900, border: "1px solid #bfdbfe", bgcolor: "#eff6ff", color: "#1d4ed8" }}>
+                <Box component="span" sx={{ typography: "tiny", px: 1.25, py: 0.5, borderRadius: "0.5rem", fontWeight: 900, border: "1px solid", borderColor: "blue.200", bgcolor: "blue.50", color: "blue.700" }}>
                   {p.status.status_name}
                 </Box>
                 <Button
                   onClick={(e) => { e.stopPropagation(); onEdit(p); }}
-                  sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "#eff6ff", "&:hover": { bgcolor: "#dbeafe" } }}
+                  sx={{ typography: "caption", px: 1.5, py: 0.75, borderRadius: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "blue.50", "&:hover": { bgcolor: "blue.100" } }}
                 >
                   Edit
                 </Button>
               </Box>
             </Box>
-            <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", columnGap: 2, rowGap: 0.5, fontSize: "0.75rem", color: "#6b7280" }}>
-              <Box><Box component="span" sx={{ fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "10px" }}>Owner: </Box><Box component="span" sx={{ fontWeight: 700 }}>{p.owner.display_name}</Box></Box>
-              {p.bid_submission_date && <Box><Box component="span" sx={{ fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "10px" }}>Bid Date: </Box><Box component="span" sx={{ fontWeight: 700 }}>{p.bid_submission_date}</Box></Box>}
+            <Box sx={{ typography: "caption", display: "flex", flexWrap: "wrap", alignItems: "center", columnGap: 2, rowGap: 0.5, color: "gray.500" }}>
+              <Box><Box component="span" sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.05em"  }}>Owner: </Box><Box component="span" sx={{ fontWeight: 700 }}>{p.owner.display_name}</Box></Box>
+              {p.bid_submission_date && <Box><Box component="span" sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.05em"  }}>Bid Date: </Box><Box component="span" sx={{ fontWeight: 700 }}>{p.bid_submission_date}</Box></Box>}
             </Box>
           </Box>
         ))
@@ -468,8 +465,8 @@ function ProjectsTab({ projects, onAdd, onEdit, onSelectProject }: { projects: a
   );
 }
 
-const TAB_BUTTON_SX = { whiteSpace: "nowrap", px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#059669", bgcolor: "#ecfdf5", "&:hover": { bgcolor: "#d1fae5" } } as const;
-const EMPTY_BOX_SX = { textAlign: "center", py: 6, bgcolor: "#fff", borderRadius: "1.5rem", border: "2px dashed #f3f4f6", fontStyle: "italic", color: "#9ca3af" } as const;
+const TAB_BUTTON_SX = { typography: "caption", whiteSpace: "nowrap", px: 1.5, py: 0.75, borderRadius: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "emerald.600", bgcolor: "emerald.50", "&:hover": { bgcolor: "emerald.100" } } as const;
+const EMPTY_BOX_SX = { textAlign: "center", py: 6, bgcolor: "background.paper", borderRadius: "1.5rem", border: "2px dashed", borderColor: "gray.100", fontStyle: "italic", color: "gray.400" } as const;
 
 // Opens on Active Opportunities only -- the same set the pipeline counts
 // (BR-OP-07); Show All adds On Hold, Won and Lost. Editing an Opportunity happens on
@@ -487,7 +484,7 @@ function OpportunitiesTab({ opportunities, onAdd, onSelectOpportunity, showAll, 
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
       {/* Wraps on a phone: heading on its own line, buttons right-aligned below. */}
       <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 1, mb: 0.5 }}>
-        <Typography component="h4" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em" }}>
+        <Typography component="h4" sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.2em" }}>
           {total === 0
             ? "Opportunities (0)"
             : showAll
@@ -514,19 +511,19 @@ function OpportunitiesTab({ opportunities, onAdd, onSelectOpportunity, showAll, 
           <Box
             key={o.id}
             onClick={() => onSelectOpportunity?.({ id: o.id, name: o.name })}
-            sx={{ bgcolor: "#fff", p: 2, borderRadius: "1rem", boxShadow: SHADOW_SM, border: "1px solid #f3f4f6", cursor: onSelectOpportunity ? "pointer" : "default", "&:hover": onSelectOpportunity ? { borderColor: "#d1d5db" } : undefined }}
+            sx={{ bgcolor: "background.paper", p: 2, borderRadius: "1rem", boxShadow: shadows.sm, border: "1px solid", borderColor: "gray.100", cursor: onSelectOpportunity ? "pointer" : "default", "&:hover": onSelectOpportunity ? { borderColor: "gray.300" } : undefined }}
           >
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
-              <Box sx={{ fontWeight: 700, color: "#1f2937" }}>{o.name}</Box>
+              <Box sx={{ fontWeight: 700, color: "gray.800" }}>{o.name}</Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Box component="span" sx={{ px: 1.25, py: 0.5, borderRadius: "0.5rem", fontSize: "10px", fontWeight: 900, border: "1px solid #fde68a", bgcolor: "#fffbeb", color: "#b45309" }}>
+                <Box component="span" sx={{ typography: "tiny", px: 1.25, py: 0.5, borderRadius: "0.5rem", fontWeight: 900, border: "1px solid", borderColor: "amber.200", bgcolor: "amber.50", color: "amber.700" }}>
                   {o.stage.stage_name}
                 </Box>
-                <Box component="span" sx={{ px: 1.25, py: 0.5, borderRadius: "0.5rem", fontSize: "10px", fontWeight: 900, border: "1px solid #bfdbfe", bgcolor: "#eff6ff", color: "#1d4ed8" }}>
+                <Box component="span" sx={{ typography: "tiny", px: 1.25, py: 0.5, borderRadius: "0.5rem", fontWeight: 900, border: "1px solid", borderColor: "blue.200", bgcolor: "blue.50", color: "blue.700" }}>
                   {o.status.status_name}
                 </Box>
                 {isReactivationOverdue(o.status?.status_code, o.reactivation_date) && (
-                  <Box component="span" sx={{ px: 1.25, py: 0.5, borderRadius: "0.5rem", fontSize: "10px", fontWeight: 900, border: "1px solid #fecaca", bgcolor: "#fef2f2", color: "#dc2626" }}>
+                  <Box component="span" sx={{ typography: "tiny", px: 1.25, py: 0.5, borderRadius: "0.5rem", fontWeight: 900, border: "1px solid", borderColor: "red.200", bgcolor: "red.50", color: "red.600" }}>
                     Reactivation Overdue
                   </Box>
                 )}
@@ -540,15 +537,15 @@ function OpportunitiesTab({ opportunities, onAdd, onSelectOpportunity, showAll, 
                 )}
               </Box>
             </Box>
-            <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", columnGap: 2, rowGap: 0.5, fontSize: "0.75rem", color: "#6b7280" }}>
-              <Box><Box component="span" sx={{ fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "10px" }}>Owner: </Box><Box component="span" sx={{ fontWeight: 700 }}>{o.owner.display_name}</Box></Box>
+            <Box sx={{ typography: "caption", display: "flex", flexWrap: "wrap", alignItems: "center", columnGap: 2, rowGap: 0.5, color: "gray.500" }}>
+              <Box><Box component="span" sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.05em"  }}>Owner: </Box><Box component="span" sx={{ fontWeight: 700 }}>{o.owner.display_name}</Box></Box>
               <Box>
-                <Box component="span" sx={{ fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "10px" }}>Win %: </Box>
-                <Box component="span" sx={{ fontWeight: 900, color: Number(o.win_probability) >= 70 ? "#059669" : Number(o.win_probability) >= 40 ? "#d97706" : "#dc2626" }}>
+                <Box component="span" sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.05em"  }}>Win %: </Box>
+                <Box component="span" sx={{ fontWeight: 900, color: Number(o.win_probability) >= 70 ? "emerald.600" : Number(o.win_probability) >= 40 ? "amber.600" : "red.600" }}>
                   {o.win_probability}%
                 </Box>
               </Box>
-              {o.indicative_value && <Box><Box component="span" sx={{ fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "10px" }}>Value: </Box><Box component="span" sx={{ fontWeight: 700 }}>{o.indicative_value}L</Box></Box>}
+              {o.indicative_value && <Box><Box component="span" sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.05em"  }}>Value: </Box><Box component="span" sx={{ fontWeight: 700 }}>{o.indicative_value}L</Box></Box>}
             </Box>
           </Box>
         ))
@@ -562,18 +559,18 @@ function InstalledBaseTab({ assets, onAdd, onEdit }: { assets: any[]; onAdd: () 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
-        <Typography component="h4" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em" }}>
+        <Typography component="h4" sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.2em" }}>
           Installed Base ({assets.length})
         </Typography>
         <Button
           onClick={onAdd}
-          sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "#eff6ff", "&:hover": { bgcolor: "#dbeafe" } }}
+          sx={{ typography: "caption", px: 1.5, py: 0.75, borderRadius: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "blue.50", "&:hover": { bgcolor: "blue.100" } }}
         >
           + Add
         </Button>
       </Box>
       {assets.length === 0 ? (
-        <Box sx={{ textAlign: "center", py: 6, bgcolor: "#fff", borderRadius: "1.5rem", border: "2px dashed #f3f4f6", fontStyle: "italic", color: "#9ca3af" }}>
+        <Box sx={{ textAlign: "center", py: 6, bgcolor: "background.paper", borderRadius: "1.5rem", border: "2px dashed", borderColor: "gray.100", fontStyle: "italic", color: "gray.400" }}>
           No installed assets found for this account.
         </Box>
       ) : (
@@ -582,28 +579,28 @@ function InstalledBaseTab({ assets, onAdd, onEdit }: { assets: any[]; onAdd: () 
           const modelInfo = !a.is_competitor_equipment && a.product?.model_number ? a.product.model_number : null;
           const oemInfo = !a.is_competitor_equipment && a.product?.oem_name ? a.product.oem_name : null;
           return (
-            <Box key={a.id} sx={{ bgcolor: "#fff", p: 2, borderRadius: "1rem", boxShadow: SHADOW_SM, border: "1px solid", borderColor: a.is_competitor_equipment ? "#fecaca" : "#f3f4f6" }}>
+            <Box key={a.id} sx={{ bgcolor: "background.paper", p: 2, borderRadius: "1rem", boxShadow: shadows.sm, border: "1px solid", borderColor: a.is_competitor_equipment ? "red.200" : "gray.100" }}>
               <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Box sx={{ fontWeight: 700, color: "#1f2937" }}>{productName}</Box>
+                  <Box sx={{ fontWeight: 700, color: "gray.800" }}>{productName}</Box>
                   {a.is_competitor_equipment && (
-                    <Box component="span" sx={{ px: 1, py: 0.25, borderRadius: "0.375rem", fontSize: "10px", fontWeight: 900, border: "1px solid #fecaca", bgcolor: "#fef2f2", color: "#dc2626" }}>
+                    <Box component="span" sx={{ typography: "tiny", px: 1, py: 0.25, borderRadius: "0.375rem", fontWeight: 900, border: "1px solid", borderColor: "red.200", bgcolor: "red.50", color: "red.600" }}>
                       COMPETITOR
                     </Box>
                   )}
                 </Box>
                 <Button
                   onClick={() => onEdit(a)}
-                  sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "#eff6ff", "&:hover": { bgcolor: "#dbeafe" } }}
+                  sx={{ typography: "caption", px: 1.5, py: 0.75, borderRadius: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "blue.50", "&:hover": { bgcolor: "blue.100" } }}
                 >
                   Edit
                 </Button>
               </Box>
-              <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", columnGap: 2, rowGap: 0.5, fontSize: "0.75rem", color: "#6b7280" }}>
-                {oemInfo && <Box><Box component="span" sx={{ fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "10px" }}>OEM: </Box><Box component="span" sx={{ fontWeight: 700 }}>{oemInfo}</Box></Box>}
-                {modelInfo && <Box><Box component="span" sx={{ fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "10px" }}>Model: </Box><Box component="span" sx={{ fontWeight: 700 }}>{modelInfo}</Box></Box>}
-                {a.department && <Box><Box component="span" sx={{ fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "10px" }}>Dept: </Box><Box component="span" sx={{ fontWeight: 700 }}>{a.department}</Box></Box>}
-                {a.installation_date && <Box><Box component="span" sx={{ fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "10px" }}>Installed: </Box><Box component="span" sx={{ fontWeight: 700 }}>{a.installation_date}</Box></Box>}
+              <Box sx={{ typography: "caption", display: "flex", flexWrap: "wrap", alignItems: "center", columnGap: 2, rowGap: 0.5, color: "gray.500" }}>
+                {oemInfo && <Box><Box component="span" sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.05em"  }}>OEM: </Box><Box component="span" sx={{ fontWeight: 700 }}>{oemInfo}</Box></Box>}
+                {modelInfo && <Box><Box component="span" sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.05em"  }}>Model: </Box><Box component="span" sx={{ fontWeight: 700 }}>{modelInfo}</Box></Box>}
+                {a.department && <Box><Box component="span" sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.05em"  }}>Dept: </Box><Box component="span" sx={{ fontWeight: 700 }}>{a.department}</Box></Box>}
+                {a.installation_date && <Box><Box component="span" sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.05em"  }}>Installed: </Box><Box component="span" sx={{ fontWeight: 700 }}>{a.installation_date}</Box></Box>}
               </Box>
             </Box>
           );
@@ -845,28 +842,25 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   // --- Loading / error states ---
   if (loading) {
     return (
-      <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0, p: 2, bgcolor: "#f9fafb" }}>
+      <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0, p: 2, bgcolor: "gray.50" }}>
         <LoadingRow label="Loading Customer 360..." />
       </Box>
     );
   }
   if (hasAccountError && !account) {
     return (
-      <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0, p: 2, bgcolor: "#f9fafb" }}>
+      <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0, p: 2, bgcolor: "gray.50" }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
-          <Button
-            onClick={onBack}
-            sx={{ bgcolor: "#f3f4f6", "&:hover": { bgcolor: "#e5e7eb" }, color: "#4b5563", px: 1.5, py: 0.75, fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em" }}
-          >
-            ← Back
-          </Button>
+          <IconButton onClick={onBack} aria-label="Back" sx={{ width: 40, height: 40, color: "gray.600", flexShrink: 0, "&:hover": { bgcolor: "gray.200" } }}>
+            <ArrowBackIcon fontSize="small" />
+          </IconButton>
         </Box>
         <Alert
           severity="error"
           action={
             <Button
               onClick={() => refetchAccount()}
-              sx={{ bgcolor: "#fee2e2", "&:hover": { bgcolor: "#fecaca" }, color: "#b91c1c", px: 1.5, py: 0.5, borderRadius: "0.5rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em" }}
+              sx={{ typography: "caption", bgcolor: "red.100", "&:hover": { bgcolor: "red.200" }, color: "red.700", px: 1.5, py: 0.5, borderRadius: "0.5rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em" }}
             >
               Retry
             </Button>
@@ -1099,24 +1093,24 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   return (
     <Box
       sx={{
-        flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", bgcolor: "#f9fafb",
+        flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", bgcolor: "gray.50",
         animation: "fadeIn 200ms",
         "@keyframes fadeIn": { from: { opacity: 0 }, to: { opacity: 1 } },
       }}
     >
       {/* Fixed header */}
-      <Box sx={{ px: 2, pt: 2, bgcolor: "#f9fafb" }}>
+      <Box sx={{ px: 2, pt: 2, bgcolor: "gray.50" }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
-          <IconButton onClick={onBack} aria-label="Back" sx={{ width: 40, height: 40, color: "#4b5563", flexShrink: 0, "&:hover": { bgcolor: "#e5e7eb" } }}>
-            <ArrowBackIcon sx={{ fontSize: 20 }} />
+          <IconButton onClick={onBack} aria-label="Back" sx={{ width: 40, height: 40, color: "gray.600", flexShrink: 0, "&:hover": { bgcolor: "gray.200" } }}>
+            <ArrowBackIcon fontSize="small" />
           </IconButton>
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography component="h2" sx={{ fontWeight: 800, fontSize: "1.25rem", color: "#1f2937", letterSpacing: "-0.025em", lineHeight: 1.25 }}>
+            <Typography component="h2" sx={{ typography: "h6", fontWeight: 800, color: "gray.800", letterSpacing: "-0.025em", lineHeight: 1.25 }}>
               {account.name}
             </Typography>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5, flexWrap: "wrap" }}>
               {account.zone && (
-                <Box component="span" sx={{ px: 1.25, py: 0.25, borderRadius: "0.5rem", fontSize: "10px", fontWeight: 900, border: "1px solid #99f6e4", bgcolor: "#f0fdfa", color: "#0f766e" }}>
+                <Box component="span" sx={{ typography: "tiny", px: 1.25, py: 0.25, borderRadius: "0.5rem", fontWeight: 900, border: "1px solid", borderColor: "teal.200", bgcolor: "teal.50", color: "teal.700" }}>
                   {account.zone.name}
                 </Box>
               )}
@@ -1127,20 +1121,20 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
         </Box>
 
         {/* Count strip */}
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-around", bgcolor: "#fff", borderRadius: "1rem", boxShadow: SHADOW_SM, border: "1px solid #f3f4f6", px: 2, py: 1.5, mb: 2 }}>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-around", bgcolor: "background.paper", borderRadius: "1rem", boxShadow: shadows.sm, border: "1px solid", borderColor: "gray.100", px: 2, py: 1.5, mb: 2 }}>
           <Box sx={{ textAlign: "center" }}>
-            <Box sx={{ fontSize: "1.25rem", fontWeight: 900, color: "#7c3aed" }}>{mergedAccount.stakeholder_count ?? "—"}</Box>
-            <Box sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", mt: 0.25 }}>Stakeholders</Box>
+            <Box sx={{ typography: "h6", fontWeight: 900, color: "violet.600" }}>{mergedAccount.stakeholder_count ?? "—"}</Box>
+            <Box sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.05em", mt: 0.25 }}>Stakeholders</Box>
           </Box>
-          <Box sx={{ width: "1px", height: 32, bgcolor: "#f3f4f6" }} />
+          <Box sx={{ width: "1px", height: 32, bgcolor: "gray.100" }} />
           <Box sx={{ textAlign: "center" }}>
-            <Box sx={{ fontSize: "1.25rem", fontWeight: 900, color: "primary.main" }}>{mergedAccount.project_count ?? "—"}</Box>
-            <Box sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", mt: 0.25 }}>Projects</Box>
+            <Box sx={{ typography: "h6", fontWeight: 900, color: "primary.main" }}>{mergedAccount.project_count ?? "—"}</Box>
+            <Box sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.05em", mt: 0.25 }}>Projects</Box>
           </Box>
-          <Box sx={{ width: "1px", height: 32, bgcolor: "#f3f4f6" }} />
+          <Box sx={{ width: "1px", height: 32, bgcolor: "gray.100" }} />
           <Box sx={{ textAlign: "center" }}>
-            <Box sx={{ fontSize: "1.25rem", fontWeight: 900, color: "#059669" }}>{mergedAccount.opportunity_count ?? "—"}</Box>
-            <Box sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", mt: 0.25 }}>Opportunities</Box>
+            <Box sx={{ typography: "h6", fontWeight: 900, color: "emerald.600" }}>{mergedAccount.opportunity_count ?? "—"}</Box>
+            <Box sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.05em", mt: 0.25 }}>Opportunities</Box>
           </Box>
         </Box>
 
@@ -1162,22 +1156,22 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
                   key={tab.id}
                   data-tab={tab.id}
                   onClick={() => handleTabChange(tab.id)}
-                  sx={{
+                  sx={{ typography: "body2",
                     flexShrink: 0, display: "flex", alignItems: "center", gap: 0.75, px: 2, py: 1,
-                    borderRadius: "9999px", fontSize: "0.875rem", fontWeight: 700, whiteSpace: "nowrap",
+                    borderRadius: "9999px", fontWeight: 700, whiteSpace: "nowrap",
                     transition: "all 0.2s", border: "1px solid", textTransform: "none",
                     ...(isActive
-                      ? { bgcolor: "primary.main", color: "#fff", borderColor: "primary.main", boxShadow: SHADOW_SM }
-                      : { bgcolor: "#fff", color: "#6b7280", borderColor: "#e5e7eb", "&:hover": { borderColor: "#93c5fd", color: "primary.main" } }),
+                      ? { bgcolor: "primary.main", color: "common.white", borderColor: "primary.main", boxShadow: shadows.sm }
+                      : { bgcolor: "background.paper", color: "gray.500", borderColor: "gray.200", "&:hover": { borderColor: "blue.300", color: "primary.main" } }),
                   }}
                 >
-                  {isActive && <CheckIcon sx={{ fontSize: 14, flexShrink: 0 }} />}
+                  {isActive && <CheckIcon fontSize="inherit" sx={{ flexShrink: 0 }} />}
                   {tab.label}
                 </Button>
               );
             })}
           </Box>
-          <Box sx={{ position: "absolute", right: 0, top: 0, height: "100%", width: 40, pointerEvents: "none", background: "linear-gradient(to left, #f9fafb, transparent)" }} />
+          <Box sx={{ position: "absolute", right: 0, top: 0, height: "100%", width: 40, pointerEvents: "none", background: (theme) => `linear-gradient(to left, ${theme.palette.background.default}, transparent)` }} />
         </Box>
       </Box>
 
@@ -1284,7 +1278,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
         <FormControlLabel
           control={<Checkbox checked={newSHasDifferentWhatsapp} onChange={(e) => { setNewSHasDifferentWhatsapp(e.target.checked); if (!e.target.checked) setNewSWhatsapp(""); }} size="small" />}
           label="Different WhatsApp number?"
-          sx={{ "& .MuiFormControlLabel-label": { fontSize: "0.875rem" } }}
+          sx={{ "& .MuiFormControlLabel-label": { typography: "body2",  } }}
         />
         {newSHasDifferentWhatsapp && (
           <TextField label="WhatsApp Number" type="tel" value={newSWhatsapp} onChange={(e) => setNewSWhatsapp(e.target.value)} placeholder="e.g. +91-9876543210" fullWidth size="small" />
@@ -1310,7 +1304,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
         <FormControlLabel
           control={<Checkbox checked={editSHasDifferentWhatsapp} onChange={(e) => { setEditSHasDifferentWhatsapp(e.target.checked); if (!e.target.checked) setEditSWhatsapp(""); }} size="small" />}
           label="Different WhatsApp number?"
-          sx={{ "& .MuiFormControlLabel-label": { fontSize: "0.875rem" } }}
+          sx={{ "& .MuiFormControlLabel-label": { typography: "body2",  } }}
         />
         {editSHasDifferentWhatsapp && (
           <TextField label="WhatsApp Number" type="tel" value={editSWhatsapp} onChange={(e) => setEditSWhatsapp(e.target.value)} placeholder="e.g. +91-9876543210" fullWidth size="small" />
@@ -1367,10 +1361,10 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
       {/* Create Asset */}
       <FormModal isOpen={showCreateAsset} onClose={() => setShowCreateAsset(false)} title="New Installed Asset" onSubmit={handleCreateAsset} submitLabel="Create">
         <Box>
-          <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.5 }}>Equipment Type</Typography>
+          <Typography sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.5 }}>Equipment Type</Typography>
           <FormControlLabel
             control={<Checkbox color="primary" checked={newAIsCompetitor} onChange={(e) => setNewAIsCompetitor(e.target.checked)} />}
-            label={<Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#374151" }}>Competitor Equipment</Typography>}
+            label={<Typography sx={{ typography: "body2", fontWeight: 700, color: "gray.700" }}>Competitor Equipment</Typography>}
           />
         </Box>
         {newAIsCompetitor ? (
@@ -1388,10 +1382,10 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
       {/* Edit Asset */}
       <FormModal isOpen={editingAsset !== null} onClose={() => setEditingAsset(null)} title="Edit Installed Asset" onSubmit={handleUpdateAsset}>
         <Box>
-          <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.5 }}>Equipment Type</Typography>
+          <Typography sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.5 }}>Equipment Type</Typography>
           <FormControlLabel
             control={<Checkbox color="primary" checked={editAIsCompetitor} onChange={(e) => setEditAIsCompetitor(e.target.checked)} />}
-            label={<Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#374151" }}>Competitor Equipment</Typography>}
+            label={<Typography sx={{ typography: "body2", fontWeight: 700, color: "gray.700" }}>Competitor Equipment</Typography>}
           />
         </Box>
         {editAIsCompetitor ? (
