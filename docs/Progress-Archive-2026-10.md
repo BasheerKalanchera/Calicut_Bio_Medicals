@@ -5779,7 +5779,12 @@ moved to after the restart (Basheer).
   reminder's Project and hospital.
 - Order slip: the step 4–5 docs batch (`c310575`) was committed before the
   code review; Basheer noted it should have been after.
-- **Retro, corrections from Basheer this session: 4** — (1) code review
+- **Retro, corrections from Basheer this session: 5** — (5) at the merge I
+  asked him to have Build & Test commit two files in the main folder; he
+  asked "should I ask Build & Test to commit once again?" and the check
+  showed both held only line-ending changes, no real edits (reset them
+  instead; merge `dce73f5`). I had called them edits without checking
+  first. (1) code review
   should have come before the docs batch commit; (2) asked me to explain
   the hospital/Project Close pop-up finding, which I had written too
   tersely; (3) asked "What is this — Backlog: I added the Log Activity
@@ -5937,11 +5942,6 @@ moved to after the restart (Basheer).
   guard-stoppable. Habit going forward: write the E2E cases in the same turn
   as the fix; check the Build worktree before proposing any wide change.
 
-## 2026-10-31 (afternoon) — Plan & Chore: Activity Type table plan Approved, its E2E plan written
-
-- **Approved.** Basheer said "yes to all" to the seven open decisions in
-  `docs/Activity-Type-Table-Implementation-Plan.md` (D4 Outcome/Learning
-  column, D7 everyone signed in reads the table, D8 the database's hospital
 - **Hospital & Project next-action E2E, 31 Oct — Completed lists order fix.**
   Basheer found it hard to see where a new item landed on a Next Actions tab.
   Every reminder list sorted by due date, soonest first. Pending stays so;
@@ -5952,6 +5952,11 @@ moved to after the restart (Basheer).
   folder 260 passed, ruff clean. Uncommitted, goes in the end-of-E2E small-fixes
   batch with the Customer 360 tab reorder.
 
+## 2026-10-31 (afternoon) — Plan & Chore: Activity Type table plan Approved, its E2E plan written
+
+- **Approved.** Basheer said "yes to all" to the seven open decisions in
+  `docs/Activity-Type-Table-Implementation-Plan.md` (D4 Outcome/Learning
+  column, D7 everyone signed in reads the table, D8 the database's hospital
   check reads the table, D9 Note icon for a type with none, D10 vendor
   pipeline script left alone, D11 Dev then the next normal UAT move, D12
   changing an existing type's answers stays a developer change). The
