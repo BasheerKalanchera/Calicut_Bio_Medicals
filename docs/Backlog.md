@@ -655,17 +655,15 @@ it is committed — the commit check refuses a changed screen otherwise
 to clear. Remove a screen from here when it is committed clean.
 - **How to refresh the counts:** `node scripts/check-mui-standard.js --all`
   in `sales-os-app/` (report only). Counts below are from 1 Nov 2026,
-  `.ts`/`.tsx` files only. Customer 360 is left out: its MUI round 1 is
-  with another session (Basheer, 2026-11-01).
+  `.ts`/`.tsx` files only; rechecked the evening of 1 Nov after MUI round
+  1 steps 4–7, which cleared Opportunity Detail, the Customers list,
+  Product Catalog, Daily Activity Report, Next Actions (screen and panel)
+  and the Close Next Action pop-up (25 files, 400 lines left). Customer
+  360 is left out: its MUI round 1 is done (`6a417cb`).
 - **Not seen by the check, so listed by hand:** the back button and arrow
   rules (§6.6 item 7, §6.11 rules 8–9), a filter's name above its box, a
   label on every drop-down. Plan & Chore was asked (1 Nov) to add the
   arrow checks to the commit check.
-
-**Opportunity Detail** (`OpportunityDetailScreen.tsx`)
-- 97 typed colours, 75 typed text sizes — including the back arrow's
-  `fontSize: 20`, which becomes `fontSize="small"`, and its hex button
-  colours, which become `gray.600` / `gray.200`.
 
 **Opportunity Pipeline** (`OpportunityPipelineScreen.tsx`)
 - 49 typed colours, 26 typed text sizes.
@@ -674,18 +672,9 @@ to clear. Remove a screen from here when it is committed clean.
   with "All Zones" inside the box (Rate Hospitals' `ZonePicker` is the
   model).
 
-**Account Management → Customers list** (`CustomerDirectoryScreen.tsx`)
-- 20 typed colours, 7 typed text sizes.
-- Row chevron at line 263 has `#9ca3af`.
-- Zone filter at line 147 is named "All Zones"; same fix as the Pipeline.
-
 **Account Management → Projects list** (`ProjectDirectoryScreen.tsx`)
 - 41 typed colours, 25 typed text sizes.
 - Row chevron at line 556 has `#9ca3af`.
-
-**Product Catalog** (`ProductCatalogScreen.tsx`)
-- 23 typed colours, 6 typed text sizes.
-- Row chevron at line 588 has `#9ca3af`.
 
 **Brand Target Tracking** (`BrandTargetTrackingScreen.tsx`)
 - Quarter arrows at lines 384 and 388 are typed ◀ ▶ characters; switch to
@@ -705,19 +694,30 @@ to clear. Remove a screen from here when it is committed clean.
 - The white title strip is written out 13 times (grep, 28 Oct) — one
   shared header part (moved here from the MUI good-practice entry above).
 
+**Found in MUI round 1 steps 5–7 (1 Nov), not fixed**
+- A line spacing of 1.625 has no theme name; it is typed in 3 places
+  (`ActivityTimeline.tsx:126`, `DailyActivityReportScreen.tsx:102` and
+  `:113`). Name it in the theme the next time one of those is touched.
+- The Opportunity Pipeline zone filter (`OpportunityPipelineScreen.tsx`)
+  has no name above it (see its block above).
+- The Log Activity "Logged For" box is now named, nothing more. Whether
+  a manager may close another person's next action stays an open question.
+- Check whether the Frontend standards and Process-Improvements wording
+  still says the person box shows "Me (default)" — the Close Next Action
+  pop-up shows "Me (default)" or "Same person (default)"
+  (`CloseReminderModal.tsx:627`).
+
 **Other screens** (typed colours / typed text sizes)
-- Marketing Lead Review Queue 15 / 11; Daily Activity Report 13 / 11;
-  Marketing Lead Entry 9 / 7; Next Actions 8 / 4; Opportunities On Hold
-  report 7 / 4; Audit Log 1 / 5; Product Performance report 3 / 3;
-  User Directory 0 / 1.
+- Marketing Lead Review Queue 15 / 11; Marketing Lead Entry 9 / 7;
+  Opportunities On Hold report 7 / 4; Audit Log 1 / 5; Product
+  Performance report 3 / 3; User Directory 0 / 1.
 
 **Shared parts and helpers** (typed colours / typed text sizes)
-- Quick Lead pop-up 16 / 10; Activity Timeline 14 / 11; Close Reminder
-  pop-up 13 / 10; Reminder row 15 / 7; Activity comment thread 8 / 7 and
-  Marketing Lead comment thread 8 / 7; Help drawer 8 / 6; Opportunity
-  Items list 8 / 6; Opportunity Item Add row 9 / 3; Next Actions panel
-  6 / 4; Urgent Notification dialog 5 / 4 (+ one `style`); Error boundary
-  5 / 4; Login screen 3 / 2; Marketing Lead Reassign pop-up 1 / 1;
+- Quick Lead pop-up 16 / 10; Activity Timeline 14 / 11; Reminder row
+  15 / 7; Activity comment thread 8 / 7 and Marketing Lead comment
+  thread 8 / 7; Help drawer 8 / 6; Opportunity Items list 8 / 6;
+  Opportunity Item Add row 9 / 3; Urgent Notification dialog 5 / 4 (+ one
+  `style`); Error boundary 5 / 4; Login screen 3 / 2; Marketing Lead Reassign pop-up 1 / 1;
   Business Potential chip 0 / 1.
 - Helper files, colours only: `utils/activityTypes.ts` 13,
   `utils/businessPotential.ts` 4, `utils/marketingLeadMilestone.ts` 4.

@@ -6,8 +6,14 @@ by him the same day. Steps 1–4 done: the automatic check and shared parts
 review (`10010f2`). Step 5 (round 1 fixes) is with Build & Test, split by
 Basheer on 1 Nov: Part 1 (restyle + delete confirmations + findings, one
 commit per screen) first — Customer 360 and the shared `ConfirmDialog`
-shipped `6a417cb`, Opportunity Detail `f8c61b3`, steps 4–8 to do — and
-Part 2 (the wording sweep) after `/build`'s current plans merge.
+shipped `6a417cb`, Opportunity Detail `f8c61b3`, Product Catalogue
+`394444a`, Account Management `06a304b`, Daily Activity Report `0c4f728`,
+Next Actions screen and panel `b1fdb3f`, Close Next Action pop-up
+`33293b8`, Log Activity "Logged For" name `5c26ed3` (steps 1–7 done and
+pushed on `worktree-build`, 1 Nov; none seen in a browser). Step 8 (21
+"after" screenshots, the before-and-after page, the combined E2E) is
+Build & Test's. Part 2 (the wording sweep) comes after `/build`'s current
+plans merge.
 **Traceability rows:** 14.1, 14.2 "Responsive Web App (iOS/Android), simple
 UI minimizing manual entry" (already Done; this plan keeps it true).
 **Design / discussion:** Backlog "MUI good practice on phone, tablet and

@@ -158,3 +158,56 @@ messages. No tracker line: neither was a slip a tool check could stop, and
 neither touched live data. Process note (not a correction): for step 3 I
 showed the file and subject line, not the full message body, before
 "commit + push"; the full message is shown first from now on.
+
+## 2026-11-01 (evening) — MUI steps 5–7, Planning tabs fixes, Target vs Actuals and Overdue fixes (Build, parallel)
+
+All on `worktree-build`, pushed, **not merged into `main`** (Build & Test is
+mid-E2E; merge only when Basheer says go). None seen in a browser. Last
+checks at `22e3526`: pytest 1,508 passed, tsc clean, lint 0 errors (135
+warnings, as before), MUI check 0 breaches in the touched files.
+
+- **MUI round 1 steps 5–7** (taken over from Build & Test by Basheer):
+  `06a304b` Account Management (27 → 0, zone filter named "Zone"),
+  `0c4f728` Daily Activity Report (24 → 0, date and team filters named),
+  `b1fdb3f` Next Actions screen and panel (12 + 10 → 0), `33293b8` Close
+  Next Action pop-up (23 → 0), `5c26ed3` Log Activity "Logged For" box.
+  Line spacing may shift a hair where text moved to caption / body2: look
+  in the E2E screenshots. Step 8 is Build & Test's.
+- **Planning tabs fixes D12–D16:** `30766c7`; `8d0d0b3` makes the opening
+  tab Needs Your Approval whenever anything waits, in any period or SBU
+  (Basheer's question "why not show it irrespective of the quarter?"). The
+  pre-E2E `/code-review` found Admin and General Manager would wait on the
+  SBU list and could meet a blank screen; removed in `8d0d0b3`.
+- **Target vs Actuals, from Build & Test's E2E:** `52e8397` — the row under
+  Company shows the SBU's name; Quarter person rows read "No approved plan"
+  (Basheer's wording; empty percent also covers Draft and Rejected plans,
+  so "No plan" would have been wrong); arrows show "Previous/Next quarter
+  or year" on hover. `f2b72c6` — Fix 4: a person's own screen opens at the
+  top, hides the card title and pickers, name row stays fixed while the
+  boxes and tables scroll (one commit, my recommendation; Basheer did not
+  object).
+- **Insights Overdue tab:** `22e3526` — headings once; a block per person
+  on a phone; zeros grey and inert, counts above zero red and open My Work;
+  inactive accounts (e.g. "Test - Area Manager") stay listed in a muted
+  colour with "Inactive account". Server: `is_active` on `OverdueActionRow`
+  from both overdue queries and the merge; `api.ts` regenerated; no
+  migration. Dev backend must be restarted before the E2E re-check.
+- **Build & Test re-checks after the merge:** A2, B2, B6, Fix 4 (390 / 768
+  / 1280), D9, D10 and the My Work links in D4–D6; the Planning tabs
+  E2E for D12–D16. E2E plans not edited by this session.
+- **Docs batch:** MUI plan Status and Tabs plan build progress updated;
+  Backlog "Front-end standardisation fixes" rechecked (six screens
+  cleared; counts of the rest unchanged at 25 files / 400 lines) with a
+  new block for the 1.625 line spacing, the Pipeline zone filter name,
+  "Logged For" and the "Me (default)" wording check.
+
+**Retro (1 Nov evening, Build):** corrections from Basheer: 2 — (1) "Please
+explain this - One honest caveat…" — a caveat I had worded too
+technically for him; (2) "What
+merge commit you are referring to? Merge commit was already done right?" —
+my reference did not match what had been done. Counted from his typed
+messages in the transcript after the earlier retro's cut-off; "Not yet…",
+"Why not show the Needs Approval tab…" and "Why 2 commits for Fix 4?" are
+not corrections. No tracker line: neither could be stopped by a tool check
+and nothing touched live data, UAT or lost work. The handover note passed
+its 75-line limit (82); pruned before the commit.

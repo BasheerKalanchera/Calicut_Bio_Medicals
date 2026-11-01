@@ -3,8 +3,10 @@
 **Status:** Approved, 2026-10-31 — Basheer agreed the mock-up.
 **Build progress:** step 1 (the screen) built 2026-10-31, commit `7a8a201`,
 pushed; merged into `main` 1 Nov (`515a2f2`). E2E started 1 Nov (8 of 25
-steps recorded, one Fail: B1); it found D12–D16, whose fixes (step 3)
-are for `/build`. No migration.
+steps recorded, one Fail: B1); it found D12–D16. Step 3 (those fixes)
+built 1 Nov on `worktree-build`: `30766c7`, then `8d0d0b3` (the opening
+tab looks at any period or SBU, D15), both pushed, **not yet merged into
+`main`**; `/code-review` medium done (8 findings, 1 fixed). No migration.
 **Traceability rows:** signed 3.1 ("Sales target configuration:
 individual, team, regional" — 6.4 Target Management; layout only, row
 stays Done).
