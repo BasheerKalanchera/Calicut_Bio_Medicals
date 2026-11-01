@@ -17,6 +17,7 @@ import { listAccounts, getAccountCounts } from "../services/accounts";
 import AddHospitalModal from "../components/AddHospitalModal";
 import ZonePicker from "../components/ZonePicker";
 import useDebouncedValue from "../hooks/useDebouncedValue";
+import { shadows } from "../theme/shadows";
 import type { ZoneSearchResult } from "../services/masterData";
 
 // "MULTISPECIALITY_HOSPITAL" -> "Multispeciality Hospital"
@@ -29,9 +30,9 @@ function formatEnumLabel(value?: string | null): string {
 }
 
 function payerBehaviorChipSx(value: string) {
-  if (value === "GOOD") return { bgcolor: "#ecfdf5", color: "#047857", borderColor: "#a7f3d0" };
-  if (value === "PROBLEMATIC") return { bgcolor: "#fef2f2", color: "#b91c1c", borderColor: "#fecaca" };
-  return { bgcolor: "#f9fafb", color: "#4b5563", borderColor: "#e5e7eb" };
+  if (value === "GOOD") return { bgcolor: "emerald.50", color: "emerald.700", borderColor: "emerald.200" };
+  if (value === "PROBLEMATIC") return { bgcolor: "red.50", color: "red.700", borderColor: "red.200" };
+  return { bgcolor: "gray.50", color: "gray.600", borderColor: "gray.200" };
 }
 
 interface Props {
@@ -103,7 +104,7 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
   };
 
   return (
-    <Box sx={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", bgcolor: "#f9fafb" }}>
+    <Box sx={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", bgcolor: "gray.50" }}>
       {/* Fixed: search + zone filter — does not scroll */}
       <Box sx={{ px: 2, pt: 2 }}>
         <Box
@@ -115,8 +116,9 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
             bgcolor: "background.paper",
             p: 2,
             borderRadius: "1rem",
-            boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-            border: "1px solid #f3f4f6",
+            boxShadow: shadows.sm,
+            border: "1px solid",
+            borderColor: "gray.100",
           }}
         >
           <TextField
@@ -145,7 +147,8 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
           />
           <Box sx={{ minWidth: { sm: 220 }, flexShrink: 0 }}>
             <ZonePicker
-              label="All Zones"
+              label="Zone"
+              placeholder="All Zones"
               value={zoneFilter}
               onChange={(zone) => { setZoneFilter(zone); setPage(1); }}
             />
@@ -178,17 +181,18 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
                     bgcolor: "background.paper",
                     p: 2.5,
                     borderRadius: "1rem",
-                    boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-                    border: "1px solid #f3f4f6",
+                    boxShadow: shadows.sm,
+                    border: "1px solid",
+                    borderColor: "gray.100",
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
                     cursor: "pointer",
                     transition: "all 0.15s",
-                    "&:hover": { borderColor: "#60a5fa", boxShadow: "0 4px 6px rgba(0,0,0,0.07)" },
-                    "&:hover [data-part='account-name']": { color: "#1e3a8a" },
-                    "&:hover [data-part='account-avatar']": { bgcolor: "#d97706", color: "#fff" },
-                    "&:hover [data-part='account-chevron-box']": { bgcolor: "#eff6ff" },
+                    "&:hover": { borderColor: "blue.400", boxShadow: shadows.md },
+                    "&:hover [data-part='account-name']": { color: "blue.900" },
+                    "&:hover [data-part='account-avatar']": { bgcolor: "amber.600", color: "common.white" },
+                    "&:hover [data-part='account-chevron-box']": { bgcolor: "blue.50" },
                     "&:hover [data-part='account-chevron-icon']": { color: "primary.main" },
                   }}
                 >
@@ -198,15 +202,15 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
                       sx={{
                         width: 36,
                         height: 36,
-                        bgcolor: "#fffbeb",
-                        color: "#d97706",
+                        bgcolor: "amber.50",
+                        color: "amber.600",
                         borderRadius: "0.75rem",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                         fontWeight: 900,
-                        fontSize: "0.875rem",
-                        boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                        typography: "body2",
+                        boxShadow: shadows.sm,
                         flexShrink: 0,
                         transition: "background-color 0.15s, color 0.15s",
                       }}
@@ -216,7 +220,8 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
                     <Box>
                       <Typography
                         data-part="account-name"
-                        sx={{ fontWeight: 700, fontSize: "0.875rem", color: "#1f2937", transition: "color 0.15s" }}
+                        variant="body2"
+                        sx={{ fontWeight: 700, color: "gray.800", transition: "color 0.15s" }}
                       >
                         {account.name}
                       </Typography>
@@ -226,7 +231,7 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
                             label={account.zone.name}
                             size="small"
                             variant="outlined"
-                            sx={{ height: 20, fontSize: "0.6875rem", bgcolor: "#f0fdfa", color: "#0f766e", borderColor: "#99f6e4" }}
+                            sx={{ height: 20, typography: "caption2", bgcolor: "teal.50", color: "teal.700", borderColor: "teal.200" }}
                           />
                         )}
                         {account.parent_account && (
@@ -234,7 +239,7 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
                             label={`Parent: ${account.parent_account.name}`}
                             size="small"
                             variant="outlined"
-                            sx={{ height: 20, fontSize: "0.6875rem", bgcolor: "#eef2ff", color: "#4338ca", borderColor: "#c7d2fe" }}
+                            sx={{ height: 20, typography: "caption2", bgcolor: "indigo.50", color: "indigo.700", borderColor: "indigo.200" }}
                           />
                         )}
                         {account.payer_behavior && (
@@ -242,7 +247,7 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
                             label={account.payer_behavior}
                             size="small"
                             variant="outlined"
-                            sx={{ height: 20, fontSize: "0.6875rem", ...payerBehaviorChipSx(account.payer_behavior) }}
+                            sx={{ height: 20, typography: "caption2", ...payerBehaviorChipSx(account.payer_behavior) }}
                           />
                         )}
                         {account.customer_type && (
@@ -250,7 +255,7 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
                             label={formatEnumLabel(account.customer_type)}
                             size="small"
                             variant="outlined"
-                            sx={{ height: 20, fontSize: "0.6875rem", bgcolor: "#fffbeb", color: "#b45309", borderColor: "#fde68a" }}
+                            sx={{ height: 20, typography: "caption2", bgcolor: "amber.50", color: "amber.700", borderColor: "amber.200" }}
                           />
                         )}
                       </Box>
@@ -260,7 +265,7 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
                     data-part="account-chevron-box"
                     sx={{ bgcolor: "background.default", p: 1, borderRadius: "0.75rem", flexShrink: 0, ml: 1, transition: "background-color 0.15s" }}
                   >
-                    <ChevronRightIcon data-part="account-chevron-icon" sx={{ fontSize: 18, color: "#9ca3af", transition: "color 0.15s" }} />
+                    <ChevronRightIcon data-part="account-chevron-icon" sx={{ width: 18, height: 18, color: "gray.400", transition: "color 0.15s" }} />
                   </Box>
                 </Box>
               ))}
