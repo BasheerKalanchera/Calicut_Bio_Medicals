@@ -6,10 +6,10 @@ import CloseReminderModal from "./CloseReminderModal";
 import type { ReminderResponse } from "../types/api-aliases";
 
 const TOGGLE_SX = {
-  px: 2, py: 0.75, fontSize: "10px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
-  border: "none", color: "#9ca3af", bgcolor: "#fff",
+  px: 2, py: 0.75, typography: "tiny", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
+  border: "none", color: "gray.400", bgcolor: "common.white",
   "&:hover": { bgcolor: "background.default" },
-  "&.Mui-selected": { bgcolor: "primary.main", color: "#fff" },
+  "&.Mui-selected": { bgcolor: "primary.main", color: "common.white" },
   "&.Mui-selected:hover": { bgcolor: "primary.main" },
 } as const;
 
@@ -50,7 +50,7 @@ export default function NextActionsPanel({
 
   if (isLoading) {
     return (
-      <Box sx={{ py: 6, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.75rem", color: "#d1d5db", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.1em" }}>
+      <Box sx={{ py: 6, display: "flex", alignItems: "center", justifyContent: "center", typography: "caption", color: "gray.300", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.1em" }}>
         Loading…
       </Box>
     );
@@ -62,7 +62,7 @@ export default function NextActionsPanel({
         value={includeCompleted}
         exclusive
         onChange={(_, value) => { if (value !== null) setIncludeCompleted(value); }}
-        sx={{ width: "fit-content", border: "1px solid #e5e7eb", borderRadius: "0.75rem", overflow: "hidden" }}
+        sx={{ width: "fit-content", border: "1px solid", borderColor: "gray.200", borderRadius: "0.75rem", overflow: "hidden" }}
       >
         <ToggleButton value={false} disableRipple sx={TOGGLE_SX}>Pending</ToggleButton>
         <ToggleButton value={true} disableRipple sx={TOGGLE_SX}>Completed</ToggleButton>
@@ -71,12 +71,12 @@ export default function NextActionsPanel({
       {isError && <Alert severity="error">Couldn't load next actions. The list may be incomplete.</Alert>}
 
       {reminders.length === 0 ? (
-        <Box sx={{ py: 6, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.75rem", color: "#9ca3af", textAlign: "center", px: 4 }}>
+        <Box sx={{ py: 6, display: "flex", alignItems: "center", justifyContent: "center", typography: "caption", color: "gray.400", textAlign: "center", px: 4 }}>
           {includeCompleted ? "No completed next actions yet." : emptyPendingMessage}
         </Box>
       ) : (
         <>
-          <Box sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+          <Box sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.05em" }}>
             {includeCompleted ? "Completed" : "Pending"} ({reminders.length})
           </Box>
           {reminders.map((r) => (

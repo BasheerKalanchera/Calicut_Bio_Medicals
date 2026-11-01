@@ -49,16 +49,16 @@ export default function NextActionsScreen({
           value={includeCompleted}
           exclusive
           onChange={(_, value) => { if (value !== null) setIncludeCompleted(value); }}
-          sx={{ width: "fit-content", border: "1px solid #e5e7eb", borderRadius: "0.75rem", overflow: "hidden" }}
+          sx={{ width: "fit-content", border: "1px solid", borderColor: "gray.200", borderRadius: "0.75rem", overflow: "hidden" }}
         >
           <ToggleButton
             value={false}
             disableRipple
             sx={{
-              px: 2, py: 0.75, fontSize: "10px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
-              border: "none", color: "#9ca3af", bgcolor: "#fff",
+              px: 2, py: 0.75, typography: "tiny", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
+              border: "none", color: "gray.400", bgcolor: "common.white",
               "&:hover": { bgcolor: "background.default" },
-              "&.Mui-selected": { bgcolor: "primary.main", color: "#fff" },
+              "&.Mui-selected": { bgcolor: "primary.main", color: "common.white" },
               "&.Mui-selected:hover": { bgcolor: "primary.main" },
             }}
           >
@@ -68,10 +68,10 @@ export default function NextActionsScreen({
             value={true}
             disableRipple
             sx={{
-              px: 2, py: 0.75, fontSize: "10px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
-              border: "none", color: "#9ca3af", bgcolor: "#fff",
+              px: 2, py: 0.75, typography: "tiny", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
+              border: "none", color: "gray.400", bgcolor: "common.white",
               "&:hover": { bgcolor: "background.default" },
-              "&.Mui-selected": { bgcolor: "primary.main", color: "#fff" },
+              "&.Mui-selected": { bgcolor: "primary.main", color: "common.white" },
               "&.Mui-selected:hover": { bgcolor: "primary.main" },
             }}
           >
@@ -100,7 +100,7 @@ export default function NextActionsScreen({
       <Box sx={{ flex: 1, overflowY: "auto", px: 2, pb: 2, pt: 1 }}>
         {isLoading && (
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", py: 6 }}>
-            <Box sx={{ color: "#9ca3af", fontWeight: 700, fontSize: "0.875rem" }}>Loading next actions...</Box>
+            <Box sx={{ color: "gray.400", fontWeight: 700, typography: "body2" }}>Loading next actions...</Box>
           </Box>
         )}
 
@@ -119,14 +119,14 @@ export default function NextActionsScreen({
         )}
 
         {!isLoading && !isError && reminders.length === 0 && (
-          <Box sx={{ textAlign: "center", py: 6, bgcolor: "#fff", borderRadius: "1.5rem", border: "2px dashed #f3f4f6", fontStyle: "italic", color: "#9ca3af" }}>
+          <Box sx={{ textAlign: "center", py: 6, bgcolor: "common.white", borderRadius: "1.5rem", border: "2px dashed", borderColor: "gray.100", fontStyle: "italic", color: "gray.400" }}>
             {includeCompleted ? "No completed actions yet." : "All caught up — no pending actions."}
           </Box>
         )}
 
         {!isLoading && reminders.length > 0 && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-            <Box sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            <Box sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.05em" }}>
               {includeCompleted ? "Completed" : "Pending"} ({reminders.length})
             </Box>
             {reminders.map((r) => (
