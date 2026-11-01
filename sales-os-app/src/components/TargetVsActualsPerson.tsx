@@ -60,7 +60,16 @@ export default function TargetVsActualsPerson({
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+      {/* Stays at the top while the boxes and tables scroll under it. The
+          negative margin and padding stretch its solid background across the
+          card's own padding, so nothing shows at the sides. */}
+      <Box
+        sx={{
+          position: "sticky", top: 0, zIndex: 1, bgcolor: "background.paper",
+          mx: -2, px: 2, my: -0.5, py: 0.5,
+          display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap",
+        }}
+      >
         <IconButton
           onClick={onBack}
           aria-label="Back"

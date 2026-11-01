@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Box, ButtonBase, IconButton, MenuItem, TextField } from "@mui/material";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
@@ -71,6 +71,19 @@ export default function TargetVsActualsSection() {
   const tree = data ? asTree(data.people) : [];
   const openPerson = data?.people.find((p) => p.user_id === personId);
 
+  // The dashboard scrolls as one area, so swapping the table for a person's
+  // screen (and back) would leave it where it was: back to the top instead.
+  const topRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    for (let el = topRef.current?.parentElement; el; el = el.parentElement) {
+      const overflowY = getComputedStyle(el).overflowY;
+      if (overflowY === "auto" || overflowY === "scroll") {
+        el.scrollTop = 0;
+        return;
+      }
+    }
+  }, [personId]);
+
   // D77: on a phone the title, the SBU and Quarter/Year boxes, and the
   // period with its arrows each take a line, so nothing leaves the card.
   const picker = (
@@ -123,7 +136,10 @@ export default function TargetVsActualsSection() {
   );
 
   return (
-    <SectionCard title="Target vs Actuals" action={picker} stackActionOnPhone>
+    // While a person's own screen is open the title and pickers are hidden:
+    // changing the period there would show them for another quarter unannounced.
+    <SectionCard title="Target vs Actuals" action={picker} stackActionOnPhone hideHeader={!!openPerson}>
+      <Box ref={topRef} />
       <LoadingOrEmpty
         isLoading={active.isLoading}
         isError={active.isError}

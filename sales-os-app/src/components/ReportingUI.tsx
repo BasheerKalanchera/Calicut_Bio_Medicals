@@ -138,6 +138,7 @@ export function SectionCard({
   title,
   action,
   stackActionOnPhone = false,
+  hideHeader = false,
   children,
 }: {
   title: string;
@@ -145,25 +146,30 @@ export function SectionCard({
   // On a phone, put the action on its own lines under the title, full width,
   // so a wide action stays inside the card (Annual Target Planning D77).
   stackActionOnPhone?: boolean;
+  // Skip the title and action (Target vs Actuals, while one person's own
+  // screen is open).
+  hideHeader?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <Box sx={{ bgcolor: "background.paper", borderRadius: "1rem", border: 1, borderColor: "gray.100", boxShadow: shadows.sm, p: 2 }}>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          mb: 1.5,
-          ...(stackActionOnPhone
-            ? { flexDirection: { xs: "column", sm: "row" }, alignItems: { xs: "stretch", sm: "center" }, gap: 1 }
-            : { alignItems: "center" }),
-        }}
-      >
-        <Box sx={{ typography: "caption", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "gray.500" }}>
-          {title}
+      {!hideHeader && (
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            mb: 1.5,
+            ...(stackActionOnPhone
+              ? { flexDirection: { xs: "column", sm: "row" }, alignItems: { xs: "stretch", sm: "center" }, gap: 1 }
+              : { alignItems: "center" }),
+          }}
+        >
+          <Box sx={{ typography: "caption", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "gray.500" }}>
+            {title}
+          </Box>
+          {action}
         </Box>
-        {action}
-      </Box>
+      )}
       {children}
     </Box>
   );
