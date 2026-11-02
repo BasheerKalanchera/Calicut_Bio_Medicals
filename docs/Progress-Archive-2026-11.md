@@ -245,3 +245,77 @@ notes, not the code.
 didn't say it was the commit check, not a screen.
 No tracker line: all four are judgement slips no tool check could stop,
 and none touched live data.
+
+## 2026-11-02 — Build & Test: Target vs Actuals E2E Sections E and F done; waiting on `/build`
+
+- **Results:** E1–E4 and F1–F4 all Pass (Basheer, as Fazal, Fahad,
+  Shruthi, Haroon and Basheer K). Recorded in
+  `docs/Target-vs-Actuals-Redesign-Manual-E2E-Test-Plan.md` with "Result
+  2 Nov". Target vs Actuals plan now 41 of 41 recorded; the 3 Fails from
+  1 Nov (B6, C6, D10) stand. Test run 49 of 66 (41 on 1 Nov + 8); Tabs
+  plan still 8 of 25, on hold.
+- **Plan correction:** F2 said "same as P5", which was wrong. Target &
+  Coverage Planning shows "No hospitals on this plan — it was set before
+  hospital-wise planning" for Rudrappa's plan (`TargetPlanDetails.tsx:48`);
+  "Not assigned to a hospital" is Target vs Actuals' wording for the same
+  ₹10.0 L (`backend/app/domains/planning/service.py:1334`). F2 reworded;
+  not an app fault.
+- **New findings, neither an E/F fail (both for `/build`, write-ups given
+  to Basheer):**
+  1. Target vs Actuals, a person's own screen (Shruthi on Rudrappa's): the
+     other Insights tabs stay clickable and show the signed-in person's
+     own data; leaving the tab closes the person screen and the back
+     button is gone on return (open person is local state,
+     `TargetVsActualsSection.tsx:44`; the tab is mounted only while
+     active, `InsightsDashboardScreen.tsx:216`). **Decided (Basheer,
+     2 Nov): hide the other tabs while a person's screen is open**;
+     "view as Rudrappa" not wanted. In the plan under E4.
+  2. Sales Report: the period box says "This Quarter" and nothing shows
+     which dates; a quoted figure can't be traced to a quarter. Pre-
+     existing (no change to the screen since `515a2f2`, counted with git
+     log). Fix: a small line with the period ("Oct–Dec 2026", "Nov 2026",
+     "All time"), display only; small-fixes batch. Drill banners that say
+     "This Quarter" (`SalesReportScreen.tsx:77`) left as they are.
+- **Waiting on `/build`:** to fix, commit and merge to `main`: the Target
+  vs Actuals fixes from 1 Nov (SBU name in the SBU row, "No plan", arrow
+  hover text, person screen at top with header hidden and name row fixed,
+  Overdue tab rebuilt with inactive accounts marked) and the Tabs D12–D16
+  fixes (`30766c7`, `8d0d0b3`), plus the two findings above. Seen on
+  `worktree-build`, unmerged: `f2b72c6` (person screen), `22e3526`
+  (Overdue tab), `84772e9` (docs). Not checked: whether the SBU name, "No
+  plan" and arrow-hover fixes are among its commits.
+- **After the merge, in this order:** review the new code (pre-E2E);
+  re-run A2, B2, B6, C1, C6, D9, D10, plus E2 (Overdue tab rebuilt) and E4
+  (person screen); a wider regression of both plans to check nothing else
+  broke (Basheer wants it); rewrite and re-run the Tabs plan (B1, C2,
+  A2–A5 order, new steps; D–F not yet run). Then MUI step 8 pictures.
+- **Why Sales Report is in the plan (Basheer asked):** the Redesign
+  Implementation Plan 4(c) (lines 226–232) lists it under "must not
+  change" — the zone and brand tables left Target vs Actuals and live in
+  Sales Report (lines 180–182, 236–237). Test plan Section F is those
+  "after" checks (F1 Sales Report, F2/F3 plans, F4 My Work). Basheer
+  has asked `/build` to fix the two findings; if its MUI work also changes
+  Sales Report, review it (§6.11, whole file) and re-run F1 as "changed",
+  plus a step for the period line at 390/768/1280 px.
+- **Session clock (Basheer asked):** the P98 check runs only after a
+  successful `git push`, as built on 1 Nov; this session had none, so it
+  said nothing when 2 h 23 min / 22 messages passed (run by hand against
+  the transcript). Basheer: keep it as it is, tighten later if needed.
+
+**Session retro (Build & Test, 2 Nov) — corrections from Basheer this
+session: 4.** Counted from his 22 typed messages (session clock, 2 h 23
+min). (1) My first reply said nothing could be tested until `/build`
+merges; he had to ask "instead of continuing with E & F?" (E and F could
+run on the current app). (2) My answer then read as a "3rd option", and
+I had suggested a pre-E2E code review in the middle of a run already
+started ("I didn't understand the need for doing the pre-E2E code
+review?"). (3) F2 said "same as P5" with no values and was wrong for that
+screen; he asked three times (what P5 was; status Approved missing, typo
+or fail; the different hospitals message), counted once. (4) I was about
+to give E1 without saying which steps fit his Fazal login; he interrupted
+with "Any test cases in section E & F can be done with his login id?".
+Not counted: his two findings (other tabs on a person's screen; Sales
+Report dates), write-up requests, and his questions on the session clock
+and on Sales Report. Tracker: new P103 (a step must not point to another
+step for its expected value) — 2nd sighting, after D2 "same as P4" on
+1 Nov; proposal only, the weekly review decides.
