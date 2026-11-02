@@ -177,7 +177,14 @@ export default function InsightsDashboardScreen({ isActive, onOpenMyWork, startR
   const activityRows = activityQuery.data?.rows ?? [];
   const maxActivityCount = Math.max(1, ...activityRows.map((r) => r.activity_count));
 
-  const overdueRows = overdueQuery.data?.rows ?? [];
+  // Overdue tab order: as the server sends it (most overdue first) or by name.
+  // Not saved anywhere -- the tab opens in the server's order each time.
+  const [overdueSort, setOverdueSort] = useState<"most-overdue" | "name">("most-overdue");
+  const overdueFromServer = overdueQuery.data?.rows ?? [];
+  const overdueRows =
+    overdueSort === "name"
+      ? [...overdueFromServer].sort((a, b) => a.display_name.localeCompare(b.display_name, undefined, { sensitivity: "base" }))
+      : overdueFromServer;
 
   return (
     <Box sx={{ flex: 1, overflow: "hidden", bgcolor: "background.default", display: "flex", flexDirection: "column" }}>
@@ -297,6 +304,20 @@ export default function InsightsDashboardScreen({ isActive, onOpenMyWork, startR
               errorText="Couldn't load overdue items."
               onRetry={() => overdueQuery.refetch()}
             />
+            {overdueRows.length > 0 && (
+              <TextField
+                select
+                label="Sort by"
+                size="small"
+                value={overdueSort}
+                onChange={(e) => setOverdueSort(e.target.value as "most-overdue" | "name")}
+                sx={{ minWidth: 200, alignSelf: "flex-start", mb: 1.5 }}
+                slotProps={{ inputLabel: { shrink: true } }}
+              >
+                <MenuItem value="most-overdue">Most overdue first</MenuItem>
+                <MenuItem value="name">Name A–Z</MenuItem>
+              </TextField>
+            )}
             {overdueRows.length > 0 && (
               // Headings once; a block per person on a phone. Counts above zero
               // are red and open My Work, zeros are grey and do nothing.
