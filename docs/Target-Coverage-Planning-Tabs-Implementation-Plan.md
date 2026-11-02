@@ -7,8 +7,10 @@ steps recorded, one Fail: B1); it found D12–D16. Step 3 (those fixes)
 built 1 Nov on `worktree-build`: `30766c7`, then `8d0d0b3` (the opening
 tab looks at any period or SBU, D15), both pushed and now in `main`;
 `/code-review` medium done (8 findings, 1 fixed). The E2E re-run on 2 Nov
-found D17 (a My Targets tab), decided 2 Nov; step 4 below, **not yet
-built**. No migration.
+found D17 (a My Targets tab), decided 2 Nov. Step 4 (D17) built 2 Nov on
+`worktree-build`: `cfa886c`; `/code-review` medium done (8 findings, 3
+fixed in `19141b8`); branch pushed, not merged into `main`, not seen in a
+browser. Test plan rewrite and E2E re-run pending. No migration.
 **Traceability rows:** signed 3.1 ("Sales target configuration:
 individual, team, regional" — 6.4 Target Management; layout only, row
 stays Done).

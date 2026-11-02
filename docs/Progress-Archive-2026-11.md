@@ -475,3 +475,56 @@ write-up and fixed. No tracker line: no tool check could have stopped
 these, and nothing touched live data, UAT or lost work (Dev only read).
 Session clock at 15:09: 4 h 27 min wall-clock (about 2 h 12 min active
 after gaps of 63 and 72 min), 21 messages.
+
+## 2026-11-02 (second Build session) — My Targets tab, plan amount, Overdue sort, pre-E2E review (Build, parallel)
+
+All on `worktree-build`, **not merged into `main`**. None seen in a browser.
+Screen-only changes, no server change, no migration. Checks on each: `tsc`
+and the MUI check clean; ESLint 0 errors, 135 warnings (as before).
+
+- **`cfa886c` — Tabs plan step 4 (D17):** My Targets tab, "My Plans"
+  rename, new tab order and opening tab, the General Manager's SBU-target
+  card (Annual view: "Imaging SBU target" over four quarters and a total,
+  agreed with Basheer 2 Nov), filled "Plan" button in the Annual view, the
+  "Your target" line off the plans tab. `main` merged in first (`3b82bf9`).
+- **`14888f8` — Target vs Actuals, Quarter view:** each person's row reads
+  "of plan ₹X L" under the percentage (`TargetVsActualsSection.tsx:218`).
+  Basheer's write-up; Simpler Table D13 is not yet written into that plan
+  (Plan & Chore's job).
+- **`ab6a039` — Insights Dashboard, Overdue tab:** a "Sort by" box (Most
+  overdue first, the default / Name A–Z), choice not saved. Basheer's
+  write-up; D14 not yet in the Simpler Table plan either.
+- **Pre-E2E review (medium, `main..HEAD`, held until Basheer said):** 8
+  findings, each checked against the code. **Three taken, `19141b8`:**
+  (1) My Targets showed a blank panel for the General Manager while the SBU
+  list loaded; now a spinner. (2) The Opportunity Pipeline file still said
+  "deal" in its visible text, names and comments; now "Opportunity"
+  (CLAUDE.md terminology; same behaviour). (3) The deliberate-sign-out flag
+  (`bd81bcb`) was cleared only by `signIn()`; a session restored another way
+  (a login in another tab) left it on, so a later expiry would not reach the
+  login screen; now also cleared when a session is applied. **Five not
+  taken:** the Overdue list is not paged and is sorted on the server;
+  the hook-order worry is wrong; the plan amount and the percent come from
+  the same `planned_lakhs` (`service.py:1355/1360`); the General Manager's
+  "Not set yet" is the intended wording; the My Plan / My Plans heading is
+  D17 as decided. Noted, not taken: the Annual total counts set quarters
+  only, as the old line did.
+- **Noted, not fixed:** `src/App.jsx:7686` still says "No deals match this
+  report filter" (old file, outside the review). The commit-time MUI check
+  again printed "no staged .ts/.tsx files" with a .tsx file staged (known).
+  Shell guard blocked the first review-fix commit for the word "deal" in
+  its message; reworded.
+- **Open:** the push and the merge (when Basheer says go); the "Me
+  (default)" wording check in Frontend standards and Process-Improvements;
+  D13/D14 for the Simpler Table plan and the MUI-check quirk go to Plan &
+  Chore via Basheer; Basheer's 390 / 768 / 1280 px looks at E2E.
+
+**Retro (2 Nov, Build, second session):** corrections from Basheer: 1 —
+"Please explain this": my question about the General Manager's card heading
+in the Annual view was in jargon, so he had to ask for a plain version.
+Counted from the 16 messages in the transcript (including the retro request
+and one mangled "eys."); the approvals, the two write-ups, "hold off on the
+review" and "do the code review now" are not corrections. No tracker line:
+no tool check could stop it, and nothing touched live data, UAT or lost
+work. Session clock: 6 h 24 min wall-clock (first to last message,
+transcript timestamps).

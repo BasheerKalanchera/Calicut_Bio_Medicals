@@ -658,19 +658,14 @@ to clear. Remove a screen from here when it is committed clean.
   `.ts`/`.tsx` files only; rechecked the evening of 1 Nov after MUI round
   1 steps 4–7, which cleared Opportunity Detail, the Customers list,
   Product Catalog, Daily Activity Report, Next Actions (screen and panel)
-  and the Close Next Action pop-up (25 files, 400 lines left). Customer
+  and the Close Next Action pop-up (25 files, 400 lines left). Rechecked
+  2 Nov after the Opportunity Pipeline screen was cleaned (`a07e97d`,
+  49 colours + 26 text sizes): 24 files, 325 lines left. Customer
   360 is left out: its MUI round 1 is done (`6a417cb`).
 - **Not seen by the check, so listed by hand:** the back button and arrow
   rules (§6.6 item 7, §6.11 rules 8–9), a filter's name above its box, a
   label on every drop-down. Plan & Chore was asked (1 Nov) to add the
   arrow checks to the commit check.
-
-**Opportunity Pipeline** (`OpportunityPipelineScreen.tsx`)
-- 49 typed colours, 26 typed text sizes.
-- Row chevron at line 260 has `#9ca3af` (§6.11 rule 9, theme colour).
-- Zone filter at line 479 is named "All Zones"; it should be named "Zone"
-  with "All Zones" inside the box (Rate Hospitals' `ZonePicker` is the
-  model).
 
 **Account Management → Projects list** (`ProjectDirectoryScreen.tsx`)
 - 41 typed colours, 25 typed text sizes.
@@ -698,8 +693,6 @@ to clear. Remove a screen from here when it is committed clean.
 - A line spacing of 1.625 has no theme name; it is typed in 3 places
   (`ActivityTimeline.tsx:126`, `DailyActivityReportScreen.tsx:102` and
   `:113`). Name it in the theme the next time one of those is touched.
-- The Opportunity Pipeline zone filter (`OpportunityPipelineScreen.tsx`)
-  has no name above it (see its block above).
 - The Log Activity "Logged For" box is now named, nothing more. Whether
   a manager may close another person's next action stays an open question.
 - Check whether the Frontend standards and Process-Improvements wording
@@ -721,6 +714,18 @@ to clear. Remove a screen from here when it is committed clean.
   Business Potential chip 0 / 1.
 - Helper files, colours only: `utils/activityTypes.ts` 13,
   `utils/businessPotential.ts` 4, `utils/marketingLeadMilestone.ts` 4.
+
+### Sign out loaded the login screen twice — fix built, not yet re-tested on Dev (2 Nov 2026)
+
+Signing out made the login screen load a second time. The cause is a
+hypothesis from reading the code, not reproduced: `api.ts` treats any 401
+(session expired) by signing out and reloading the page, and a deliberate
+sign-out can trigger that same path. **Built (`bd81bcb`, branch
+`worktree-build`, not yet in `main`):** while a deliberate sign-out is on
+(`setDeliberateSignOut`, set in `signOut()`, cleared in `signIn()`), `api.ts`
+skips its own sign-out and reload. After the merge, Basheer signs out on Dev
+and checks the login screen loads once; remove this entry if it does. If it
+still loads twice, the cause is elsewhere and this entry needs rewriting.
 
 ### Front-end consistency audit — parked, undecided (raised 2026-09-30)
 
