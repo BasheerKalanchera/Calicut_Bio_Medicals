@@ -308,9 +308,9 @@ the common filter"). Server half: Backend standards, "Filtering Standards".
 
 **Target** means only a figure set from the top: a brand's target (Brand
 Target Tracking), the SBU target (its brands' total), or a person's
-quarterly target set by the person they report to ("Your target", "Team
-Targets"; Annual Target Planning, 2026-10-21). **Plan** means a rep's own
-bottom-up figure, built from their hospitals ("My Plan", "Team Plans",
+quarterly target set by the person they report to ("My Targets", "Team
+Targets"; Annual Target Planning, 2026-10-21; Tabs plan D17, 2026-11-02). **Plan** means a rep's own
+bottom-up figure, built from their hospitals ("My Plans", "Team Plans",
 "Plan total", "Last approved plan", "Approve Vivek's plan?"). Any new
 label, message or help text follows this, including server refusal
 messages. Names that hold both keep "Target": the menu "Target & Coverage

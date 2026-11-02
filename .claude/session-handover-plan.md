@@ -7,10 +7,14 @@ session edits this note._
 
 - Forecast plan (untracked, written by Antigravity — Basheer 27 Oct): commit it, and by which session? Open. At review, line 110 → BR-FIN-09.
 
+## Tabs plan D17 (My Targets tab) — review in progress 2026-11-02
+
+- D17 answers, Dev check, section edits and Frontend standards wording
+  done and committed 2 Nov; brief for /build given. **Next:** /build
+  step 4; then rewrite the tabs test plan. Tidy-up every 3 days: parked.
+
 ## Build queue for `/build` (all Approved, E2E plans written)
 
-- Hospital next-action rule: merged into `main` 31 Oct (`dce73f5`,
-  pushed); its E2E is Build & Test's.
 - Then, in order: Target vs Actuals simpler table, Target & Coverage
   Planning tabs (both Approved 31 Oct, mock-up v26, `43f146e`); Activity
   Type table (Approved 31 Oct, D1–D12; E2E plan
@@ -52,11 +56,7 @@ session edits this note._
 
 ## Harness Engineering
 
-- Weekly review done 1 Nov (tracker Reviews line): P98 session clock,
-  P77 gap, P102 docs-batch reminder built, tests 18/18; 27 watch-list
-  lines deleted. Committed and pushed `277efa7`; the session clock
-  fired live on that push. Docs-batch reminder not yet seen live: check
-  it at the next docs-only commit. "← Back" check: /build
+- Weekly review 1 Nov done and pushed (`277efa7`, `fdcfbb3`). "← Back" check: /build
   after its MUI round 1 fixes (Basheer) — Backlog entry and /build's note
   still to update (quarter → year wording too). /build reported the MUI
   check printing "no staged .ts/.tsx files" with three staged: not looked
