@@ -10,8 +10,13 @@ import {
   MenuItem,
   TextField,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import ClearIcon from "@mui/icons-material/Clear";
+import SearchIcon from "@mui/icons-material/Search";
+import { shadows } from "../theme/shadows";
+import { statusColors } from "../theme/statusColors";
 import { listPipeline } from "../services/opportunities";
 import { listStages, listUsers } from "../services/masterData";
 import { isReactivationOverdue } from "../utils/opportunityStatus";
@@ -80,11 +85,11 @@ interface UserOption { id: string; display_name: string; is_active?: boolean | n
 // ---------------------------------------------------------------------------
 function StatusBadge({ code }: { code: string }) {
   const colours: Record<string, { bg: string; color: string }> = {
-    ACTIVE:  { bg: "#d1fae5", color: "#047857" },
-    ON_HOLD: { bg: "#fef3c7", color: "#b45309" },
-    STALLED: { bg: "#f3f4f6", color: "#6b7280" },
-    WON:     { bg: "#dbeafe", color: "#1d4ed8" },
-    LOST:    { bg: "#fee2e2", color: "#dc2626" },
+    ACTIVE:  { bg: "emerald.100", color: "emerald.700" },
+    ON_HOLD: { bg: "amber.100", color: "amber.700" },
+    STALLED: { bg: "gray.100", color: "gray.500" },
+    WON:     { bg: "blue.100", color: "blue.700" },
+    LOST:    { bg: "red.100", color: "red.600" },
   };
   const c = colours[code] ?? colours.STALLED;
   return (
@@ -92,7 +97,7 @@ function StatusBadge({ code }: { code: string }) {
       component="span"
       sx={{
         display: "inline-block", px: 0.75, py: 0.25, borderRadius: "0.25rem",
-        fontSize: "9px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
+        typography: "micro", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
         bgcolor: c.bg, color: c.color,
       }}
     >
@@ -117,37 +122,37 @@ function DealCard({
       focusRipple
       sx={{
         width: "100%", textAlign: "left", display: "flex", flexDirection: "column", alignItems: "stretch", gap: 0.75,
-        bgcolor: "#fff", borderRadius: "1rem", boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-        border: "1px solid #f3f4f6", p: 1.5, transition: "all 0.15s",
-        "&:hover": { boxShadow: "0 4px 6px rgba(0,0,0,0.07)", borderColor: "#bfdbfe" },
+        bgcolor: "background.paper", borderRadius: "1rem", boxShadow: shadows.sm,
+        border: "1px solid", borderColor: "gray.100", p: 1.5, transition: "all 0.15s",
+        "&:hover": { boxShadow: shadows.md, borderColor: "blue.200" },
         "&:active": { transform: "scale(0.98)" },
       }}
     >
-      <Box sx={{ fontWeight: 700, fontSize: "0.875rem", color: "#1f2937", lineHeight: 1.375 }}>
+      <Box sx={{ fontWeight: 700, typography: "body2", color: "gray.800", lineHeight: 1.375 }}>
         {opp.name}
       </Box>
-      <Box sx={{ fontSize: "10px", color: "#6b7280", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+      <Box sx={{ typography: "tiny", color: "gray.500", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
         {opp.account.name}
       </Box>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 0.5 }}>
         <StatusBadge code={opp.status.status_code} />
         {opp.indicative_value && (
-          <Box component="span" sx={{ fontSize: "10px", fontWeight: 900, color: "#374151" }}>
+          <Box component="span" sx={{ typography: "tiny", fontWeight: 900, color: "gray.700" }}>
             ₹{parseFloat(opp.indicative_value).toFixed(1)}L
           </Box>
         )}
       </Box>
       {isReactivationOverdue(opp.status.status_code, opp.reactivation_date) && (
-        <Box component="span" sx={{ alignSelf: "flex-start", px: 1, py: 0.25, borderRadius: "0.375rem", fontSize: "9px", fontWeight: 900, border: "1px solid #fecaca", bgcolor: "#fef2f2", color: "#dc2626" }}>
+        <Box component="span" sx={{ alignSelf: "flex-start", px: 1, py: 0.25, borderRadius: "0.375rem", typography: "micro", fontWeight: 900, border: "1px solid", borderColor: statusColors.danger.border, bgcolor: statusColors.danger.bg, color: statusColors.danger.text }}>
           Reactivation Overdue
         </Box>
       )}
       {opp.is_high_priority && (
-        <Box component="span" sx={{ alignSelf: "flex-start", px: 1, py: 0.25, borderRadius: "0.375rem", fontSize: "9px", fontWeight: 900, border: "1px solid #fed7aa", bgcolor: "#fff7ed", color: "#c2410c" }}>
+        <Box component="span" sx={{ alignSelf: "flex-start", px: 1, py: 0.25, borderRadius: "0.375rem", typography: "micro", fontWeight: 900, border: "1px solid", borderColor: "orange.200", bgcolor: "orange.50", color: "orange.700" }}>
           High Priority
         </Box>
       )}
-      <Box sx={{ fontSize: "9px", color: "#9ca3af", fontWeight: 500 }}>
+      <Box sx={{ typography: "micro", color: "gray.400", fontWeight: 500 }}>
         {opp.owner.display_name}
       </Box>
     </ButtonBase>
@@ -169,15 +174,15 @@ function StageColumn({
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minWidth: 0 }}>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: 0.75, pl: 1.5, pr: 0.5 }}>
-        <Box component="span" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+        <Box component="span" sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.05em" }}>
           {stageName}
         </Box>
-        <Box component="span" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", bgcolor: "#f3f4f6", borderRadius: "9999px", px: 0.75 }}>
+        <Box component="span" sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", bgcolor: "gray.100", borderRadius: "9999px", px: 0.75 }}>
           {deals.length}
         </Box>
       </Box>
       {deals.length === 0 ? (
-        <Box sx={{ fontSize: "10px", color: "#d1d5db", fontStyle: "italic", textAlign: "center", py: 2 }}>No deals</Box>
+        <Box sx={{ typography: "tiny", color: "gray.300", fontStyle: "italic", textAlign: "center", py: 2 }}>No deals</Box>
       ) : (
         deals.map((opp) => (
           <DealCard key={opp.id} opp={opp} onClick={() => onSelect(opp)} />
@@ -201,13 +206,13 @@ function ListRow({
     <Box
       onClick={onClick}
       sx={{
-        bgcolor: "#fff", py: 1.5, px: 2, borderRadius: "1rem", boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-        border: "1px solid #f3f4f6", display: "flex", justifyContent: "space-between", alignItems: "center",
+        bgcolor: "background.paper", py: 1.5, px: 2, borderRadius: "1rem", boxShadow: shadows.sm,
+        border: "1px solid", borderColor: "gray.100", display: "flex", justifyContent: "space-between", alignItems: "center",
         cursor: "pointer", transition: "all 0.15s",
-        "&:hover": { borderColor: "#60a5fa", boxShadow: "0 4px 6px rgba(0,0,0,0.07)" },
-        "&:hover [data-part='deal-name']": { color: "#1e3a8a" },
-        "&:hover [data-part='deal-avatar']": { bgcolor: "primary.main", color: "#fff" },
-        "&:hover [data-part='deal-chevron-box']": { bgcolor: "#eff6ff" },
+        "&:hover": { borderColor: "blue.400", boxShadow: shadows.md },
+        "&:hover [data-part='deal-name']": { color: "blue.900" },
+        "&:hover [data-part='deal-avatar']": { bgcolor: "primary.main", color: "common.white" },
+        "&:hover [data-part='deal-chevron-box']": { bgcolor: "blue.50" },
         "&:hover [data-part='deal-chevron-icon']": { color: "primary.main" },
       }}
     >
@@ -215,9 +220,9 @@ function ListRow({
         <Box
           data-part="deal-avatar"
           sx={{
-            width: 36, height: 36, bgcolor: "#eff6ff", color: "primary.main", borderRadius: "0.75rem",
-            display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: "0.875rem",
-            boxShadow: "0 1px 2px rgba(0,0,0,0.05)", flexShrink: 0, transition: "background-color 0.15s, color 0.15s",
+            width: 36, height: 36, bgcolor: "blue.50", color: "primary.main", borderRadius: "0.75rem",
+            display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, typography: "body2",
+            boxShadow: shadows.sm, flexShrink: 0, transition: "background-color 0.15s, color 0.15s",
           }}
         >
           {opp.name.charAt(0).toUpperCase()}
@@ -225,39 +230,39 @@ function ListRow({
         <Box sx={{ minWidth: 0 }}>
           <Box
             data-part="deal-name"
-            sx={{ fontWeight: 700, color: "#1f2937", fontSize: "0.875rem", transition: "color 0.15s", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+            sx={{ fontWeight: 700, color: "gray.800", typography: "body2", transition: "color 0.15s", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
           >
             {opp.name}
           </Box>
-          <Box sx={{ fontSize: "0.75rem", fontWeight: 500, color: "#9ca3af", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", mt: 0.25 }}>
+          <Box sx={{ typography: "caption", fontWeight: 500, color: "gray.400", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", mt: 0.25 }}>
             {opp.account.name}
           </Box>
           <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1.25, mt: 0.75 }}>
-            <Box component="span" sx={{ px: 1, py: 0.25, borderRadius: "0.375rem", fontSize: "10px", fontWeight: 900, border: "1px solid #bfdbfe", bgcolor: "#eff6ff", color: "#1d4ed8" }}>
+            <Box component="span" sx={{ px: 1, py: 0.25, borderRadius: "0.375rem", typography: "tiny", fontWeight: 900, border: "1px solid", borderColor: statusColors.info.border, bgcolor: statusColors.info.bg, color: statusColors.info.text }}>
               {opp.stage.stage_name}
             </Box>
             <StatusBadge code={opp.status.status_code} />
             {isReactivationOverdue(opp.status.status_code, opp.reactivation_date) && (
-              <Box component="span" sx={{ px: 1, py: 0.25, borderRadius: "0.375rem", fontSize: "10px", fontWeight: 900, border: "1px solid #fecaca", bgcolor: "#fef2f2", color: "#dc2626" }}>
+              <Box component="span" sx={{ px: 1, py: 0.25, borderRadius: "0.375rem", typography: "tiny", fontWeight: 900, border: "1px solid", borderColor: statusColors.danger.border, bgcolor: statusColors.danger.bg, color: statusColors.danger.text }}>
                 Reactivation Overdue
               </Box>
             )}
             {opp.is_high_priority && (
-              <Box component="span" sx={{ px: 1, py: 0.25, borderRadius: "0.375rem", fontSize: "10px", fontWeight: 900, border: "1px solid #fed7aa", bgcolor: "#fff7ed", color: "#c2410c" }}>
+              <Box component="span" sx={{ px: 1, py: 0.25, borderRadius: "0.375rem", typography: "tiny", fontWeight: 900, border: "1px solid", borderColor: "orange.200", bgcolor: "orange.50", color: "orange.700" }}>
                 High Priority
               </Box>
             )}
             {opp.indicative_value && (
-              <Box component="span" sx={{ fontSize: "10px", fontWeight: 900, color: "#059669" }}>
+              <Box component="span" sx={{ typography: "tiny", fontWeight: 900, color: "emerald.600" }}>
                 ₹{parseFloat(opp.indicative_value).toFixed(1)}L
               </Box>
             )}
-            <Box component="span" sx={{ fontSize: "10px", color: "#9ca3af" }}>{opp.owner.display_name}</Box>
+            <Box component="span" sx={{ typography: "tiny", color: "gray.400" }}>{opp.owner.display_name}</Box>
           </Box>
         </Box>
       </Box>
       <Box data-part="deal-chevron-box" sx={{ bgcolor: "background.default", p: 1, borderRadius: "0.75rem", flexShrink: 0, ml: 1, transition: "background-color 0.15s" }}>
-        <ChevronRightIcon data-part="deal-chevron-icon" sx={{ fontSize: 18, color: "#9ca3af", transition: "color 0.15s" }} />
+        <ChevronRightIcon data-part="deal-chevron-icon" fontSize="small" sx={{ color: "gray.400", transition: "color 0.15s" }} />
       </Box>
     </Box>
   );
@@ -401,7 +406,7 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMod
             sx={{
               display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1,
               mb: 1, px: 1.5, py: 1, borderRadius: "0.75rem",
-              bgcolor: "#eef2ff", border: "1px solid #c7d2fe",
+              bgcolor: "indigo.50", border: "1px solid", borderColor: "indigo.200",
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, minWidth: 0 }}>
@@ -410,12 +415,12 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMod
                   onClick={onBackToReport}
                   aria-label="Back to report"
                   size="small"
-                  sx={{ color: "#3730a3", flexShrink: 0, "&:hover": { bgcolor: "#e0e7ff" } }}
+                  sx={{ color: "indigo.800", flexShrink: 0, "&:hover": { bgcolor: "indigo.100" } }}
                 >
-                  <ArrowBackIcon sx={{ fontSize: 18 }} />
+                  <ArrowBackIcon fontSize="small" />
                 </IconButton>
               )}
-              <Box sx={{ fontSize: "0.8125rem", fontWeight: 600, color: "#3730a3" }}>
+              <Box sx={{ typography: "body3", fontWeight: 600, color: "indigo.800" }}>
                 Showing: {initialFilter.label}
                 {/* The bar's count straight away, then the list's own server total
                     once loaded (not the search-narrowed list). */}
@@ -425,12 +430,12 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMod
                 })()}
               </Box>
             </Box>
-            <Button size="small" onClick={onClearInitialFilter} sx={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "none" }}>
+            <Button size="small" onClick={onClearInitialFilter} sx={{ typography: "caption", fontWeight: 700, textTransform: "none" }}>
               Clear filter
             </Button>
           </Box>
         )}
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1, bgcolor: "#fff", p: 1.5, borderRadius: "1rem", boxShadow: "0 1px 2px rgba(0,0,0,0.05)", border: "1px solid #f3f4f6" }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1, bgcolor: "background.paper", p: 1.5, borderRadius: "1rem", boxShadow: shadows.sm, border: "1px solid", borderColor: "gray.100" }}>
           {/* Search */}
           <TextField
             placeholder="Search by opportunity or hospital..."
@@ -441,11 +446,15 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMod
             autoComplete="off"
             slotProps={{
               input: {
-                startAdornment: <InputAdornment position="start">🔍</InputAdornment>,
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" />
+                  </InputAdornment>
+                ),
                 endAdornment: searchQuery ? (
                   <InputAdornment position="end">
-                    <IconButton size="small" edge="end" onClick={() => setSearchQuery("")}>
-                      <Box component="span" sx={{ fontWeight: 700, fontSize: "0.75rem", color: "#9ca3af" }}>×</Box>
+                    <IconButton size="small" edge="end" aria-label="Clear search" onClick={() => setSearchQuery("")}>
+                      <ClearIcon fontSize="small" />
                     </IconButton>
                   </InputAdornment>
                 ) : undefined,
@@ -456,11 +465,12 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMod
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <TextField
               select
+              label="Owner"
               value={ownerFilter}
               onChange={(e) => setOwnerFilter(e.target.value)}
               size="small"
               sx={{ flex: 1 }}
-              slotProps={{ select: { displayEmpty: true } }}
+              slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
             >
               <MenuItem value="">All Owners</MenuItem>
               {activeOwners.map((u) => (
@@ -476,7 +486,7 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMod
               ]}
             </TextField>
             <Box sx={{ flex: 1 }}>
-              <ZonePicker label="All Zones" value={zoneFilter} onChange={setZoneFilter} />
+              <ZonePicker label="Zone" placeholder="All Zones" value={zoneFilter} onChange={setZoneFilter} />
             </Box>
           </Box>
         </Box>
@@ -484,14 +494,14 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMod
 
       {isLoading && (
         <Box sx={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <Box sx={{ color: "#9ca3af", fontWeight: 700, fontSize: "0.875rem" }}>Loading pipeline...</Box>
+          <Box sx={{ color: "gray.400", fontWeight: 700, typography: "body2" }}>Loading pipeline...</Box>
         </Box>
       )}
 
       {!isLoading && viewMode === "list" && (
         <Box sx={{ flex: 1, overflowY: "auto", px: 2, pb: 2, pt: 1 }}>
           {filteredDeals.length === 0 ? (
-            <Box sx={{ textAlign: "center", py: 6, bgcolor: "#fff", borderRadius: "1.5rem", border: "2px dashed #f3f4f6", fontStyle: "italic", color: "#9ca3af" }}>
+            <Box sx={{ textAlign: "center", py: 6, bgcolor: "background.paper", borderRadius: "1.5rem", border: "2px dashed", borderColor: "gray.100", fontStyle: "italic", color: "gray.400" }}>
               {searchQuery ? "No opportunities match your search." : "No opportunities found."}
             </Box>
           ) : (
@@ -525,15 +535,16 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMod
                   disableRipple
                   sx={{
                     flexShrink: 0, px: 1.5, py: 0.75,
-                    borderRadius: "9999px", fontSize: "10px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
-                    bgcolor: isActive ? "primary.main" : "#fff",
-                    color: isActive ? "#fff" : "#6b7280",
-                    border: isActive ? "none" : "1px solid #e5e7eb",
-                    boxShadow: isActive ? "0 1px 2px rgba(0,0,0,0.05)" : "none",
+                    borderRadius: "9999px", typography: "tiny", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
+                    bgcolor: isActive ? "primary.main" : "background.paper",
+                    color: isActive ? "common.white" : "gray.500",
+                    border: isActive ? "none" : "1px solid",
+                    borderColor: "gray.200",
+                    boxShadow: isActive ? shadows.sm : "none",
                     "&:hover": {
-                      borderColor: isActive ? "transparent" : "#93c5fd",
-                      color: isActive ? "#fff" : "primary.main",
-                      bgcolor: isActive ? "primary.main" : "#fff",
+                      borderColor: isActive ? "transparent" : "blue.300",
+                      color: isActive ? "common.white" : "primary.main",
+                      bgcolor: isActive ? "primary.main" : "background.paper",
                     },
                   }}
                 >
@@ -542,10 +553,10 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMod
                     <Box
                       component="span"
                       sx={{
-                        width: 16, height: 16, borderRadius: "50%", fontSize: "9px", fontWeight: 900,
+                        width: 16, height: 16, borderRadius: "50%", typography: "micro", fontWeight: 900,
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        bgcolor: isActive ? "rgba(255,255,255,0.2)" : "#f3f4f6",
-                        color: isActive ? "#fff" : "#6b7280",
+                        bgcolor: isActive ? (theme) => alpha(theme.palette.common.white, 0.2) : "gray.100",
+                        color: isActive ? "common.white" : "gray.500",
                       }}
                     >
                       {count}
