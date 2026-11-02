@@ -77,6 +77,9 @@ export default function InsightsDashboardScreen({ isActive, onOpenMyWork, startR
   const tabs = TABS.filter((t) => isManagerTier || !t.managerOnly);
 
   const [activeTab, setActiveTab] = useState<TabId>("target");
+  // True while a person's own screen is open under Target vs Actuals: the tab
+  // bar is hidden then, and returns on its Back button.
+  const [personOpen, setPersonOpen] = useState(false);
   const chipBarRef = useRef<HTMLDivElement>(null);
 
   const centerTab = useCallback((tabId: TabId, behavior: ScrollBehavior = "smooth") => {
@@ -179,7 +182,7 @@ export default function InsightsDashboardScreen({ isActive, onOpenMyWork, startR
   return (
     <Box sx={{ flex: 1, overflow: "hidden", bgcolor: "background.default", display: "flex", flexDirection: "column" }}>
       {/* Tab chip bar -- stays put while the tab content scrolls */}
-      <Box sx={{ position: "relative", px: 2, pt: 2, pb: 1.5, flexShrink: 0 }}>
+      {!personOpen && <Box sx={{ position: "relative", px: 2, pt: 2, pb: 1.5, flexShrink: 0 }}>
         <Box
           ref={chipBarRef}
           sx={{
@@ -212,10 +215,10 @@ export default function InsightsDashboardScreen({ isActive, onOpenMyWork, startR
           })}
         </Box>
         <Box sx={{ position: "absolute", right: 0, top: 0, height: "100%", width: 40, pointerEvents: "none", background: (theme) => `linear-gradient(to left, ${theme.palette.background.default}, transparent)` }} />
-      </Box>
+      </Box>}
 
       <Box sx={{ flex: 1, overflowY: "auto", px: 2, pb: 2, display: "flex", flexDirection: "column", gap: 1.5 }}>
-        {activeTab === "target" && <TargetVsActualsSection />}
+        {activeTab === "target" && <TargetVsActualsSection onPersonOpenChange={setPersonOpen} />}
 
         {activeTab === "pipeline" && (
           <>

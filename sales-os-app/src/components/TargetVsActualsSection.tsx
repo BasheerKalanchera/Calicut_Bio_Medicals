@@ -28,7 +28,13 @@ const QUARTER_STATE_LABEL: Record<QuarterState, string> = {
 
 type View = "QUARTER" | "YEAR";
 
-export default function TargetVsActualsSection() {
+interface Props {
+  // Tells the dashboard a person's own screen is open, so it can hide its
+  // tab bar: the other tabs would show the viewer's own data meanwhile.
+  onPersonOpenChange?: (open: boolean) => void;
+}
+
+export default function TargetVsActualsSection({ onPersonOpenChange }: Props) {
   const { userProfile } = useAuth();
   const homeSbuId: string | undefined = userProfile?.sbu?.id;
   // BR-FIN-09: a team view's totals are its members' shares, so an
@@ -70,6 +76,14 @@ export default function TargetVsActualsSection() {
   const step = view === "QUARTER" ? 1 : 4;
   const tree = data ? asTree(data.people) : [];
   const openPerson = data?.people.find((p) => p.user_id === personId);
+
+  // Reports the person screen actually showing (not the click), and clears
+  // on unmount so the tab bar can never stay hidden.
+  const isPersonOpen = !!openPerson;
+  useEffect(() => {
+    onPersonOpenChange?.(isPersonOpen);
+    return () => onPersonOpenChange?.(false);
+  }, [isPersonOpen, onPersonOpenChange]);
 
   // The dashboard scrolls as one area, so swapping the table for a person's
   // screen (and back) would leave it where it was: back to the top instead.
