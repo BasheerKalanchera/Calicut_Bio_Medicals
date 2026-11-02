@@ -13,39 +13,32 @@ session edits this note._
   hotfix-branch route (`docs/Deployment-Topology.md` "Fix to UAT ahead
   of a full promotion").
 
-## NOW (2 Nov) — manual E2E of what `/build` merged (`515a2f2`)
-- Docs batch `396e3da` is on `main`, **not pushed**. 2 Nov edits to the
-  Target vs Actuals plan, Progress-Archive-2026-11 and this note are
-  **uncommitted**. Nothing to test until `/build` merges.
-- Dev backend restarted by Basheer 1 Nov. Total 66 steps; run 49 of 66.
+## NOW (2 Nov, afternoon) — re-checking what `/build` merged (`a1c9d67`)
+- `/build` merged to `main` 2 Nov (`a1c9d67`); Basheer restarted the Dev
+  backend (11:29, after the files changed); Dev data re-read done (P3b in
+  both plans). Plan edits, Tabs plan D17, the 2 Nov archive entry and this
+  note are **uncommitted** (docs batch to propose). 53 of 66 recorded.
+- **Re-checks (24 steps whose wording changed): 3 done** (TvA E4, Tabs A2,
+  Tabs B3, all Pass), plus TvA B2 half (Shruthi's "No approved plan"
+  Pass; the "Imaging" row name as Haroon still to do) and TvA F2 Pass.
+  **Next, as Fazal (TvA):** D2, D3, D4, D5, D6, D8, E2. Then as Haroon: A2,
+  B2, B6, C1, C6, D9, D10 (390/768/1280), E4 re-check; F1 (Sales Report).
 - **Target vs Actuals E2E (`docs/Target-vs-Actuals-Redesign-Manual-E2E-Test-Plan.md`):
-  41 of 41 recorded (2 Nov); E1–E4 and F1–F4 all Pass.** 3 Fails stand:
-  B6 (arrow hover text), C6 (person screen opens scrolled down; header
-  hidden, name row fixed), D10 (Overdue list not one block per person).
-  Also for `/build`: "SBU" row label → SBU name; "No plan" for the dash
-  (Quarter); inactive accounts marked (needs `is_active` from the
-  server); NEW 2 Nov: hide the other Insights tabs while a person's
-  screen is open; Sales Report to show the period's dates beside the box.
-  All write-ups given to Basheer. Detail: Progress-Archive 2 Nov.
-- **WAITING on `/build`** to fix and merge to `main` (unmerged on
-  `worktree-build` 2 Nov: `f2b72c6`, `22e3526`, `30766c7`, `8d0d0b3`).
-  **Then, in order:** review the new code; re-run A2, B2, B6, C1, C6, D9,
-  D10, E2, E4; a wider regression of both plans (Basheer wants it);
-  record the re-runs in the plans. Plan wording still to correct: B2
-  expected rows ("SBU" label), C6/D9/D10 re-checks.
-- **Tabs E2E (`docs/Target-Coverage-Planning-Tabs-Manual-E2E-Test-Plan.md`):
-  8 of 25 recorded, ON HOLD** — P3, A1–A5, B1 (Fail), B2 Pass. P1/P2 still
-  unrecorded (Basheer to confirm). B3, B4, C, D, E, F not run.
-- B1 failed: Needs Your Approval lists every pending plan in any period
-  (4 for Haroon). Decided with Basheer 1 Nov — plan D12–D16, build step 3:
-  approval list follows period + SBU with a "N more waiting in other
-  periods" line; SBU on every tab; tab order My Plan / Needs Your Approval
-  / Team Plans / Team Targets; opening tab rule kept; Annual My Plan
-  "Your target" line. Pushed on `main` as `c9c5372`.
-- **Next:** `/build` has built D12–D16 (1 Nov; fix commits `30766c7`,
-  `8d0d0b3`, not yet merged). After its merge: review the new code,
-  rewrite the Tabs test plan (B1, C2, A2–A5 order, new steps), re-run A–C,
-  run D–F.
+  41 of 41 recorded (2 Nov), 3 Fails (B6, C6, D10) fixed by `/build` and
+  merged; being re-checked as above. Detail: Progress-Archive 2 Nov.
+- Then a wider regression of both plans (Basheer wants it); record each
+  re-run in the plan the moment it completes. Both plans' expected wording
+  was rewritten 2 Nov from the branch code (new P1b, P3b, Sales Report F1).
+- **Tabs E2E (`docs/Target-Coverage-Planning-Tabs-Manual-E2E-Test-Plan.md`)
+  ON HOLD (Basheer, 2 Nov)** until `/build` lands **D17** (new My Targets
+  tab, My Plan → My Plans, new tab order and opening tab; every Tabs step
+  names the tabs, so all re-run once on the new layout). Done on `a1c9d67`:
+  P1, P3b, A2, B3 Pass. B2 re-run not reported. A4, A5, B1, B5, C1, C2
+  and the never-run B4, C3, C4, D–F wait. P2 (sign-ins) unrecorded.
+- D17 is written in the Tabs implementation plan; one point open (keep or
+  hide the SBU Target card on Team Targets). Write-up for `/build` goes
+  through Plan & Chore (Basheer asked, 2 Nov); re-read D17 before
+  rewriting the Tabs test plan.
 
 ## MUI round 1 Part 1 — step 8 is mine (Basheer, 1 Nov)
 - Steps 1–4 done (`6a417cb`, `f8c61b3`, `394444a`); 5–7 are `/build`'s
@@ -54,10 +47,8 @@ session edits this note._
   before-and-after page, one combined E2E; take it AFTER the Tabs fixes
   merge so the pictures show the final app. Remove Backlog "File deletes:
   ask 'Are you sure?' first" only when that E2E passes.
-- GAP: Product Catalogue has no "before" picture — take it from a temporary
-  copy of `515a2f2` (parent of `394444a`) on a second port, Dev data, read-
-  only, 390/768/1280 px + brochure ✕ "Delete this file?" at 390 px, saved
-  `11-Product-Catalogue-<width>.png`; then delete the copy. Don't miss it.
+- Product Catalogue "before" pictures done (`Desktop\cabio\MUI-Round1-
+  Before\11*`). "After" detail picture: use Haroon or Admin.
 - Part 2 (wording sweep) comes later; check report 1 Nov: 33 files / 862
   lines. Log Activity contact-box name still to check.
 

@@ -82,6 +82,48 @@ agreed by Basheer, 2026-10-31.
   Target card does (Annual Target D47); "Not set yet" when none is set.
   The Quarter view already has it. Not a regression: the old card had no
   such line — Basheer, 2026-11-01.
+- D17. Found at A2 of the re-run (2 Nov). Targets get their own tab, apart
+  from plans, because the "Your target" line sitting above the plan table
+  read as if it were part of the plan (Fazal's Oct–Dec row showed "Not
+  set" beside "Your target ₹160.0 L"). Replaces D14, and the line of D16:
+  - **My Targets** (new): Quarter view, one card headed "My Target" with
+    the quarter's target; Annual view, a card headed "My Targets" listing
+    the four quarters and a total row. "Not set yet" for a quarter with no
+    target. The "Your target for …" line comes off My Plan.
+  - **My Plan → My Plans.** Card heading "My Plan" in Quarter view, "My
+    Plans" in Annual view.
+  - **Tab order:** Needs Your Approval, My Targets, My Plans, Team
+    Targets, Team Plans (the last three as D14 and D9: Team Targets hidden
+    when empty).
+  - **Who sees what:** My Targets and My Plans for everyone in the team
+    (rep, Area Manager, SBU Manager, GM); Needs Your Approval, Team
+    Targets and Team Plans for managers only (D6). Admin sees neither of
+    the first two (no targets, no plans). A rep now has two tabs, so the
+    tab bar shows for a rep (replaces "no tab bar" in D3).
+  - **Opening tab:** a rep opens on My Plans. A manager opens on Needs Your
+    Approval when anything is waiting in any period or SBU (D15), else on
+    **My Plans** (was Team Plans). Admin has no My Plans, so Admin falls
+    back to Team Plans. A bell click for an approved or rejected plan opens
+    My Plans (D5).
+  - **The "Plan" button:** the Annual view's "Plan" for a quarter with no
+    plan becomes the same filled button the Quarter view has; "Continue"
+    and "Revise" stay as they are.
+  - **Team Targets' Annual card** already says "Your target for the year"
+    (`TeamTargetsPanel.tsx:310`); `/build` reads it and removes it if it is
+    now a duplicate of My Targets.
+  - **Phone:** five tabs do not fit in a row, so the row scrolls sideways
+    (D10, My Work's tabs). Looked at in the E2E at 390/768/1280.
+  - **General Manager:** sees both new tabs. The GM has no personal
+    target (nobody above sets one; BR-PL-12, Annual Target D45; Dev shows
+    Haroon's as "-", 2 Nov), so the GM's My Targets shows the **SBU
+    target** (the brands' total, BR-PL-11) of the SBU chosen in the SBU
+    choice (D13): Oct–Dec 2026 Imaging ₹280.0 L, Critical Care ₹185.0 L
+    (Dev, 2 Nov). No new rule — Basheer, 2026-11-02.
+  - **OPEN — the SBU Target card on Team Targets:** it shows the same
+    figure to Admin, GM and SBU Manager (`SbuTargetBox.tsx`, shown at
+    `TargetPlanningScreen.tsx:717`). Admin has no My Targets tab, so
+    removing the card would hide the SBU target from Admin; left in place
+    until Basheer decides.
 
 ## Figures and sources
 

@@ -434,3 +434,44 @@ messages this session; the mangled `/build`, the approvals, "commit +
 push" and the two fix write-ups are not corrections. No tracker line: not
 a slip a tool check could stop, and nothing touched live data, UAT or lost
 work. Session clock at the checkpoint: 2 h 29 min, 10 messages.
+
+## 2 Nov (Build & Test) — Tabs re-run: "My Targets" tab proposed
+
+- Re-run on `main` (`a1c9d67`), Fazal: Tabs A2 and B3 Pass. At A2 Basheer
+  asked why the Oct–Dec row of his Annual plan table was blank beside "Your
+  target for FY 2026-27: ₹160.0 L". Answer, read from the code: the line is
+  his target (set by Haroon, `own_target_lakhs`); the table is his own plan
+  (none for Oct–Dec, so "—", "Not set", "Plan"). Working as built, but
+  confusing; Annual "Plan" is also a plain link where Quarter's is a
+  filled button.
+- Basheer's design call, written up as D17 in the Tabs plan: new My
+  Targets tab, My Plan → My Plans, order Needs Your Approval / My Targets /
+  My Plans / Team Targets / Team Plans, rep opens on My Plans, a manager
+  with nothing waiting opens on My Plans (was Team Plans), Admin hides
+  both. GM point: he said the GM has a target per SBU; the rules and Dev
+  (Haroon "-") say not. Decided with him: the GM's My Targets shows the
+  SBU target of the chosen SBU (no new rule). One point still open: keep
+  or hide the SBU Target card on Team Targets (Admin has no My Targets
+  tab, so removing it would hide the SBU target from Admin). Write-up for
+  `/build` handed to Basheer via Plan & Chore.
+- Re-checks recorded on `a1c9d67` (backend started 11:29, after the files
+  changed): Tabs P1, A2, B3 Pass; Target vs Actuals P1b, E4, F2 Pass, B2
+  half (Shruthi's "No approved plan" Pass). P3b re-read of Dev data (2 Nov,
+  read-only): Overdue total 32, Fahad 3, Vivek 3, Fazal's tab total 5;
+  everything else unchanged. 53 of 66 recorded; 3 of 24 re-checks done.
+- Decision: pause the Tabs re-runs (every Tabs step names the tabs) until
+  `/build` lands D17; continue the Target vs Actuals re-checks, which it
+  doesn't touch. Tabs E2E D–F stay unrun.
+
+**Retro (2 Nov, Build & Test, second half):** corrections from Basheer: 1
+— "Give me the full description of these test cases": my Fazal steps were
+a short list. Borderline, not counted: he asked which steps use Shruthi's
+login, because my list didn't say which login each step needs. My own
+slips, not corrections: I said the backend ran old code from a
+`/openapi.json` check (404, docs are off), retracted by me and verified by
+process start time; a wrong B5 expectation, caught by me; a stale
+"1 Nov counts" line in the Target vs Actuals plan's D9, found at the
+write-up and fixed. No tracker line: no tool check could have stopped
+these, and nothing touched live data, UAT or lost work (Dev only read).
+Session clock at 15:09: 4 h 27 min wall-clock (about 2 h 12 min active
+after gaps of 63 and 72 min), 21 messages.
