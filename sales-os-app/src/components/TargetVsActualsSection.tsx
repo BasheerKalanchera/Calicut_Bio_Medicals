@@ -215,7 +215,7 @@ export default function TargetVsActualsSection({ onPersonOpenChange }: Props) {
                   <TocCell label="PO received" align="right" sx={numCellSx}>{lakhs(p.po_received_lakhs)}</TocCell>
                   <TocCell label="Won %">
                     {/* No percent = no counted plan: not started, Draft or Rejected. */}
-                    <WonBar wonPct={p.percent_of_target} basis="of plan" emptyText="No approved plan" />
+                    <WonBar wonPct={p.percent_of_target} basis={`of plan ${lakhs(p.planned_lakhs)}`} emptyText="No approved plan" />
                   </TocCell>
                 </TocRow>
               ))}
