@@ -5,57 +5,13 @@ import TableOrCards, { TocCell, TocRow } from "./TableOrCards";
 import { getTeamTargets, removePersonTarget, setPersonTarget } from "../services/targetPlanning";
 import { formatLakhs, formatPlanningPeriod } from "../utils/formatter";
 
-// Annual Target Planning D30, D33, D45, D57, D62. One query feeds both the
-// "Your target" line and the Team targets panel (same key, fetched once).
+// Annual Target Planning D30, D33, D45, D57, D62. The same request feeds the
+// Team targets panel and the My Targets tab (same key, fetched once).
 function useTeamTargets(sbuId: string, period: string) {
   return useQuery({
     queryKey: ["planning", "team-targets", sbuId, period],
     queryFn: () => getTeamTargets(sbuId, period),
   });
-}
-
-// "Your target for Oct–Dec 2026": the person's own figure only (D35), set by
-// the person they report to. Not shown to Admin/GM, who have none.
-export function YourTargetLine({ sbuId, period }: { sbuId: string; period: string }) {
-  const { data, isError } = useTeamTargets(sbuId, period);
-  if (isError || !data) return null;
-  return (
-    <Typography sx={{ mb: 1.5 }}>
-      Your target for {formatPlanningPeriod(period)}:{" "}
-      {data.own_target_lakhs !== null ? (
-        <strong>{formatLakhs(Number(data.own_target_lakhs))}</strong>
-      ) : (
-        <Typography component="span" color="text.secondary">Not set yet</Typography>
-      )}
-    </Typography>
-  );
-}
-
-// Annual view of the line above (Tabs plan D16): the four quarterly targets
-// added up, as the SBU Target card does (Annual Target Planning D47). The
-// same requests as the quarter line's, so nothing extra is fetched.
-export function YourAnnualTargetLine({ sbuId, quarters, yearLabel }: { sbuId: string; quarters: string[]; yearLabel: string }) {
-  const results = useQueries({
-    queries: quarters.map((q) => ({
-      queryKey: ["planning", "team-targets", sbuId, q],
-      queryFn: () => getTeamTargets(sbuId, q),
-    })),
-  });
-  if (results.some((r) => r.isError || !r.data)) return null;
-  const set = results
-    .map((r) => r.data!.own_target_lakhs)
-    .filter((v) => v !== null)
-    .map(Number);
-  return (
-    <Typography sx={{ mb: 1.5 }}>
-      Your target for {yearLabel}:{" "}
-      {set.length > 0 ? (
-        <strong>{formatLakhs(set.reduce((a, b) => a + b, 0))}</strong>
-      ) : (
-        <Typography component="span" color="text.secondary">Not set yet</Typography>
-      )}
-    </Typography>
-  );
 }
 
 // Each manager divides their own quarterly target among the people who

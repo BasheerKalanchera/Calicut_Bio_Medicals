@@ -19,7 +19,8 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import FormModal from "../components/FormModal";
 import SbuTargetBox, { AnnualSbuTargetCard } from "../components/SbuTargetBox";
-import TeamTargetsPanel, { AnnualTeamTargetsCard, YourAnnualTargetLine, YourTargetLine } from "../components/TeamTargetsPanel";
+import TeamTargetsPanel, { AnnualTeamTargetsCard } from "../components/TeamTargetsPanel";
+import { AnnualMyTargetsCard, MyTargetCard } from "../components/MyTargetsCard";
 import TargetPlanDetails from "../components/TargetPlanDetails";
 import TargetPlanDialog from "../components/TargetPlanDialog";
 import ChipTabs from "../components/ChipTabs";
@@ -71,8 +72,8 @@ const COMPANY_WIDE_ROLES = new Set(["Admin", "General Manager"]);
 
 // Admin is purely an oversight/approval account -- unlike GM, who sells
 // personally alongside running the company (Basheer's call, 2026-09-17),
-// Admin carries no personal sales quota, so "My Plan" doesn't apply to
-// them at all. This can't be derived from userProfile.sbu being null --
+// Admin carries no personal sales quota, so "My Plans" and "My Targets"
+// don't apply to them at all. This can't be derived from userProfile.sbu being null --
 // GM's sbu is null for the exact same structural reason (no fixed home
 // SBU) but GM *does* get this section -- it's a real, deliberate business
 // exception, not a hierarchy generalization.
@@ -190,7 +191,7 @@ interface AnnualPerson {
   byQuarter: Record<string, TargetPlan | undefined>;
 }
 
-// "My Plan" grouped by SBU -- almost everyone belongs to exactly one SBU
+// "My Plans" grouped by SBU -- almost everyone belongs to exactly one SBU
 // (so this collapses to a single block), but Admin/GM belong to none and
 // may set a target in each, since they sell across every SBU personally.
 interface AnnualSbuBlock {
@@ -199,8 +200,8 @@ interface AnnualSbuBlock {
   byQuarter: Record<string, TargetPlan | undefined>;
 }
 
-// One tab per section (Target-Coverage-Planning-Tabs plan D2).
-type PlanTabId = "my-plan" | "approval" | "team-targets" | "team-plans";
+// One tab per section (Target-Coverage-Planning-Tabs plan D2, D17).
+type PlanTabId = "approval" | "my-targets" | "my-plans" | "team-targets" | "team-plans";
 
 export default function TargetPlanningScreen({
   initialFocus = null,
@@ -267,6 +268,10 @@ export default function TargetPlanningScreen({
   // default) -- derived from the loaded list rather than an effect,
   // defaulting to the first one until the user picks a different one.
   const rollupSbuId = needsSbuChoice ? (selectedSbuId ?? sbus[0]?.id ?? null) : userProfile?.sbu?.id ?? null;
+  // My Targets (D17): one's own SBU's target, or for the GM -- who has none --
+  // the chosen SBU's, headed with its name.
+  const myTargetSbuId = isCompanyWide ? rollupSbuId : userProfile?.sbu?.id ?? null;
+  const rollupSbuName = sbus.find((s) => s.id === rollupSbuId)?.name ?? null;
 
   // Drives the "Needs Brand Split" nudge below -- a target is flagged once
   // its SBU has an active brand, regardless of whether the target itself
@@ -295,7 +300,7 @@ export default function TargetPlanningScreen({
     enabled: showMyTarget,
   });
 
-  // Admin/GM's SBU choice applies to My Plan too: only the chosen SBU's row
+  // Admin/GM's SBU choice applies to My Plans too: only the chosen SBU's row
   // (Tabs plan D13). Everyone else sees all of their own SBUs, as before.
   const planSbus: TargetPlanSbu[] = showRollup && needsSbuChoice && rollupSbuId ? mySbus.filter((s) => s.id === rollupSbuId) : mySbus;
   const planSbuIds = new Set(planSbus.map((s) => s.id));
@@ -411,12 +416,19 @@ export default function TargetPlanningScreen({
   const hasTeamTargets = canSeeSbuTarget || teamTargetsLoading || teamTargetQueries.some((q) => (q.data?.reports.length ?? 0) > 0);
   const showTeamTargetsTab = showRollup && !!rollupSbuId && hasTeamTargets;
 
+  // Order as D17: Needs Your Approval, My Targets, My Plans, Team Targets,
+  // Team Plans.
   const tabs: { id: PlanTabId; label: string }[] = [];
-  if (showMyTarget) tabs.push({ id: "my-plan", label: "My Plan" });
   if (showRollup) {
     tabs.push({ id: "approval", label: pendingApproval.length > 0 ? `Needs Your Approval (${pendingApproval.length})` : "Needs Your Approval" });
-    tabs.push({ id: "team-plans", label: "Team Plans" });
+  }
+  if (showMyTarget) {
+    tabs.push({ id: "my-targets", label: "My Targets" });
+    tabs.push({ id: "my-plans", label: "My Plans" });
+  }
+  if (showRollup) {
     if (showTeamTargetsTab) tabs.push({ id: "team-targets", label: "Team Targets" });
+    tabs.push({ id: "team-plans", label: "Team Plans" });
   }
 
   // The opening tab is worked out once the approval list has loaded (D4,
@@ -424,21 +436,24 @@ export default function TargetPlanningScreen({
   // not move the manager to another tab.
   const [focus, setFocus] = useState(initialFocus);
   const [openingTab, setOpeningTab] = useState<PlanTabId | null>(null);
-  // A failed approval list must not leave the screen blank: open on Team
-  // Plans, as if nothing were waiting.
+  // A failed approval list must not leave the screen blank: open as if
+  // nothing were waiting.
   const approvalListReady = (pendingLoaded || pendingFailed) && !pendingFetching;
   // A "plan submitted" click opens the approval tab without waiting for the
   // list: the list in memory may be up to 30 seconds old and not yet hold
   // that plan, so it is refreshed below instead of trusted.
   if (isActive && openingTab === null && (!showRollup || focus?.kind === "submitted" || approvalListReady)) {
     let opening: PlanTabId;
-    if (!showRollup) opening = "my-plan";
-    else if (focus?.kind === "decided") opening = showMyTarget ? "my-plan" : "team-plans";
+    // Nothing waiting: My Plans, or Team Plans for Admin, who has no plans of
+    // their own (D17).
+    const quietTab: PlanTabId = showMyTarget ? "my-plans" : "team-plans";
+    if (!showRollup) opening = "my-plans";
+    else if (focus?.kind === "decided") opening = quietTab;
     else if (focus) opening = "approval";
     // Anything waiting for this approver, in any period or SBU (Tabs plan
     // D15), so a plan in another quarter is not missed; the tab itself
     // says how many are waiting elsewhere.
-    else opening = pendingAll.length > 0 ? "approval" : "team-plans";
+    else opening = pendingAll.length > 0 ? "approval" : quietTab;
     setOpeningTab(opening);
   }
   const [wasActive, setWasActive] = useState(isActive);
@@ -557,7 +572,7 @@ export default function TargetPlanningScreen({
         </Box>
       </Box>
 
-      {/* One tab per section; a rep has only My Plan, so no tab bar (D3). */}
+      {/* One tab per section; a rep has two (My Targets, My Plans), so the bar shows (D17). */}
       {showTabBar && activeTab && <ChipTabs tabs={tabs} value={activeTab} onChange={setChosenTab} barRef={tabBarRef} />}
 
       {/* Scrollable content -- keyed on the tab so each opens at its top. */}
@@ -567,12 +582,30 @@ export default function TargetPlanningScreen({
             <CircularProgress size={28} />
           </Box>
         )}
-        {activeTab === "my-plan" && showMyTarget && (
+        {/* The target, apart from the plan (D17). The GM has none of their own,
+            so the GM's card is the chosen SBU's target. */}
+        {activeTab === "my-targets" && showMyTarget && myTargetSbuId && (
+          <Box sx={CARD_SX}>
+            {isAnnual ? (
+              <AnnualMyTargetsCard
+                key={`my-targets-${myTargetSbuId}-${fyStartYear}`}
+                sbuId={myTargetSbuId}
+                sbuName={rollupSbuName}
+                quarters={yearQuarters}
+                yearLabel={periodLabel}
+                companyWide={isCompanyWide}
+              />
+            ) : (
+              <MyTargetCard key={`my-target-${myTargetSbuId}-${period}`} sbuId={myTargetSbuId} sbuName={rollupSbuName} period={period} companyWide={isCompanyWide} />
+            )}
+          </Box>
+        )}
+
+        {activeTab === "my-plans" && showMyTarget && (
         <Box sx={CARD_SX}>
-          <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5 }}>My Plan</Typography>
+          <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5 }}>{isAnnual ? "My Plans" : "My Plan"}</Typography>
           {!isAnnual ? (
             <>
-              {!isCompanyWide && userProfile?.sbu && <YourTargetLine sbuId={userProfile.sbu.id} period={period} />}
               {planSbus.length > 1 && (
                 <Typography sx={{ mb: 1.5 }}>
                   Total across SBUs: <strong>{formatLakhs(myPeriodTotal)}</strong>
@@ -606,7 +639,6 @@ export default function TargetPlanningScreen({
             </>
           ) : (
             <>
-              {!isCompanyWide && userProfile?.sbu && <YourAnnualTargetLine sbuId={userProfile.sbu.id} quarters={yearQuarters} yearLabel={periodLabel} />}
               {myAnnualBySbu.length > 1 && (
                 <Typography sx={{ mb: 1.5 }}>
                   Grand Total across SBUs: <strong>{formatLakhs(myAnnualGrandTotal)}</strong>
@@ -630,7 +662,8 @@ export default function TargetPlanningScreen({
                             {t ? <StatusWithNote target={t} sbuHasBrands={mySbuHasBrands.has(block.sbu.id)} /> : <Typography color="text.secondary" variant="body2">Not set</Typography>}
                           </TocCell>
                           <TocCell action align="right">
-                            <Button size="small" onClick={() => openTargetDialog(q, t ?? null, block.sbu.id)}>{!t ? "Plan" : t.status === "DRAFT" ? "Continue" : "Revise"}</Button>
+                            {/* "Plan" is the same filled button as in the Quarter view (D17). */}
+                            <Button size="small" variant={t ? "text" : "contained"} onClick={() => openTargetDialog(q, t ?? null, block.sbu.id)}>{!t ? "Plan" : t.status === "DRAFT" ? "Continue" : "Revise"}</Button>
                           </TocCell>
                         </TocRow>
                       );
