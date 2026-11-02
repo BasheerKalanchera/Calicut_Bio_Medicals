@@ -159,6 +159,93 @@ neither touched live data. Process note (not a correction): for step 3 I
 showed the file and subject line, not the full message body, before
 "commit + push"; the full message is shown first from now on.
 
+## Build & Test, 1 Nov — manual E2E of what `/build` merged (`515a2f2`)
+
+- **Where it stands:** Target vs Actuals Redesign plan 33 of 41 run
+  (Sections P, A, B, C, D; E and F not run), 3 Fails. Tabs plan 8 of 25,
+  on hold until `/build`'s fixes D12–D16 (`30766c7`, `8d0d0b3`) merge. Test
+  run 41 of 66.
+- **Tabs findings:** B1 failed — Needs Your Approval counted 4 plans (3
+  from other quarters) because its list ignores period and SBU. My P3 check
+  looked at two periods only, so the plan expected 1. Decided with Basheer:
+  plan D12–D16 (period and SBU on every tab, "N more waiting in other
+  periods", tab order, opening-tab rule, Annual "Your target" line).
+- **Target vs Actuals findings, all for `/build` (write-ups given to
+  Basheer):** (1) the SBU row reads "SBU" — show the SBU's name (A2/B2);
+  (2) "No plan" instead of the dash for a person with no counted plan, Quarter
+  view only (B2); (3) the Quarter/Year arrows have no hover text (B6, Fail);
+  (4) a person's own screen opens scrolled down, and Basheer wants, at all
+  widths, the title/drop-downs/period arrows hidden and the name row fixed
+  (C6, Fail); (5) the Overdue tab is hand-built rows on one card — rebuild
+  with the shared table component, headings once, one block per person on a
+  phone (D10, Fail), and show inactive accounts in their own colour with
+  "Inactive account" (needs an `is_active` flag from the server; D9
+  suggestion). "Test - Area Manager" (inactive, manager also inactive)
+  appears on Haroon's Overdue tab with 2 overdue.
+- **Plan corrections made:** D8 reworded (names on the Overdue tab are not
+  links; it now checks Fahad's lists in My Work have no Done / Log Activity
+  buttons); D2 says what P4's number was (2); D9 expected list updated from
+  the 1 Nov Dev check (total 30, was 31).
+- **After the merge:** re-run A2, B2, B6, C1, C6, D9, D10, plus a wider
+  regression of both plans (Basheer, 1 Nov).
+
+**Session retro (Build & Test, manual E2E, 1 Nov) — corrections from
+Basheer this session: 9.** Counted from his 60 messages in the transcript:
+(1) the missing "before" pictures, raised twice, counted once; (2) Tabs B1,
+my P3 check looked at two periods only; (3) he expected me to fix the Tabs
+issues here, not hand them to `/build`; (4) he asked how `/build` would get
+the plan updates without a docs commit; (5) my plan described Imaging and
+Critical Care rows the screen does not show; (6) I summarised the person-
+screen fix as phone-only after he had clarified, and he asked "all 3
+layouts?"; (7) he asked for the full `/build` wording after I gave only a
+correction; (8) D2 said "same as P4" without P4's number; (9) D8 told him
+to click a name that is not a link. No tracker line: none was a slip a
+tool check could stop, and none touched live data. Pattern for the watch:
+(5), (8) and (9) are plan steps written without checking the built screen
+(rule "take labels and the order of checks from the code", 2026-09-30).
+
+## 2026-11-01 (afternoon) — weekly Harness Engineering review; three checks built (Plan & Chore)
+
+**Review** (tracker `docs/Process-Improvements.md`, Reviews line
+2026-11-01). Corrections counted from the retros: 126 in 24 sessions
+21–27 Oct (5.2 a session) vs 79 in 21 sessions 28 Oct–1 Nov (3.8).
+Counting measures but does not stop a slip; the drops came where a tool
+check went in. Basheer chose to build all three proposed checks:
+- **P98 session clock:** after each successful push, a note tells Claude
+  the session's real running time and Basheer's message count, read from
+  the session transcript. First live use on `277efa7`: 6 h 4 min, 8
+  messages (the time includes breaks).
+- **P77 gap:** an inline edit script fed to python named through a shell
+  variable (`$P - <<EOF`, the 28 Oct archive edit) is now refused.
+- **P102 docs-batch reminder:** a commit with only docs/`.claude` files
+  staged gets a reminder to check for code fixes still awaiting their
+  pre-E2E review. Never a block. Basheer turned down a blocking design
+  as over-complicated. First live check: this docs batch.
+Tests: 18 of 18 passed (scratch script). 27 watch-list lines past 14 days
+deleted. Committed and pushed `277efa7`.
+
+**"← Back" check (item 4):** read against the code: not built.
+`check-mui-standard.js` has no ◀ or "← Back" rule. The only typed ◀ ▶
+left in `src` are Brand Target Tracking's year arrows (lines 384, 388).
+Fix: two new rules in the check and chevron icons on that screen; ▶ in
+Territory Admin stays. Basheer: /build builds it after its MUI round 1
+fixes. Still to do, waiting for his yes: Backlog entry (owner, and
+"quarter" → "year") and /build's note line saying it waits on Plan & Chore.
+Not looked at: /build's report that the check prints "no staged .ts/.tsx
+files" with three staged.
+
+**Session retro:** 4 corrections:
+(1) "I don't understand the issue here — Docs committed before the code
+review": the P102 explanation was unclear.
+(2) "Why unnecessarily complicate this": the P102 check was designed to
+block, when a reminder was enough.
+(3) "I am saying check the code for 4": answered from the Backlog and
+notes, not the code.
+(4) "Which screen are we talking about here?": the item 4 explanation
+didn't say it was the commit check, not a screen.
+No tracker line: all four are judgement slips no tool check could stop,
+and none touched live data.
+
 ## 2026-11-01 (evening) — MUI steps 5–7, Planning tabs fixes, Target vs Actuals and Overdue fixes (Build, parallel)
 
 All on `worktree-build`, pushed, **not merged into `main`** (Build & Test is

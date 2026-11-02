@@ -15,6 +15,10 @@ case "$out" in
     printf '%s shell-guard rewrite -X utf8 | %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$cmd" >> "$dir/guard.log" 2>/dev/null
     printf '%s\n' "$out"
     exit 0 ;;
+  *'"additionalContext"'*)  # P102 docs-batch reminder (2026-11-01): never a block
+    printf '%s shell-guard remind docs batch | %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$cmd" >> "$dir/guard.log" 2>/dev/null
+    printf '%s\n' "$out"
+    exit 0 ;;
 esac
 printf '%s shell-guard deny | %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$cmd" >> "$dir/guard.log" 2>/dev/null
 printf '%s\n' "$out" | sed -n 's/.*"permissionDecisionReason": *"\(.*\)".*/\1/p' >&2

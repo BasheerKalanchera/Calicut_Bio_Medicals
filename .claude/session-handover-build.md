@@ -13,55 +13,54 @@ session edits this note._
   hotfix-branch route (`docs/Deployment-Topology.md` "Fix to UAT ahead
   of a full promotion").
 
-## Done 31 Oct (detail: Progress-Archive)
-- Hospital next-action E2E 37 of 37 recorded; fix `268570f`; docs `c9c44f5`.
-- Target vs Actuals and Annual Target L stay parked (Plan & Chore).
+## NOW (1 Nov) — manual E2E of what `/build` merged (`515a2f2`)
+- Dev backend restarted by Basheer 1 Nov. Total 66 steps.
+- **Target vs Actuals E2E (`docs/Target-vs-Actuals-Redesign-Manual-E2E-Test-Plan.md`):
+  33 of 41 run, stopped after Section D (1 Nov).** P1–P5, A, B, C, D all
+  recorded. Fails: B6 (arrow hover text), C6 (person screen opens
+  scrolled down; header to be hidden and name row fixed, all widths), D10
+  (Overdue list not one block per person). D9 suggestions: column headings
+  once; inactive accounts in own colour with "Inactive account" (needs an
+  `is_active` flag from the server). Also: "SBU" row label to show the SBU
+  name; "No plan" instead of the dash (Quarter). Write-ups for all of
+  these were given to Basheer to pass to `/build` (5 fixes, 2–3 commits).
+  **Not run: E (hide-checks, 4), F (must-not-change, 4).** Plan wording
+  still to correct: B2 expected rows ("SBU" label), C6/D9/D10 re-checks.
+- **After `/build` merges:** re-run the fixed steps (A2, B2, B6, C1, C6,
+  D9, D10) plus a wider regression of both plans (Basheer wants it);
+  record the re-runs in the plans. Review the new code first.
+- **Tabs E2E (`docs/Target-Coverage-Planning-Tabs-Manual-E2E-Test-Plan.md`):
+  8 of 25 recorded, ON HOLD** — P3, A1–A5, B1 (Fail), B2 Pass. P1/P2 still
+  unrecorded (Basheer to confirm). B3, B4, C, D, E, F not run.
+- B1 failed: Needs Your Approval lists every pending plan in any period
+  (4 for Haroon). Decided with Basheer 1 Nov — plan D12–D16, build step 3:
+  approval list follows period + SBU with a "N more waiting in other
+  periods" line; SBU on every tab; tab order My Plan / Needs Your Approval
+  / Team Plans / Team Targets; opening tab rule kept; Annual My Plan
+  "Your target" line. Pushed on `main` as `c9c5372`.
+- **Next:** `/build` has built D12–D16 (1 Nov; fix commits `30766c7`,
+  `8d0d0b3`, not yet merged). After its merge: review the new code,
+  rewrite the Tabs test plan (B1, C2, A2–A5 order, new steps), re-run A–C,
+  run D–F.
 
-## 1 NOV — MUI round 1 "Part 1" APPROVED by Basheer, in progress
-- Scope (Basheer, 1 Nov): restyle + file-delete "Are you sure?" ONLY, one
-  commit per screen, no wording changes. The "hospital"/"deal" wording
-  sweep is Part 2, separate, AFTER Part 1 and after `/build`'s current
-  plans (Target vs Actuals table, Target & Coverage tabs) merge — they
-  edit DemoApp, My Work, Target screens (clash). A/B/C split, "Rate
-  Customers", "My customers" still unanswered; ask at Part 2.
-- Order: 1 `ConfirmDialog` + 2 Customer 360 — DONE, committed and pushed
-  1 Nov as `6a417cb` (tab move, colours/sizes onto theme names 165 → 0
-  breaches, Stakeholders card and account-load-error Back fit a phone;
-  ConfirmDialog not used yet; not yet seen in a browser — phone check is
-  in the combined E2E); 3 Opportunity Detail
-  + file-delete question — DONE, committed and pushed 1 Nov as `f8c61b3`
-  (172 → 0 breaches, colours round-trip identical; Documents tab "×" asks
-  via ConfirmDialog; not seen in a browser). NEXT: step 4; 4 Product Catalogue + file-delete question;
-  5 Account Management (zone filter name); 6 Daily Activity Report
-  (filter names); 7 Close Next Action, Next Actions (Log Activity shows 0
-  breaches now — contact-box name still to check); 8 21 "after"
-  screenshots + before-and-after page + one E2E (MUI plan step 5).
-- Check report 1 Nov: 33 files / 862 lines; round 1 files ≈ 452.
+## MUI round 1 Part 1 — step 8 is mine (Basheer, 1 Nov)
+- Steps 1–4 done (`6a417cb`, `f8c61b3`, `394444a`); 5–7 are `/build`'s
+  (5 `06a304b`, 6 `0c4f728` done; 7 Close Next Action + Next Actions next).
+- Step 8: 21 "after" pictures into `Desktop\cabio\MUI-Round1-After\`,
+  before-and-after page, one combined E2E; take it AFTER the Tabs fixes
+  merge so the pictures show the final app. Remove Backlog "File deletes:
+  ask 'Are you sure?' first" only when that E2E passes.
+- GAP: Product Catalogue has no "before" picture — take it from a temporary
+  copy of `515a2f2` (parent of `394444a`) on a second port, Dev data, read-
+  only, 390/768/1280 px + brochure ✕ "Delete this file?" at 390 px, saved
+  `11-Product-Catalogue-<width>.png`; then delete the copy. Don't miss it.
+- Part 2 (wording sweep) comes later; check report 1 Nov: 33 files / 862
+  lines. Log Activity contact-box name still to check.
 
-## Now: Annual Target Part 2 E2E, sections J–L (Target vs Actuals E2E parked)
-- Dev at migration 0064 (head). Target vs Actuals E2E run 6 of 40, PARKED
-  (redesign with Plan & Chore). The small-fixes batch shipped `374a2a8`.
-- Annual Target E2E (`docs/Annual-Target-Planning-Manual-E2E-Test-Plan.md`):
-  21 Pass, 1 Skipped of 33. **Section L (11 steps, three widths) PARKED
-  30 Oct** until a few screens are redesigned; re-read against the new
-  screens before running. Load `cabio-e2e-testing`; Basheer signs in as
-  each user. Dev test data left as found (Maquet ₹100 L; Medion ₹100 L,
-  Oct–Dec ₹40 L, Jan–Mar 2027 ₹10 L). Detail: Progress-Archive 28–30 Oct.
-- Idea from Basheer: widen Backlog "Front-end consistency audit" into a
-  convention audit (expensive job — show scope/cost first).
-
-## After the Annual Target Part 2 E2E (sections I–K done, L left)
-- Part 2 screens steps 1–6 shipped (bell `5b5ad0c`); pre-E2E review fixes
-  `e33f35c`, pushed 28 Oct. Migration 0064 on Dev = head. Sections I–K
-  detail: Progress-Archive 28–30 Oct.
-- UAT moves after the E2E (Basheer, 26 Oct, D6), then the post-commit
-  checklist. Dev servers: Basheer runs them.
-
-## From Plan & Chore (25 Oct)
-- Small-fixes Backlog adds still open: "+ Add Customer"; "deal" →
-  "Opportunity" incl. "Stagnant Opportunities" (Basheer tells Haroon).
-
-## Not yet scheduled
-- The other 6 rule gaps: Backlog "Business rules vs code — 6 gaps
-  awaiting decision".
-- Part 1's A8 hint wording still awaiting Basheer.
+## Parked
+- Annual Target E2E section L (11 steps, three widths): re-read against the
+  new screens; Tabs plan covers its L1–L3 (D11). Detail: Progress-Archive
+  28–30 Oct. Dev test data left as found (Maquet ₹100 L; Medion ₹100 L).
+- Weekly Harness Engineering review due; skipped in this session.
+- Other deferred items live in the Backlog (6 rule gaps, small fixes,
+  convention audit idea).

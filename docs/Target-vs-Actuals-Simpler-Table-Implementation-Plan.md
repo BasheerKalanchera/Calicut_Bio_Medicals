@@ -53,6 +53,22 @@ under "31 Oct — simpler table" — agreed by Basheer, 2026-10-31.
   finish", since Likely finish isn't shown (D5, D7) — it is the card's
   only Likely finish note; the "no PO date" note stays — Basheer,
   2026-10-31.
+- D11. A person's own screen, at all three widths (phone, tablet, laptop),
+  changes after the E2E (C6, 1 Nov): it opens at the top and returns to the
+  top on Back; the "Target vs Actuals" title, the SBU and View drop-downs
+  and the period arrows are hidden there, so nothing can be changed while
+  looking at one person; the person's name row stays fixed at the top and
+  only the detail cards scroll. The Quarter and Year tables are unchanged.
+  Built by `/build` (the scroll-to-top first, then the hidden header and
+  fixed name row) — Basheer, 2026-11-01.
+- D12. The Overdue tab (Redesign D5) becomes a proper table (D10 in the E2E
+  at 1 Nov): column headings once — Who, Overdue next actions, Past closing
+  date count, Value — with only the numbers under them; on a phone, one
+  block per person. A person whose account is inactive is still listed, in
+  a different colour with "Inactive account" beside the name, so Haroon
+  sees that pending overdue items need someone to pick them up. This needs
+  an inactive flag from the server (no migration). Built by `/build` as its
+  own commit — Basheer, 2026-11-01.
 
 ## Figures and sources
 
