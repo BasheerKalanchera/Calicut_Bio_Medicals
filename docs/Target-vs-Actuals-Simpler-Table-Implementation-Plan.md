@@ -69,6 +69,20 @@ under "31 Oct — simpler table" — agreed by Basheer, 2026-10-31.
   sees that pending overdue items need someone to pick them up. This needs
   an inactive flag from the server (no migration). Built by `/build` as its
   own commit — Basheer, 2026-11-01.
+- D13. On the Quarter view a person's Won % is Won ÷ their approved plan
+  ("of plan"), but the plan amount was nowhere on the row. The line under
+  the percentage now reads "of plan ₹25.0 L" (the person's plan amount,
+  from the figure the server already sends); no new column. The Company and
+  Imaging rows ("of target") and the Year view are unchanged; a person with
+  no counted plan still shows "No approved plan". Front-end only — Basheer,
+  2026-11-02 (found at the B2 re-run).
+- D14. The Overdue tab (D12) keeps "most overdue first" as its default order
+  (what the server sends today) and gains a "Sort by" box above the list
+  with two choices: "Most overdue first" and "Name A–Z", so Haroon can see
+  the team in name order. A box rather than a clickable "Who" heading,
+  because a phone shows one block per person with no headings to click, and
+  the shared table component has no sorting. Sorting happens on the screen;
+  no backend change — Basheer, 2026-11-02 (found at the D9 re-run).
 
 ## Figures and sources
 

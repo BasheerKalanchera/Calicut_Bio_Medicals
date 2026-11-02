@@ -16,16 +16,21 @@ session edits this note._
 ## NOW (2 Nov, afternoon) — re-checking what `/build` merged (`a1c9d67`)
 - `/build` merged to `main` 2 Nov (`a1c9d67`); Basheer restarted the Dev
   backend (11:29, after the files changed); Dev data re-read done (P3b in
-  both plans). Plan edits, Tabs plan D17, the 2 Nov archive entry and this
-  note are **uncommitted** (docs batch to propose). 53 of 66 recorded.
-- **Re-checks (24 steps whose wording changed): 3 done** (TvA E4, Tabs A2,
-  Tabs B3, all Pass), plus TvA B2 half (Shruthi's "No approved plan"
-  Pass; the "Imaging" row name as Haroon still to do) and TvA F2 Pass.
-  **Next, as Fazal (TvA):** D2, D3, D4, D5, D6, D8, E2. Then as Haroon: A2,
-  B2, B6, C1, C6, D9, D10 (390/768/1280), E4 re-check; F1 (Sales Report).
+  both plans). Plan edits, Tabs plan D17 and the 2 Nov archive entry and
+  retro are **committed and pushed** (`79d3d3e`). 53 of 66 recorded.
+- **All Target vs Actuals re-checks after the merge are done (2 Nov
+  evening, all Pass): D2–D6, D8, D9, D10, E2, E4, F1, F2, A2, B2, B6, C1,
+  C6** (Tabs A2, B3 Pass earlier). No Fails. Findings handed to `/build`:
+  D13, D14 (below). D10 wording fixed to "one line each" (Basheer's call).
 - **Target vs Actuals E2E (`docs/Target-vs-Actuals-Redesign-Manual-E2E-Test-Plan.md`):
   41 of 41 recorded (2 Nov), 3 Fails (B6, C6, D10) fixed by `/build` and
   merged; being re-checked as above. Detail: Progress-Archive 2 Nov.
+- **Parked for re-check once `/build` lands them (handed over 2 Nov):**
+  D13 plan amount under "Won % of plan" on the Quarter table → re-check
+  TvA B2 (Haroon) and B5 (phone); D14 Overdue "Sort by" box (Most overdue
+  first / Name A–Z) → re-check TvA D9 (order) and D10 (3 widths, as
+  Haroon and Fazal). Add a test line for each in the plan when built
+  (plan: `Target-vs-Actuals-Simpler-Table-Implementation-Plan.md`).
 - Then a wider regression of both plans (Basheer wants it); record each
   re-run in the plan the moment it completes. Both plans' expected wording
   was rewritten 2 Nov from the branch code (new P1b, P3b, Sales Report F1).
