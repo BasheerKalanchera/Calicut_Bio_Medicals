@@ -348,23 +348,42 @@ beside it in brackets. This plan creates none.
 
 1. [Simple] As Fazal: Target vs Actuals, Quarter, Oct–Dec 2026.
    **Expected:** Fazal and Fahad only; no Shruthi, Rudrappa, Basheer K
-   or Critical Care row; ₹280.0 L appears nowhere. —
+   or Critical Care row; ₹280.0 L appears nowhere. **Result 2 Nov —
+   Pass (Basheer).** —
 2. [Simple] As Fazal: Overdue tab. **Expected:** Fazal and Fahad only;
-   no Shruthi (2 overdue) or Haroon (₹50.0 L). —
+   no Shruthi (2 overdue) or Haroon (₹50.0 L). **Result 2 Nov — Pass
+   (Basheer).** —
 3. [Simple] As Fahad: Insights Dashboard. **Expected:** no Overdue tab
    (managers only); Target vs Actuals shows his own row only, Year and
-   Quarter. —
+   Quarter. **Result 2 Nov — Pass (Basheer).** —
 4. [Simple] As Shruthi: Quarter view, click "Rudrappa". **Expected:** his
-   screen opens; Fahad's name is not on her list to click. —
+   screen opens; Fahad's name is not on her list to click. **Result
+   2 Nov — Pass (Basheer).** Found beside it (not an E4 fail): on a
+   person's screen the other tabs of the Insights Dashboard stay
+   clickable, show the signed-in person's own data, and leaving the
+   Target vs Actuals tab closes the person screen (back button gone on
+   return). **Decided (Basheer, 2 Nov): hide the other tabs while a
+   person's own screen is open** (same rule as the hidden title and
+   drop-downs in C6; "view as Rudrappa" is not wanted). Write-up to
+   `/build`; re-check after the fix: open Rudrappa from Shruthi's table
+   — no other tabs shown; Back — tabs return. —
 
 ## F — Must not change
 
 1. [Simple] As Haroon: Sales Report, Oct–Dec 2026. **Expected:** won
    amounts by zone and by brand as before the build (SonoScape won
-   ₹34.0 L). —
+   ₹34.0 L). **Result 2 Nov — Pass (Basheer).** —
 2. [Simple] As Shruthi: Target & Coverage Planning → Rudrappa's
-   Oct–Dec 2026 plan. **Expected:** same as P5, status Approved. —
+   Oct–Dec 2026 plan. **Expected:** status Approved; brands SonoScape
+   ₹10.0 L; with the row opened, the message "No hospitals on this plan
+   — it was set before hospital-wise planning." (this screen's own
+   wording, `TargetPlanDetails.tsx:48`). "Not assigned to a hospital" is
+   the Target vs Actuals screen's wording for the same plan (P5, C2),
+   not this screen's. **Result 2 Nov — Pass (Basheer).** Expected text
+   corrected from "same as P5", which was wrong. —
 3. [Simple] As Basheer K: Target & Coverage Planning, Oct–Dec 2026.
-   **Expected:** his ₹55.0 L plan still pending. —
+   **Expected:** his ₹55.0 L plan still pending. **Result 2 Nov — Pass
+   (Basheer).** —
 4. [Simple] As Fazal: My Work from the menu. **Expected:** opens on "Me"
-   and Summary, as before the build. —
+   and Summary, as before the build. **Result 2 Nov — Pass (Basheer).**
+   —

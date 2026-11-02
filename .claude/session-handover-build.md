@@ -13,22 +13,26 @@ session edits this note._
   hotfix-branch route (`docs/Deployment-Topology.md` "Fix to UAT ahead
   of a full promotion").
 
-## NOW (1 Nov) — manual E2E of what `/build` merged (`515a2f2`)
-- Dev backend restarted by Basheer 1 Nov. Total 66 steps.
+## NOW (2 Nov) — manual E2E of what `/build` merged (`515a2f2`)
+- Docs batch `396e3da` is on `main`, **not pushed**. 2 Nov edits to the
+  Target vs Actuals plan, Progress-Archive-2026-11 and this note are
+  **uncommitted**. Nothing to test until `/build` merges.
+- Dev backend restarted by Basheer 1 Nov. Total 66 steps; run 49 of 66.
 - **Target vs Actuals E2E (`docs/Target-vs-Actuals-Redesign-Manual-E2E-Test-Plan.md`):
-  33 of 41 run, stopped after Section D (1 Nov).** P1–P5, A, B, C, D all
-  recorded. Fails: B6 (arrow hover text), C6 (person screen opens
-  scrolled down; header to be hidden and name row fixed, all widths), D10
-  (Overdue list not one block per person). D9 suggestions: column headings
-  once; inactive accounts in own colour with "Inactive account" (needs an
-  `is_active` flag from the server). Also: "SBU" row label to show the SBU
-  name; "No plan" instead of the dash (Quarter). Write-ups for all of
-  these were given to Basheer to pass to `/build` (5 fixes, 2–3 commits).
-  **Not run: E (hide-checks, 4), F (must-not-change, 4).** Plan wording
-  still to correct: B2 expected rows ("SBU" label), C6/D9/D10 re-checks.
-- **After `/build` merges:** re-run the fixed steps (A2, B2, B6, C1, C6,
-  D9, D10) plus a wider regression of both plans (Basheer wants it);
-  record the re-runs in the plans. Review the new code first.
+  41 of 41 recorded (2 Nov); E1–E4 and F1–F4 all Pass.** 3 Fails stand:
+  B6 (arrow hover text), C6 (person screen opens scrolled down; header
+  hidden, name row fixed), D10 (Overdue list not one block per person).
+  Also for `/build`: "SBU" row label → SBU name; "No plan" for the dash
+  (Quarter); inactive accounts marked (needs `is_active` from the
+  server); NEW 2 Nov: hide the other Insights tabs while a person's
+  screen is open; Sales Report to show the period's dates beside the box.
+  All write-ups given to Basheer. Detail: Progress-Archive 2 Nov.
+- **WAITING on `/build`** to fix and merge to `main` (unmerged on
+  `worktree-build` 2 Nov: `f2b72c6`, `22e3526`, `30766c7`, `8d0d0b3`).
+  **Then, in order:** review the new code; re-run A2, B2, B6, C1, C6, D9,
+  D10, E2, E4; a wider regression of both plans (Basheer wants it);
+  record the re-runs in the plans. Plan wording still to correct: B2
+  expected rows ("SBU" label), C6/D9/D10 re-checks.
 - **Tabs E2E (`docs/Target-Coverage-Planning-Tabs-Manual-E2E-Test-Plan.md`):
   8 of 25 recorded, ON HOLD** — P3, A1–A5, B1 (Fail), B2 Pass. P1/P2 still
   unrecorded (Basheer to confirm). B3, B4, C, D, E, F not run.
