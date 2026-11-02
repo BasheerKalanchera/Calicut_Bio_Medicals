@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import { getCurrentUser } from "../services/auth";
-import { ApiError } from "../lib/api";
+import { ApiError, setDeliberateSignOut } from "../lib/api";
 
 interface AuthContextValue {
   session: any;
@@ -133,6 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function signIn(email: string, password: string) {
     signingInRef.current = true;
+    setDeliberateSignOut(false);
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
@@ -159,6 +160,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // LoginScreen's first render can see the old (wrong) reason.
     setSignOutReason(reason ?? null);
     setSessionCheckFailed(false);
+    // Stray 401s from requests still in flight must not hard-reload the page
+    // (api.ts); cleared again by the next signIn().
+    setDeliberateSignOut(true);
     queryClient.clear();
     await supabase.auth.signOut();
     setSession(null);
