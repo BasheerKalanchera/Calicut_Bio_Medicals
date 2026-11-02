@@ -298,3 +298,65 @@ messages in the transcript after the earlier retro's cut-off; "Not yet…",
 not corrections. No tracker line: neither could be stopped by a tool check
 and nothing touched live data, UAT or lost work. The handover note passed
 its 75-line limit (82); pruned before the commit.
+
+## 2026-11-02 — `main` merged in; person-screen tab fix; Sales Report dates and labels (Build, parallel)
+
+All on `worktree-build`, pushed, **not merged into `main`**. None seen in a
+browser. Checks on each fix: `tsc`, ESLint and the MUI check pass; lint 0
+errors, 135 warnings (as before). No backend change, so no pytest.
+
+- **`b01dcb0` — `main` brought into the branch** (3 commits: hook changes,
+  Build & Test's E2E docs, the 1 Nov Plan & Chore entry). One clash, in
+  this file; both sides kept, `main`'s entries first.
+- **`1c1c78c` — Target vs Actuals:** the tab row (Pipeline, Team Activity,
+  Overdue) hides while a person's own screen is open and returns on Back.
+  The section reports the open person to the dashboard through a new
+  optional `onPersonOpenChange` prop; it clears on unmount. Re-check with
+  Fix 4 at 390 / 768 / 1280: the card may sit close to the top edge (no
+  gap added, so the sticky name row is not disturbed).
+- **`35e9156` — Sales Report:** a grey line beside the period box says
+  which dates it covers ("Oct–Dec 2026" for This Quarter, 2026-Q3 per
+  `scripts/quarter.py` on 2 Nov; "Nov 2026"; "All time"), reusing
+  `formatPlanningPeriod`. The Period and Group by boxes now carry names
+  (standards §6.11 rule 7). Display only. Drill-down banners left as they
+  were (their wording feeds the Pipeline list's filter label). Found in the
+  Target vs Actuals E2E, step F1. Re-check at 390 / 768 / 1280: the card
+  header with the labelled Group by box.
+- **Noted, not done:** the Pipeline Report has the same unnamed-box gap.
+  The commit-time MUI check printed "no staged .ts/.tsx files" on both
+  `1c1c78c` and `35e9156` although a .tsx file was staged in each (the same
+  slip `/build` reported on 1 Nov; run by hand with the file staged it
+  checks correctly). Still to go to Plan & Chore via Basheer.
+- **Pre-E2E review (2 Nov):** medium `/code-review` of the five fix
+  commits since the 1 Nov review (`52e8397`, `f2b72c6`, `22e3526`,
+  `1c1c78c`, `35e9156`), with the touched files read against standards
+  §6.11. Ten findings, none taken, each checked against the code. The
+  "tab row can stay hidden" finding is wrong: the section is only on screen
+  while its tab is selected and clears the flag when it goes
+  (`TargetVsActualsSection.tsx:83-86`, `InsightsDashboardScreen.tsx:221`).
+  "No approved plan" on a blank percent is right: submitting a plan needs a
+  total above zero (`planning/service.py:204-206`) and only submitted plans
+  count, so a blank percent means no counted plan. The Sales Report date
+  line and the quarter bounds use the same calculation (`formatter.ts`).
+  `OverdueActionRow` is built in one place, which passes `is_active`. The
+  Period and Group by names are box labels, like the SBU and View boxes
+  accepted on 1 Nov. Phone-layout points (sticky name row, card near the
+  top edge) stay with Basheer's 390 / 768 / 1280 step.
+- **Checks at `35e9156`:** pytest 1,508 passed; `tsc` clean; ESLint 0
+  errors, 135 warnings (as before); ruff 2 line-length errors (E501) in
+  `backend/tests/domains/reporting/test_reporting_service.py` lines 92 and
+  129, left by the test edits in `22e3526`. Fixed by wrapping the two lines
+  (`a8e971f`, tests only); ruff check then clean and the 131
+  reporting tests pass. `ruff format --check` still flags other spots in
+  that file, in tests this build didn't touch; left alone.
+- **Open:** the merge, when Basheer says go.
+
+**Retro (2 Nov, Build):** corrections from Basheer: 1 — "can you also apply
+the MUI guidelines check and fix the screen for that too?" I had reported
+the Sales Report's MUI check as passing, but that script covers only
+typed colours / sizes / class names / tables; the judgement rules (here, a
+filter's name above it) are read by hand and I hadn't. Counted from his 11
+messages this session; the mangled `/build`, the approvals, "commit +
+push" and the two fix write-ups are not corrections. No tracker line: not
+a slip a tool check could stop, and nothing touched live data, UAT or lost
+work. Session clock at the checkpoint: 2 h 29 min, 10 messages.

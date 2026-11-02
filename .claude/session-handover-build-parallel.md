@@ -24,6 +24,16 @@ the build branch, and reaches `main` at the merge (Basheer, 2026-10-17)._
     a phone, inactive accounts marked; server `is_active` flag; `api.ts`
     regenerated; no migration. Re-check D9, D10 (390/768/1280) and the My
     Work links in D4–D6.
+  - `1c1c78c` (2 Nov) — Target vs Actuals: tab row hides while a person's
+    own screen is open, back on Back. Not seen in a browser; re-check with
+    Fix 4 (390/768/1280); the card may sit close to the top edge (no gap
+    added). `b01dcb0` brought `main` in (Progress-Archive clash kept both).
+    tsc, ESLint and MUI check clean; lint 0 errors, 135 warnings.
+  - `35e9156` (2 Nov) — Sales Report: dates line beside the period box
+    ("Oct–Dec 2026" / "Nov 2026" / "All time"); boxes named "Period" and
+    "Group by" (§6.11 rule 7). Drill-down banners untouched. Not seen in a
+    browser; re-check at 390/768/1280 (header row with the labelled box).
+    Pipeline Report has the same unnamed-box gap, left alone.
 - **MUI round 1 Part 1:** steps 1–7 done and pushed (last `5c26ed3`);
   step 8 (21 "after" screenshots, before-and-after page, combined E2E)
   is Build & Test's. Plan: `docs/MUI-Good-Practice-Implementation-Plan.md`.
@@ -31,20 +41,25 @@ the build branch, and reaches `main` at the merge (Basheer, 2026-10-17)._
   (135 warnings), MUI check 0 breaches in touched files.
 
 ## Next
-- **Docs batch and retro done (1 Nov evening)**, committed right after
-  `22e3526`: plan Status lines, Backlog, Progress-Archive-2026-11 (retro: 2
-  corrections). Still open from it: check the "Me (default)" wording in
-  Frontend standards and Process-Improvements (Backlog block "Found in
-  MUI round 1 steps 5–7"). Don't edit the E2E plans (Build & Test's).
-- **Tomorrow:** E2E testing and fixes continue; build whatever Build &
-  Test sends, each fix its own shown-first commit.
+- **Review done (2 Nov):** medium `/code-review` of `52e8397`…`35e9156`,
+  ten findings, none taken (Progress-Archive 2 Nov). Checks: pytest 1,508
+  passed, tsc clean, lint 0 errors; ruff's 2 E501 errors in
+  `backend/tests/domains/reporting/test_reporting_service.py` (from
+  `22e3526`) fixed in `a8e971f`. That fix and the docs batch are committed
+  on the branch, not yet pushed. **Next:** push when Basheer says, then the merge when he
+  says go.
+- Still open from 1 Nov: check the "Me (default)" wording in Frontend
+  standards and Process-Improvements (Backlog block "Found in MUI round 1
+  steps 5–7"). Don't edit the E2E plans (Build & Test's).
+- **After that:** build whatever Build & Test sends, each fix its own
+  shown-first commit.
 - **Merge to `main`** only when Basheer says go: bring `main` in, re-run
   tests, push, `ExitWorktree` keep, merge, push, `cabio-post-commit`.
   Dev backend restart needed before the Planning E2E and for the Overdue
   `is_active` change.
 - **To tell Plan & Chore (via Basheer):** add ◀ and "← Back" to
   `check-mui-standard.js`; the commit check prints "no staged .ts/.tsx
-  files" even when some are staged.
+  files" even when some are staged (seen again 2 Nov on both commits).
 - **After the E2Es (Build & Test's):** `cabio-post-commit` paperwork
   (Traceability, scorecard, plan Status). User manual and in-app help
   wait for the UAT move (Simpler Table D8).
