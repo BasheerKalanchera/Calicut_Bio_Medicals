@@ -85,6 +85,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUserProfile(null);
       return;
     }
+    // A session restored without signIn() (e.g. a login in another tab) ends
+    // the "deliberate sign-out" state set by signOut(), as signIn() would.
+    setDeliberateSignOut(false);
     let lastErr: unknown;
     for (let attempt = 0; ; attempt++) {
       try {

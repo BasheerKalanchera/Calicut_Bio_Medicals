@@ -584,6 +584,11 @@ export default function TargetPlanningScreen({
         )}
         {/* The target, apart from the plan (D17). The GM has none of their own,
             so the GM's card is the chosen SBU's target. */}
+        {activeTab === "my-targets" && showMyTarget && !myTargetSbuId && isCompanyWide && (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+            <CircularProgress size={28} />
+          </Box>
+        )}
         {activeTab === "my-targets" && showMyTarget && myTargetSbuId && (
           <Box sx={CARD_SX}>
             {isAnnual ? (

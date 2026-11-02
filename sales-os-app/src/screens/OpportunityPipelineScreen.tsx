@@ -47,7 +47,7 @@ interface Props {
     closedTo?: string;
     statusId?: string;
     stageId?: string;
-    // The report bar's own deal count -- shown in the banner at once,
+    // The report bar's own Opportunity count -- shown in the banner at once,
     // replaced by the list's total when it loads (normally identical).
     expectedCount?: number;
     label: string;
@@ -107,9 +107,9 @@ function StatusBadge({ code }: { code: string }) {
 }
 
 // ---------------------------------------------------------------------------
-// Deal card
+// Opportunity card
 // ---------------------------------------------------------------------------
-function DealCard({
+function OpportunityCard({
   opp,
   onClick,
 }: {
@@ -164,11 +164,11 @@ function DealCard({
 // ---------------------------------------------------------------------------
 function StageColumn({
   stageName,
-  deals,
+  opportunities,
   onSelect,
 }: {
   stageName: string;
-  deals: PipelineOpportunity[];
+  opportunities: PipelineOpportunity[];
   onSelect: (opp: PipelineOpportunity) => void;
 }) {
   return (
@@ -178,14 +178,14 @@ function StageColumn({
           {stageName}
         </Box>
         <Box component="span" sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", bgcolor: "gray.100", borderRadius: "9999px", px: 0.75 }}>
-          {deals.length}
+          {opportunities.length}
         </Box>
       </Box>
-      {deals.length === 0 ? (
-        <Box sx={{ typography: "tiny", color: "gray.300", fontStyle: "italic", textAlign: "center", py: 2 }}>No deals</Box>
+      {opportunities.length === 0 ? (
+        <Box sx={{ typography: "tiny", color: "gray.300", fontStyle: "italic", textAlign: "center", py: 2 }}>No Opportunities</Box>
       ) : (
-        deals.map((opp) => (
-          <DealCard key={opp.id} opp={opp} onClick={() => onSelect(opp)} />
+        opportunities.map((opp) => (
+          <OpportunityCard key={opp.id} opp={opp} onClick={() => onSelect(opp)} />
         ))
       )}
     </Box>
@@ -210,15 +210,15 @@ function ListRow({
         border: "1px solid", borderColor: "gray.100", display: "flex", justifyContent: "space-between", alignItems: "center",
         cursor: "pointer", transition: "all 0.15s",
         "&:hover": { borderColor: "blue.400", boxShadow: shadows.md },
-        "&:hover [data-part='deal-name']": { color: "blue.900" },
-        "&:hover [data-part='deal-avatar']": { bgcolor: "primary.main", color: "common.white" },
-        "&:hover [data-part='deal-chevron-box']": { bgcolor: "blue.50" },
-        "&:hover [data-part='deal-chevron-icon']": { color: "primary.main" },
+        "&:hover [data-part='opp-name']": { color: "blue.900" },
+        "&:hover [data-part='opp-avatar']": { bgcolor: "primary.main", color: "common.white" },
+        "&:hover [data-part='opp-chevron-box']": { bgcolor: "blue.50" },
+        "&:hover [data-part='opp-chevron-icon']": { color: "primary.main" },
       }}
     >
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, minWidth: 0 }}>
         <Box
-          data-part="deal-avatar"
+          data-part="opp-avatar"
           sx={{
             width: 36, height: 36, bgcolor: "blue.50", color: "primary.main", borderRadius: "0.75rem",
             display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, typography: "body2",
@@ -229,7 +229,7 @@ function ListRow({
         </Box>
         <Box sx={{ minWidth: 0 }}>
           <Box
-            data-part="deal-name"
+            data-part="opp-name"
             sx={{ fontWeight: 700, color: "gray.800", typography: "body2", transition: "color 0.15s", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
           >
             {opp.name}
@@ -261,8 +261,8 @@ function ListRow({
           </Box>
         </Box>
       </Box>
-      <Box data-part="deal-chevron-box" sx={{ bgcolor: "background.default", p: 1, borderRadius: "0.75rem", flexShrink: 0, ml: 1, transition: "background-color 0.15s" }}>
-        <ChevronRightIcon data-part="deal-chevron-icon" fontSize="small" sx={{ color: "gray.400", transition: "color 0.15s" }} />
+      <Box data-part="opp-chevron-box" sx={{ bgcolor: "background.default", p: 1, borderRadius: "0.75rem", flexShrink: 0, ml: 1, transition: "background-color 0.15s" }}>
+        <ChevronRightIcon data-part="opp-chevron-icon" fontSize="small" sx={{ color: "gray.400", transition: "color 0.15s" }} />
       </Box>
     </Box>
   );
@@ -282,7 +282,7 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMod
   // this screen -- that combination is invisible to the user and can make
   // a real match look like "No opportunities found" (found 2026-09-16
   // manual E2E: North Kerala drill + Owner=Fazal, then an unrelated Sales
-  // Report drill left Owner stuck on Fazal and hid a Basheer K-owned deal).
+  // Report drill left Owner stuck on Fazal and hid a Basheer K-owned Opportunity).
   // Adjusted during render, same pattern as ActivityCommentThread's
   // prevInitiallyExpanded -- every object DemoApp.tsx passes here for a new
   // drill is a fresh reference, so this only fires on an actual new drill,
@@ -318,7 +318,7 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMod
         closed_from: initialFilter?.closedFrom,
         closed_to: initialFilter?.closedTo,
         // Report Drill-down: a drilled-into list must match the report
-        // card's own count exactly -- the report only attributes a deal to
+        // card's own count exactly -- the report only attributes an Opportunity to
         // its literal owner/owner's team, never a Split participant, so
         // this narrows the pipeline's normal (broader, Split-inclusive)
         // visibility to match whenever we arrived via a drill (i.e.
@@ -339,7 +339,7 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMod
 
   const { data: users = [] } = useQuery({
     queryKey: ["users", "include-inactive"],
-    // include_inactive=true -- this is a filter over existing deals, not an
+    // include_inactive=true -- this is a filter over existing Opportunities, not an
     // assignment picker, so a deactivated owner's opportunities still need
     // to be findable here (unlike the assignee/reassignment pickers, which
     // correctly stay active-only).
@@ -349,22 +349,22 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMod
   const activeOwners = users.filter((u) => u.is_active !== false);
   const inactiveOwners = users.filter((u) => u.is_active === false);
 
-  const allDeals = pipeline?.items ?? [];
+  const allOpportunities = pipeline?.items ?? [];
 
-  const filteredDeals = searchQuery.trim()
-    ? allDeals.filter((d) => {
+  const filteredOpportunities = searchQuery.trim()
+    ? allOpportunities.filter((d) => {
         const q = searchQuery.toLowerCase();
         return d.name.toLowerCase().includes(q) || d.account.name.toLowerCase().includes(q);
       })
-    : allDeals;
+    : allOpportunities;
 
   // Sort stages by display_order, filter to pipeline stages only
   const orderedStages = stages
     .filter((s) => PIPELINE_STAGE_CODES.includes(s.stage_code))
     .sort((a, b) => a.display_order - b.display_order);
 
-  const dealsByStage = (stageCode: string) =>
-    filteredDeals.filter((d) => d.stage.stage_code === stageCode);
+  const opportunitiesByStage = (stageCode: string) =>
+    filteredOpportunities.filter((d) => d.stage.stage_code === stageCode);
 
   // getBoundingClientRect-based, not offsetLeft-based: offsetLeft is relative to
   // the nearest *positioned* ancestor, not necessarily the scroll container, so it
@@ -426,7 +426,7 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMod
                     once loaded (not the search-narrowed list). */}
                 {(() => {
                   const n = pipeline?.total ?? initialFilter.expectedCount;
-                  return n === undefined ? null : ` · ${n} ${n === 1 ? "deal" : "deals"}`;
+                  return n === undefined ? null : ` · ${n} ${n === 1 ? "Opportunity" : "Opportunities"}`;
                 })()}
               </Box>
             </Box>
@@ -500,13 +500,13 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMod
 
       {!isLoading && viewMode === "list" && (
         <Box sx={{ flex: 1, overflowY: "auto", px: 2, pb: 2, pt: 1 }}>
-          {filteredDeals.length === 0 ? (
+          {filteredOpportunities.length === 0 ? (
             <Box sx={{ textAlign: "center", py: 6, bgcolor: "background.paper", borderRadius: "1.5rem", border: "2px dashed", borderColor: "gray.100", fontStyle: "italic", color: "gray.400" }}>
               {searchQuery ? "No opportunities match your search." : "No opportunities found."}
             </Box>
           ) : (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-              {filteredDeals.map((opp) => (
+              {filteredOpportunities.map((opp) => (
                 <ListRow key={opp.id} opp={opp} onClick={() => onSelectOpportunity(opp)} />
               ))}
             </Box>
@@ -525,7 +525,7 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMod
             }}
           >
             {orderedStages.map((s) => {
-              const count = dealsByStage(s.stage_code).length;
+              const count = opportunitiesByStage(s.stage_code).length;
               const isActive = s.stage_code === activeStageCode;
               return (
                 <Button
@@ -583,7 +583,7 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMod
               >
                 <StageColumn
                   stageName={s.stage_name}
-                  deals={dealsByStage(s.stage_code)}
+                  opportunities={opportunitiesByStage(s.stage_code)}
                   onSelect={onSelectOpportunity}
                 />
               </Box>
