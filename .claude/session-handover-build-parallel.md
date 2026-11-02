@@ -45,18 +45,19 @@ the build branch, and reaches `main` at the merge (Basheer, 2026-10-17)._
   ten findings, none taken (Progress-Archive 2 Nov). Checks: pytest 1,508
   passed, tsc clean, lint 0 errors; ruff's 2 E501 errors in
   `backend/tests/domains/reporting/test_reporting_service.py` (from
-  `22e3526`) fixed in `a8e971f`. That fix and the docs batch are committed
-  on the branch, not yet pushed. **Next:** push when Basheer says, then the merge when he
-  says go.
+  `22e3526`) fixed in `a8e971f`; docs batch `52dbf90`. Basheer said go
+  (2 Nov): `main` (`7d629bd`) merged into the branch as `1748b51`
+  (Progress-Archive clash kept both, main's first); pytest 1,508 passed,
+  ruff and tsc clean; branch pushed to `1748b51`. **Next:** `ExitWorktree`
+  keep, merge into `main`, push, then `cabio-post-commit`. No migration.
+  Dev backend restart needed (Overdue `is_active`).
 - Still open from 1 Nov: check the "Me (default)" wording in Frontend
   standards and Process-Improvements (Backlog block "Found in MUI round 1
   steps 5–7"). Don't edit the E2E plans (Build & Test's).
 - **After that:** build whatever Build & Test sends, each fix its own
   shown-first commit.
-- **Merge to `main`** only when Basheer says go: bring `main` in, re-run
-  tests, push, `ExitWorktree` keep, merge, push, `cabio-post-commit`.
-  Dev backend restart needed before the Planning E2E and for the Overdue
-  `is_active` change.
+- **Merge to `main`:** only when Basheer says go (steps above). Dev
+  backend restart needed before the Planning E2E too.
 - **To tell Plan & Chore (via Basheer):** add ◀ and "← Back" to
   `check-mui-standard.js`; the commit check prints "no staged .ts/.tsx
   files" even when some are staged (seen again 2 Nov on both commits).
