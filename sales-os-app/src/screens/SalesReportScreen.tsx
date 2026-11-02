@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Box, MenuItem, TextField } from "@mui/material";
+import { Box, MenuItem, TextField, Typography } from "@mui/material";
 import dayjs from "dayjs";
 import { LoadingOrEmpty, MiniBar, SectionCard, StatTile, ZoneTreeNote } from "../components/ReportingUI";
 import { getSalesHeadline, getSalesSummary } from "../services/reporting";
 import { listStatuses } from "../services/masterData";
 import type { ReportingFilters, SalesGroupBy } from "../types/reporting";
-import { formatLakhs, getFiscalQuarterBounds } from "../utils/formatter";
+import { formatLakhs, formatPlanningPeriod, getCurrentPlanningPeriod, getFiscalQuarterBounds } from "../utils/formatter";
 
 const GROUP_BY_OPTIONS: { value: SalesGroupBy; label: string }[] = [
   { value: "rep", label: "Rep" },
@@ -35,6 +35,14 @@ function periodFilters(period: Period): ReportingFilters {
   }
   const { start, end } = getFiscalQuarterBounds();
   return { period_start: start, period_end: end };
+}
+
+// The dates the period box covers, spelled out ("This Quarter" alone changes
+// meaning on 1 January). Quarter reads like Target vs Actuals ("Oct–Dec 2026").
+function periodDates(period: Period): string {
+  if (period === "all") return "All time";
+  if (period === "month") return dayjs().format("MMM YYYY");
+  return formatPlanningPeriod(getCurrentPlanningPeriod());
 }
 
 function formatPercent(v: number) {
@@ -82,8 +90,9 @@ export default function SalesReportScreen({
 
   return (
     <Box sx={{ flex: 1, overflowY: "auto", bgcolor: "background.default", p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
-      <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-        <TextField select size="small" value={period} onChange={(e) => setPeriod(e.target.value as Period)} sx={{ minWidth: 140 }}>
+      <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
+        <Typography variant="caption" color="text.secondary">{periodDates(period)}</Typography>
+        <TextField select size="small" label="Period" value={period} onChange={(e) => setPeriod(e.target.value as Period)} sx={{ minWidth: 140 }}>
           {PERIOD_OPTIONS.map((o) => (
             <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
           ))}
@@ -111,7 +120,7 @@ export default function SalesReportScreen({
       <SectionCard
         title={`Revenue Won by ${GROUP_BY_OPTIONS.find((o) => o.value === groupBy)?.label}`}
         action={
-          <TextField select size="small" value={groupBy} onChange={(e) => setGroupBy(e.target.value as SalesGroupBy)} sx={{ minWidth: 110 }}>
+          <TextField select size="small" label="Group by" value={groupBy} onChange={(e) => setGroupBy(e.target.value as SalesGroupBy)} sx={{ minWidth: 110 }}>
             {GROUP_BY_OPTIONS.map((o) => (
               <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
             ))}
