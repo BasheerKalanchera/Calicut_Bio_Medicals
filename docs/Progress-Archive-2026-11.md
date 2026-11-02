@@ -517,3 +517,43 @@ the handover's "24 re-checks" never reconciled with the plan's markers and
 was left unresolved. No tracker line: no tool check would have stopped
 these, and nothing touched live data, UAT or lost work (Dev not written to).
 Findings handed to `/build`: D13 and D14.
+
+## 2 Nov (Plan & Chore) — UAT backup; Tabs plan D17 settled for `/build`
+
+**UAT backup:** `cabio_uat_2026-11-02_0813.dump` (847,841 bytes, 535
+checked entries); the oldest, `cabio_uat_2026-10-19_0703.dump`, pruned, 14
+kept. Docker had to be force-closed at the end (30 s timeout). Basheer
+copies the file to Google Drive by hand.
+
+**Doc tidy-up:** skipped today (Basheer). His idea of moving it to every 3
+days is parked, not decided; nothing changed.
+
+**Tabs plan D17 (My Targets tab), reviewed from Build & Test's write-up.**
+Read against `TargetPlanningScreen.tsx`, `TeamTargetsPanel.tsx` and
+`SbuTargetBox.tsx` at `bd81bcb`. Found: the GM's "My Target" heading would
+present the SBU target as the GM's own (BR-PL-12); the plan left a
+decision to `/build` (remove Team Targets' "Your target for the year"),
+though the code shows it is the team-total comparison, not a copy; D17's
+order line said "as D14" while reversing it; the SBU Manager's own target
+was unchecked. Basheer, 2 Nov: SBU Target card stays on Team Targets
+(Admin, GM, SBU Manager); the GM's card is headed with the SBU ("Imaging
+SBU target ₹280.0 L"); Team Targets keeps its "Your target" comparisons.
+Dev check (read-only, admin connection, 2 Nov): one SBU Manager, Basheer K
+(Imaging), reports to the GM, no reports, no target in any quarter; the
+four Area Managers report to the GM, who set their Oct–Dec (2026-Q3)
+targets: Fazal ₹160, Shruthi ₹120, Arun Adarsh ₹100, Nishad K V ₹85 L.
+Business-Rules and Traceability name no tabs; Frontend standards' wording
+examples changed to "My Targets" / "My Plans"; UAT User Manual waits for
+the UAT move. Plan sections updated for D17 (older decisions marked
+replaced, plain terms, phone, build step 4, addendum). Committed and
+pushed `c23478a`. Brief for `/build` step 4 given to Basheer in chat.
+
+**Session clock:** after the push the P98 hook reported "8 h 6 min" for a
+window opened 08:07 and idle most of the day (about 1 h 10 min of work);
+logged under "For the next review" in Process-Improvements (Basheer).
+
+**Session retro:** 1 correction:
+(1) "This session just started 1hr ago. Where are you getting 8 hrs window
+from?": passed on the session clock's figure and suggested `/exit`
+without checking it against the message times. Already logged for the
+Harness review (the hook counts idle time); no extra tracker line.

@@ -120,7 +120,15 @@ Rules: `harness-engineering` skill.
 
 ## For the next review
 
-- Nothing yet.
+- P98 session clock counts idle time (2026-11-02 Plan & Chore): after the
+  `c23478a` push it reported "8 h 6 min, checkpoint reached" for a window
+  opened at 08:07 IST and left idle 08:12–10:38 and 10:38–15:04; actual
+  working time was about 1 h 10 min (from the transcript). Claude passed
+  the 8 h on and suggested `/exit`; Basheer: "This session just started
+  1hr ago. Where are you getting 8 hrs window from?" Proposed fix:
+  `session_clock.py` `session_facts()` adds up only the gaps between
+  entries shorter than 30 minutes (would have read about 1 h 15 min),
+  plus a test. Logged for the review, not built (Basheer).
 
 ## Reviews
 - 2026-10-06 — first fill, from the retros of 2026-09-26 to 2026-10-06.
