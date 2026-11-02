@@ -5,8 +5,10 @@
 pushed; merged into `main` 1 Nov (`515a2f2`). E2E started 1 Nov (8 of 25
 steps recorded, one Fail: B1); it found D12–D16. Step 3 (those fixes)
 built 1 Nov on `worktree-build`: `30766c7`, then `8d0d0b3` (the opening
-tab looks at any period or SBU, D15), both pushed, **not yet merged into
-`main`**; `/code-review` medium done (8 findings, 1 fixed). No migration.
+tab looks at any period or SBU, D15), both pushed and now in `main`;
+`/code-review` medium done (8 findings, 1 fixed). The E2E re-run on 2 Nov
+found D17 (a My Targets tab), decided 2 Nov; step 4 below, **not yet
+built**. No migration.
 **Traceability rows:** signed 3.1 ("Sales target configuration:
 individual, team, regional" — 6.4 Target Management; layout only, row
 stays Done).
@@ -25,15 +27,18 @@ agreed by Basheer, 2026-10-31.
   Approval (N)**, **Team Targets** (the SBU target and the team's
   targets), **Team Plans**. The Quarter/Year switch and the period arrows
   stay above the tabs and apply to every tab — Basheer, 2026-10-31.
+  (Tab names and order now as D17.)
 - D3. Who sees which tab: My Plan for everyone but Admin (no plan of
   their own); Needs Your Approval, Team Targets and Team Plans only for
   people who approve plans. A rep sees only My Plan, so no tab bar —
-  Basheer, 2026-10-31.
+  Basheer, 2026-10-31. (Replaced by D17: a rep now has My Targets and My
+  Plans, so the tab bar shows.)
 - D4. Opening tab: a manager opens on Needs Your Approval when something
   is waiting, else on Team Plans; a rep on My Plan — Basheer, 2026-10-31.
+  (Replaced by D17: else on My Plans; Admin falls back to Team Plans.)
 - D5. A bell click opens the tab holding the plan: "submitted" opens
   Needs Your Approval with that plan opened up; "approved" or "rejected"
-  opens My Plan — Basheer, 2026-10-31.
+  opens My Plan — Basheer, 2026-10-31. (My Plan is now My Plans, D17.)
 - D6. "People who approve plans" (D3) = Admin, General Manager, SBU
   Manager and Area Manager — the roles that see Team Plans today. The
   Needs Your Approval tab shows for them even when nothing is waiting,
@@ -65,11 +70,11 @@ agreed by Basheer, 2026-10-31.
   tab: My Plan shows only the chosen SBU's row, as Team Targets and Team
   Plans do. Until now My Plan listed every SBU and Needs Your Approval
   every pending plan. Replaces the "SBU applies to both" wording of D8 —
-  Basheer, 2026-11-01.
+  Basheer, 2026-11-01. (Applies to My Targets too, D17.)
 - D14. Tab order for managers: My Plan, Needs Your Approval, Team Plans,
   Team Targets (Team Plans moves above Team Targets), so both tabs the
   screen opens on sit next to My Plan. Replaces the order in D2 —
-  Basheer, 2026-11-01.
+  Basheer, 2026-11-01. (Replaced by D17's order.)
 - D15. Opening tab as D4: Needs Your Approval when anything is waiting
   for the viewer **in any period or SBU** (not narrowed to the chosen
   ones, so a plan in another quarter is not missed), else Team Plans.
@@ -81,7 +86,62 @@ agreed by Basheer, 2026-10-31.
   FY 2026-27: ₹X" line: the four quarterly targets added up, as the SBU
   Target card does (Annual Target D47); "Not set yet" when none is set.
   The Quarter view already has it. Not a regression: the old card had no
-  such line — Basheer, 2026-11-01.
+  such line — Basheer, 2026-11-01. (Replaced by D17: the line moves to
+  the My Targets tab.)
+- D17. Found at A2 of the re-run (2 Nov). Targets get their own tab, apart
+  from plans, because the "Your target" line sitting above the plan table
+  read as if it were part of the plan (Fazal's Oct–Dec row showed "Not
+  set" beside "Your target ₹160.0 L"). Replaces D14, and the line of D16:
+  - **My Targets** (new): Quarter view, one card headed "My Target" with
+    the quarter's target; Annual view, a card headed "My Targets" listing
+    the four quarters and a total row. "Not set yet" for a quarter with no
+    target. The "Your target for …" line comes off My Plan.
+  - **My Plan → My Plans.** Card heading "My Plan" in Quarter view, "My
+    Plans" in Annual view.
+  - **Tab order:** Needs Your Approval, My Targets, My Plans, Team
+    Targets, Team Plans. Team Targets now comes before Team Plans
+    (reverses D14's order); Team Targets is still hidden when empty (D9).
+  - **Who sees what:** My Targets and My Plans for everyone in the team
+    (rep, Area Manager, SBU Manager, GM); Needs Your Approval, Team
+    Targets and Team Plans for managers only (D6). Admin sees neither of
+    the first two (no targets, no plans). A rep now has two tabs, so the
+    tab bar shows for a rep (replaces "no tab bar" in D3).
+  - **Opening tab:** a rep opens on My Plans. A manager opens on Needs Your
+    Approval when anything is waiting in any period or SBU (D15), else on
+    **My Plans** (was Team Plans). Admin has no My Plans, so Admin falls
+    back to Team Plans. A bell click for an approved or rejected plan opens
+    My Plans (D5).
+  - **The "Plan" button:** the Annual view's "Plan" for a quarter with no
+    plan becomes the same filled button the Quarter view has; "Continue"
+    and "Revise" stay as they are.
+  - **Team Targets keeps its "Your target" comparisons** for Area and SBU
+    Managers: on the team total row ("Team total ₹X · Your target for the
+    year ₹Y"), "Your target: ₹Y" in the Quarter view, and "Your target of
+    ₹Y hasn't been passed on to your team yet". They let a manager see
+    whether the split adds up to their own target (BR-PL-12), so they are
+    a comparison, not a copy of My Targets — Basheer, 2026-11-02.
+  - **Phone:** five tabs do not fit in a row, so the row scrolls sideways
+    (D10, My Work's tabs). Looked at in the E2E at 390/768/1280.
+  - **General Manager:** sees both new tabs. The GM has no personal
+    target (nobody above sets one; BR-PL-12, Annual Target D45; Dev shows
+    Haroon's as "-", 2 Nov), so the GM's My Targets shows the **SBU
+    target** (the brands' total, BR-PL-11) of the SBU chosen in the SBU
+    choice (D13): Oct–Dec 2026 Imaging ₹280.0 L, Critical Care ₹185.0 L
+    (Dev, 2 Nov). No new rule — Basheer, 2026-11-02. The GM's card is
+    headed with the SBU, e.g. "Imaging SBU target ₹280.0 L", not "My
+    Target", so it does not read as the GM's own figure (BR-PL-12) —
+    Basheer, 2026-11-02.
+  - **The SBU Target card stays on Team Targets** for Admin, GM and SBU
+    Manager (`SbuTargetBox.tsx`). Admin has no My Targets tab, so this is
+    Admin's only place to see the SBU target; the GM seeing it on both
+    tabs is accepted — Basheer, 2026-11-02.
+  - **SBU Manager's My Targets** shows their own target, set by the
+    person they report to (BR-PL-12), or "Not set yet". Dev, 2 Nov
+    (read-only query): the one SBU Manager, Basheer K (Imaging), reports
+    to the GM, has no one reporting to them and no target in any quarter;
+    the four Area Managers report to the GM directly, and the GM set all
+    four Oct–Dec targets. So on Dev their My Targets reads "Not set yet",
+    and the SBU target stays on their Team Targets tab.
 
 ## Figures and sources
 
@@ -104,14 +164,22 @@ Your Approval, the SBU target, Team Targets and Team Plans one under the
 other. Each becomes its own tab, as on My Work, so a manager sees one
 thing at a time.
 
-- **A rep** sees only My Plan, as today, with no tabs.
-- **A manager** (Area Manager, SBU Manager, GM, Admin) sees My Plan
-  (not Admin), Needs Your Approval with a count, Team Targets and Team
-  Plans. The screen opens on Needs Your Approval when something is
-  waiting, otherwise on Team Plans.
+(Updated 2026-11-02 for D17.)
+
+- **A rep** sees two tabs: My Targets (the target their manager set) and
+  My Plans (their own plan). The screen opens on My Plans.
+- **A manager** (Area Manager, SBU Manager, GM) sees five tabs, in this
+  order: Needs Your Approval with a count, My Targets, My Plans, Team
+  Targets, Team Plans. The screen opens on Needs Your Approval when
+  something is waiting, otherwise on My Plans.
+- **Admin** has no targets or plans of their own, so no My Targets or My
+  Plans; Admin opens on Needs Your Approval or, with nothing waiting, on
+  Team Plans.
+- **The GM** has no target of their own; their My Targets shows the
+  chosen SBU's target, headed e.g. "Imaging SBU target".
 - **The bell:** when Fahad submits his plan, his manager's click opens
   Needs Your Approval with Fahad's plan opened up. Fahad's "approved" or
-  "rejected" click opens My Plan.
+  "rejected" click opens My Plans.
 - Quarter/Year, the period arrows and (Admin and GM) the SBU choice sit
   above the tabs and apply to all of them.
 
@@ -124,8 +192,9 @@ after its E2E.
 ### On a phone
 
 Header as today: title; Quarter/Year (and SBU for Admin/GM); period with
-its arrows. Then the tabs in one row that scrolls sideways if it doesn't
-fit, as on My Work. Each tab's content as today (one block per row).
+its arrows. Then the tabs in one row; a manager's five tabs do not fit a
+phone's width, so the row scrolls sideways, as on My Work (D17). Each
+tab's content as today (one block per row).
 
 ## 2. Build order
 
@@ -144,6 +213,14 @@ fit, as on My Work. Each tab's content as today (one block per row).
    expected count, C2, A2–A5 order, B-steps for the opening tab, a new
    Annual "Your target" step, the "more waiting in other periods" line);
    Build & Test re-runs A–C and runs D–F on the final screen.
+4. **My Targets tab (D17), built by `/build` in its copy of the code**
+   (Basheer, 2 Nov), merged once. Screen only: the new tab, the renamed
+   My Plans, the new order and opening tab, the GM's SBU-target card, the
+   filled "Plan" button in the Annual view, the "Your target" line off My
+   Plans. Type check, lint, pre-E2E review. Then the test plan is
+   rewritten (A2, A4, A5, B1, B2, B3, B5, C1, C2, a new My Targets step, a
+   phone step) and Build & Test re-runs the whole plan, plus Annual Target
+   E2E L1–L3 (D11).
 
 ## 3. What could be affected
 
@@ -160,7 +237,7 @@ fit, as on My Work. Each tab's content as today (one block per row).
   separate gap (Backlog), not about layout.
 - A number on the bell: separate finding (30 Oct).
 - Found in the E2E on 1 Nov (A2, A5, B1) and decided the same day: see
-  D12–D16 and build step 3 below.
+  D12–D16 and build step 3 below; found 2 Nov: D17, build step 4.
 
 ## 5. Business rules and records to update
 
@@ -182,3 +259,13 @@ File and line numbers re-read at build.
   shared component `components/ChipTabs.tsx` (D10); `SubTabs` stays in
   My Work.
 - No server change, no migration.
+- D17 (read 2 Nov at `bd81bcb`, re-read at build): tab ids built at
+  `TargetPlanningScreen.tsx:415–419` (now My Plan, Needs Your Approval,
+  Team Plans, Team Targets); opening tab at `:436–445`; the quarter
+  target line `YourTargetLine` / `YourAnnualTargetLine`
+  (`TeamTargetsPanel.tsx:19–58`) is shown on My Plan at `:575` and moves
+  to My Targets. The GM's card reads the SBU target that `SbuTargetBox` /
+  `AnnualSbuTargetCard` already fetch (`COMPANY_WIDE_ROLES` includes
+  Admin, but Admin gets no My Targets tab). The Team Targets "Your
+  target" comparisons (`TeamTargetsPanel.tsx:128`, `:214`, `:306–313`)
+  stay.

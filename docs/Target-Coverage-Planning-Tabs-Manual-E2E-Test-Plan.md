@@ -4,7 +4,7 @@
 **Covers:** `docs/Target-Coverage-Planning-Tabs-Implementation-Plan.md`
 (D2–D10). Annual Target E2E L1–L3 (look at three widths) are rewritten
 for the tabs there (D11) and run with this plan.
-**Built:** `7a8a201` on `worktree-build`, pushed; merged into `main` 1 Nov (`515a2f2`). Pre-E2E review fix `03ac0ea`; the quarter/year chevron arrows (C4), `3937558` (1 Nov), pushed. Fixes D12–D16 found in this E2E: not yet built (`/build`).
+**Built:** `7a8a201` on `worktree-build`, pushed; merged into `main` 1 Nov (`515a2f2`). Pre-E2E review fix `03ac0ea`; the quarter/year chevron arrows (C4), `3937558` (1 Nov), pushed. Fixes D12–D16 found in this E2E: built by `/build` (`30766c7`, `8d0d0b3`) on `worktree-build`, merge into `main` pending; expected wording below rewritten 2 Nov from that code (read, not run) — re-check every quoted label after the merge.
 **Where:** Dev (`main`).
 
 ## Checked against live data
@@ -80,8 +80,13 @@ looks off.
 
 ## Pre-flight
 
-- P1. [Simple] Dev frontend running the merged build (no server change
-  in this plan, so no backend restart needed). —
+- P1. [Simple] Dev frontend running the build with the D12–D16 fixes
+  merged. The Dev backend is restarted once after that merge (the
+  Target vs Actuals plan's Overdue tab gets a new server field); one
+  restart covers both plans. **Result 2 Nov — Pass (Basheer restarted
+  the backend; Claude confirmed the server process started 11:29:28,
+  after the merged files changed at 11:25:54, and no backend file has
+  changed since).** —
 - P2. [Simple] Basheer can sign in as Abdul Latheef P, Haroon Sidheeq,
   Fazal, Nishad K V and Fahad. —
 - P3. [Complex: Claude — reading values the screen doesn't show] Re-run
@@ -99,59 +104,103 @@ looks off.
   plan. Moved since the plan was written: Nishad K V's Jan–Mar ₹10 L
   is now ₹12.0 L approved. —
 
+- P3b. [Complex: Claude — reading values the screen doesn't show] (New
+  2 Nov.) **Result 2 Nov — Pass (Claude, Dev read-only, the app's own
+  approval-list and team-targets code run as Haroon and Fazal, all three
+  RLS settings verified).** Waiting for Haroon, all periods: 4, unchanged
+  — Oct–Dec 2026 Basheer K ₹55.0 L (Imaging); Jan–Mar 2027 Arun Adarsh
+  ₹30.0 L (Critical Care); Apr–Jun 2027 Nishad K V ₹10.0 L and Arun
+  Adarsh ₹30.0 L (Critical Care). Waiting for Fazal: 0 in any period.
+  Fazal's own targets, FY 2026-27: Oct–Dec ₹160.0 L, the other three
+  quarters not set — so A2's Annual line should read "Your target for FY
+  2026-27: ₹160.0 L". —
+
 ## A — Who sees which tab (D3, D6, D9)
 
 1. [Simple] As Fahad (rep): Target & Coverage Planning. **Expected:** My
    Plan only, no tab bar. **Result 1 Nov — Pass (Basheer).** —
-2. [Simple] As Fazal (Area Manager): same screen. **Expected:** tabs My
-   Plan, Needs Your Approval, Team Targets, Team Plans, in that order.
-   **Result 1 Nov — Pass (Basheer).** Found: Annual My Plan has no "Your
-   target" line, and Team Plans sits last. Decided 1 Nov: the line is
-   added (implementation plan D16) and the order becomes My Plan, Needs
-   Your Approval, Team Plans, Team Targets (D14); the order wording here
-   is rewritten when that is built. —
+2. [Simple] As Fazal (Area Manager): same screen. **Expected (rewritten
+   2 Nov for D14, D16):** tabs My Plan, Needs Your Approval, Team Plans,
+   Team Targets, in that order. On Annual (Year), My Plan shows "Your
+   target for FY 2026-27: ₹X" (his four quarters added up), or "Your
+   target for FY 2026-27: Not set yet" if none is set. **Result 1 Nov —
+   Pass (Basheer) on the old wording** (order My Plan, Needs Your
+   Approval, Team Targets, Team Plans; no "Your target" line). Found:
+   Annual My Plan had no "Your target" line, and Team Plans sat last.
+   Decided 1 Nov: the line is added (D16) and the order changed (D14).
+   **Re-run 2 Nov — Pass (Basheer, as Fazal, after the merge).** Order and
+   the "₹160.0 L" line as expected. Noted: the Oct–Dec row in the table
+   below shows "Not set" / "Plan" because that table is his own plan, not
+   his target (expected). Also noted: Annual "Plan" is a plain link,
+   Quarter's is a filled button; Basheer prefers the button. Basheer
+   proposed a "My Targets" tab (design change, for `/build`; see
+   Progress-Archive 2 Nov). —
 3. [Simple] As Nishad K V (Area Manager, no one reports to him).
    **Expected:** My Plan, Needs Your Approval, Team Plans; no Team
    Targets tab (D9). **Result 1 Nov — Pass (Basheer).** —
-4. [Simple] As Abdul Latheef P (Admin). **Expected:** Needs Your
-   Approval, Team Targets, Team Plans; no My Plan tab. **Result 1 Nov —
-   Pass (Basheer).** —
-5. [Simple] As Haroon (GM). **Expected:** all four tabs; the SBU choice
-   sits beside Quarter/Year, above the tabs (D8). **Result 1 Nov — Pass
-   (Basheer).** Needs Your Approval was highlighted, with plans waiting.
-   Found: the SBU choice changes Team Targets and Team Plans only, not My
-   Plan or Needs Your Approval (as D8 says). Decided 1 Nov: it applies
-   to every tab (implementation plan D13). —
+4. [Simple] As Abdul Latheef P (Admin). **Expected (rewritten 2 Nov for
+   D14):** Needs Your Approval, Team Plans, Team Targets; no My Plan tab.
+   **Result 1 Nov — Pass (Basheer) on the old order** (Needs Your
+   Approval, Team Targets, Team Plans). Re-run after the merge. —
+5. [Simple] As Haroon (GM). **Expected (rewritten 2 Nov for D13):** all
+   four tabs; the SBU choice sits beside Quarter/Year, above the tabs
+   (D8), and applies to every tab: My Plan shows only the chosen SBU's
+   row, Needs Your Approval lists only that SBU's plans (and the chosen
+   period's), Team Plans and Team Targets show that SBU. **Result 1 Nov —
+   Pass (Basheer) on the old wording.** Needs Your Approval was
+   highlighted, with plans waiting. Found: the SBU choice changed Team
+   Targets and Team Plans only, not My Plan or Needs Your Approval.
+   Decided 1 Nov: it applies to every tab (D13). Re-run after the
+   merge. —
 
 ## B — Opening tab (D4, D10)
 
-1. [Simple] As Haroon, Oct–Dec 2026. **Expected:** opens on Needs Your
-   Approval, with a count of 1 (Basheer K's ₹55.0 L plan, if still
-   pending at P3). **Result 1 Nov — Fail (Basheer).** It opened on Needs
+1. [Simple] As Haroon, Oct–Dec 2026, SBU Imaging. **Expected
+   (rewritten 2 Nov for D12, D15):** opens on "Needs Your Approval (1)",
+   listing Basheer K's ₹55.0 L plan only, with the line "3 more waiting in
+   other periods or SBUs" under it (Arun Adarsh ₹30.0 L in Jan–Mar 2027;
+   Arun Adarsh ₹30.0 L and Nishad K V ₹10.0 L in Apr–Jun 2027, Critical
+   Care — Dev, 1 Nov; P3 re-reads them before the run). **Result 1 Nov —
+   Fail (Basheer) on the old wording (count 1).** It opened on Needs
    Your Approval with a count of 4, not 1. Cause (read-only Dev check, 1
    Nov): the list is every plan waiting for Haroon in any period, and has
    never followed the Quarter/Year choice (the old page was the same):
    Oct–Dec 2026 Basheer K ₹55.0 L; Jan–Mar 2027 Arun Adarsh ₹30.0 L;
    Apr–Jun 2027 Arun Adarsh ₹30.0 L and Nishad K V ₹10.0 L. The plan's
    "1" was wrong: P3 looked at two periods only. Decided 1 Nov: the list
-   follows the period and SBU (implementation plan D12); B1's expected
-   value is rewritten when that is built. —
+   follows the period and SBU (implementation plan D12). Re-run after
+   the merge. —
 2. [Simple] As Fazal, Oct–Dec 2026. **Expected:** if nothing waits for
    him (P3), opens on Team Plans. **Result 1 Nov — Pass (Basheer).** —
 3. [Simple] As Fazal: click Needs Your Approval. **Expected:** "Nothing
-   waiting for your approval" (D6), unless P3 found a plan waiting. —
+   waiting for your approval" (D6), unless P3 found a plan waiting. If
+   plans wait for him in other periods only, the text reads "Nothing
+   waiting for your approval in Oct–Dec 2026" with a "N more waiting in
+   other periods" line under it (B2 passing on 1 Nov means none did
+   then). **Re-run 2 Nov — Pass (Basheer, as Fazal, after the merge).** —
 4. [Complex: cross-screen] As Fazal: pick Team Targets, go to My Work,
    then back to Target & Coverage Planning from the menu. **Expected:**
    back on the opening tab, not Team Targets (D10). —
+5. [Complex: multi-step] (New 2 Nov, D12, D13, D15.) As Haroon: Needs
+   Your Approval, arrow to Jan–Mar 2027, SBU Imaging. **Expected:** the
+   tab stays open (it is chosen once, on opening, D15); it reads "Nothing
+   waiting for your approval in Jan–Mar 2027" with "4 more waiting in
+   other periods or SBUs" under it. Switch the SBU to Critical Care:
+   "Needs Your Approval (1)" lists Arun Adarsh ₹30.0 L, with "3 more
+   waiting in other periods or SBUs". (Counts from Dev, 1 Nov; P3
+   re-reads them.) —
 
-## C — Quarter/Year and period apply to every tab; SBU to Team Targets and Team Plans (D2, D8)
+## C — Quarter/Year, period and SBU apply to every tab (D2, D8, D12, D13)
 
 1. [Complex: multi-step] As Haroon: on Team Plans, switch to Year, then
-   open each tab. **Expected:** every tab shows the year; switch back to
-   Quarter and arrow to Jan–Mar 2027 — every tab shows Jan–Mar 2027. —
+   open each tab. **Expected:** every tab shows the year (Needs Your
+   Approval lists plans from all four quarters of the year); switch back
+   to Quarter and arrow to Jan–Mar 2027 — every tab shows Jan–Mar 2027,
+   Needs Your Approval included (its list follows the period, D12). —
 2. [Complex: multi-step] As Haroon: switch the SBU choice from Imaging to
-   Critical Care. **Expected:** Team Targets and Team Plans both show
-   Critical Care (Arun Adarsh, Vivek, Nishad K V). —
+   Critical Care. **Expected:** all four tabs show Critical Care: My Plan
+   its row only, Needs Your Approval its plans only, Team Plans and Team
+   Targets (Arun Adarsh, Vivek, Nishad K V) (D13). —
 3. [Simple] Each tab's content. **Expected:** the same as the old card
    it replaces — same headings, columns and buttons; nothing lost. —
 4. [Simple] As Haroon: the arrows either side of the period name at the
