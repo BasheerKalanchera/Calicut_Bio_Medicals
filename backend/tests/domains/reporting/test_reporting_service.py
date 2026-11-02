@@ -89,7 +89,11 @@ class TestOverduePastClosingDate:
             [SimpleNamespace(user_id=asha, display_name="Asha", is_active=True, overdue_count=2)],
             [
                 SimpleNamespace(
-                    user_id=asha, display_name="Asha", is_active=True, past_closing_count=3, past_closing_value_lakhs=42.5
+                    user_id=asha,
+                    display_name="Asha",
+                    is_active=True,
+                    past_closing_count=3,
+                    past_closing_value_lakhs=42.5,
                 )
             ],
         )
@@ -126,7 +130,11 @@ class TestOverduePastClosingDate:
             [SimpleNamespace(user_id=nisha, display_name="Nisha", is_active=True, overdue_count=0)],
             [
                 SimpleNamespace(
-                    user_id=nisha, display_name="Nisha", is_active=True, past_closing_count=0, past_closing_value_lakhs=0
+                    user_id=nisha,
+                    display_name="Nisha",
+                    is_active=True,
+                    past_closing_count=0,
+                    past_closing_value_lakhs=0,
                 )
             ],
         )
