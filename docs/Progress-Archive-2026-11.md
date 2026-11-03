@@ -707,3 +707,45 @@ to Jan–Mar 2027; plans can already be made for Oct–Dec. No tracker line:
 neither touched live data, UAT or lost work, and no tool check would have
 caught them. Noted, not a correction: the data-quality draft's wrong "new"
 marks (Ravi Kumar's name changed since 30 Oct) were caught before showing.
+
+## 2026-11-03 (late) — code review of the fixed-header commits, D16 Pass, regression counts (Build & Test)
+
+- **Code review (medium, `19141b8..HEAD`):** the two code commits since the
+  2 Nov review, `4744b34` (Overdue sort resets on leaving) and `a1f0147`
+  (fixed headers, D15/D16). 8 findings, none a bug; each checked against
+  the code. **Two taken, `7fa039c`:** (1) the Pipeline tab's fixed header
+  (two tiles, "Pipeline by …" title, drop-down) was copied in the Insights
+  Dashboard and the Pipeline Report; now one shared component,
+  `PipelineHeaderStrip.tsx`, which also owns the group-by list. (2) The
+  Overdue tab's "Sort by" box appeared only once rows loaded, so the strip
+  changed height and the list jumped; it is now always drawn and greyed out
+  while there are no rows. **Six not taken:** the "person screen is clipped"
+  finding is wrong (the inner box scrolls); "scroll does not reset when the
+  period changes" is by design (the reset is for table ↔ person screen,
+  dependency `personId`, `TargetVsActualsSection.tsx:91-99`); two phone-height
+  worries were cleared by Basheer's D16 look; the empty `{null}` body and the
+  unused card titles on the fixed strips work as they are, left as a tidy-up.
+- **D16 at 768 and 1280 px: Pass (Basheer, 3 Nov)**, recorded in the Target
+  vs Actuals test plan, section B step 5. The new shared header and the
+  Sort box were looked at on Dev and "looking good" (Basheer).
+- **Checks before the commit:** pytest 1,508 passed; ruff clean; `tsc`
+  clean; ESLint 0 errors, 135 warnings (as before); Tailwind guard clean;
+  MUI check passed on the 3 staged files. Frontend-only change.
+- **Regression counts, from the plans (3 Nov):** Tabs plan 29 steps
+  (A 10, B 5, C 4, D 5, E 3, F 2) plus sign-in check P2, all to re-run on the
+  five-tab layout. Target vs Actuals plan 37 lettered steps (A 6, B 6, C 6,
+  D 11, E 4, F 4); 5 re-run on 3 Nov (B2, B5, D9, D10, D11), so about 32
+  not re-run — approximate, from a text search for "3 Nov". The earlier
+  "about 24" was low. Pre-E2E checks above stand. The full regression starts
+  4 Nov, Tabs plan first; further fixes go in a new `fix:` commit.
+
+**Retro, Build & Test, 3 Nov (late) — corrections from Basheer: 4.** (1)
+"Show me what are these fixes" — the two fixes were offered by short labels
+without saying in plain words what they did. (2) "What is the D16 look?" —
+D16 used as if remembered, no screens named. (3) "What is this fix? 2. An
+always-visible Overdue 'Sort by' box…" — the label repeated without the
+plain explanation. (4) "Are we ready for this fix commit batch? Let's do
+the full regression testing first" — I proposed committing the small fix at
+once; CLAUDE.md batches small fixes to the end of the feature's E2E. No
+tracker line: none touched live data, UAT or lost work, and no tool check
+would have caught them.

@@ -270,7 +270,8 @@ beside it in brackets. This plan creates none.
    the "This quarter · as of …" line and the table or blocks below scroll;
    the same in the Year view (step 6 of section A) and, in a person's own
    screen, only that screen scrolls under its back-arrow header. Check at
-   390, 768 and 1280 px. **Seen 3 Nov — looks good (Basheer, phone).** —
+   390, 768 and 1280 px. **Seen 3 Nov — looks good (Basheer, phone).**
+   **D16 at 768 and 1280 px — Pass 3 Nov (Basheer).** —
 6. [Simple] Same screen, the header. **Expected:** the drop-down that
    holds Quarter / Year shows the name "View" on its box (Frontend
    standards §6.11 rule 7); as Haroon, the SBU drop-down shows "SBU". The

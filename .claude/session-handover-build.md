@@ -18,11 +18,18 @@ session edits this note._
   11: all Pass 3 Nov. D15 (Overdue) and D16 (Target vs Actuals, Pipeline
   tab, Pipeline Report) fixed in `a1f0147`, pushed; Basheer saw them on a
   phone only. Test wording for D13–D17 is in the plans (`c3c7ae9`,
-  pushed). Retro done (6 corrections).
-- **Next:** (a) hard refresh, look at D16 at 768 and 1280 px; (b) Tabs E2E
-  from P1 on the five-tab layout (P2 sign-ins unrecorded); (c) re-test
-  `/build`'s sign-out fix; (d) about 24 TvA steps not re-run (estimate, not
-  counted; count from the plan). Then MUI step 8 below.
+  Tabs plan `32fe4ec`, both pushed). Retro done (6 corrections).
+- D16 at 768 and 1280 px: Pass (Basheer, 3 Nov). Code review of
+  `19141b8..HEAD` (medium): 8 findings, none a bug; two small fixes proposed
+  (shared Pipeline header strip; Overdue "Sort by" always shown, greyed
+  while empty): committed 3 Nov as `7fa039c`; seen on Dev, looks good
+  (Basheer). pytest 1,508 passed, ruff, tsc, lint clean. Retro for this
+  part done (4 corrections), in Progress-Archive 3 Nov (late).
+- **Next (regression starts 4 Nov):** (b) Tabs E2E from P1 on the five-tab
+  layout (29 steps + P2 sign-ins, unrecorded; confirm the Dev backend start
+  time first); (c) re-test `/build`'s sign-out fix; (d) TvA plan: 37 lettered
+  steps, 5 re-run 3 Nov, about 32 not (approximate, counted from the plan).
+  Further fixes go in a new `fix:` commit at the end. Then MUI step 8 below.
 - Open: Sales Report and Opportunities On Hold likely need the same fixed
   header (Backlog, 3 Nov). Year view "of plan" parked for Plan & Chore.
 - Dev read 3 Nov (P3c): own targets Oct–Dec 2026 only; SBU Imaging ₹280.0L,
