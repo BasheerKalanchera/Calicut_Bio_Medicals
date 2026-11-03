@@ -1,9 +1,0 @@
-UAT data-quality check paused — Basheer, 2026-10-15; extended 2026-10-25.
-
-Reason: the next-action rules feature reached UAT on 2026-10-25 (Live
-08:15). A baseline run was taken the same day (08:59, run log). Basheer
-(2026-10-25): give the team one week to clear their old cases before the
-regular checks resume.
-Resume: on 2026-11-01, delete this file and run the check on UAT (ask
-Basheer first, UAT rule); compare with the 2026-10-25 run log line.
-While this file exists the SessionStart hook (block 2) does not remind.

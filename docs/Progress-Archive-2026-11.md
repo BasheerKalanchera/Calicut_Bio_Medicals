@@ -677,3 +677,33 @@ edits was unclear. Counted from the session's messages (41 listed; his
 choices between options and new requests are not counted). No tracker line:
 no tool check would have stopped these, and nothing touched live data, UAT
 or lost work.
+
+**UAT data-quality check resumed (3 Nov, Plan & Chore):** first regular
+run since the 25 Oct next-action rules launch; pause marker
+`.claude/dq-check-paused` deleted (its resume date was 1 Nov). Both scripts
+ran clean on UAT 13:09–13:10 (run log lines, Basheer approved). Against
+25 Oct → 30 Oct → 3 Nov: Opportunities with no Activity 43 → 41 → 39;
+Active/On Hold with no open next action 62 → 58 → 54; notes that don't say
+what happened 59 → 65 → 73 (rising; some new hits like "Order lost",
+"Closed won", "Got po" do say what happened); look-alike hospital pairs
+39 → 41 (2 new on 2 Nov); leads opened 2+ weeks with no decision 18 → 17
+(30 Oct → 3 Nov). Closure report: 169 open Opportunities, closing date
+passed 23 → 26, Lead stage chance above default 42 → 47
+(`Expected-Closure-Dates-2026-11-03.pdf`). Data-quality PDF
+drafted too (`UAT-Data-Quality-Report-2026-11-03.pdf`, 30 Oct layout,
+14 sections) after a second read-only UAT read (Basheer, option A) for the
+full lists the check cuts short: all 73 notes, 572 overdue next actions
+(536 on 30 Oct), who added each region-level or unused hospital. Rows
+not on the 30 Oct list are marked "new": 8 notes, 2 look-alike pairs,
+Ambalpadi (edited again 31 Oct). Both shared with Cabio leadership and
+moved up into the main reports folder (Basheer, 3 Nov). The overdue rise
+led to `docs/Discussion-Overdue-Next-Actions-2026-11.md` (Q1–Q6 for Haroon).
+
+**Retro, Plan & Chore, 3 Nov — corrections from Basheer: 2.** (1) "My work
+and Overdue tab is also not in UAT yet" — the overdue paper and chat called
+both live on UAT without reading the plans. (2) "Remove Jan–Mar 2027… They
+can start this quarter also right?" — proper hospital-wise plans were tied
+to Jan–Mar 2027; plans can already be made for Oct–Dec. No tracker line:
+neither touched live data, UAT or lost work, and no tool check would have
+caught them. Noted, not a correction: the data-quality draft's wrong "new"
+marks (Ravi Kumar's name changed since 30 Oct) were caught before showing.

@@ -7,17 +7,14 @@ session edits this note._
 
 - Forecast plan (untracked, written by Antigravity — Basheer 27 Oct): commit it, and by which session? Open. At review, line 110 → BR-FIN-09.
 
-## 3 Nov — tidy-up applied; Salesperson Performance paper
+## 3 Nov — papers with Haroon; scorecard republish
 
-- Doc tidy-up 3 Nov: fixes 1–7 applied (Weekly Follow-up row → Done,
-  row 3.2 Year view wording), not committed. **Next:** regenerate the
-  scorecard, show the client diff, then the docs-batch commit (paper,
-  Backlog, this note, tidy-up files). Haroon's product-cost question:
-  Basheer checking with him.
-- Salesperson Performance: new "Performance" tab on Insights, shape
-  agreed 3 Nov; written as discussion paper section 10, not committed.
-  **Next:** Basheer sends 10.4 to Haroon (5 questions, incl. Excel/PDF
-  download).
+- Overdue next actions paper `docs/Discussion-Overdue-Next-Actions-2026-11.md`
+  (Q1–Q6). **Next:** Basheer sends the WhatsApp summary to Haroon.
+- Salesperson Performance paper section 10 (`d5b6a96`). **Next:** Basheer
+  sends 10.4 to Haroon. Product-cost question: Basheer checking with him.
+- **Next:** republish both client scorecard pages (diff shown 3 Nov,
+  Basheer not yet answered).
 
 ## Build queue for `/build` (all Approved, E2E plans written)
 
@@ -41,8 +38,7 @@ session edits this note._
 
 ## After the UAT move (25 Oct, details in the archive)
 
-- Checks paused to 1 Nov: then run both scripts on UAT (ask first).
-  Duplicate hospitals step 19 on UAT; Audit Trail plan step 5 cautions.
+- Duplicate hospitals step 19 on UAT; Audit Trail plan step 5 cautions.
 
 ## User Manual and help catch-up
 
