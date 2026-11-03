@@ -617,3 +617,25 @@ Harness review (the hook counts idle time); no extra tracker line.
 entries verified); pruned `cabio_uat_2026-10-20_0654.dump`, 14 kept.
 Docker took about 2½ min to start (script logged "20s") and needed a
 forced close; backup unaffected. Google Drive copy done by Basheer.
+
+## 3 Nov 2026 (Build, parallel) — D14 fix; `main` merged; `main` = `1bf0260`
+- D14 (Insights Dashboard, Overdue tab): the "Sort by" choice stayed
+  after leaving the screen (the screen stays loaded; only the tab was
+  reset). Fixed in `4744b34`: the sort is reset to "Most overdue first"
+  with the tab; comment corrected. Read from code, not seen in a browser.
+- Merge prep: `main` merged into the branch twice (`f9cfaa0`; `1bf0260`
+  after Plan & Chore's `6f3df39`). The only clash was Progress-Archive
+  (kept both). pytest 1,508 passed after the first merge; tsc clean;
+  ESLint 0 errors, 135 warnings. The second merge was docs only, tests
+  not re-run.
+- Merge into `main`: blocked once by an old uncommitted copy of the
+  handover note in the main folder (discarded after Basheer's go; its
+  content was already in the branch's note), then a normal merge.
+  Pushed: `main` = `1bf0260`.
+- Retro. **Corrections from Basheer this session: 2.** (1) Offered to
+  write and commit the docs batch right after the merge; he had decided
+  on 2 Nov to do it at the session refresh ("Wait."). (2) Stayed in the
+  main folder after the merge instead of going back into the worktree.
+  No tracker line: no tool check could stop either, nothing touched live
+  data, UAT or lost work. Not counted: a command I suggested to him could
+  not run from the main folder while the session was in the worktree.
