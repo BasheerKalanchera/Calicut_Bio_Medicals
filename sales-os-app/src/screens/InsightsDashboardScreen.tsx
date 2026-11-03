@@ -100,12 +100,20 @@ export default function InsightsDashboardScreen({ isActive, onOpenMyWork, startR
     centerTab(tabId);
   }, [centerTab]);
 
-  // Back to the first tab whenever the screen is hidden (state adjusted
-  // during render, React's recommended alternative to setState in an effect).
+  // Overdue tab "Sort by" choice. Declared before the reset below, which
+  // sets it back to the default.
+  const [overdueSort, setOverdueSort] = useState<"most-overdue" | "name">("most-overdue");
+
+  // Back to the first tab, and the Overdue sort back to its default, whenever
+  // the screen is hidden (state adjusted during render, React's recommended
+  // alternative to setState in an effect).
   const [wasActive, setWasActive] = useState(isActive);
   if (isActive !== wasActive) {
     setWasActive(isActive);
-    if (!isActive) setActiveTab("target");
+    if (!isActive) {
+      setActiveTab("target");
+      setOverdueSort("most-overdue");
+    }
   }
 
   // Declared after the reset above, so on the render that shows the screen
@@ -177,9 +185,9 @@ export default function InsightsDashboardScreen({ isActive, onOpenMyWork, startR
   const activityRows = activityQuery.data?.rows ?? [];
   const maxActivityCount = Math.max(1, ...activityRows.map((r) => r.activity_count));
 
-  // Overdue tab order: as the server sends it (most overdue first) or by name.
-  // Not saved anywhere -- the tab opens in the server's order each time.
-  const [overdueSort, setOverdueSort] = useState<"most-overdue" | "name">("most-overdue");
+  // Overdue tab order: the server's order (most overdue first) or by name.
+  // The choice is kept only while the Insights screen is open; leaving the
+  // screen puts it back to "most-overdue" (see the reset above).
   const overdueFromServer = overdueQuery.data?.rows ?? [];
   const overdueRows =
     overdueSort === "name"
