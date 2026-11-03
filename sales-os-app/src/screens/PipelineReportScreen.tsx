@@ -1,20 +1,12 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Box, MenuItem, TextField } from "@mui/material";
-import { LoadingOrEmpty, MiniBar, SectionCard, StatTile, ZoneTreeNote } from "../components/ReportingUI";
+import { Box } from "@mui/material";
+import { LoadingOrEmpty, MiniBar, SectionCard, ZoneTreeNote } from "../components/ReportingUI";
+import PipelineHeaderStrip from "../components/PipelineHeaderStrip";
 import { getPipelineSummary } from "../services/reporting";
 import { listStatuses } from "../services/masterData";
 import type { PipelineGroupBy } from "../types/reporting";
 import { formatLakhs } from "../utils/formatter";
-
-const GROUP_BY_OPTIONS: { value: PipelineGroupBy; label: string }[] = [
-  { value: "stage", label: "Stage" },
-  { value: "rep", label: "Rep" },
-  { value: "sbu", label: "SBU" },
-  { value: "zone", label: "Zone" },
-  { value: "product", label: "Product" },
-  { value: "brand", label: "Brand" },
-];
 
 type DrillFilter = { ownerId?: string; zoneId?: string; sbuId?: string; productId?: string; brandId?: string; tradeInsOnly?: boolean; noProductsOnly?: boolean; zoneExact?: boolean; stageId?: string; statusId?: string; expectedCount?: number; label: string };
 
@@ -67,23 +59,13 @@ export default function PipelineReportScreen({
       {/* The tiles and the "Pipeline by …" title with its dropdown stay put;
           only the bars below scroll (Frontend standards §6.1, D16). */}
       <Box sx={{ p: 2, pb: 1.5, flexShrink: 0, display: "flex", flexDirection: "column", gap: 1.5 }}>
-        <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
-          <StatTile compact label="Active Pipeline Value" value={formatLakhs(totalValue)} sublabel={`${totalCount} active ${totalCount === 1 ? "Opportunity" : "Opportunities"}`} />
-          <StatTile compact label="Weighted Forecast" value={formatLakhs(totalWeighted)} sublabel="Active Opportunities, win-probability adjusted" />
-        </Box>
-        <SectionCard
-          compact
-          title={`Pipeline by ${GROUP_BY_OPTIONS.find((o) => o.value === groupBy)?.label}`}
-          action={
-            <TextField select size="small" value={groupBy} onChange={(e) => setGroupBy(e.target.value as PipelineGroupBy)} sx={{ minWidth: 110 }}>
-              {GROUP_BY_OPTIONS.map((o) => (
-                <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
-              ))}
-            </TextField>
-          }
-        >
-          {null}
-        </SectionCard>
+        <PipelineHeaderStrip
+          totalValue={totalValue}
+          totalCount={totalCount}
+          totalWeighted={totalWeighted}
+          groupBy={groupBy}
+          onGroupByChange={setGroupBy}
+        />
       </Box>
 
       <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", px: 2, pb: 2 }}>

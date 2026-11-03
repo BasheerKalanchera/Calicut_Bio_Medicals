@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Box, Button, ButtonBase, MenuItem, TextField } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
 import dayjs from "dayjs";
-import { LoadingOrEmpty, MiniBar, SectionCard, StatTile, ZoneTreeNote } from "../components/ReportingUI";
+import { LoadingOrEmpty, MiniBar, SectionCard, ZoneTreeNote } from "../components/ReportingUI";
+import PipelineHeaderStrip from "../components/PipelineHeaderStrip";
 import TableOrCards, { TocCell, TocRow } from "../components/TableOrCards";
 import TargetVsActualsSection from "../components/TargetVsActualsSection";
 import { useAuth } from "../contexts/AuthContext";
@@ -24,15 +25,6 @@ import { statusColors } from "../theme/statusColors";
 // scroll, pill style copied from Customer360Screen's chip bar. Always opens
 // on Target vs Actuals; each tab's queries run only once it is opened.
 const MANAGER_TIER_ROLES = new Set(["SBU Manager", "Area Manager", "Admin", "General Manager"]);
-
-const GROUP_BY_OPTIONS: { value: PipelineGroupBy; label: string }[] = [
-  { value: "stage", label: "Stage" },
-  { value: "rep", label: "Rep" },
-  { value: "sbu", label: "SBU" },
-  { value: "zone", label: "Zone" },
-  { value: "product", label: "Product" },
-  { value: "brand", label: "Brand" },
-];
 
 type TabId = "target" | "pipeline" | "activity" | "overdue";
 
@@ -237,20 +229,22 @@ export default function InsightsDashboardScreen({ isActive, onOpenMyWork, startR
       {isManagerTier && activeTab === "overdue" && (
         <Box sx={{ px: 2, pb: 1.5, flexShrink: 0 }}>
           <SectionCard title={`Overdue${overdueQuery.data ? ` — ${overdueQuery.data.total_overdue} overdue next actions` : ""}`}>
-            {overdueRows.length > 0 && (
-              <TextField
-                select
-                label="Sort by"
-                size="small"
-                value={overdueSort}
-                onChange={(e) => setOverdueSort(e.target.value as "most-overdue" | "name")}
-                sx={{ minWidth: 200 }}
-                slotProps={{ inputLabel: { shrink: true } }}
-              >
-                <MenuItem value="most-overdue">Most overdue first</MenuItem>
-                <MenuItem value="name">Name A–Z</MenuItem>
-              </TextField>
-            )}
+            {/* Always drawn (greyed out while there is nothing to sort) so the
+                strip keeps its height and the list does not jump when the data
+                arrives. */}
+            <TextField
+              select
+              label="Sort by"
+              size="small"
+              value={overdueSort}
+              onChange={(e) => setOverdueSort(e.target.value as "most-overdue" | "name")}
+              disabled={overdueRows.length === 0}
+              sx={{ minWidth: 200 }}
+              slotProps={{ inputLabel: { shrink: true } }}
+            >
+              <MenuItem value="most-overdue">Most overdue first</MenuItem>
+              <MenuItem value="name">Name A–Z</MenuItem>
+            </TextField>
           </SectionCard>
         </Box>
       )}
@@ -259,23 +253,13 @@ export default function InsightsDashboardScreen({ isActive, onOpenMyWork, startR
           dropdown stay put; only the bars below scroll (D16). */}
       {activeTab === "pipeline" && (
         <Box sx={{ px: 2, pb: 1.5, flexShrink: 0, display: "flex", flexDirection: "column", gap: 1.5 }}>
-          <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
-            <StatTile compact label="Active Pipeline Value" value={formatLakhs(totalValue)} sublabel={`${totalCount} active ${totalCount === 1 ? "Opportunity" : "Opportunities"}`} />
-            <StatTile compact label="Weighted Forecast" value={formatLakhs(totalWeighted)} sublabel="Active Opportunities, win-probability adjusted" />
-          </Box>
-          <SectionCard
-            compact
-            title={`Pipeline by ${GROUP_BY_OPTIONS.find((o) => o.value === groupBy)?.label}`}
-            action={
-              <TextField select size="small" value={groupBy} onChange={(e) => setGroupBy(e.target.value as PipelineGroupBy)} sx={{ minWidth: 110 }}>
-                {GROUP_BY_OPTIONS.map((o) => (
-                  <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
-                ))}
-              </TextField>
-            }
-          >
-            {null}
-          </SectionCard>
+          <PipelineHeaderStrip
+            totalValue={totalValue}
+            totalCount={totalCount}
+            totalWeighted={totalWeighted}
+            groupBy={groupBy}
+            onGroupByChange={setGroupBy}
+          />
         </Box>
       )}
 
