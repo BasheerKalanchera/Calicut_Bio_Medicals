@@ -629,3 +629,51 @@ review is finished (step 4, `cfa886c`, with review fixes `19141b8`, both
 in `main`), and the 1 Nov Harness review is done (`277efa7`, `fdcfbb3`).
 Haroon's product-cost question (asked 16 Oct) is still open; Basheer is
 checking with him.
+
+## 3 Nov 2026 — Build & Test: Target vs Actuals re-checks; fixed headers (D15, D16)
+- **Merge checked in git:** `/build` merged D13, D14 and D17 into `main` as
+  `1bf0260` (D14's sort-reset fix is `4744b34`). Test wording for D13, D14,
+  D17 written from the code: Target vs Actuals plan B2, B5, D9, D10, new
+  step 11; Tabs plan rewritten for the five-tab layout (new P3c, A6–A10,
+  E3). The Tabs E2E itself is not run yet.
+- **Target vs Actuals re-checks, all Pass (Basheer, 3 Nov, after the
+  merge):** B2 (as Haroon), B5, D9, D10, step 11. B2's Year clause was
+  reworded: the Year view has no small line under Won % at all (its column
+  is headed "Won % of target"). **Decided (Basheer):** Year view keeps no
+  "of plan" for now; showing it later needs a backend change
+  (`TargetVsActualYearPerson` has no `planned_lakhs`) and is a Plan &
+  Chore decision.
+- **Finding D15 (Basheer, at the D10 re-run):** on a phone the Overdue
+  tab's title and "Sort by" box scrolled away with the list. Cause: both sat
+  inside the scrolling box (`InsightsDashboardScreen.tsx`). Basheer asked
+  for it to be fixed here, not through `/build` and a merge. Fix: a fixed
+  strip under the tab row; the list card has sticky column headings.
+- **Finding D16 (Basheer, after D15):** the same on the Target vs Actuals
+  tab (`TargetVsActualsSection.tsx`), the Pipeline tab and the Pipeline
+  Report screen (`PipelineReportScreen.tsx`). Target vs Actuals: card with
+  pickers fixed, the "as of" line scrolls with the list (Basheer's call).
+  Pipeline screens: the two tiles and the "Pipeline by …" card fixed (option
+  2; the tiles above the title could not scroll away without moving the
+  title above them), only the bars scroll. Tiles and fixed cards shortened
+  at Basheer's request through an opt-in `compact` on `StatTile` and
+  `SectionCard` (`ReportingUI.tsx`), so Sales Report and the person screen
+  look as before. Shipped in `a1f0147` (pushed): type check, full lint (0
+  errors; 135 warnings, none in these files — checked by file name) and the
+  MUI standard check pass. Seen on a phone by Basheer, "Looks good";
+  768 and 1280 px not looked at. Backend tests not run: no server change.
+- **Left for later (Backlog):** Sales Report and Opportunities On Hold are
+  built the same old way; not read or checked.
+
+**Retro (3 Nov, Build & Test):** corrections from Basheer: 6 — (1) "Why not
+fix the sort issue now itself before the merge?": I had planned to leave
+it until after the merge. (2) B2's Year clause ("Year view: no 'of plan'
+line") was confusing; reworded. (3) I misread his "Won % of plan in the Year
+view" question and answered about wording, not about adding the figure. (4)
+"Why not you make this change here?": I was about to send a small fix
+through `/build` and a merge. (5) "You update the plans earlier today ... why
+are you asking now to relay this to Plan & Chore?": I had updated them
+myself. (6) "What are these other changes?": my explanation of the pending
+edits was unclear. Counted from the session's messages (41 listed; his
+choices between options and new requests are not counted). No tracker line:
+no tool check would have stopped these, and nothing touched live data, UAT
+or lost work.

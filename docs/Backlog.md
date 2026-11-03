@@ -729,6 +729,21 @@ skips its own sign-out and reload. After the merge, Basheer signs out on Dev
 and checks the login screen loads once; remove this entry if it does. If it
 still loads twice, the cause is elsewhere and this entry needs rewriting.
 
+### Fixed header on other report screens: Sales Report, Opportunities On Hold — not started (3 Nov 2026)
+
+On a phone the Overdue tab, Target vs Actuals tab, Pipeline tab and Pipeline
+Report now keep their title, pickers and tiles fixed while the list scrolls
+(Simpler Table D15, D16, `a1f0147`). Two more report screens are built the
+same old way, with the whole screen scrolling as one box, so the same
+complaint is likely: Sales Report (`SalesReportScreen.tsx`, outer box at
+line 92) and Opportunities On Hold (`OpportunitiesOnHoldReportScreen.tsx`,
+line 23). Not read beyond that line; check each on a phone first. The fix
+is the same split (fixed strip, scrolling box) with the opt-in "compact"
+look of `StatTile` and `SectionCard` in `ReportingUI.tsx`. Possibly in the
+"Front-end standardisation fixes, by screen" entry above rather than its
+own. Also open: D16 is seen only on a phone; 768 and 1280 px not yet
+looked at.
+
 ### Front-end consistency audit — parked, undecided (raised 2026-09-30)
 
 The 2026-09-30 deal-edit bug came from duplicated screen code: the deal

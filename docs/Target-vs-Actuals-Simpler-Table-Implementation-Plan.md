@@ -83,6 +83,30 @@ under "31 Oct — simpler table" — agreed by Basheer, 2026-10-31.
   because a phone shows one block per person with no headings to click, and
   the shared table component has no sorting. Sorting happens on the screen;
   no backend change — Basheer, 2026-11-02 (found at the D9 re-run).
+- D15. On the Overdue tab (D12), the card title ("Overdue — N overdue next
+  actions") and the "Sort by" box (D14) stay fixed under the tab row while
+  the list of people scrolls; on a laptop or tablet the column headings
+  stay visible too. D14 had put the box inside the scrolling area, so both
+  scrolled away (the pinned-controls rule, Frontend standards §6.1).
+  Nothing else on the tab changes. Front-end only; built by Build & Test
+  directly, not `/build`, since the D14 merge (`1bf0260`) had already
+  landed — Basheer, 2026-11-03 (found at the D10 re-run). Commit `a1f0147`; D15
+  Pass on a phone (Basheer, 3 Nov).
+- D16. The same rule on three more screens, found while checking D15 on a
+  phone: the title and pickers must not scroll away with the list. (a)
+  Insights Dashboard → Target vs Actuals tab: the "Target vs Actuals" card
+  (SBU and View boxes, period arrows) stays fixed; the "This quarter · as
+  of …" line and everything below it scroll; a person's own screen scrolls
+  under its back-arrow header. (b) Insights Dashboard → Pipeline tab and
+  (c) the Pipeline Report screen: the two tiles ("Active Pipeline Value",
+  "Weighted Forecast") and the "Pipeline by …" title with its dropdown stay
+  fixed; only the bars scroll. The tiles and the fixed cards are shorter
+  (an opt-in "compact" look; other screens that use the same tiles and
+  cards are unchanged). Front end only — Basheer, 2026-11-03. Built with
+  D15 by Build & Test in commit `a1f0147`; seen on a phone by Basheer.
+  Not yet checked at 768 and 1280 px, nor the Sales Report and
+  Opportunities On Hold screens, which are built the same way as the old
+  Pipeline Report (see Backlog).
 
 ## Figures and sources
 
