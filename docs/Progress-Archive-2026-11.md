@@ -617,3 +617,15 @@ Harness review (the hook counts idle time); no extra tracker line.
 entries verified); pruned `cabio_uat_2026-10-20_0654.dump`, 14 kept.
 Docker took about 2½ min to start (script logged "20s") and needed a
 forced close; backup unaffected. Google Drive copy done by Basheer.
+
+**Doc tidy-up (Plan & Chore, 3 Nov):** Traceability's Weekly Follow-up
+Report row moved to Done: it was built as My Work, merged 28 Oct, E2E
+51 of 51 Pass. Its stale Backlog entry was removed, and the "still
+unbuilt" mentions in Business-Rules and the High-Priority plan were
+corrected. Row 3.2's client line now names the Year view (it existed
+already; Basheer agreed the wording). The Tabs plan now records step 4's
+merge (`1bf0260`). Moved out of the Plan handover: the Tabs plan D17
+review is finished (step 4, `cfa886c`, with review fixes `19141b8`, both
+in `main`), and the 1 Nov Harness review is done (`277efa7`, `fdcfbb3`).
+Haroon's product-cost question (asked 16 Oct) is still open; Basheer is
+checking with him.

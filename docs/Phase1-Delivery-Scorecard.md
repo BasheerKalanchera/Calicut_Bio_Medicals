@@ -5,15 +5,15 @@
 
 ## Summary
 
-Of **50** signed requirements: **34 done, 11 partly done, 5 not started** — plus **19 additional features built beyond the signed contract**: some requested by the Cabio leadership team for immediate business needs, others added by our team to make the system safer and easier to use (see "Commitment beyond contract" at the end). **3 more have been requested by Cabio leadership and are pending to build** (see "Requested" below that), and **1 more has been proposed but not yet decided** (see "Pending").
+Of **50** signed requirements: **35 done, 11 partly done, 4 not started** — plus **19 additional features built beyond the signed contract**: some requested by the Cabio leadership team for immediate business needs, others added by our team to make the system safer and easier to use (see "Commitment beyond contract" at the end). **3 more have been requested by Cabio leadership and are pending to build** (see "Requested" below that), and **1 more has been proposed but not yet decided** (see "Pending").
 
 | Done | Partly done | Not started | Commitment beyond contract |
 | :---: | :---: | :---: | :---: |
-| 34 | 11 | 5 | 19 |
+| 35 | 11 | 4 | 19 |
 
 **Real progress, two honest ways to read it:**
-- **Strictly done:** 34 of 50 = **68.0%**
-- **Counting partly-done items as half-credit** (the fairer "real progress" number, since 11 items aren't zero — they're mid-flight): (34 + 11×0.5) ÷ 50 = **79.0%**
+- **Strictly done:** 35 of 50 = **70.0%**
+- **Counting partly-done items as half-credit** (the fairer "real progress" number, since 11 items aren't zero — they're mid-flight): (35 + 11×0.5) ÷ 50 = **81.0%**
 
 ---
 
@@ -80,14 +80,14 @@ Where leadership and managers see how the business is doing.
 | # | Signed Feature ID | Requirement | PRD Section | Status | Notes |
 | :---: | :--- | :--- | :--- | :--- | :--- |
 | 29 | 2.5 | Weighted/unweighted forecasting by month/quarter/product; <3x-target low-pipeline alert | 5.1 Forecasting + 5.2 Pipeline Coverage Monitoring | Partial | Forecasting broken down by product is live today. Forecasting by month/quarter, and an early-warning alert for a thin pipeline, are no longer blocked on Target Management but still not built. |
-| 30 | 3.2 | Real-time actual-vs-target via role-specific dashboards | 5.3/5.4/5.5 Salesperson/Manager/GM Dashboard | Partial | Role-based dashboards are live today. Target vs Actuals on the Insights Dashboard shows each person's target, plan, PO received and Won, rolling up to team, SBU and company for leadership. A year-to-date view is still to be added. |
+| 30 | 3.2 | Real-time actual-vs-target via role-specific dashboards | 5.3/5.4/5.5 Salesperson/Manager/GM Dashboard | Partial | Role-based dashboards are live today. Target vs Actuals on the Insights Dashboard shows each person's target, plan, PO received and Won, rolling up to team, SBU and company for leadership. A Year view shows the whole year's target against Won so far. |
 | 31 | 4.3 | Revenue per product/brand analytics | Appendix A.1 Reporting Principles (also 5.6 Core Reports) | Partial | Revenue and brand-level reporting is live today. Margin reporting (cost versus price) is approved and scheduled, restricted to senior roles only. |
 | 32 | 6.1 | Demo-to-sale conversion report | 4.2 Demo Management | Not started |  |
 | 33 | 11.1 | Core reports: sales, pipeline, product qty/price/margin | 5.6 Core Reports | Partial | Sales, Pipeline, and Product Performance reports are all live today. The Margin report (cost versus price) is approved and scheduled, restricted to senior roles only. |
 | 34 | 11.1 | Exception report: zero lead activity over 3 months | 5.7 Exception Reports | Not started |  |
 | 35 | 11.1 | Phase 1 analytics: conversion, pipeline aging, salesperson performance | Appendix A.1 Reporting Principles | Partial | Conversion figures are available today; pipeline-aging analysis (how long deals linger at each stage over time) is deferred to a later phase. |
 | 36 | 1.4 | Competitive Loss Report | Appendix A.3.5 Competitive Loss Report (also 5.5 GM Dashboard) | Not started |  |
-| 37 | 11.1 | Weekly Follow-up Report | 5.8 Weekly Follow-up Report | Not started |  |
+| 37 | 11.1 | Weekly Follow-up Report | 5.8 Weekly Follow-up Report | Done | Live as My Work: each person's high-priority Opportunities and those 70 %+ likely to close, Opportunities with no activity for 30 days or more, closing dates passed, and overdue next actions. |
 | 38 | 11.2 | Region → Team → Individual drill-down | 5.9 Drill-down Reporting | Done | Clicking any number on a report — by region, team, person, product, brand, or stage — now takes you straight to the exact list of deals behind it, with a button to jump back to the report. That list is now guaranteed to match the report's own count exactly. |
 
 ## 6. Governance & Admin

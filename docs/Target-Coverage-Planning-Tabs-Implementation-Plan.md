@@ -9,7 +9,7 @@ tab looks at any period or SBU, D15), both pushed and now in `main`;
 `/code-review` medium done (8 findings, 1 fixed). The E2E re-run on 2 Nov
 found D17 (a My Targets tab), decided 2 Nov. Step 4 (D17) built 2 Nov on
 `worktree-build`: `cfa886c`; `/code-review` medium done (8 findings, 3
-fixed in `19141b8`); branch pushed, not merged into `main`, not seen in a
+fixed in `19141b8`); merged into `main` 3 Nov (`1bf0260`); not seen in a
 browser. Test plan rewrite and E2E re-run pending. No migration.
 **Traceability rows:** signed 3.1 ("Sales target configuration:
 individual, team, regional" — 6.4 Target Management; layout only, row

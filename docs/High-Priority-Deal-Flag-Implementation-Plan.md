@@ -42,7 +42,8 @@ takes over.
   for that tile to consume later, but building the tile itself is a
   different piece of work.
 - **Weekly Follow-up Report** — still unbuilt, unrelated to this plan beyond
-  eventually reading the same computed field.
+  eventually reading the same computed field. *(superseded — now built as
+  My Work, 28 Oct)*
 
 ## Backend
 

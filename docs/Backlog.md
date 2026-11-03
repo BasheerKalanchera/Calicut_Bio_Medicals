@@ -15,9 +15,11 @@ this is the single list to call from. When answered, record the answer in
 its home doc and delete the line. The tidy-up sweep (check 8) asks Basheer
 about any line older than 14 days (Basheer, 2026-10-16).
 
-- **Haroon** (asked 2026-10-16) — which measures go on the Salesperson
-  Performance page: results, conversion, pipeline, activity; drop or add?
-  `docs/Discussion-Salesperson-Performance-Report-2026-10.md` section 5 Q1.
+- **Haroon** (asked 2026-10-16; re-worded 2026-11-03) — yes or no on four
+  additions for the new Performance tab of the Insights dashboard: win
+  rate, lost count and reasons, a past month, activities by type; and
+  whether the tab gets an Excel/PDF download.
+  `docs/Discussion-Salesperson-Performance-Report-2026-10.md` section 10.4.
 - **Haroon** (asked 2026-10-16) — product cost (approved by him
   2026-09-14, BR-CAT-04, not built): who keeps the cost figures up to
   date, and is it needed in Phase 1 or can it wait for Phase 2? The signed
@@ -1067,8 +1069,11 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   page with an Excel download. The Finance incentive file (sections
   7.2–7.4, frequency undecided) is not a signed requirement — **parked for
   Phase 2**, with the answers so far: 50 % of incentive at PO, 50 % at
-  full payment; for a retention order, the second half at close. Open:
-  the measures (Waiting on people, above).
+  full payment; for a retention order, the second half at close.
+  **2026-11-03 (Basheer):** the dedicated page is replaced by a
+  Performance tab on the Insights dashboard (shape agreed, discussion
+  note section 10). Open: Haroon's yes/no on its four additions and an
+  Excel/PDF download (Waiting on people, above).
 
 - **Payment collection: overdue alerts, Finance list, retention, payment
   terms per order — moved to a discussion paper 2026-10-13.** Latheef Bhai
@@ -1245,16 +1250,6 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   relationship going quiet before it's lost. Found missing 2026-09-14. Not
   blocked on a decision — the data (`activity.activity_date` per account) is
   already there — just not scoped or built yet.
-
-- **Weekly Follow-up Report — not built, no longer blocked.** PRD 5.8 asks
-  for a weekly report surfacing high-priority deals, deals over 70% likely to
-  close, stagnant deals, and overdue reminders. Found missing 2026-09-14.
-  All four inputs now exist or are rule-confirmed (win probability, Stagnant
-  Deals, Reminders, and the High Priority rule — see BR-OP-15,
-  `Business-Rules.md`) — just not built yet. Also include a "Closing date
-  passed" section (BR-OP-16), decided 2026-09-29.
-  Plan: `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md` (Draft,
-  2026-10-11) — the rep's "My Work" desk.
 
 - **"Stuck in stage" (BR-OP-06 as reworded) — later, once reps log
   regularly (Basheer, 2026-10-11).** An Opportunity sitting in one stage
