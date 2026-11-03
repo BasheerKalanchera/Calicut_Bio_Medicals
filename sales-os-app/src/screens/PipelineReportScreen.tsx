@@ -63,23 +63,31 @@ export default function PipelineReportScreen({
   const maxValue = Math.max(1, ...rows.map((r) => parseFloat(r.total_value_lakhs)));
 
   return (
-    <Box sx={{ flex: 1, overflowY: "auto", bgcolor: "background.default", p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
-      <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
-        <StatTile label="Active Pipeline Value" value={formatLakhs(totalValue)} sublabel={`${totalCount} active ${totalCount === 1 ? "Opportunity" : "Opportunities"}`} />
-        <StatTile label="Weighted Forecast" value={formatLakhs(totalWeighted)} sublabel="Active Opportunities, win-probability adjusted" />
+    <Box sx={{ flex: 1, overflow: "hidden", bgcolor: "background.default", display: "flex", flexDirection: "column" }}>
+      {/* The tiles and the "Pipeline by …" title with its dropdown stay put;
+          only the bars below scroll (Frontend standards §6.1, D16). */}
+      <Box sx={{ p: 2, pb: 1.5, flexShrink: 0, display: "flex", flexDirection: "column", gap: 1.5 }}>
+        <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+          <StatTile compact label="Active Pipeline Value" value={formatLakhs(totalValue)} sublabel={`${totalCount} active ${totalCount === 1 ? "Opportunity" : "Opportunities"}`} />
+          <StatTile compact label="Weighted Forecast" value={formatLakhs(totalWeighted)} sublabel="Active Opportunities, win-probability adjusted" />
+        </Box>
+        <SectionCard
+          compact
+          title={`Pipeline by ${GROUP_BY_OPTIONS.find((o) => o.value === groupBy)?.label}`}
+          action={
+            <TextField select size="small" value={groupBy} onChange={(e) => setGroupBy(e.target.value as PipelineGroupBy)} sx={{ minWidth: 110 }}>
+              {GROUP_BY_OPTIONS.map((o) => (
+                <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
+              ))}
+            </TextField>
+          }
+        >
+          {null}
+        </SectionCard>
       </Box>
 
-      <SectionCard
-        title={`Pipeline by ${GROUP_BY_OPTIONS.find((o) => o.value === groupBy)?.label}`}
-        action={
-          <TextField select size="small" value={groupBy} onChange={(e) => setGroupBy(e.target.value as PipelineGroupBy)} sx={{ minWidth: 110 }}>
-            {GROUP_BY_OPTIONS.map((o) => (
-              <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
-            ))}
-          </TextField>
-        }
-      >
-
+      <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", px: 2, pb: 2 }}>
+      <SectionCard title="Pipeline" hideHeader>
         <LoadingOrEmpty
           isLoading={breakdownQuery.isLoading}
           isError={breakdownQuery.isError}
@@ -130,6 +138,7 @@ export default function PipelineReportScreen({
         )}
         {groupBy === "zone" && rows.length > 0 && <ZoneTreeNote />}
       </SectionCard>
+      </Box>
     </Box>
   );
 }
