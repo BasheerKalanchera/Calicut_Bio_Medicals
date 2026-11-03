@@ -610,3 +610,10 @@ logged under "For the next review" in Process-Improvements (Basheer).
 from?": passed on the session clock's figure and suggested `/exit`
 without checking it against the message times. Already logged for the
 Harness review (the hook counts idle time); no extra tracker line.
+
+## 3 Nov 2026 — Plan & Chore
+
+**UAT backup:** `cabio_uat_2026-11-03_0814.dump` (868,219 bytes, 535 TOC
+entries verified); pruned `cabio_uat_2026-10-20_0654.dump`, 14 kept.
+Docker took about 2½ min to start (script logged "20s") and needed a
+forced close; backup unaffected. Google Drive copy done by Basheer.
