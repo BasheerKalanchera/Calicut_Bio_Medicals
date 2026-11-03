@@ -647,7 +647,10 @@ P7.
 Basheer runs these by eye, at 390, 768 and 1280 px (phone, tablet,
 laptop). Claude measures in the browser only if Basheer sees something
 wrong, or for a step that can't be judged by eye (step 10's widths) —
-Basheer, 2026-10-29, to save usage credits. When Claude measures, any
+Basheer, 2026-10-29, to save usage credits. **Parked 2026-10-30
+(Basheer):** none of L1–L11 run; L waits until a few of these screens
+are redesigned (Target vs Actuals, Target & Coverage Planning tabs).
+Re-read the steps against the new screens before running. When Claude measures, any
 element inside a card with `scrollWidth > clientWidth` runs past it. No
 step saves anything. Screen names and wording read from the code on
 2026-10-28; the Part 2 screens plan (D3) lists what is in scope.

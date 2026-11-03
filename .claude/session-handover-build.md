@@ -13,12 +13,12 @@ session edits this note._
   hotfix-branch route (`docs/Deployment-Topology.md` "Fix to UAT ahead
   of a full promotion").
 
-## NOW (3 Nov) — fixed headers pushed (`a1f0147`); docs batch + retro at refresh
+## NOW (3 Nov) — fixed headers pushed (`a1f0147`); docs batch + retro pushed (`c3c7ae9`)
 - `/build` merged D13/D14/D17 as `1bf0260`. TvA re-checks B2, B5, D9, D10,
   11: all Pass 3 Nov. D15 (Overdue) and D16 (Target vs Actuals, Pipeline
   tab, Pipeline Report) fixed in `a1f0147`, pushed; Basheer saw them on a
-  phone only. Test wording for D13–D17 is in the plans (docs batch,
-  uncommitted until it is approved).
+  phone only. Test wording for D13–D17 is in the plans (`c3c7ae9`,
+  pushed). Retro done (6 corrections).
 - **Next:** (a) hard refresh, look at D16 at 768 and 1280 px; (b) Tabs E2E
   from P1 on the five-tab layout (P2 sign-ins unrecorded); (c) re-test
   `/build`'s sign-out fix; (d) about 24 TvA steps not re-run (estimate, not
