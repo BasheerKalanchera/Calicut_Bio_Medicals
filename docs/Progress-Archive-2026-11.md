@@ -528,3 +528,85 @@ review" and "do the code review now" are not corrections. No tracker line:
 no tool check could stop it, and nothing touched live data, UAT or lost
 work. Session clock: 6 h 24 min wall-clock (first to last message,
 transcript timestamps).
+
+## 2 Nov (Build & Test, evening) — Target vs Actuals re-checks; plan figure missing beside Won % of plan
+- Re-checks recorded as Pass (Basheer), on the merged code: Overdue tab D2,
+  D3, D4, D5, D6, D8, E2 (as Fazal); Year view A2 and Quarter view B2 (as
+  Haroon). D2: Fazal's card title reads "Overdue — 5 overdue next
+  actions" (his 2 + Fahad's 3), not the team-wide 32 Haroon sees. D8: the
+  hospital and Opportunity names on Fahad's rows are clickable — expected
+  (`MyWorkScreen.tsx:698,701`); only "Done" depends on whose list it is.
+- **Finding (Basheer, during B2):** on the Quarter view a person's Won % is
+  Won ÷ their approved plan (`service.py:1360`, `percent_of_target(won,
+  planned)`), labelled "of plan" (`TargetVsActualsSection.tsx:218`), but
+  the plan amount itself is not on the row; the "Target" column beside it
+  is the target (`:213`). So Fahad's 44.00 % and Basheer K's 41.82 % cannot
+  be checked by eye. Confirmed by code read; the plan figure is already in
+  the response (`planned_lakhs`, `service.py:1355`). **Decided (Basheer,
+  2 Nov):** show the plan amount under the percentage ("of plan ₹25.0 L"),
+  front-end only — D13 in the Simpler Table plan; write-up handed to
+  `/build`. Re-check: TvA B2 and B5 once built.
+- **Finding (Basheer, during D9):** the Overdue rows are not in "Who" order
+  — the server sends most-overdue first (`reporting/service.py:284-287`),
+  no documented decision. **Decided (Basheer, 2 Nov):** keep that as the
+  default and add a "Sort by" box (Most overdue first / Name A–Z) — D14;
+  write-up handed to `/build`. Re-check: TvA D9 and D10 once built.
+- Also recorded as Pass this evening: B6, C1, C6, D9 (with the finding).
+
+**Retro (2 Nov, Build & Test, evening):** corrections from Basheer: 2 —
+(1) "How do you remember which steps we parked for re-check? Have you
+written it somewhere?": the parked list was not in the handover note or the
+archive; written into both after he asked. (2) "What is this re-check — 'no
+explicit re-test lines for D13 and D14'?": jargon, re-explained in plain
+words. Borderline, not counted: "Go ahead. Give me A2's full details" (my
+next-step line was shorter than the full steps). My own slips, not
+corrections: the closing status line counted each re-check as a new
+recording and climbed to "66 of 66 (100 %)" — re-runs don't add to recorded
+steps; the right figure is 53 of 66 (80 %) from the handover note, not
+recounted, plus 17 Target vs Actuals re-checks Pass (my count of this
+session's results; E4 and F2 earlier today), noticed at the retro; a
+pointer in the test plan to this entry was added before the entry existed;
+the handover's "24 re-checks" never reconciled with the plan's markers and
+was left unresolved. No tracker line: no tool check would have stopped
+these, and nothing touched live data, UAT or lost work (Dev not written to).
+Findings handed to `/build`: D13 and D14.
+
+## 2 Nov (Plan & Chore) — UAT backup; Tabs plan D17 settled for `/build`
+
+**UAT backup:** `cabio_uat_2026-11-02_0813.dump` (847,841 bytes, 535
+checked entries); the oldest, `cabio_uat_2026-10-19_0703.dump`, pruned, 14
+kept. Docker had to be force-closed at the end (30 s timeout). Basheer
+copies the file to Google Drive by hand.
+
+**Doc tidy-up:** skipped today (Basheer). His idea of moving it to every 3
+days is parked, not decided; nothing changed.
+
+**Tabs plan D17 (My Targets tab), reviewed from Build & Test's write-up.**
+Read against `TargetPlanningScreen.tsx`, `TeamTargetsPanel.tsx` and
+`SbuTargetBox.tsx` at `bd81bcb`. Found: the GM's "My Target" heading would
+present the SBU target as the GM's own (BR-PL-12); the plan left a
+decision to `/build` (remove Team Targets' "Your target for the year"),
+though the code shows it is the team-total comparison, not a copy; D17's
+order line said "as D14" while reversing it; the SBU Manager's own target
+was unchecked. Basheer, 2 Nov: SBU Target card stays on Team Targets
+(Admin, GM, SBU Manager); the GM's card is headed with the SBU ("Imaging
+SBU target ₹280.0 L"); Team Targets keeps its "Your target" comparisons.
+Dev check (read-only, admin connection, 2 Nov): one SBU Manager, Basheer K
+(Imaging), reports to the GM, no reports, no target in any quarter; the
+four Area Managers report to the GM, who set their Oct–Dec (2026-Q3)
+targets: Fazal ₹160, Shruthi ₹120, Arun Adarsh ₹100, Nishad K V ₹85 L.
+Business-Rules and Traceability name no tabs; Frontend standards' wording
+examples changed to "My Targets" / "My Plans"; UAT User Manual waits for
+the UAT move. Plan sections updated for D17 (older decisions marked
+replaced, plain terms, phone, build step 4, addendum). Committed and
+pushed `c23478a`. Brief for `/build` step 4 given to Basheer in chat.
+
+**Session clock:** after the push the P98 hook reported "8 h 6 min" for a
+window opened 08:07 and idle most of the day (about 1 h 10 min of work);
+logged under "For the next review" in Process-Improvements (Basheer).
+
+**Session retro:** 1 correction:
+(1) "This session just started 1hr ago. Where are you getting 8 hrs window
+from?": passed on the session clock's figure and suggested `/exit`
+without checking it against the message times. Already logged for the
+Harness review (the hook counts idle time); no extra tracker line.

@@ -10,7 +10,7 @@ session edits this note._
 ## Tabs plan D17 (My Targets tab) — review in progress 2026-11-02
 
 - D17 answers, Dev check, section edits and Frontend standards wording
-  done and committed 2 Nov; brief for /build given. **Next:** /build
+  done, committed and pushed 2 Nov (`c23478a`); brief for /build given. **Next:** /build
   step 4; then rewrite the tabs test plan. Tidy-up every 3 days: parked.
 
 ## Build queue for `/build` (all Approved, E2E plans written)

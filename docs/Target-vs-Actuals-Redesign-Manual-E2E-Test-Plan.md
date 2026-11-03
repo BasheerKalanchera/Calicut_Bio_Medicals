@@ -185,7 +185,9 @@ beside it in brackets. This plan creates none.
    screen only ever shows the chosen SBU's row), then the team
    hierarchy starting with Haroon. Basheer asked for the SBU's name in
    that row; built as `52e8397` (same on the Quarter view, B2). Re-run
-   A2 after the merge. —
+   A2 after the merge. **Re-run 2 Nov, after the merge — Pass (Basheer):**
+   the second row is named "Imaging", and "Critical Care" after the
+   switch. —
 3. [Simple] Same screen. **Expected:** none of: Likely finish (as a box,
    a column or in the bar), Team plans, Plans vs target, a
    quarter-by-quarter table, Year's target, Plan for year, Still to win,
@@ -232,8 +234,11 @@ beside it in brackets. This plan creates none.
    shows a dash for Won %; Basheer asked for "No plan" there. Quarter
    view only (the Year view's dash means no target, a different case).
    Re-run B2 after the merge. **Re-run 2 Nov — "No approved plan" on
-   Shruthi's row: Pass (Basheer, as Shruthi).** The "Imaging" row name
-   and the rest of B2, as Haroon, are still to re-run. —
+   Shruthi's row: Pass (Basheer, as Shruthi).** **Re-run 2 Nov, as
+   Haroon — Pass (Basheer):** the "Imaging" row name and the rest of B2.
+   Basheer then raised a possible gap (a person's plan figure is not
+   shown beside their Won % of plan) — see the Progress-Archive 2 Nov
+   entry. —
 3. [Simple] Same screen. **Expected:** none of: Likely finish (as a box,
    a column, a dash or in the bar), Team plans, Expected, Plans vs
    target, plan Status, Rep Plan, the "haven't submitted a plan" note,
@@ -260,7 +265,8 @@ beside it in brackets. This plan creates none.
    reader label but no hover text; the Planning screen's arrows have both.
    Small fix, built as `52e8397` (hover text "Previous quarter", "Next
    quarter", "Previous year", "Next year" added); re-check by hovering
-   after the merge, on both views. —
+   after the merge, on both views. **Re-run 2 Nov, after the merge — Pass
+   (Basheer):** hover names show on both views. —
 
 ## C — A person's own screen (D4; Simpler table D7, D10)
 
@@ -268,7 +274,9 @@ beside it in brackets. This plan creates none.
    "Rudrappa". **Expected:** a screen of his own, not a row opening
    underneath, with three boxes: Target ₹100.0 L; Won (paid) with "PO
    received …" under it; Won % of target. No Likely finish box.
-   **Result 1 Nov — Pass (Basheer).** —
+   **Result 1 Nov — Pass (Basheer).** **Re-run 2 Nov, after the merge —
+   Pass (Basheer):** opens at the top; title, drop-downs, arrows and the
+   Insights tab row hidden; name row fixed; Back returns everything. —
 2. [Simple] Same screen, By hospital and By brand. **Expected:** By
    hospital: one line, "Not assigned to a hospital", Planned ₹10.0 L,
    Won 0, then a Total line; By brand: SonoScape, Planned ₹10.0 L, Won 0,
@@ -311,7 +319,8 @@ beside it in brackets. This plan creates none.
    hidden; the Insights tab row is hidden; the name row stays fixed and
    only the detail cards scroll; on Back everything returns. The card
    may sit close to the top edge (no gap was added) — look at that.
-   Re-run C1 and C6. —
+   Re-run C1 and C6. **Re-run 2 Nov, after the merge — Pass (Basheer),
+   at 390, 768 and 1280 px.** —
 
 ## D — Overdue tab (D5)
 
@@ -322,23 +331,29 @@ beside it in brackets. This plan creates none.
    next actions; Past closing date 2, ₹24.0 L. Fahad — 3 overdue (was 2
    on 1 Nov); Past closing date 1, ₹20.0 L. Fazal's overdue count is the same as P4 (P4's number was 2: the
    rows in My Work → Next actions → "Overdue next actions"). **Result 1
-   Nov — Pass (Basheer).** —
+   Nov — Pass (Basheer).** **Re-run 2 Nov, after the merge — Pass
+   (Basheer):** Fazal 2, Fahad 3; the card title reads "Overdue — 5
+   overdue next actions", i.e. the total of the rows Fazal can see (2 + 3),
+   not the all-team 32 that Haroon sees (D9). —
 3. [Simple] Same tab. **Expected:** every count above zero is red and
    can be tapped (Fazal's 2 and 2, Fahad's 3 and 1; Dev 2 Nov). The grey zero is
-   checked at step 9, as Haroon. **Result 1 Nov — Pass (Basheer).** —
+   checked at step 9, as Haroon. **Result 1 Nov — Pass (Basheer).**
+   **Re-run 2 Nov, after the merge — Pass (Basheer).** —
 4. [Complex: cross-screen] Click Fahad's past closing date count.
    **Expected:** My Work opens with "Showing" set to Fahad, on the
    Opportunities tab, at "Closing date passed", which lists "Test Gate
-   override oppotunity (renamed for TC-19/22)" (Maulana) — 1 (D11). **Result 1 Nov — Pass (Basheer).** —
+   override oppotunity (renamed for TC-19/22)" (Maulana) — 1 (D11). **Result 1 Nov — Pass (Basheer).**
+   **Re-run 2 Nov, after the merge — Pass (Basheer).** —
 5. [Complex: cross-screen] Back to the Overdue tab; click Fazal's
    overdue count "2". **Expected:** My Work opens with "Showing" set to
    Fazal ("Me"), on the Next actions tab, at "Overdue next actions",
-   with 2 rows (D11). **Result 1 Nov — Pass (Basheer).** —
+   with 2 rows (D11). **Result 1 Nov — Pass (Basheer).**
+   **Re-run 2 Nov, after the merge — Pass (Basheer).** —
 6. [Complex: cross-screen] Back to the Overdue tab; click Fazal's past
    closing date "2". **Expected:** Opportunities tab, "Closing date
    passed" lists "New USG m/c" (aster medicity) and "New oppotunity fast
    track" (Aster DM); the count matches the Overdue tab's 2 (D11). **Result 1 Nov — Pass
-   (Basheer).** —
+   (Basheer).** **Re-run 2 Nov, after the merge — Pass (Basheer).** —
 7. [Complex: cross-screen] Leave My Work, then open it from the menu.
    **Expected:** "Showing" is back on "Me" and the Summary tab; the
    small tabs are back on "High priority" (Opportunities) and "This week"
@@ -350,7 +365,12 @@ beside it in brackets. This plan creates none.
    button; on his Opportunities tab ("Closing date passed") there is no
    "Log Activity" or action button either. View-only, because closing an
    action records a visit or call as if it happened (My Work D15).
-   **Result 1 Nov — Pass (Basheer), on the reworded step.** —
+   **Result 1 Nov — Pass (Basheer), on the reworded step.**
+   **Re-run 2 Nov, after the merge — Pass (Basheer).** Basheer noticed the
+   hospital and Opportunity names on Fahad's 3 rows are clickable —
+   expected: in the next actions table those names are always links
+   (`MyWorkScreen.tsx:698,701`); only the "Done" button depends on whose
+   list it is (`canAct`, line 708). —
 9. [Simple] As Haroon: Overdue tab. **Expected (P3, 1 Nov):** Abdul
    Latheef P 1 / 0; Basheer K 11 / 0; Fazal 2 / 2, ₹24.0 L; Fahad 2 / 1,
    ₹20.0 L; Haroon Sidheeq 7 / 1, ₹50.0 L; Nishad K V 1 / 0; Shruthi
@@ -375,7 +395,15 @@ beside it in brackets. This plan creates none.
    closing date (count), Value; each row only numbers, the value in its
    own column; "Test - Area Manager" greyed with "Inactive account"
    beside the name; the counts unchanged from the list above. Re-run D9
-   and, because the counts are rebuilt, D3–D6 and D8. —
+   and, because the counts are rebuilt, D3–D6 and D8. **Re-run 2 Nov,
+   after the merge — Pass (Basheer), with one finding:** the rows are not
+   in "Who" order. Cause (code read): the server lists the person with
+   the most overdue next actions first, then most past-closing, then name
+   (`reporting/service.py:284-287`); no screen-side sorting exists. No
+   documented decision for that order. **Decided (Basheer, 2 Nov):** keep
+   it as the default and add a "Sort by" box (Most overdue first / Name
+   A–Z) — Simpler Table plan D14, handed to `/build`. Re-check after it
+   is built. —
 10. [Complex: phone layout] Overdue tab at 390, 768 and 1280 px, as
    Haroon. **Expected (390):** one block per person — overdue next
    actions, then Past closing date count and value side by side; a
@@ -389,7 +417,15 @@ beside it in brackets. This plan creates none.
    **Expected after the merge (added 2 Nov):** at 390 one block per
    person with the same fields and the same red and grey marks (the value
    greyed when the count is 0); at 768 and 1280 a table with the four
-   headings. Nothing runs past the card. Re-run. —
+   headings. Nothing runs past the card. Re-run. **Re-run 2 Nov, after
+   the merge (Basheer):** Pass at 390, 768 and 1280 px, with one
+   difference: at 390 the Past closing date count and the Value sit one
+   below the other, not side by side. Cause (code read): the shared
+   table-or-cards component puts every cell on its own line on a phone
+   (`TableOrCards.tsx:253`), as on the Quarter and Year blocks; "side by
+   side" was this step's wording, never built. **Decided (Basheer,
+   2 Nov): one below the other is right;** wording corrected to "one line
+   each". —
 
 ## E — Who sees what (hide-checks)
 
@@ -399,7 +435,7 @@ beside it in brackets. This plan creates none.
    Pass (Basheer).** —
 2. [Simple] As Fazal: Overdue tab. **Expected:** Fazal and Fahad only;
    no Shruthi (2 overdue) or Haroon (₹50.0 L). **Result 2 Nov — Pass
-   (Basheer).** —
+   (Basheer).** **Re-run 2 Nov, after the merge — Pass (Basheer).** —
 3. [Simple] As Fahad: Insights Dashboard. **Expected:** no Overdue tab
    (managers only); Target vs Actuals shows his own row only, Year and
    Quarter. **Result 2 Nov — Pass (Basheer).** —
@@ -425,7 +461,8 @@ beside it in brackets. This plan creates none.
    by" box is named too; beside the period box the dates it covers
    ("Oct–Dec 2026" for the quarter, "Nov 2026" for the month, "All time").
    Drill-down banners unchanged. **Re-check after the merge, at 390, 768
-   and 1280 px** (a header row with the named box at 390) —
+   and 1280 px** (a header row with the named box at 390). **Re-run
+   2 Nov, after the merge — Pass (Basheer), at 390, 768 and 1280 px.** —
 2. [Simple] As Shruthi: Target & Coverage Planning → Rudrappa's
    Oct–Dec 2026 plan. **Expected:** status Approved; brands SonoScape
    ₹10.0 L; with the row opened, the message "No hospitals on this plan

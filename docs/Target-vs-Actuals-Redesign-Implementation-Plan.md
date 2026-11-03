@@ -118,7 +118,8 @@ a phone) and D81 (a target so far with a missing quarter is not shown).
     each list ending in a shaded Total block; the two notes at the
     bottom.
   - Overdue tab: one block per person — overdue next actions, then "Past
-    closing date" count and its value side by side. A count above zero
+    closing date" count and its value, one line each (as every other phone
+    block; decided with Basheer 2 Nov). A count above zero
     is a red mark that can be tapped (opens My Work, D5); zero is grey
     and can't be tapped.
   *Changed 31 Oct by `docs/Target-vs-Actuals-Simpler-Table-Implementation-Plan.md`
