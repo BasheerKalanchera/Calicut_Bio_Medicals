@@ -14,28 +14,19 @@ session edits this note._
   of a full promotion").
 
 ## NOW (3 Nov) — fixed headers pushed (`a1f0147`); docs batch + retro pushed (`c3c7ae9`)
-- `/build` merged D13/D14/D17 as `1bf0260`. TvA re-checks B2, B5, D9, D10,
-  11: all Pass 3 Nov. D15 (Overdue) and D16 (Target vs Actuals, Pipeline
-  tab, Pipeline Report) fixed in `a1f0147`, pushed; Basheer saw them on a
-  phone only. Test wording for D13–D17 is in the plans (`c3c7ae9`,
-  Tabs plan `32fe4ec`, both pushed). Retro done (6 corrections).
-- D16 at 768 and 1280 px: Pass (Basheer, 3 Nov). Code review of
-  `19141b8..HEAD` (medium): 8 findings, none a bug; two small fixes proposed
-  (shared Pipeline header strip; Overdue "Sort by" always shown, greyed
-  while empty): committed 3 Nov as `7fa039c`, pushed with docs batch
-  `fe0bd00`; seen on Dev, looks good
-  (Basheer). pytest 1,508 passed, ruff, tsc, lint clean. Retro for this
-  part done (4 corrections), in Progress-Archive 3 Nov (late).
-- **4 Nov: Tabs E2E done, 30 of 30 recorded (P1–F2 + new E4), all Pass.**
-  Fails fixed in `413abf8` (pushed to origin/main): D4 (a "submitted" bell
-  click on a decided plan now opens Team Plans, Tabs plan D7) and D18
-  (Team Plans Annual view lists everyone as a reporting tree). tsc, lint
-  clean; D4 and E4 re-run Pass on Dev. Detail, retro (4 corrections) and
-  the Backlog entry (GM seeing reps' targets, waits for the leadership
-  demo) are in Progress-Archive 4 Nov (Build & Test) and the docs batch.
-- **Next:** (c) re-test `/build`'s sign-out fix; (d) TvA plan: 37 lettered
-  steps, 5 re-run 3 Nov, about 32 not (approximate, counted from the plan).
-  Further fixes go in a new `fix:` commit at the end. Then MUI step 8 below.
+- 3 Nov work (D13–D17 merged, `a1f0147`, `7fa039c`, docs `c3c7ae9`/`fe0bd00`)
+  is pushed and in Progress-Archive 3 Nov.
+- **4 Nov: Tabs E2E done, 30 of 30, all Pass.** Fixes `413abf8`, pushed.
+  Detail, retro and the Backlog entry: Progress-Archive 4 Nov.
+- **4 Nov: (c) sign-out follow-up built and tested, Pass; committed `70b517a`, pushed to origin/main.**
+  Idle sign-out showed the login screen twice (a late token renewal brought
+  the app back for 0.7 s). Fixed in `AuthContext.tsx` + `api.ts` (reload
+  removed, "signed out" marker, old reason cleared at sign-in). Idle, refused
+  session, Sign Out button, sign-in after sign-out: all Pass on Dev. Detail:
+  Progress-Archive 4 Nov (last entry). Docs for it still uncommitted (docs batch).
+- **Next:** (d) TvA plan: 37 lettered steps, 5 re-run 3 Nov, about 32 not
+  (approximate, counted from the plan). Further fixes go in a new `fix:`
+  commit at the end. Then MUI step 8 below.
 - Open: Sales Report and Opportunities On Hold likely need the same fixed
   header (Backlog, 3 Nov). Year view "of plan" parked for Plan & Chore.
 - Dev read 3 Nov (P3c): own targets Oct–Dec 2026 only; SBU Imaging ₹280.0L,

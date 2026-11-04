@@ -827,6 +827,28 @@ plans back from Dev (read-only, all three RLS settings set and checked).
   errors); no backend change, so pytest not rerun. Commit `413abf8`, pushed.
   Combined diff reviewed by me before the re-run (no other findings).
 
+## 4 Nov 2026 — Build & Test: sign-out fix (`bd81bcb`) re-tested, Pass
+
+**Result:** Sign out no longer reloads the page. Run by me in the browser on
+Dev as Haroon, Basheer watching (his request: too fiddly to do by hand).
+- 3 sign-outs started right after opening a data-heavy screen (Opportunities;
+  Target & Coverage Planning twice): login screen once, a marker set on the
+  page before sign-out was still there after (no reload), token cleared.
+- Those runs never showed the fix's own branch working, because no refused
+  request happened. So I added two temporary console lines in `api.ts`
+  (Basheer approved), faked a refused request and refused token refresh from
+  inside the page, clicked the bell and Sign Out 30 ms apart: console showed
+  `[auth-test] refused request ignored (deliberate sign-out)`, no reload.
+  That is the direct proof.
+- Real expiry still reloads: with the same fake and no sign-out, the page
+  reloaded and a note saved just before the reload read
+  `reloaded-for-expiry`.
+- Temporary lines removed; `git status` clean for `sales-os-app`. Nothing
+  committed. Earlier tries with a fake that only matched `:8000` missed the
+  app's calls (it uses `/api/v1` through the Vite proxy), and two screens
+  loaded from cached data, so no request fired. Real expiry (an hour idle or
+  a revoked login) was not tried.
+
 **Retro — corrections from Basheer this session: 4.**
 1. C1/C2: test-plan expected wording was wrong against the data and code.
 2. D1: I told a rep to pick an SBU ("Again Rep's don't get the ability to
@@ -838,3 +860,72 @@ Pattern: three of the four are test-step or fix wording written without
 reading the matching Quarter-view code or the role's screen first. No tracker
 line: none touched live data, UAT or lost work, and no tool check would have
 caught them.
+
+## 4 Nov 2026 — Build & Test: sign-out double screen after idle sign-out, found and fixed (`70b517a`, pushed)
+
+**Screens:** the login screen after Sign Out, the 60-minute idle sign-out, and
+a refused session. Run by me in the browser on Dev, Basheer watching.
+- **Reload removed.** `api.ts` used to sign out and hard-reload the page
+  whenever a request was refused and the token renewal failed (added
+  24 June, `8ad603d`, no recorded reason). Now it only signs out and sets the
+  "deliberate sign-out" flag; `AuthContext` clears cached data on every
+  `SIGNED_OUT` event, so the previous user's data does not outlive any
+  sign-out.
+- **Real cause of the double screen** (found only after Basheer asked for a
+  step-by-step timeline of the idle path): a background token renewal
+  finished just before the sign-out; its "who am I?" check completed after
+  it, so the app believed the user was signed in again, mounted its screens
+  for about 0.7 s, got 31 refused requests, then went back to the login
+  screen. No page reload was involved. Timeline recorded on Dev: login
+  screen 41012 ms, app back 41649 ms, login screen again 41715 ms.
+- **Fix in `AuthContext.tsx`:** a "signed out" marker, set by `signOut()` and
+  by any `SIGNED_OUT` event, cleared by `signIn()`. While on, the listener
+  ignores session events and `applySession` drops its result. Same 61-minute
+  clock jump afterwards: one login screen draw, no app flash, 0 refused
+  requests (before: 31), no reload.
+- **Second fix:** `signIn()` clears the stored sign-out reason, so an old
+  "idle" never shows on a later forced sign-out (found when a refused-session
+  test showed the inactivity line).
+- **Results after the fixes (Dev, Haroon/Basheer):** idle path Pass (twice;
+  inactivity line shows); sign-in after a sign-out on the same open page
+  Pass (77 requests, none refused); refused session Pass (1 draw, no
+  reload, no inactivity line after an earlier idle sign-out); Sign Out
+  button Pass (1 draw, no line, no reload). Basheer signed in as Basheer
+  then Haroon in the same tab with no old screens carried over.
+- **Not tested:** a real hour of idle with no clock change; a real
+  revoked/switched-off account mid-session; phone. My clock-jump leaves the
+  login library renewing tokens, which may make the overlap more likely
+  than in real use.
+- **Test-method notes:** moving the clock and leaving a "refuse renewals"
+  switch on makes the next sign-in fail with "Authorization header
+  required" — a test leftover, not an app fault (cleared without refresh).
+  An earlier "idle" run was only a manual sign-out on a settled screen and
+  did not test the idle path; the first real attempt hid the finding behind
+  my own clock jump. Basheer's correction: this timeline test should have
+  been the first test, not after other paths.
+- Checks: tsc clean, eslint 0 errors (6 existing warnings in the two files).
+  Committed as `70b517a` (`sales-os-app/src/lib/api.ts`,
+  `sales-os-app/src/contexts/AuthContext.tsx`), pushed to origin/main.
+
+**Retro, Build & Test, 4 Nov (sign-out part) — corrections from Basheer: 8.**
+1. "Isn't this overengineering": I proposed extra cleanup work to drop the
+   reload.
+2. "I think the expiry path is what was firing the refresh. And that is still
+   not fixed": I had called it fixed from a test that never hit that path.
+3. "How was this a idle sign out test?": I labelled a manual sign-out as an
+   idle test.
+4. "Signed in two devices is not the issue. Fix this instead of doing BS
+   testing": I offered a guess instead of finding the cause.
+5. "What is this expiry?": I used "expiry" for something that is only the idle
+   timer.
+6. "Why not test it again": I hadn't re-tested the path my patch was meant to
+   fix.
+7. "This is the test that you should have done before… wasted 1hr": the
+   timeline test of the idle path should have come first.
+8. "We ran this already": I reported the different-user check as not run, when
+   Basheer had done it.
+
+Pattern: five of the eight are my statements about what a test had covered,
+written from what I meant to run and not from what ran. The most direct test
+came last. No tracker line: nothing touched live data, UAT or lost work, and
+no tool check would have caught them.
