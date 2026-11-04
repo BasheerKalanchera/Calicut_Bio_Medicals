@@ -50,6 +50,9 @@ export default function NoActivityCustomersReportScreen({
     placeholderData: (previous) => previous,
   });
 
+  // After a new pick, the old list stays up until the new one arrives: dim it
+  // so it isn't read as the new pick's list.
+  const dimmed = query.isPlaceholderData;
   const rows = query.data?.rows ?? [];
   // The server says whether the viewer holds more than one zone (D13).
   const showZonePicker = query.data?.show_zone_picker ?? false;
@@ -91,14 +94,14 @@ export default function NoActivityCustomersReportScreen({
           </Box>
         )}
         {query.data && (
-          <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: "1fr 1fr" }}>
+          <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: "1fr 1fr", opacity: dimmed ? 0.5 : 1, transition: "opacity 0.2s" }}>
             <StatTile inGrid compact label="Gone quiet" value={String(query.data.gone_quiet_count)} sublabel={`No activity for ${query.data.threshold_days}+ days`} />
             <StatTile inGrid compact label="Never contacted" value={String(query.data.never_contacted_count)} sublabel="No visit, call, meeting or email yet" />
           </Box>
         )}
       </Box>
 
-      <Box sx={{ flex: 1, overflowY: "auto", px: 2, pb: 2, pt: 1 }}>
+      <Box sx={{ flex: 1, overflowY: "auto", px: 2, pb: 2, pt: 1, opacity: dimmed ? 0.5 : 1, transition: "opacity 0.2s" }}>
         <LoadingOrEmpty
           isLoading={query.isLoading}
           isError={query.isError}
