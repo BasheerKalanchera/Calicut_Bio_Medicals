@@ -6,11 +6,11 @@ keeps its own note: `.claude/session-handover-build.md`. Only the Plan & Chore
 session edits this note._
 
 - Forecast plan (untracked, written by Antigravity — Basheer 27 Oct): commit it, and by which session? Open. At review, line 110 → BR-FIN-09.
+- Parked to 5 Nov (Basheer): `docs/Marketing-Lead-To-Project-Implementation-Plan.md`, Draft. **Next:** discuss D1–D9.
 
 ## 4 Nov — Competitive Loss and Demo-to-sale plans: paused
 
-- Don't start either until Basheer says so (he stopped me, 4 Nov). Only a Dev
-  look so far (Progress-Archive); UAT check not run, no plan file.
+- Don't start either until Basheer says so (4 Nov). Dev look only; no plan file.
 
 ## 3 Nov — papers with Haroon; scorecard republish
 
@@ -30,7 +30,7 @@ session edits this note._
   are built and in `main`. Plan & Chore confirms plan and step before
   each `/build` starts.
 - Then: Customer with No Activity (`docs/Exception-Report-Implementation-Plan.md`,
-  Approved 4 Nov; E2E `docs/Customer-No-Activity-Report-Manual-E2E-Test-Plan.md`,
+  Approved 4 Nov, pushed `8fa30af`; E2E `docs/Customer-No-Activity-Report-Manual-E2E-Test-Plan.md`,
   37 steps). Activity Type first is my recommendation; Basheer to confirm.
 
 ## Rollout: when planning counts — to plan (Basheer, 30 Oct)
@@ -46,9 +46,8 @@ session edits this note._
 
 ## User Manual and help catch-up
 
-- Moves a day or two after the app (User Manual plan D15). Draft PDF
-  `Desktop\cabio\Cabio-Sales-OS-User-Manual.pdf`. **Next:** Basheer
-  reviews it.
+- Moves a day or two after the app (User Manual plan D15). **Next:** Basheer
+  reviews draft PDF `Desktop\cabio\Cabio-Sales-OS-User-Manual.pdf`.
 
 ## In-app help (help plan step 3a) — in progress 2026-10-22
 

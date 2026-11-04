@@ -929,3 +929,41 @@ Pattern: five of the eight are my statements about what a test had covered,
 written from what I meant to run and not from what ran. The most direct test
 came last. No tracker line: nothing touched live data, UAT or lost work, and
 no tool check would have caught them.
+
+## 2026-11-04 — Plan & Chore: session refresh check rebuilt (P98, `593a980`, pushed)
+
+Basheer's report: a session said "7 h 42 min with 43 messages" only at the
+end. Found from the transcripts (session `c0a99c56`, started 09:10 IST): it
+passed message 25 at 13:12 and 2 hours worked at 13:43, but the check ran only
+after a `git push`, and its one push was at 16:52. Its 7 h 42 min included
+idle time; time worked was 2 h 53 min. Counting idle time also wrongly paused
+three sessions (3 Nov: 1 h 22 min and 53 min worked; 4 Nov: 1 h 15 min).
+
+Rule (Basheer): from message 25, every 5 messages, recommend a refresh if time
+worked is over 2 hours; otherwise check again 5 messages later. Claude's
+addition, agreed by Basheer: also check after a push on time worked, because
+the rule alone missed three of the five sessions over 2 hours (19, 22 and 23
+messages). Time worked leaves out gaps of 30 minutes or more. A memory-use
+check was dropped: compression already handles memory (`autoCompactWindow`
+200000 in `.claude/settings.json`; the highest use seen was 167,241).
+
+Also fixed: background-task notices counted as Basheer's messages.
+
+Verified: 12 new tests pass (`.claude/hooks/test_session_clock.py`). Replay of
+the finished code over the 12 sessions since 3 Nov: the 7 h 42 min session
+gets its first recommendation at message 30 (13:43), the three wrong pauses
+are gone, and all five sessions over 2 hours are caught. The real hook ran on
+real-format input and took 0.19–0.24 s on a 5.9 MB transcript.
+
+Known limits: a running session may not pick up the new every-message check
+until it restarts (not tested), and `/build`'s worktree gets it only when it
+merges `main`. Left as is: any shell command whose text contains the words for
+a push counts as a push, as before (seen once while testing).
+
+**Retro, Plan & Chore, 4 Nov — corrections from Basheer: 1.**
+1. "What does this achieve? … We already have a compression at 200k right?": I
+   kept offering a memory check without saying what it would add, and I hadn't
+   read the 200k setting in `.claude/settings.json` before answering.
+
+No tracker line: nothing touched live data, UAT or lost work, and no tool check
+would have caught it.
