@@ -143,7 +143,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           queryClient.clear();
         }
         if (signingInRef.current) return; // signIn() below already owns this transition
-        if (s && signedOutRef.current) return; // stray session after a sign-out
+        // A real login from another tab ends this tab's sign-out, as signIn() would.
+        if (event === "SIGNED_IN" && s) signedOutRef.current = false;
+        if (s && signedOutRef.current) return; // stray session (e.g. a late token renewal) after a sign-out
         applySession(s).catch(() => {});
       }
     );

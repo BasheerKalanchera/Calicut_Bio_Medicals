@@ -202,6 +202,8 @@ export interface TargetVsActualPerson {
   display_name: string;
   // Who they report to; the screen lists a manager's team under them (D76).
   manager_id: string | null;
+  // The General Manager has no personal target: the Target cell reads "Same as SBU target".
+  is_general_manager: boolean;
   // Draft and Rejected plans come with no figures (planned 0, no hospitals/brands).
   plan_status: RosterStatus;
   // BR-PL-05: set while a revision of an approved plan is in flight ("was ₹X approved").
@@ -273,6 +275,7 @@ export interface TargetVsActualYearPerson {
   user_id: string;
   display_name: string;
   manager_id: string | null;
+  is_general_manager: boolean;
   target_lakhs: string | null;
   // PO received so far (Simpler Table D4).
   po_received_lakhs: string;

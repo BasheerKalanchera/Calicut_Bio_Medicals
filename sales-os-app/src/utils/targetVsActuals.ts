@@ -10,6 +10,12 @@ export const DASH = "—";
 export function lakhs(v: string | null): string {
   return v === null ? DASH : formatLakhs(parseFloat(v));
 }
+// A person's Target cell. The General Manager has no personal target (BR-PL-12),
+// so theirs reads "Same as SBU target" instead of a dash (Basheer, 4 Nov).
+export const SAME_AS_SBU_TARGET = "Same as SBU target";
+export function personTarget(p: { target_lakhs: string | null; is_general_manager: boolean }): string {
+  return p.target_lakhs === null && p.is_general_manager ? SAME_AS_SBU_TARGET : lakhs(p.target_lakhs);
+}
 export function percent(v: string | null): string {
   return v === null ? DASH : `${parseFloat(v).toFixed(2)}%`;
 }

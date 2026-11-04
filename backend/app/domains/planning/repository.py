@@ -564,19 +564,19 @@ class TargetVsActualRepository:
         stmt = self._apply_owner_scope(stmt, current_user)
         return list(self.db.scalars(stmt).all())
 
-    def roster(self, current_user: UserProfile, sbu_id: uuid.UUID) -> list[tuple[uuid.UUID, str]]:
+    def roster(self, current_user: UserProfile, sbu_id: uuid.UUID) -> list[tuple[uuid.UUID, str, str]]:
         """Who gets a row: every active member of the SBU plus the General
         Manager (on both SBUs' rosters), never Admin, within the caller's
-        owner scope: (user_id, display_name)."""
+        owner scope: (user_id, display_name, role_name)."""
         stmt = (
-            select(UserProfile.id, UserProfile.display_name)
+            select(UserProfile.id, UserProfile.display_name, Role.role_name)
             .join(Role, Role.id == UserProfile.role_id)
             .where(UserProfile.is_active.is_not(False))
             .where(Role.role_name != "Admin")
             .where(or_(UserProfile.sbu_id == sbu_id, Role.role_name == "General Manager"))
         )
         stmt = self._apply_owner_scope(stmt, current_user)
-        return [(u, n) for u, n in self.db.execute(stmt).all()]
+        return [(u, n, r) for u, n, r in self.db.execute(stmt).all()]
 
     def zone_of_accounts(self, account_ids: list[uuid.UUID]) -> dict[uuid.UUID, tuple[uuid.UUID | None, str | None]]:
         """ZONE-level ancestor of each hospital's zone: account_id ->
