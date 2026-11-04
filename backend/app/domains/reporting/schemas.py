@@ -235,3 +235,32 @@ class SalesSummaryRow(BaseModel):
 class SalesSummaryResponse(BaseModel):
     group_by: SalesGroupBy
     rows: list[SalesSummaryRow]
+
+
+class NoActivityCustomerRow(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    account_id: uuid.UUID
+    account_name: str
+    zone_name: str
+    # None = never contacted (no visit, call, meeting or email on record).
+    last_contact_date: date | None = None
+    last_contact_by: str | None = None
+    days_silent: int | None = None
+    active_opportunity_count: int
+    installed_asset_count: int
+
+    # The lookup hands back a timestamp; the screen shows the IST day.
+    @field_validator("last_contact_date", mode="before")
+    @classmethod
+    def _to_ist_day(cls, value):
+        if isinstance(value, datetime):
+            return value.astimezone(_IST).date()
+        return value
+
+
+class NoActivityCustomersResponse(BaseModel):
+    threshold_days: int
+    gone_quiet_count: int
+    never_contacted_count: int
+    rows: list[NoActivityCustomerRow]

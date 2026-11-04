@@ -11,6 +11,7 @@ from app.db.session import get_db
 from app.domains.organization.models import UserProfile
 from app.domains.reporting.repository import ReportingRepository
 from app.domains.reporting.schemas import (
+    NoActivityCustomersResponse,
     OpportunitiesOnHoldResponse,
     OverdueActionsResponse,
     PipelineGroupBy,
@@ -126,6 +127,16 @@ def get_opportunities_on_hold(
     return APIResponse(
         data=service.opportunities_on_hold(current_user, sbu_id=sbu_id, zone_id=zone_id, user_id=user_id)
     )
+
+
+@router.get("/no-activity-customers")
+def get_no_activity_customers(
+    zone_id: uuid.UUID | None = Query(None),
+    user_id: uuid.UUID | None = Query(None),
+    current_user: UserProfile = Depends(get_current_user),
+    service: ReportingService = Depends(_get_service),
+) -> APIResponse[NoActivityCustomersResponse]:
+    return APIResponse(data=service.no_activity_customers(current_user, zone_id=zone_id, user_id=user_id))
 
 
 @router.get("/sales-headline")

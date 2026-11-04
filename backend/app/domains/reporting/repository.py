@@ -1,19 +1,28 @@
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import Row, String, case, cast, func, or_, select
+from sqlalchemy import Row, String, case, cast, func, or_, select, text
 from sqlalchemy.orm import Session
 
 from app.domains.account.models import Account
 from app.domains.activity.models import Activity, Reminder
 from app.domains.activity.repository import _REMINDER_ORDER, _reminder_display_options
+from app.domains.asset.models import InstalledAsset
 from app.domains.audit.models import AuditLog
 from app.domains.opportunity.models import Opportunity, OpportunityItem
 from app.domains.organization.models import UserProfile, UserZone
 from app.domains.organization.repository import TEAM_SCOPE_BUILDERS, UNRESTRICTED_ROLES
 from app.domains.planning.models import TargetPlan, TargetPlanAccount
 from app.domains.product.models import Product
-from app.domains.reference.models import SBU, Brand, HoldReason, OpportunityStage, OpportunityStatus, Zone
+from app.domains.reference.models import (
+    SBU,
+    Brand,
+    HoldReason,
+    OpportunityStage,
+    OpportunityStatus,
+    Zone,
+    ZoneClosure,
+)
 
 # Net line value: BR-FIN-03 nets BUYBACK lines against PRODUCT lines --
 # extended_value_lakhs itself always stores a plain positive amount, the
@@ -650,3 +659,116 @@ class ReportingRepository:
             stmt = stmt.where(Account.zone_id == zone_id)
         stmt = stmt.order_by(days_on_hold.desc())
         return list(self.db.execute(stmt).all())
+
+    def _no_activity_subject(self, current_user: UserProfile, user_id: uuid.UUID | None) -> UserProfile | None:
+        """Whose hospitals the Customer-with-No-Activity report lists: the
+        viewer, or (the "View as" picker) someone in the viewer's team.
+        None when user_id is outside the viewer's team -- an empty list, never
+        another person's hospitals (D4)."""
+        if user_id is None or user_id == current_user.id:
+            return current_user
+        stmt = self._apply_owner_scope(select(UserProfile), current_user, None).where(UserProfile.id == user_id)
+        return self.db.scalars(stmt).first()
+
+    def _no_activity_scope_zones(self, subject: UserProfile):
+        """Zones the subject answers for, as a subquery of zone ids; None =
+        every zone (SBU Manager, General Manager, Admin -- D4). A rep: their
+        own zones. An Area Manager: their own plus their team's. The zone tree
+        below each is added by the caller."""
+        role_name = subject.role.role_name
+        if role_name in UNRESTRICTED_ROLES or role_name == "SBU Manager":
+            return None
+        people = UserProfile.id == subject.id
+        scope_builder = TEAM_SCOPE_BUILDERS.get(role_name)
+        if scope_builder is not None:
+            people = or_(people, scope_builder(subject))
+        return select(UserZone.zone_id).where(UserZone.user_id.in_(select(UserProfile.id).where(people)))
+
+    def no_activity_customers(
+        self,
+        current_user: UserProfile,
+        *,
+        zone_id: uuid.UUID | None = None,
+        user_id: uuid.UUID | None = None,
+    ) -> list[dict]:
+        """Every in-scope hospital with its last contact, who logged it, its
+        Active Opportunity count and installed-asset count (one row each, no
+        age filter -- the service decides who counts as quiet).
+
+        Last contact and the Active count come from cabio_app_account_last_contact()
+        (SECURITY DEFINER, migration 0065): a colleague's visit on their own
+        Opportunity is invisible to a rep's own RLS (D15)."""
+        subject = self._no_activity_subject(current_user, user_id)
+        if subject is None:
+            return []
+        # D5: counted per SBU. GM/Admin looking at everything count anyone's
+        # activity (sbu_id None); everyone else needs an SBU to count in.
+        if subject.role.role_name in UNRESTRICTED_ROLES:
+            sbu_id = None
+        elif subject.sbu_id is None:
+            return []
+        else:
+            sbu_id = subject.sbu_id
+
+        stmt = (
+            select(
+                Account.id.label("account_id"),
+                Account.name.label("account_name"),
+                Zone.name.label("zone_name"),
+                func.count(InstalledAsset.id).label("installed_asset_count"),
+            )
+            .select_from(Account)
+            .join(Zone, Account.zone_id == Zone.id)
+            .outerjoin(InstalledAsset, InstalledAsset.account_id == Account.id)
+            .group_by(Account.id, Account.name, Zone.name)
+            .order_by(Account.name)
+        )
+        scope_zones = self._no_activity_scope_zones(subject)
+        if scope_zones is not None:
+            stmt = stmt.where(
+                Account.zone_id.in_(
+                    select(ZoneClosure.descendant_zone_id).where(ZoneClosure.ancestor_zone_id.in_(scope_zones))
+                )
+            )
+        if zone_id is not None:
+            stmt = stmt.where(
+                Account.zone_id.in_(
+                    select(ZoneClosure.descendant_zone_id).where(ZoneClosure.ancestor_zone_id == zone_id)
+                )
+            )
+        accounts = self.db.execute(stmt).all()
+        if not accounts:
+            return []
+
+        lookup = {
+            row.account_id: row
+            for row in self.db.execute(
+                text(
+                    "SELECT account_id, last_contact_at, last_contact_by, active_opportunity_count FROM "
+                    "cabio_app_account_last_contact("
+                    "CAST(:ids AS uuid[]), CAST(:sbu_id AS uuid), CAST(:types AS text[]))"
+                ),
+                {
+                    "ids": [str(a.account_id) for a in accounts],
+                    "sbu_id": str(sbu_id) if sbu_id is not None else None,
+                    "types": list(_CONTACT_ACTIVITY_TYPES),
+                },
+            ).all()
+        }
+        if not lookup:
+            # The function refuses an SBU that isn't the caller's own; showing
+            # every hospital as "never contacted" instead would be wrong.
+            return []
+        return [
+            {
+                "account_id": a.account_id,
+                "account_name": a.account_name,
+                "zone_name": a.zone_name,
+                "installed_asset_count": a.installed_asset_count,
+                "last_contact_at": lookup[a.account_id].last_contact_at,
+                "last_contact_by": lookup[a.account_id].last_contact_by,
+                "active_opportunity_count": lookup[a.account_id].active_opportunity_count,
+            }
+            for a in accounts
+            if a.account_id in lookup
+        ]

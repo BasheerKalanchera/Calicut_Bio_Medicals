@@ -9,6 +9,8 @@ from app.domains.organization.models import UserProfile
 from app.domains.organization.repository import TEAM_SCOPE_BUILDERS, UNRESTRICTED_ROLES
 from app.domains.reporting.repository import ReportingRepository
 from app.domains.reporting.schemas import (
+    NoActivityCustomerRow,
+    NoActivityCustomersResponse,
     OpportunitiesOnHoldResponse,
     OpportunityOnHoldRow,
     OverdueActionRow,
@@ -36,6 +38,10 @@ from app.domains.reporting.schemas import (
 )
 
 _IST = ZoneInfo("Asia/Kolkata")
+
+# Customer with No Activity: quiet means this many days or more since the
+# last visit, call, meeting or email -- fixed, no picker (D6).
+NO_ACTIVITY_DAYS = 90
 
 # My Work's "High priority or 70 %+" list (D3).
 _HIGH_CHANCE = Decimal(70)
@@ -406,3 +412,37 @@ class ReportingService:
     ) -> OpportunitiesOnHoldResponse:
         rows = self.repository.opportunities_on_hold(current_user, sbu_id=sbu_id, zone_id=zone_id, user_id=user_id)
         return OpportunitiesOnHoldResponse(rows=[OpportunityOnHoldRow.model_validate(r) for r in rows])
+
+    def no_activity_customers(
+        self,
+        current_user: UserProfile,
+        *,
+        zone_id: uuid.UUID | None = None,
+        user_id: uuid.UUID | None = None,
+    ) -> NoActivityCustomersResponse:
+        """Customer with No Activity (docs/Exception-Report-Implementation-Plan.md).
+        Quiet = last contact 90 or more days ago (D6, fixed). Gone-quiet first,
+        longest silence first (D8); never-contacted after, by name."""
+        today = today_ist()
+        gone_quiet: list[NoActivityCustomerRow] = []
+        never_contacted: list[NoActivityCustomerRow] = []
+        for r in self.repository.no_activity_customers(current_user, zone_id=zone_id, user_id=user_id):
+            last_contact_at = r["last_contact_at"]
+            if last_contact_at is None:
+                never_contacted.append(NoActivityCustomerRow.model_validate({**r, "days_silent": None}))
+                continue
+            days_silent = (today - last_contact_at.astimezone(_IST).date()).days
+            if days_silent >= NO_ACTIVITY_DAYS:
+                gone_quiet.append(
+                    NoActivityCustomerRow.model_validate(
+                        {**r, "last_contact_date": last_contact_at, "days_silent": days_silent}
+                    )
+                )
+        gone_quiet.sort(key=lambda row: (-(row.days_silent or 0), row.account_name))
+        never_contacted.sort(key=lambda row: row.account_name)
+        return NoActivityCustomersResponse(
+            threshold_days=NO_ACTIVITY_DAYS,
+            gone_quiet_count=len(gone_quiet),
+            never_contacted_count=len(never_contacted),
+            rows=gone_quiet + never_contacted,
+        )

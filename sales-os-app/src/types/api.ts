@@ -1305,6 +1305,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/reporting/no-activity-customers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get No Activity Customers */
+        get: operations["get_no_activity_customers_api_v1_reporting_no_activity_customers_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/reporting/sales-headline": {
         parameters: {
             query?: never;
@@ -2009,6 +2026,20 @@ export interface components {
              */
             message: string;
             data: components["schemas"]["ModelResponse"];
+        };
+        /** APIResponse[NoActivityCustomersResponse] */
+        APIResponse_NoActivityCustomersResponse_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["NoActivityCustomersResponse"];
         };
         /** APIResponse[OpportunitiesOnHoldResponse] */
         APIResponse_OpportunitiesOnHoldResponse_: {
@@ -4165,6 +4196,39 @@ export interface components {
             is_active: boolean;
             brand: components["schemas"]["BrandResponse"];
             category: components["schemas"]["CategoryResponse"];
+        };
+        /** NoActivityCustomerRow */
+        NoActivityCustomerRow: {
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Account Name */
+            account_name: string;
+            /** Zone Name */
+            zone_name: string;
+            /** Last Contact Date */
+            last_contact_date?: string | null;
+            /** Last Contact By */
+            last_contact_by?: string | null;
+            /** Days Silent */
+            days_silent?: number | null;
+            /** Active Opportunity Count */
+            active_opportunity_count: number;
+            /** Installed Asset Count */
+            installed_asset_count: number;
+        };
+        /** NoActivityCustomersResponse */
+        NoActivityCustomersResponse: {
+            /** Threshold Days */
+            threshold_days: number;
+            /** Gone Quiet Count */
+            gone_quiet_count: number;
+            /** Never Contacted Count */
+            never_contacted_count: number;
+            /** Rows */
+            rows: components["schemas"]["NoActivityCustomerRow"][];
         };
         /** NotificationResponse */
         NotificationResponse: {
@@ -10001,6 +10065,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["APIResponse_OpportunitiesOnHoldResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_no_activity_customers_api_v1_reporting_no_activity_customers_get: {
+        parameters: {
+            query?: {
+                zone_id?: string | null;
+                user_id?: string | null;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_NoActivityCustomersResponse_"];
                 };
             };
             /** @description Validation Error */
