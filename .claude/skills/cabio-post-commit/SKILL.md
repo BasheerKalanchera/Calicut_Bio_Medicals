@@ -10,11 +10,16 @@ Moved here word for word from CLAUDE.md on 2026-10-08
 (`docs/Harness-Engineering-Implementation-Plan.md`).
 
 ## Natural Transition Checkpoint (2-Hour / Push Checkpoint)
-Immediately after completing a `git push` or completing a major milestone:
-1. If the session has been active for ~2 hours (or history exceeds ~25 turns), Claude MUST pause and NOT start the next task.
+The session clock (`.claude/hooks/session_clock.py`) decides when this is due and gives the figures; never call it on a guess. *(2026-11-04)*
+- On Basheer's message: from message 25, every 5 messages, if time worked is over 2 hours.
+- After a successful `git push`: if time worked is over 2 hours, however few messages there have been.
+- Time worked leaves out gaps of 30 minutes or more.
+
+When the clock says it's due:
+1. Claude finishes the current step and does NOT start the next task, unless Basheer says to carry on.
 2. Ensure this session's handover note (`.claude/session-handover-plan.md` or `-build.md`) has the exact next step recorded.
 3. Prompt Basheer:
-   > "🔄 **Clean Transition Point Reached:** Code is pushed and handover note is saved. To reset context to a clean slate, please type `/exit` now."  *(2026-10-03)*
+   > "🔄 **Clean Transition Point Reached:** The handover note is saved. To reset context to a clean slate, please type `/exit` now."  *(2026-10-03)*
 
 ## Post-commit checklist
 Feature commits (`feat:`/`fix:`) are committed **and pushed** by Claude Code so
