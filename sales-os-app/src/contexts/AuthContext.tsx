@@ -70,6 +70,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // caused the login error to flash and then disappear (a rapid
   // double-submit was also part of it -- see signIn()'s comment below).
   const signingInRef = useRef(false);
+  // True from the moment this tab signs out (button, idle timer, refused
+  // session) until the user signs in here again. While on, a stray session
+  // -- e.g. a background token refresh that finished just before the
+  // sign-out -- must not put the app screens back on top of the login
+  // screen. Seen 4 Nov: login screen, app flash for ~0.7 s, login screen.
+  const signedOutRef = useRef(false);
 
   // Supabase Auth has no idea user_profile.is_active exists -- it's a plain
   // app-level column, not synced to Auth, so a deactivated account's
@@ -85,6 +91,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUserProfile(null);
       return;
     }
+    // Signed out in this tab and not signed in again here: drop the session.
+    if (signedOutRef.current) return;
     // A session restored without signIn() (e.g. a login in another tab) ends
     // the "deliberate sign-out" state set by signOut(), as signIn() would.
     setDeliberateSignOut(false);
@@ -92,6 +100,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     for (let attempt = 0; ; attempt++) {
       try {
         const profile = await getCurrentUser();
+        // A sign-out may have happened while /auth/me was in flight.
+        if (signedOutRef.current) return;
         setSession(s);
         setUserProfile(profile);
         setSessionCheckFailed(false);
@@ -125,17 +135,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, s) => {
+      (event, s) => {
+        // Whoever signs out -- the button, the idle timer, an expired session
+        // -- the previous user's cached data must not outlive it.
+        if (event === "SIGNED_OUT") {
+          signedOutRef.current = true;
+          queryClient.clear();
+        }
         if (signingInRef.current) return; // signIn() below already owns this transition
+        if (s && signedOutRef.current) return; // stray session after a sign-out
         applySession(s).catch(() => {});
       }
     );
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [queryClient]);
 
   async function signIn(email: string, password: string) {
     signingInRef.current = true;
+    signedOutRef.current = false;
+    // A new login ends the previous sign-out's reason, so an old "idle" never
+    // shows on a later forced sign-out.
+    setSignOutReason(null);
     setDeliberateSignOut(false);
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -163,8 +184,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // LoginScreen's first render can see the old (wrong) reason.
     setSignOutReason(reason ?? null);
     setSessionCheckFailed(false);
-    // Stray 401s from requests still in flight must not hard-reload the page
-    // (api.ts); cleared again by the next signIn().
+    // Stray 401s from requests still in flight must not be treated as an
+    // expired session (api.ts), and a stray session must not bring the app
+    // back (signedOutRef); both cleared again by the next signIn().
+    signedOutRef.current = true;
     setDeliberateSignOut(true);
     queryClient.clear();
     await supabase.auth.signOut();

@@ -42,8 +42,8 @@ api.interceptors.request.use(async (config) => {
 // True from the moment AuthContext.signOut() starts until the next signIn().
 // A request still in flight (or fired by a mounted screen) while we sign out
 // gets a 401 and its token refresh fails -- that is expected, not an expired
-// session, so the interceptor below must not hard-reload the page for it
-// (the reload made the login screen load a second time after Sign out).
+// session, so the interceptor below must not treat it as one (it used to
+// hard-reload the page, which made the login screen load a second time).
 let deliberateSignOut = false;
 
 export function setDeliberateSignOut(value: boolean): void {
@@ -76,8 +76,12 @@ api.interceptors.response.use(
         return api(originalRequest);
       }
       if (!deliberateSignOut) {
+        // Expired session: sign out and let AuthContext's listener show the
+        // login screen (it also clears cached data). No page reload -- the
+        // reload made the login screen load twice. Flag set so further
+        // refused requests don't repeat this; cleared by the next signIn().
+        deliberateSignOut = true;
         supabase.auth.signOut();
-        window.location.href = "/";
       }
     }
 
