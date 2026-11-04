@@ -22,12 +22,18 @@ session edits this note._
 - D16 at 768 and 1280 px: Pass (Basheer, 3 Nov). Code review of
   `19141b8..HEAD` (medium): 8 findings, none a bug; two small fixes proposed
   (shared Pipeline header strip; Overdue "Sort by" always shown, greyed
-  while empty): committed 3 Nov as `7fa039c`; seen on Dev, looks good
+  while empty): committed 3 Nov as `7fa039c`, pushed with docs batch
+  `fe0bd00`; seen on Dev, looks good
   (Basheer). pytest 1,508 passed, ruff, tsc, lint clean. Retro for this
   part done (4 corrections), in Progress-Archive 3 Nov (late).
-- **Next (regression starts 4 Nov):** (b) Tabs E2E from P1 on the five-tab
-  layout (29 steps + P2 sign-ins, unrecorded; confirm the Dev backend start
-  time first); (c) re-test `/build`'s sign-out fix; (d) TvA plan: 37 lettered
+- **4 Nov: Tabs E2E done, 30 of 30 recorded (P1–F2 + new E4), all Pass.**
+  Fails fixed in `413abf8` (pushed to origin/main): D4 (a "submitted" bell
+  click on a decided plan now opens Team Plans, Tabs plan D7) and D18
+  (Team Plans Annual view lists everyone as a reporting tree). tsc, lint
+  clean; D4 and E4 re-run Pass on Dev. Detail, retro (4 corrections) and
+  the Backlog entry (GM seeing reps' targets, waits for the leadership
+  demo) are in Progress-Archive 4 Nov (Build & Test) and the docs batch.
+- **Next:** (c) re-test `/build`'s sign-out fix; (d) TvA plan: 37 lettered
   steps, 5 re-run 3 Nov, about 32 not (approximate, counted from the plan).
   Further fixes go in a new `fix:` commit at the end. Then MUI step 8 below.
 - Open: Sales Report and Opportunities On Hold likely need the same fixed

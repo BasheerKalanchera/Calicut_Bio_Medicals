@@ -9,8 +9,9 @@ tab looks at any period or SBU, D15), both pushed and now in `main`;
 `/code-review` medium done (8 findings, 1 fixed). The E2E re-run on 2 Nov
 found D17 (a My Targets tab), decided 2 Nov. Step 4 (D17) built 2 Nov on
 `worktree-build`: `cfa886c`; `/code-review` medium done (8 findings, 3
-fixed in `19141b8`); merged into `main` 3 Nov (`1bf0260`); not seen in a
-browser. Test plan rewrite and E2E re-run pending. No migration.
+fixed in `19141b8`); merged into `main` 3 Nov (`1bf0260`). E2E re-run on
+the five-tab layout done 4 Nov: 30 of 30 recorded, all Pass after the
+D7/D18 fixes (`413abf8`, pushed; D4 and E4 re-run Pass). No migration.
 **Traceability rows:** signed 3.1 ("Sales target configuration:
 individual, team, regional" — 6.4 Target Management; layout only, row
 stays Done).
@@ -144,6 +145,16 @@ agreed by Basheer, 2026-10-31.
     the four Area Managers report to the GM directly, and the GM set all
     four Oct–Dec targets. So on Dev their My Targets reads "Not set yet",
     and the SBU target stays on their Team Targets tab.
+- D18. Found at E1 of the E2E (4 Nov). Team Plans in the **Annual** view
+  lists everyone on the roster (the four quarters together), as the
+  Quarter view does, not only people with a plan: a person with no plan in
+  any quarter shows "Not set" for each quarter and an Annual Total of
+  ₹0.0 L; the count line reads "across N people", not "N reps". Until now
+  the Annual list held only people with at least one plan row, so a rep or
+  Area Manager who had not started was missing — Basheer, 2026-11-04.
+  Built 4 Nov in `TargetPlanningScreen.tsx` with the D7 fix (a "submitted"
+  click now waits for the refreshed waiting list and opens Team Plans when
+  the plan is no longer on it); both go in the end-of-E2E `fix:` commit.
 
 ## Figures and sources
 

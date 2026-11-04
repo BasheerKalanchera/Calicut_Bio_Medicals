@@ -749,3 +749,53 @@ the full regression testing first" — I proposed committing the small fix at
 once; CLAUDE.md batches small fixes to the end of the feature's E2E. No
 tracker line: none touched live data, UAT or lost work, and no tool check
 would have caught them.
+
+## 4 Nov 2026 — Build & Test: Planning tabs E2E on the five-tab layout, 30 of 30 recorded
+
+**Result:** P2, A1–A10, B1–B5, C1–C4, D1–D5, E1–E4, F1–F2 all recorded Pass.
+Dev backend restarted 4 Nov 06:28 (last backend commit 2 Nov), so P1 held.
+Basheer ran every step; I recorded each as he reported it and read the saved
+plans back from Dev (read-only, all three RLS settings set and checked).
+
+**Findings:**
+- **C1, C2 (my test-plan wording, not the app):** C1 said "plans from all
+  four quarters" and left out "of the chosen SBU" (Imaging: Basheer K ₹55.0
+  L; Critical Care: Arun Adarsh ₹30.0 L; each with "3 more waiting in other
+  periods or SBUs", Dev 4 Nov). C2 listed Vivek on Team Targets, but for the
+  GM that tab shows Area Managers only (`get_team_targets` →
+  `sbu_top_people`); reps appear on Team Plans. Plan wording corrected.
+  Basheer then asked for the GM to see reps' targets there too, view only,
+  and decided to **wait**: Backlog entry "Team Targets: let the GM (and
+  Admin) see reps' targets, view only", built only if the leadership team
+  asks after his demo.
+- **D4 (real bug, fixed `413abf8`):** a "plan submitted" bell click opened
+  Needs Your Approval even after the plan was approved. The opening-tab code
+  sent every "submitted" click there without checking the plan was still
+  waiting (D7 never built). It now waits for the refreshed list: still
+  waiting → Needs Your Approval; decided → Team Plans with the plan opened
+  up; list failed → Needs Your Approval.
+- **E1 / D18 (real gap, fixed `413abf8`):** Team Plans, Annual view, listed
+  only people with at least one plan, so a rep or Area Manager who had not
+  started was missing, unlike the Quarter view. Basheer chose: list everyone
+  on the roster, "Not set" per quarter, ₹0.0 L, "across N people" (Tabs plan
+  D18). My first fix listed them flat; he re-ran E4 and saw it was not in the
+  Quarter view's hierarchy. Second fix: same reporting tree and indentation
+  (`asTree`), "reports to …" caption, former members last, sorted by name.
+- **E1 pop-up:** my step asked for a "plan pop-up from Team Plans"; Team
+  Plans opens a plan in place, and the only pop-up is Approve/Reject on
+  Needs Your Approval (Pass at all widths).
+- Checks before the commit: tsc and lint clean (135 existing warnings, 0
+  errors); no backend change, so pytest not rerun. Commit `413abf8`, pushed.
+  Combined diff reviewed by me before the re-run (no other findings).
+
+**Retro — corrections from Basheer this session: 4.**
+1. C1/C2: test-plan expected wording was wrong against the data and code.
+2. D1: I told a rep to pick an SBU ("Again Rep's don't get the ability to
+   choose a SBU").
+3. E1: a pop-up step for Team Plans that does not exist.
+4. E4: my Annual-list fix ignored the Quarter view's hierarchy and
+   indentation.
+Pattern: three of the four are test-step or fix wording written without
+reading the matching Quarter-view code or the role's screen first. No tracker
+line: none touched live data, UAT or lost work, and no tool check would have
+caught them.

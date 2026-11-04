@@ -744,6 +744,26 @@ look of `StatTile` and `SectionCard` in `ReportingUI.tsx`. Possibly in the
 own. Also open: D16 is seen only on a phone; 768 and 1280 px not yet
 looked at.
 
+### Team Targets: let the GM (and Admin) see reps' targets, view only — waits for the leadership demo (Basheer, 4 Nov 2026)
+
+Found in the Tabs E2E (section C2, 4 Nov). On Team Targets the GM and Admin
+see only the Area Managers (`get_team_targets` → `sbu_top_people`; plan D45),
+because the tab divides the SBU target among the first level below it. A rep's
+target is set by their Area Manager out of that Area Manager's own figure, so
+the GM can't see it there, though Team Plans does show reps' plans. Basheer
+would like the GM to see them, view only, "just like Team Plans". **Decision:
+not now.** Basheer demos the revised Target & Coverage Planning screen to the
+Cabio leadership team first; build it only if they ask.
+
+If asked, the shape proposed 4 Nov (not yet answered by Basheer): reps as
+smaller, button-free lines under their Area Manager, left out of the Total
+(else they would be counted twice against the SBU target); shown to Admin as
+well as the GM; same in the Year view. Example (Dev, 3 Nov): Critical Care
+Oct–Dec 2026 Arun Adarsh ₹100.0 L with Vivek ₹90.0 L under him. Needs the
+server to send the second level (today it sends one) and both Team Targets
+cards (`TeamTargetsPanel.tsx`, quarter and year) to draw it. Related: "Target
+Planning: GM can't change a target set below them" above.
+
 ### Front-end consistency audit — parked, undecided (raised 2026-09-30)
 
 The 2026-09-30 deal-edit bug came from duplicated screen code: the deal
