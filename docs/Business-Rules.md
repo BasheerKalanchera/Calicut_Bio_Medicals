@@ -335,7 +335,7 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
   1. **Automatic:** any Opportunity past the Demo stage — Clinical Evaluation, Negotiation, Order, Delivery & Installation, or Payment Pending (`opportunity_stage.display_order > 30`) — is automatically High Priority. Computed at query time from the current stage; no stored field, nothing to keep in sync.
   2. **Manual:** an Opportunity still in Lead, Qualified, or Demo stage (`display_order` 10/20/30) does not qualify automatically, but can be marked High Priority by hand via a flag a person sets explicitly.
 * **Rationale:** Confirmed by Haroon, 2026-09-14, replacing an earlier proposed value/closure-date threshold rule (₹30L Imaging / ₹15L Critical Care, within 14 days of Expected Closure Date) that was never approved — see `docs/Backlog.md`'s "Auto-computed High Priority deal flag" entry for that superseded derivation. A deal advancing past Demo already represents real, demonstrated commitment regardless of its size or exact closing date, which is a simpler and more defensible signal than a tunable Lakhs/day threshold.
-* **Downstream use:** feeds the Insights Dashboard's missing "High-Priority Deals" tile, the Kanban board's priority sort (alongside its existing probability ordering), and the still-unbuilt Weekly Follow-up Report.
+* **Downstream use:** feeds the Insights Dashboard's missing "High-Priority Deals" tile, the Kanban board's priority sort (alongside its existing probability ordering), and the Weekly Follow-up Report (My Work, built 28 Oct).
 * **Enforcement:** `opportunity.high_priority_manual` (migration `0042`) holds the manual half; `PipelineOpportunity.is_high_priority` (`backend/app/domains/opportunity/schemas.py`) computes the effective flag as `stage.display_order > 30 OR high_priority_manual`, served on both `GET /opportunities/pipeline` and `GET /opportunities/{id}`. The badge and checkbox UI (`b000a09`) and the Kanban/List priority sort (`90a752a`) shipped 2026-09-15.
 
 ### BR-OP-16: Closing Date Passed (2026-09-29)
@@ -559,6 +559,17 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
   11 and 13 Oct, section 9).
 * **Enforcement:** none — withdrawn before it was built
   (`docs/Next-Action-Rules-Implementation-Plan.md` D21).
+
+### BR-ACC-06: Customer With No Activity (agreed 2026-11-04, not built)
+* **Rule:** a customer is on the "Customer with No Activity" report when nobody has logged a visit, call, meeting or email on it, or on one of its Opportunities, for 90 days or more, or ever. The 90 days are fixed, with no box to change them.
+* **What counts:** visits, calls, meetings and emails only, as in BR-OP-20. An activity dated in the future doesn't count. Activity on an Opportunity whose products are all accessories doesn't count; an Opportunity with no products yet does.
+* **Which customers:** every customer, dealers included. Each branch is its own line; a visit to the main hospital doesn't clear its branch.
+* **Per SBU:** an Imaging list ignores a Critical Care visit, and the reverse. A visit by someone with no SBU (General Manager, Admin) counts for both. The all-customers view of a General Manager or Admin counts anyone's visit.
+* **Who sees what:** customers have no owner, so a rep's list is every customer in their zones, including zones below them. An Area Manager's is the same for their own zones plus their team's. An SBU Manager, General Manager and Admin see all customers. A rep sees a colleague's last activity date, name and Active Opportunity count on a line, never the Opportunity or the notes.
+* **Order:** customers that went quiet come first, longest silence at the top; never-contacted customers follow. Two numbers above the list count each group.
+* **Effect:** a list only. Nothing on the customer or an Opportunity changes, and nobody gets a notification.
+* **Not the same as BR-OP-20:** that rule is about one Active Opportunity nobody has visited; this one is about a whole customer.
+* **Enforcement:** none yet — see `docs/Exception-Report-Implementation-Plan.md` (D2–D13, D15); E2E plan `docs/Customer-No-Activity-Report-Manual-E2E-Test-Plan.md`.
 
 ---
 

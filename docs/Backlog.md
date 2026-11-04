@@ -15,9 +15,11 @@ this is the single list to call from. When answered, record the answer in
 its home doc and delete the line. The tidy-up sweep (check 8) asks Basheer
 about any line older than 14 days (Basheer, 2026-10-16).
 
-- **Haroon** (asked 2026-10-16) — which measures go on the Salesperson
-  Performance page: results, conversion, pipeline, activity; drop or add?
-  `docs/Discussion-Salesperson-Performance-Report-2026-10.md` section 5 Q1.
+- **Haroon** (asked 2026-10-16; re-worded 2026-11-03) — yes or no on four
+  additions for the new Performance tab of the Insights dashboard: win
+  rate, lost count and reasons, a past month, activities by type; and
+  whether the tab gets an Excel/PDF download.
+  `docs/Discussion-Salesperson-Performance-Report-2026-10.md` section 10.4.
 - **Haroon** (asked 2026-10-16) — product cost (approved by him
   2026-09-14, BR-CAT-04, not built): who keeps the cost figures up to
   date, and is it needed in Phase 1 or can it wait for Phase 2? The signed
@@ -727,6 +729,41 @@ skips its own sign-out and reload. After the merge, Basheer signs out on Dev
 and checks the login screen loads once; remove this entry if it does. If it
 still loads twice, the cause is elsewhere and this entry needs rewriting.
 
+### Fixed header on other report screens: Sales Report, Opportunities On Hold — not started (3 Nov 2026)
+
+On a phone the Overdue tab, Target vs Actuals tab, Pipeline tab and Pipeline
+Report now keep their title, pickers and tiles fixed while the list scrolls
+(Simpler Table D15, D16, `a1f0147`). Two more report screens are built the
+same old way, with the whole screen scrolling as one box, so the same
+complaint is likely: Sales Report (`SalesReportScreen.tsx`, outer box at
+line 92) and Opportunities On Hold (`OpportunitiesOnHoldReportScreen.tsx`,
+line 23). Not read beyond that line; check each on a phone first. The fix
+is the same split (fixed strip, scrolling box) with the opt-in "compact"
+look of `StatTile` and `SectionCard` in `ReportingUI.tsx`. Possibly in the
+"Front-end standardisation fixes, by screen" entry above rather than its
+own. Also open: D16 is seen only on a phone; 768 and 1280 px not yet
+looked at.
+
+### Team Targets: let the GM (and Admin) see reps' targets, view only — waits for the leadership demo (Basheer, 4 Nov 2026)
+
+Found in the Tabs E2E (section C2, 4 Nov). On Team Targets the GM and Admin
+see only the Area Managers (`get_team_targets` → `sbu_top_people`; plan D45),
+because the tab divides the SBU target among the first level below it. A rep's
+target is set by their Area Manager out of that Area Manager's own figure, so
+the GM can't see it there, though Team Plans does show reps' plans. Basheer
+would like the GM to see them, view only, "just like Team Plans". **Decision:
+not now.** Basheer demos the revised Target & Coverage Planning screen to the
+Cabio leadership team first; build it only if they ask.
+
+If asked, the shape proposed 4 Nov (not yet answered by Basheer): reps as
+smaller, button-free lines under their Area Manager, left out of the Total
+(else they would be counted twice against the SBU target); shown to Admin as
+well as the GM; same in the Year view. Example (Dev, 3 Nov): Critical Care
+Oct–Dec 2026 Arun Adarsh ₹100.0 L with Vivek ₹90.0 L under him. Needs the
+server to send the second level (today it sends one) and both Team Targets
+cards (`TeamTargetsPanel.tsx`, quarter and year) to draw it. Related: "Target
+Planning: GM can't change a target set below them" above.
+
 ### Front-end consistency audit — parked, undecided (raised 2026-09-30)
 
 The 2026-09-30 deal-edit bug came from duplicated screen code: the deal
@@ -1067,8 +1104,11 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   page with an Excel download. The Finance incentive file (sections
   7.2–7.4, frequency undecided) is not a signed requirement — **parked for
   Phase 2**, with the answers so far: 50 % of incentive at PO, 50 % at
-  full payment; for a retention order, the second half at close. Open:
-  the measures (Waiting on people, above).
+  full payment; for a retention order, the second half at close.
+  **2026-11-03 (Basheer):** the dedicated page is replaced by a
+  Performance tab on the Insights dashboard (shape agreed, discussion
+  note section 10). Open: Haroon's yes/no on its four additions and an
+  Excel/PDF download (Waiting on people, above).
 
 - **Payment collection: overdue alerts, Finance list, retention, payment
   terms per order — moved to a discussion paper 2026-10-13.** Latheef Bhai
@@ -1245,16 +1285,6 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   relationship going quiet before it's lost. Found missing 2026-09-14. Not
   blocked on a decision — the data (`activity.activity_date` per account) is
   already there — just not scoped or built yet.
-
-- **Weekly Follow-up Report — not built, no longer blocked.** PRD 5.8 asks
-  for a weekly report surfacing high-priority deals, deals over 70% likely to
-  close, stagnant deals, and overdue reminders. Found missing 2026-09-14.
-  All four inputs now exist or are rule-confirmed (win probability, Stagnant
-  Deals, Reminders, and the High Priority rule — see BR-OP-15,
-  `Business-Rules.md`) — just not built yet. Also include a "Closing date
-  passed" section (BR-OP-16), decided 2026-09-29.
-  Plan: `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md` (Draft,
-  2026-10-11) — the rep's "My Work" desk.
 
 - **"Stuck in stage" (BR-OP-06 as reworded) — later, once reps log
   regularly (Basheer, 2026-10-11).** An Opportunity sitting in one stage

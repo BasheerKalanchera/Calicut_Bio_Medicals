@@ -7,6 +7,8 @@ Actuals is finished. **2026-10-16:** Q3 and Q4 answered; the Finance
 download (7.2–7.4) parked for Phase 2 — see section 8. Still open with
 Haroon: Q1, the measures. **2026-10-31:** overlap with My Work and Target
 vs Actuals checked; nothing built until Q1 is answered — section 9.
+**2026-11-03:** a new "Performance" tab on the Insights dashboard, shape
+agreed; Q1 re-asked as four yes/no additions — section 10.
 **Participants:** Basheer (decisions), Haroon / Cabio leadership (business
 sign-off), Claude (options and analysis).
 **Origin:** Basheer, 2026-10-03: "Is a report of a salesperson's performance
@@ -295,7 +297,8 @@ moved to UAT before the first report is due.
 
 ## 8. Decisions — 2026-10-16 (Basheer)
 
-- **Q3 (lighter or fuller):** one dedicated page.
+- **Q3 (lighter or fuller):** one dedicated page. *Replaced 2026-11-03 by
+  a Performance tab on the Insights dashboard — section 10.*
 - **Q4 (export):** an Excel download.
 - **Finance incentive download (7.2–7.4):** not a signed requirement —
   parked for Phase 2. Answers so far, kept for then:
@@ -340,7 +343,9 @@ Once Haroon answers Q1:
   page decided on 16 Oct (section 8, Q3).
 
 So the 16 Oct page decision is looked at again once Q1 is answered; it
-stands until then — Basheer, 2026-10-31.
+stands until then — Basheer, 2026-10-31. *Looked at again 2026-11-03
+before Q1: replaced by a Performance tab on the Insights dashboard —
+section 10.*
 
 **Technical addendum.** My Work: `MyWorkScreen.tsx` Summary tab (lines
 331–350: My hospitals, Opportunities, Next actions groups). Target vs
@@ -349,3 +354,146 @@ previous/next quarter or year arrows). Insights tabs:
 `InsightsDashboardScreen.tsx:38–43` (`TABS`), Pipeline `groupBy` "rep"
 (lines 27–34, 126), Team Activity `getActivityLevels` over the last 30
 days (lines 153, 266), Overdue (lines 307–313).
+
+## 10. A "Performance" tab on the Insights dashboard — 2026-11-03
+
+Basheer (3 Nov): instead of asking Haroon what he looks at today, give
+him choices. Talking it through, Basheer agreed that most of section 2
+repeats what Insights already shows (section 9), and asked for the
+missing parts as a new tab on the Insights dashboard. Examples below are
+made up.
+
+### 10.1 What it adds — four gaps
+
+Insights already shows each person's target against Won, open pipeline,
+overdue actions and an activity count. Missing (screens read 3 Nov):
+
+1. **Win rate per person** — "won 3 of 5 closed, 60 %". Today there is
+   one team-wide win rate only (Sales Report).
+2. **Number lost and the reasons, per person** — "2 lost: Price,
+   competitor". Each lost Opportunity already records one reason from a
+   fixed list.
+3. **A past month** — e.g. "August". Today Target vs Actuals steps by
+   quarter or year; Pipeline, Overdue and Team Activity show today only.
+   Pipeline and Overdue stay as they are.
+4. **Activities by type, per person** — "12 visits, 8 calls, 2 demos"
+   instead of one total; Team Activity today is one total, last 30 days.
+
+All four use data the app already records; nothing new to enter.
+
+### 10.2 Why a tab, not changes to the existing tabs
+
+- One period box (month, quarter or year, past ones too) serves all
+  four; spread over tabs, each would need its own and they could drift
+  apart.
+- The existing tabs don't change.
+- It answers signed 11.1 "salesperson performance" where people already
+  look.
+- It joins the 16 Oct decision (a dedicated page) with the 31 Oct one
+  (don't repeat Insights): the dedicated page, placed inside Insights.
+  It replaces the 16 Oct "dedicated page" (section 8, Q3).
+
+### 10.3 Shape — agreed by Basheer, 3 Nov ("This looks good")
+
+- **Results on the tab too:** Target, Won and % of target sit beside the
+  new columns, worked out exactly as on Target vs Actuals (split credit
+  included), so the two tabs always agree.
+- **Who sees it:** everyone; a salesperson sees only their own row,
+  managers their team, Haroon and Admin everyone (today's access rules).
+- **A single month:** Won, win rate, losses and activities, with no
+  target or % — targets are set per quarter. Target and % show when a
+  quarter or year is chosen.
+- **A table, one row per person,** grouped and indented by who reports
+  to whom, as Target vs Actuals already does; each manager's row carries
+  the team total. Columns can be sorted (e.g. by win rate). On a phone
+  each row becomes a card (Frontend standards §6.11). About 15 people
+  (Basheer, 7 Oct) fit one laptop screen.
+- **Click a figure** to see the Opportunities behind it, like the other
+  reports.
+
+Example (made up):
+
+| Person | Target | Won | % | Win rate | Lost | Visits | Calls | Demos |
+|---|---|---|---|---|---|---|---|---|
+| **North Kerala — Area Manager A** | ₹160 L | ₹120 L | 75 % | 58 % | 5 | 40 | 31 | 6 |
+| Rep 1 | ₹30 L | ₹24 L | 80 % | 60 % | 2 — Price 1, Competitor 1 | 12 | 8 | 2 |
+| Rep 2 | ₹25 L | ₹10 L | 40 % | 33 % | 4 — mostly Price (3) | 6 | 3 | 0 |
+
+**Lost reasons when there are several.** Each lost Opportunity has one
+reason, so "several" means several losses for different reasons.
+- The cell shows the number lost and the most common reason: "4 — mostly
+  Price (3)"; a tie shows both: "2 — Price 1, Budget 1".
+- Clicking it opens the full breakdown: each reason, its count and the
+  Opportunities under it.
+- One team-wide line at the top of the tab: "Team losses this quarter:
+  Price 9, Competitor 4, Budget 2".
+
+How many reasons the fixed list holds is not counted (it lives in the
+Dev database; a read-only query can list them).
+
+**Overlap:** the team-wide losses line is a small part of the signed
+Competitive Loss Report (Traceability row 1.4, Not started), which also
+needs losses by competitor. It doesn't close that row.
+
+**Download:** Excel/PDF export of this tab is added only after checking
+with Haroon (Basheer, 3 Nov) — question 5 in 10.4. The 16 Oct Excel
+decision (section 8, Q4) waits on his answer.
+
+### 10.4 The question for Haroon (replaces Q1)
+
+"Here is the new Performance tab on the Insights dashboard. Which of
+these do you want — yes or no for each?"
+
+1. Win rate for each person. *Suggested: yes — Zoho, Dynamics,
+   Salesforce and SAP all treat it as core (10.5).*
+2. Number lost and the reasons, for each person. *Suggested: yes — it
+   shows why a person is losing, not just how often.*
+3. Looking back at a past month. *Suggested: yes, for Won and
+   activities.*
+4. Activities split by type (visits, calls, demos). *Suggested: yes,
+   with the same choice of period.*
+5. A download of this tab, as Excel or PDF — for review meetings,
+   sharing with people who don't use the app, and keeping a record of
+   how a quarter looked. *Suggested: yes, Excel.*
+
+### 10.5 What leading products do (searched 3 Nov)
+
+All four put three measures at the core and read them together: % of
+target, win rate and average order value (total won ÷ number won). A
+high win rate with small orders can still miss target.
+
+- **Zoho CRM:** a standard "Sales Person's Performance" report (won per
+  person); average size and win rate are separate custom reports;
+  target-based reports need Zoho Analytics.
+- **Dynamics 365:** the Sales Analytics add-on shows conversions, win
+  rates, average size and revenue; a partner guide advises the typical
+  (median) size, because a few big orders pull the average up.
+- **Salesforce:** guides list % of target, win rate and average size as
+  core, then pipeline cover, sales cycle length, activity and forecast
+  accuracy.
+- **SAP Sales Cloud:** four headline figures — sales by month, the same
+  month last year, quota, and win rate (month by month against last
+  year).
+
+Mostly partner and blog pages, not the vendors' own manuals; SAP's page
+is from an older release — the general pattern, not exact feature lists.
+Sources: zoho.com/crm/help/reports;
+zoho.com/analytics/blog/sales-team-analytics.html; Microsoft AppSource
+"microsoftd365.salesanalytics"; randgroup.com Dynamics 365 dashboards
+guide; metabase.com/integrations/dynamics-365-sales; revops.io
+"measuring sales rep success"; help.sap.com (sbo92) sales performance
+KPIs.
+
+### 10.6 Technical addendum (2026-11-03)
+
+- Insights tabs: `InsightsDashboardScreen.tsx:37–43` (`TabId`, `TABS` —
+  target, pipeline, activity, overdue; activity and overdue
+  `managerOnly`); Team Activity window `today.subtract(30, "day")`
+  (line 134).
+- Sales Report: `SalesReportScreen.tsx:20–24` (`PERIOD_OPTIONS` — this
+  month, this quarter, all time); headline `win_rate` is team-wide
+  (lines 108–112); per-rep rows carry revenue and `won_count` only.
+- Lost reasons: `loss_reason` table (`reason_code`, `reason_name`,
+  `is_active`); one `loss_reason_id` per Opportunity
+  (`docs/Physical-Schema.sql`).
+- Phone: shared table-or-cards component (Frontend standards §6.11).

@@ -150,9 +150,19 @@ export default function TargetVsActualsSection({ onPersonOpenChange }: Props) {
   );
 
   return (
-    // While a person's own screen is open the title and pickers are hidden:
-    // changing the period there would show them for another quarter unannounced.
-    <SectionCard title="Target vs Actuals" action={picker} stackActionOnPhone hideHeader={!!openPerson}>
+    // The title and pickers stay fixed under the tab row; only the card below
+    // scrolls (Frontend standards §6.1, Simpler Table D16). The dashboard's own
+    // scrolling is switched off for this tab to make that so.
+    <Box sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", gap: 1.5 }}>
+      {/* While a person's own screen is open the title and pickers are hidden:
+          changing the period there would show them for another quarter unannounced. */}
+      {!openPerson && (
+        <Box sx={{ flexShrink: 0 }}>
+          <SectionCard compact title="Target vs Actuals" action={picker} stackActionOnPhone>{null}</SectionCard>
+        </Box>
+      )}
+      <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+    <SectionCard title="Target vs Actuals" hideHeader>
       <Box ref={topRef} />
       <LoadingOrEmpty
         isLoading={active.isLoading}
@@ -225,5 +235,7 @@ export default function TargetVsActualsSection({ onPersonOpenChange }: Props) {
         </Box>
       )}
     </SectionCard>
+      </Box>
+    </Box>
   );
 }

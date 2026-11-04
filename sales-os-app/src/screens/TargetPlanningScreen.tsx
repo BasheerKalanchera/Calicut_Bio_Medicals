@@ -186,7 +186,12 @@ function hospitalCount(t: TargetPlan): string {
 // One person's target amounts across a fiscal year's 4 quarters -- the
 // team rollup's per-rep grouping (Group H's "grouped rows" layout).
 interface AnnualPerson {
-  user: TargetPlan["user"];
+  user_id: string;
+  display_name: string;
+  // Who they report to and whether they are still on the team, from the
+  // roster, so the list is a tree as in the Quarter view (Tabs plan D18).
+  manager_id: string | null;
+  on_team: boolean;
   total: number;
   byQuarter: Record<string, TargetPlan | undefined>;
 }
@@ -385,15 +390,45 @@ export default function TargetPlanningScreen({
     }
   }
   const teamAnnualByUser = new Map<string, AnnualPerson>();
+  // Everyone on the roster is listed, as in the Quarter view, even with no plan
+  // in any quarter: "Not set" each quarter, total 0 (Tabs plan D18). The
+  // latest quarter's roster decides who reports to whom.
+  for (const q of [...annualRosterQueries].reverse()) {
+    for (const p of q.data?.people ?? []) {
+      if (!teamAnnualByUser.has(p.user_id)) {
+        teamAnnualByUser.set(p.user_id, {
+          user_id: p.user_id,
+          display_name: p.display_name,
+          manager_id: p.manager_id,
+          on_team: p.on_team,
+          total: countedByUser.get(p.user_id) ?? 0,
+          byQuarter: {},
+        });
+      }
+    }
+  }
   for (const q of annualTeamQueries) {
     for (const t of q.data ?? []) {
       if (!teamAnnualByUser.has(t.user_id)) {
-        teamAnnualByUser.set(t.user_id, { user: t.user, total: countedByUser.get(t.user_id) ?? 0, byQuarter: {} });
+        teamAnnualByUser.set(t.user_id, {
+          user_id: t.user_id,
+          display_name: t.user.display_name,
+          manager_id: null,
+          on_team: false,
+          total: countedByUser.get(t.user_id) ?? 0,
+          byQuarter: {},
+        });
       }
       teamAnnualByUser.get(t.user_id)!.byQuarter[t.planning_period] = t;
     }
   }
-  const teamAnnualList = Array.from(teamAnnualByUser.values()).sort((a, b) => b.total - a.total);
+  // As the Quarter view: a tree by reporting line, each level by name, and
+  // former members last (D76).
+  const teamAnnualList = Array.from(teamAnnualByUser.values()).sort((a, b) => a.display_name.localeCompare(b.display_name));
+  const teamAnnualRows = [
+    ...asTree(teamAnnualList.filter((p) => p.on_team)),
+    ...teamAnnualList.filter((p) => !p.on_team).map((person) => ({ person, depth: 0, managerName: null })),
+  ];
   const annualRollupTotal = annualRosterQueries.reduce((sum, q) => sum + Number(q.data?.total_lakhs ?? 0), 0);
 
   // --- Tabs (Target-Coverage-Planning-Tabs plan D2-D10) ---
@@ -436,20 +471,26 @@ export default function TargetPlanningScreen({
   // not move the manager to another tab.
   const [focus, setFocus] = useState(initialFocus);
   const [openingTab, setOpeningTab] = useState<PlanTabId | null>(null);
+  // A "plan submitted" click: is that plan still waiting? null until the
+  // freshly loaded list has answered (Tabs plan D7).
+  const [stillWaiting, setStillWaiting] = useState<boolean | null>(null);
   // A failed approval list must not leave the screen blank: open as if
   // nothing were waiting.
   const approvalListReady = (pendingLoaded || pendingFailed) && !pendingFetching;
-  // A "plan submitted" click opens the approval tab without waiting for the
-  // list: the list in memory may be up to 30 seconds old and not yet hold
-  // that plan, so it is refreshed below instead of trusted.
-  if (isActive && openingTab === null && (!showRollup || focus?.kind === "submitted" || approvalListReady)) {
+  // A "plan submitted" click does not use the list in memory, which may be up
+  // to 30 seconds old and not yet hold that plan: it waits for the refresh
+  // below and opens by that answer instead.
+  const openingReady = focus?.kind === "submitted" ? stillWaiting !== null : approvalListReady;
+  if (isActive && openingTab === null && (!showRollup || openingReady)) {
     let opening: PlanTabId;
     // Nothing waiting: My Plans, or Team Plans for Admin, who has no plans of
     // their own (D17).
     const quietTab: PlanTabId = showMyTarget ? "my-plans" : "team-plans";
     if (!showRollup) opening = "my-plans";
     else if (focus?.kind === "decided") opening = quietTab;
-    else if (focus) opening = "approval";
+    // Already approved or rejected by the time it is clicked: Team Plans, with
+    // that plan opened up (D7).
+    else if (focus) opening = stillWaiting ? "approval" : "team-plans";
     // Anything waiting for this approver, in any period or SBU (Tabs plan
     // D15), so a plan in another quarter is not missed; the tab itself
     // says how many are waiting elsewhere.
@@ -463,11 +504,20 @@ export default function TargetPlanningScreen({
       setOpeningTab(null);
       setChosenTab(null);
       setFocus(null);
+      setStillWaiting(null);
     }
   }
   const submittedPlanId = isActive && showRollup && focus?.kind === "submitted" ? focus.planId : null;
   useEffect(() => {
-    if (submittedPlanId) void refetchPending();
+    if (!submittedPlanId) return;
+    let cancelled = false;
+    // If the list cannot be loaded, open the approval tab as before.
+    void refetchPending().then((r) => {
+      if (!cancelled) setStillWaiting(r.isError ? true : (r.data ?? []).some((p) => p.id === submittedPlanId));
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [submittedPlanId, refetchPending]);
   // A tab that has gone (Team Targets in a quarter with no team) falls back
   // to the opening tab.
@@ -848,19 +898,27 @@ export default function TargetPlanningScreen({
             ) : (
               <>
                 <Typography sx={{ mb: 1.5 }}>
-                  Total: <strong>{formatLakhs(annualRollupTotal)}</strong> across {teamAnnualList.length} rep
-                  {teamAnnualList.length === 1 ? "" : "s"} for {periodLabel}
+                  Total: <strong>{formatLakhs(annualRollupTotal)}</strong> across {teamAnnualList.length}{" "}
+                  {teamAnnualList.length === 1 ? "person" : "people"} for {periodLabel}
                 </Typography>
                 {/* On a phone each person is one card with their quarters inside. */}
                 <TableOrCards columns={[{ label: "Rep" }, { label: "Amount" }, { label: "Status" }]}>
-                  {teamAnnualList.map((p) => (
+                  {teamAnnualRows.map(({ person: p, depth, managerName }, i, rows) => (
+                    <Fragment key={p.user_id}>
+                    {!p.on_team && (i === 0 || rows[i - 1].person.on_team) && (
+                      <TocMessage>
+                        <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
+                          No longer on this team — their plans still count in the total
+                        </Typography>
+                      </TocMessage>
+                    )}
                     <TocRow
-                      key={p.user.id}
+                      indent={depth}
                       total
                       subRows={yearQuarters.map((q) => {
                         const t = p.byQuarter[q];
                         return (
-                          <TocRow key={`${p.user.id}-${q}`}>
+                          <TocRow key={`${p.user_id}-${q}`}>
                             <TocCell title sx={{ pl: { sm: 3 }, color: "text.secondary" }}>{formatPlanningPeriod(q)}</TocCell>
                             <TocCell label="Amount">
                               {t ? <PlanAmount amount={t.target_amount_lakhs} note={previousApprovedNote(t.status, t.previous_approved_total_lakhs)} /> : "—"}
@@ -872,14 +930,22 @@ export default function TargetPlanningScreen({
                         );
                       })}
                     >
-                      <TocCell title>{p.user.display_name}</TocCell>
+                      <TocCell title>
+                        {p.display_name}
+                        {managerName && (
+                          <Typography variant="caption" color="text.secondary" sx={{ display: "block", fontWeight: 400 }}>
+                            reports to {managerName}
+                          </Typography>
+                        )}
+                      </TocCell>
                       <TocCell label="Annual Total">{formatLakhs(p.total)}</TocCell>
                       <TocCell phone={false}>Annual Total</TocCell>
                     </TocRow>
+                    </Fragment>
                   ))}
                   {teamAnnualList.length === 0 && (
                     <TocMessage>
-                      <Typography color="text.secondary">No plans set for {periodLabel} yet.</Typography>
+                      <Typography color="text.secondary">No one in this team for {periodLabel}.</Typography>
                     </TocMessage>
                   )}
                 </TableOrCards>

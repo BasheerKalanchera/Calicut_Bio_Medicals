@@ -98,7 +98,7 @@ export function MiniBar({
 
 // With onClick the tile is a button (keyboard and focus included), e.g. My
 // Work's Summary boxes that open their list (Weekly Follow-up plan D33).
-export function StatTile({ label, value, sublabel, onClick, children, inGrid = false }: {
+export function StatTile({ label, value, sublabel, onClick, children, inGrid = false, compact = false }: {
   label: string;
   value: string;
   sublabel?: string;
@@ -107,6 +107,9 @@ export function StatTile({ label, value, sublabel, onClick, children, inGrid = f
   children?: React.ReactNode;
   // Sits in a grid that sets the widths (two to a row on a phone): no minimum width of its own.
   inGrid?: boolean;
+  // A shorter tile (less padding, smaller figure) for screens that keep their
+  // tiles fixed at the top while the list below scrolls (Simpler Table D16).
+  compact?: boolean;
 }) {
   return (
     <Box
@@ -121,14 +124,14 @@ export function StatTile({ label, value, sublabel, onClick, children, inGrid = f
         border: 1,
         borderColor: "gray.100",
         boxShadow: shadows.sm,
-        p: 2,
+        p: compact ? 1.25 : 2,
       }}
     >
-      <Box sx={{ typography: "tiny", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "gray.400", mb: 0.5 }}>
+      <Box sx={{ typography: "tiny", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "gray.400", mb: compact ? 0 : 0.5 }}>
         {label}
       </Box>
-      <Box sx={{ typography: "h5", fontWeight: 900, color: "report.figure", fontVariantNumeric: "tabular-nums" }}>{value}</Box>
-      {sublabel && <Box sx={{ typography: "caption", color: "gray.500", mt: 0.25 }}>{sublabel}</Box>}
+      <Box sx={{ typography: compact ? "h6" : "h5", fontWeight: 900, color: "report.figure", fontVariantNumeric: "tabular-nums" }}>{value}</Box>
+      {sublabel && <Box sx={{ typography: "caption", color: "gray.500", mt: compact ? 0 : 0.25 }}>{sublabel}</Box>}
       {children && <Box sx={{ mt: 1 }}>{children}</Box>}
     </Box>
   );
@@ -139,6 +142,7 @@ export function SectionCard({
   action,
   stackActionOnPhone = false,
   hideHeader = false,
+  compact = false,
   children,
 }: {
   title: string;
@@ -149,16 +153,19 @@ export function SectionCard({
   // Skip the title and action (Target vs Actuals, while one person's own
   // screen is open).
   hideHeader?: boolean;
+  // A header-only strip (no body): less padding and no gap under the header,
+  // for cards kept fixed at the top of a scrolling screen (Simpler Table D16).
+  compact?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <Box sx={{ bgcolor: "background.paper", borderRadius: "1rem", border: 1, borderColor: "gray.100", boxShadow: shadows.sm, p: 2 }}>
+    <Box sx={{ bgcolor: "background.paper", borderRadius: "1rem", border: 1, borderColor: "gray.100", boxShadow: shadows.sm, p: compact ? 1.25 : 2 }}>
       {!hideHeader && (
         <Box
           sx={{
             display: "flex",
             justifyContent: "space-between",
-            mb: 1.5,
+            mb: compact ? 0 : 1.5,
             ...(stackActionOnPhone
               ? { flexDirection: { xs: "column", sm: "row" }, alignItems: { xs: "stretch", sm: "center" }, gap: 1 }
               : { alignItems: "center" }),

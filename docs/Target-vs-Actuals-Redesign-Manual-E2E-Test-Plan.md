@@ -238,7 +238,15 @@ beside it in brackets. This plan creates none.
    Haroon — Pass (Basheer):** the "Imaging" row name and the rest of B2.
    Basheer then raised a possible gap (a person's plan figure is not
    shown beside their Won % of plan) — see the Progress-Archive 2 Nov
-   entry. —
+   entry. **Expected after the merge (added 3 Nov, Simpler table D13):**
+   under each person's Won %, the small line reads "of plan" and that
+   person's approved plan amount — Rudrappa "of plan ₹10.0L" (his ₹10.0 L
+   plan, P3 re-read 30 Oct; the screen writes amounts without a space
+   before L). Fazal and Shruthi still say "No approved plan"; the
+   Company and Imaging rows still say "of target"; the Year view has no
+   small line under Won % at all (its column is headed "Won % of
+   target"). Re-run B2 as Haroon. **Re-run 3 Nov, after the merge — Pass
+   (Basheer, as Haroon).** —
 3. [Simple] Same screen. **Expected:** none of: Likely finish (as a box,
    a column, a dash or in the bar), Team plans, Expected, Plans vs
    target, plan Status, Rep Plan, the "haven't submitted a plan" note,
@@ -252,7 +260,18 @@ beside it in brackets. This plan creates none.
    person a block — name, then one line each for Target, Won (paid),
    PO received and Won %; reps indented with "reports to <manager>";
    768 and 1280 as tables. Nothing runs past the card. **Result 1 Nov —
-   Pass (Basheer).** —
+   Pass (Basheer).** **Expected after the merge (added 3 Nov, D13):** at
+   390 the longer "of plan ₹…L" line sits under the % inside each
+   person's block, on one line, and nothing runs past the card; 768 and
+   1280 as tables. Re-run. **Re-run 3 Nov, after the merge — Pass
+   (Basheer).** **Expected after the fix (added 3 Nov, D16, commit
+   `a1f0147`):** the "Target vs Actuals" card with the SBU / View boxes
+   and the period arrows stays fixed under the tab row (a short card) while
+   the "This quarter · as of …" line and the table or blocks below scroll;
+   the same in the Year view (step 6 of section A) and, in a person's own
+   screen, only that screen scrolls under its back-arrow header. Check at
+   390, 768 and 1280 px. **Seen 3 Nov — looks good (Basheer, phone).**
+   **D16 at 768 and 1280 px — Pass 3 Nov (Basheer).** —
 6. [Simple] Same screen, the header. **Expected:** the drop-down that
    holds Quarter / Year shows the name "View" on its box (Frontend
    standards §6.11 rule 7); as Haroon, the SBU drop-down shows "SBU". The
@@ -403,7 +422,18 @@ beside it in brackets. This plan creates none.
    documented decision for that order. **Decided (Basheer, 2 Nov):** keep
    it as the default and add a "Sort by" box (Most overdue first / Name
    A–Z) — Simpler Table plan D14, handed to `/build`. Re-check after it
-   is built. —
+   is built. **Expected after the merge (added 3 Nov, D14):** a "Sort by"
+   box above the table headings, showing "Most overdue first", with the
+   rows in this order: Basheer K, Haroon Sidheeq, Fahad, Vivek, Fazal,
+   Shruthi, "Test - Area Manager" (greyed), Abdul Latheef P, Nishad K V.
+   Choose "Name A–Z": Abdul Latheef P, Basheer K, Fahad, Fazal, Haroon
+   Sidheeq, Nishad K V, Shruthi, "Test - Area Manager" (greyed), Vivek.
+   Counts, red and grey marks, the card title ("Overdue — 32 overdue next
+   actions") and tap-through to My Work are unchanged. Choose "Most
+   overdue first" again: the first order returns. As Fazal: the box is
+   there, and "Name A–Z" puts Fahad before Fazal. (Orders worked out from
+   the 2 Nov counts above and the server's rule, not seen on screen.)
+   **Re-run 3 Nov, after the merge — Pass (Basheer).** —
 10. [Complex: phone layout] Overdue tab at 390, 768 and 1280 px, as
    Haroon. **Expected (390):** one block per person — overdue next
    actions, then Past closing date count and value side by side; a
@@ -425,7 +455,32 @@ beside it in brackets. This plan creates none.
    (`TableOrCards.tsx:253`), as on the Quarter and Year blocks; "side by
    side" was this step's wording, never built. **Decided (Basheer,
    2 Nov): one below the other is right;** wording corrected to "one line
-   each". —
+   each". **Expected after the merge (added 3 Nov, D14):** at 390, 768
+   and 1280 the "Sort by" box sits on its own line above the list,
+   left-aligned, about 200 px wide, and nothing runs past the card; at
+   390 the person blocks follow the chosen order. Re-run as Haroon and as
+   Fazal. **Re-run 3 Nov, after the merge — Pass (Basheer)** on the box's
+   place and size, **with a finding (D15):** on the phone the title
+   "Overdue — N overdue next actions" and the "Sort by" box scroll away
+   with the list; they should stay fixed and only the person blocks
+   should scroll (Frontend standards §6.1). Cause (code read): both sat
+   inside the scrolling box (`InsightsDashboardScreen.tsx`, the box at
+   line 235). Fixed 3 Nov directly by Build & Test (not `/build`), commit
+   `a1f0147`. **D15 check 3 Nov — Pass (Basheer, phone).** **Expected
+   after the fix (added 3 Nov, D15):** at 390,
+   768 and 1280 the title and the "Sort by" box stay put while the list
+   scrolls (they sit in their own card under the tab row); on a laptop
+   the column headings stay visible too. Re-run D10 at all three widths,
+   as Haroon, and re-run step 11. —
+11. [Complex: cross-screen] As Haroon: Insights Dashboard → Overdue,
+   choose "Name A–Z". Leave Insights (open My Work from the menu), then
+   open Insights → Overdue again. **Expected (after `/build`'s D14 fix,
+   added 3 Nov; built as `4744b34`, merged into `main` as `1bf0260`,
+   3 Nov — checked in git):** the box shows "Most overdue first" and the
+   list is in that order. Before the fix the choice stayed until a page
+   reload (`/build`, 3 Nov). Switching between Insights tabs is not
+   part of this step. **Result 3 Nov — Pass (Basheer, as Haroon, after
+   the merge).** Re-run once after the D15 change (D10). —
 
 ## E — Who sees what (hide-checks)
 

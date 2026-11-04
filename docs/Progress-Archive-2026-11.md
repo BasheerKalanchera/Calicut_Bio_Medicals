@@ -639,3 +639,224 @@ forced close; backup unaffected. Google Drive copy done by Basheer.
   No tracker line: no tool check could stop either, nothing touched live
   data, UAT or lost work. Not counted: a command I suggested to him could
   not run from the main folder while the session was in the worktree.
+
+**Doc tidy-up (Plan & Chore, 3 Nov):** Traceability's Weekly Follow-up
+Report row moved to Done: it was built as My Work, merged 28 Oct, E2E
+51 of 51 Pass. Its stale Backlog entry was removed, and the "still
+unbuilt" mentions in Business-Rules and the High-Priority plan were
+corrected. Row 3.2's client line now names the Year view (it existed
+already; Basheer agreed the wording). The Tabs plan now records step 4's
+merge (`1bf0260`). Moved out of the Plan handover: the Tabs plan D17
+review is finished (step 4, `cfa886c`, with review fixes `19141b8`, both
+in `main`), and the 1 Nov Harness review is done (`277efa7`, `fdcfbb3`).
+Haroon's product-cost question (asked 16 Oct) is still open; Basheer is
+checking with him.
+
+## 3 Nov 2026 — Build & Test: Target vs Actuals re-checks; fixed headers (D15, D16)
+- **Merge checked in git:** `/build` merged D13, D14 and D17 into `main` as
+  `1bf0260` (D14's sort-reset fix is `4744b34`). Test wording for D13, D14,
+  D17 written from the code: Target vs Actuals plan B2, B5, D9, D10, new
+  step 11; Tabs plan rewritten for the five-tab layout (new P3c, A6–A10,
+  E3). The Tabs E2E itself is not run yet.
+- **Target vs Actuals re-checks, all Pass (Basheer, 3 Nov, after the
+  merge):** B2 (as Haroon), B5, D9, D10, step 11. B2's Year clause was
+  reworded: the Year view has no small line under Won % at all (its column
+  is headed "Won % of target"). **Decided (Basheer):** Year view keeps no
+  "of plan" for now; showing it later needs a backend change
+  (`TargetVsActualYearPerson` has no `planned_lakhs`) and is a Plan &
+  Chore decision.
+- **Finding D15 (Basheer, at the D10 re-run):** on a phone the Overdue
+  tab's title and "Sort by" box scrolled away with the list. Cause: both sat
+  inside the scrolling box (`InsightsDashboardScreen.tsx`). Basheer asked
+  for it to be fixed here, not through `/build` and a merge. Fix: a fixed
+  strip under the tab row; the list card has sticky column headings.
+- **Finding D16 (Basheer, after D15):** the same on the Target vs Actuals
+  tab (`TargetVsActualsSection.tsx`), the Pipeline tab and the Pipeline
+  Report screen (`PipelineReportScreen.tsx`). Target vs Actuals: card with
+  pickers fixed, the "as of" line scrolls with the list (Basheer's call).
+  Pipeline screens: the two tiles and the "Pipeline by …" card fixed (option
+  2; the tiles above the title could not scroll away without moving the
+  title above them), only the bars scroll. Tiles and fixed cards shortened
+  at Basheer's request through an opt-in `compact` on `StatTile` and
+  `SectionCard` (`ReportingUI.tsx`), so Sales Report and the person screen
+  look as before. Shipped in `a1f0147` (pushed): type check, full lint (0
+  errors; 135 warnings, none in these files — checked by file name) and the
+  MUI standard check pass. Seen on a phone by Basheer, "Looks good";
+  768 and 1280 px not looked at. Backend tests not run: no server change.
+- **Left for later (Backlog):** Sales Report and Opportunities On Hold are
+  built the same old way; not read or checked.
+
+**Retro (3 Nov, Build & Test):** corrections from Basheer: 6 — (1) "Why not
+fix the sort issue now itself before the merge?": I had planned to leave
+it until after the merge. (2) B2's Year clause ("Year view: no 'of plan'
+line") was confusing; reworded. (3) I misread his "Won % of plan in the Year
+view" question and answered about wording, not about adding the figure. (4)
+"Why not you make this change here?": I was about to send a small fix
+through `/build` and a merge. (5) "You update the plans earlier today ... why
+are you asking now to relay this to Plan & Chore?": I had updated them
+myself. (6) "What are these other changes?": my explanation of the pending
+edits was unclear. Counted from the session's messages (41 listed; his
+choices between options and new requests are not counted). No tracker line:
+no tool check would have stopped these, and nothing touched live data, UAT
+or lost work.
+
+**UAT data-quality check resumed (3 Nov, Plan & Chore):** first regular
+run since the 25 Oct next-action rules launch; pause marker
+`.claude/dq-check-paused` deleted (its resume date was 1 Nov). Both scripts
+ran clean on UAT 13:09–13:10 (run log lines, Basheer approved). Against
+25 Oct → 30 Oct → 3 Nov: Opportunities with no Activity 43 → 41 → 39;
+Active/On Hold with no open next action 62 → 58 → 54; notes that don't say
+what happened 59 → 65 → 73 (rising; some new hits like "Order lost",
+"Closed won", "Got po" do say what happened); look-alike hospital pairs
+39 → 41 (2 new on 2 Nov); leads opened 2+ weeks with no decision 18 → 17
+(30 Oct → 3 Nov). Closure report: 169 open Opportunities, closing date
+passed 23 → 26, Lead stage chance above default 42 → 47
+(`Expected-Closure-Dates-2026-11-03.pdf`). Data-quality PDF
+drafted too (`UAT-Data-Quality-Report-2026-11-03.pdf`, 30 Oct layout,
+14 sections) after a second read-only UAT read (Basheer, option A) for the
+full lists the check cuts short: all 73 notes, 572 overdue next actions
+(536 on 30 Oct), who added each region-level or unused hospital. Rows
+not on the 30 Oct list are marked "new": 8 notes, 2 look-alike pairs,
+Ambalpadi (edited again 31 Oct). Both shared with Cabio leadership and
+moved up into the main reports folder (Basheer, 3 Nov). The overdue rise
+led to `docs/Discussion-Overdue-Next-Actions-2026-11.md` (Q1–Q6 for Haroon).
+
+**Retro, Plan & Chore, 3 Nov — corrections from Basheer: 2.** (1) "My work
+and Overdue tab is also not in UAT yet" — the overdue paper and chat called
+both live on UAT without reading the plans. (2) "Remove Jan–Mar 2027… They
+can start this quarter also right?" — proper hospital-wise plans were tied
+to Jan–Mar 2027; plans can already be made for Oct–Dec. No tracker line:
+neither touched live data, UAT or lost work, and no tool check would have
+caught them. Noted, not a correction: the data-quality draft's wrong "new"
+marks (Ravi Kumar's name changed since 30 Oct) were caught before showing.
+
+## 2026-11-03 (late) — code review of the fixed-header commits, D16 Pass, regression counts (Build & Test)
+
+- **Code review (medium, `19141b8..HEAD`):** the two code commits since the
+  2 Nov review, `4744b34` (Overdue sort resets on leaving) and `a1f0147`
+  (fixed headers, D15/D16). 8 findings, none a bug; each checked against
+  the code. **Two taken, `7fa039c`:** (1) the Pipeline tab's fixed header
+  (two tiles, "Pipeline by …" title, drop-down) was copied in the Insights
+  Dashboard and the Pipeline Report; now one shared component,
+  `PipelineHeaderStrip.tsx`, which also owns the group-by list. (2) The
+  Overdue tab's "Sort by" box appeared only once rows loaded, so the strip
+  changed height and the list jumped; it is now always drawn and greyed out
+  while there are no rows. **Six not taken:** the "person screen is clipped"
+  finding is wrong (the inner box scrolls); "scroll does not reset when the
+  period changes" is by design (the reset is for table ↔ person screen,
+  dependency `personId`, `TargetVsActualsSection.tsx:91-99`); two phone-height
+  worries were cleared by Basheer's D16 look; the empty `{null}` body and the
+  unused card titles on the fixed strips work as they are, left as a tidy-up.
+- **D16 at 768 and 1280 px: Pass (Basheer, 3 Nov)**, recorded in the Target
+  vs Actuals test plan, section B step 5. The new shared header and the
+  Sort box were looked at on Dev and "looking good" (Basheer).
+- **Checks before the commit:** pytest 1,508 passed; ruff clean; `tsc`
+  clean; ESLint 0 errors, 135 warnings (as before); Tailwind guard clean;
+  MUI check passed on the 3 staged files. Frontend-only change.
+- **Regression counts, from the plans (3 Nov):** Tabs plan 29 steps
+  (A 10, B 5, C 4, D 5, E 3, F 2) plus sign-in check P2, all to re-run on the
+  five-tab layout. Target vs Actuals plan 37 lettered steps (A 6, B 6, C 6,
+  D 11, E 4, F 4); 5 re-run on 3 Nov (B2, B5, D9, D10, D11), so about 32
+  not re-run — approximate, from a text search for "3 Nov". The earlier
+  "about 24" was low. Pre-E2E checks above stand. The full regression starts
+  4 Nov, Tabs plan first; further fixes go in a new `fix:` commit.
+
+**Retro, Build & Test, 3 Nov (late) — corrections from Basheer: 4.** (1)
+"Show me what are these fixes" — the two fixes were offered by short labels
+without saying in plain words what they did. (2) "What is the D16 look?" —
+D16 used as if remembered, no screens named. (3) "What is this fix? 2. An
+always-visible Overdue 'Sort by' box…" — the label repeated without the
+plain explanation. (4) "Are we ready for this fix commit batch? Let's do
+the full regression testing first" — I proposed committing the small fix at
+once; CLAUDE.md batches small fixes to the end of the feature's E2E. No
+tracker line: none touched live data, UAT or lost work, and no tool check
+would have caught them.
+
+## 4 Nov 2026 — Plan & Chore
+
+**UAT backup:** `cabio_uat_2026-11-04_0649.dump` (876,892 bytes, 535 TOC
+entries verified); pruned `cabio_uat_2026-10-21_0740.dump`, 14 kept.
+Docker took about 1 min 20 s to start (06:47:57 to 06:49:18 by the log;
+the script logged "10s") and was force-closed at the end (30 s timeout).
+Google Drive copy done by Basheer.
+
+**Exception Report plan, UAT count (D14, Basheer's go-ahead):** one
+read-only transaction, rolled back, 08:13 IST. 762 hospitals counted (769
+accounts less 7 dealers). If anyone's contact counts, 42 are listed (2 gone
+quiet). Per SBU, Critical Care lists 620 (1 gone quiet) and Imaging 113
+(1 gone quiet); the rest have never been contacted. Figures are in the plan.
+
+**Exception Report plan approved, E2E plan written:** all decisions answered,
+report named "Customer with No Activity" (Basheer), rule BR-ACC-06 added, E2E
+plan 37 steps. Dev had no usable accessory product and no dealer, so the E2E
+adds permanent test data (list in the E2E plan). Zone picker counts the zones
+below the ones a person holds (D13, Basheer).
+
+**Competitive Loss plan, first look at Dev:** 5 lost Opportunities, all
+Imaging, ₹74 Lakhs (read-only, rolled back, 12:21 IST). 3 are Competitor Won,
+with names typed as "ge", "Philips" and "siemens". Those same 3 have no
+closing date recorded, so a filter by period would miss them. Paused: I started
+this without asking; Basheer stopped it. UAT check not run, no plan file.
+
+**Retro — corrections from Basheer this session: 8.**
+1. My explanation of counting a colleague's visit wasn't clear (D15).
+2. My explanation of the two count tiles wasn't clear (D8a).
+3. I left dealers out; "Dealers are customers" (D10).
+4. The report's name: "Customer with No Activity", not a hospital report.
+5. I offered a Rep picker to reps (D13).
+6. I treated Q6 as waiting on Haroon; "Q6 already we decided".
+7. I treated D3 as open; "D3 also we decided".
+8. I started the Competitive Loss plan unasked ("Why asked you…").
+
+No tracker line: none touched live data or lost work, and no tool check would
+have caught them.
+
+## 4 Nov 2026 — Build & Test: Planning tabs E2E on the five-tab layout, 30 of 30 recorded
+
+**Result:** P2, A1–A10, B1–B5, C1–C4, D1–D5, E1–E4, F1–F2 all recorded Pass.
+Dev backend restarted 4 Nov 06:28 (last backend commit 2 Nov), so P1 held.
+Basheer ran every step; I recorded each as he reported it and read the saved
+plans back from Dev (read-only, all three RLS settings set and checked).
+
+**Findings:**
+- **C1, C2 (my test-plan wording, not the app):** C1 said "plans from all
+  four quarters" and left out "of the chosen SBU" (Imaging: Basheer K ₹55.0
+  L; Critical Care: Arun Adarsh ₹30.0 L; each with "3 more waiting in other
+  periods or SBUs", Dev 4 Nov). C2 listed Vivek on Team Targets, but for the
+  GM that tab shows Area Managers only (`get_team_targets` →
+  `sbu_top_people`); reps appear on Team Plans. Plan wording corrected.
+  Basheer then asked for the GM to see reps' targets there too, view only,
+  and decided to **wait**: Backlog entry "Team Targets: let the GM (and
+  Admin) see reps' targets, view only", built only if the leadership team
+  asks after his demo.
+- **D4 (real bug, fixed `413abf8`):** a "plan submitted" bell click opened
+  Needs Your Approval even after the plan was approved. The opening-tab code
+  sent every "submitted" click there without checking the plan was still
+  waiting (D7 never built). It now waits for the refreshed list: still
+  waiting → Needs Your Approval; decided → Team Plans with the plan opened
+  up; list failed → Needs Your Approval.
+- **E1 / D18 (real gap, fixed `413abf8`):** Team Plans, Annual view, listed
+  only people with at least one plan, so a rep or Area Manager who had not
+  started was missing, unlike the Quarter view. Basheer chose: list everyone
+  on the roster, "Not set" per quarter, ₹0.0 L, "across N people" (Tabs plan
+  D18). My first fix listed them flat; he re-ran E4 and saw it was not in the
+  Quarter view's hierarchy. Second fix: same reporting tree and indentation
+  (`asTree`), "reports to …" caption, former members last, sorted by name.
+- **E1 pop-up:** my step asked for a "plan pop-up from Team Plans"; Team
+  Plans opens a plan in place, and the only pop-up is Approve/Reject on
+  Needs Your Approval (Pass at all widths).
+- Checks before the commit: tsc and lint clean (135 existing warnings, 0
+  errors); no backend change, so pytest not rerun. Commit `413abf8`, pushed.
+  Combined diff reviewed by me before the re-run (no other findings).
+
+**Retro — corrections from Basheer this session: 4.**
+1. C1/C2: test-plan expected wording was wrong against the data and code.
+2. D1: I told a rep to pick an SBU ("Again Rep's don't get the ability to
+   choose a SBU").
+3. E1: a pop-up step for Team Plans that does not exist.
+4. E4: my Annual-list fix ignored the Quarter view's hierarchy and
+   indentation.
+Pattern: three of the four are test-step or fix wording written without
+reading the matching Quarter-view code or the role's screen first. No tracker
+line: none touched live data, UAT or lost work, and no tool check would have
+caught them.

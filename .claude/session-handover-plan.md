@@ -7,39 +7,42 @@ session edits this note._
 
 - Forecast plan (untracked, written by Antigravity — Basheer 27 Oct): commit it, and by which session? Open. At review, line 110 → BR-FIN-09.
 
-## Tabs plan D17 (My Targets tab) — review in progress 2026-11-02
+## 4 Nov — Competitive Loss and Demo-to-sale plans: paused
 
-- D17 answers, Dev check, section edits and Frontend standards wording
-  done, committed and pushed 2 Nov (`c23478a`); brief for /build given. **Next:** /build
-  step 4; then rewrite the tabs test plan. Tidy-up every 3 days: parked.
+- Don't start either until Basheer says so (he stopped me, 4 Nov). Only a Dev
+  look so far (Progress-Archive); UAT check not run, no plan file.
+
+## 3 Nov — papers with Haroon; scorecard republish
+
+- Overdue next actions paper `docs/Discussion-Overdue-Next-Actions-2026-11.md`
+  (Q1–Q6), committed and pushed `58e7de2`. **Next:** Basheer sends the
+  WhatsApp summary to Haroon.
+- Salesperson Performance paper section 10 (`d5b6a96`). **Next:** Basheer
+  sends 10.4 to Haroon. Product-cost question: Basheer checking with him.
+- **Next:** republish both client scorecard pages (diff shown 3 Nov,
+  Basheer not yet answered).
 
 ## Build queue for `/build` (all Approved, E2E plans written)
 
-- Then, in order: Target vs Actuals simpler table, Target & Coverage
-  Planning tabs (both Approved 31 Oct, mock-up v26, `43f146e`); Activity
-  Type table (Approved 31 Oct, D1–D12; E2E plan
+- Next: Activity Type table (Approved 31 Oct, D1–D12; E2E plan
   `docs/Activity-Type-Table-Manual-E2E-Test-Plan.md`, 35 steps, Dev data
-  checked 31 Oct 15:20 IST; committed `8c7a445`, pushed). Plan & Chore confirms plan and step before
+  checked 31 Oct 15:20 IST; `8c7a445`). Simpler table and Planning tabs
+  are built and in `main`. Plan & Chore confirms plan and step before
   each `/build` starts.
+- Then: Customer with No Activity (`docs/Exception-Report-Implementation-Plan.md`,
+  Approved 4 Nov; E2E `docs/Customer-No-Activity-Report-Manual-E2E-Test-Plan.md`,
+  37 steps). Activity Type first is my recommendation; Basheer to confirm.
 
 ## Rollout: when planning counts — to plan (Basheer, 30 Oct)
 
-- Planning in the system won't be done properly in Oct–Dec; July–Sep Opportunities
-  were entered without targets (paper only). Plan the go-live quarter,
-  pilot quarter, exit criteria, paper targets. Backlog "Rollout: when
-  planning starts to count". 1 Nov: Q1 decided (B — Oct–Dec learning
-  quarter, Jan–Mar 2027 first proper one; in the Backlog entry). App today
-  counts from Oct–Dec (`FIRST_SAVED_PERIOD`, service.py:649). Q2 decided:
-  (a) "Learning quarter, not counted", fix after Simpler Table merge
-  (merged into main 1 Nov, `515a2f2`) during its E2E; Backlog + Annual Target D66 updated. After the
-  merge: add it to Simpler Table plan Decisions, its E2E plan,
-  Business-Rules. Q3 decided: paper targets stay on paper (official for
-  Jul–Sep, Oct–Dec). **Next:** Q4 (exit criteria); then ADR.
+- Backlog "Rollout: when planning starts to count" holds Q1–Q3 (decided).
+  App counts from Oct–Dec today (`FIRST_SAVED_PERIOD`, service.py:649).
+  Still to add Q2 to Simpler Table plan Decisions, its E2E plan,
+  Business-Rules. **Next:** Q4 (exit criteria); then ADR.
 
 ## After the UAT move (25 Oct, details in the archive)
 
-- Checks paused to 1 Nov: then run both scripts on UAT (ask first).
-  Duplicate hospitals step 19 on UAT; Audit Trail plan step 5 cautions.
+- Duplicate hospitals step 19 on UAT; Audit Trail plan step 5 cautions.
 
 ## User Manual and help catch-up
 
@@ -56,19 +59,16 @@ session edits this note._
 
 ## Harness Engineering
 
-- Weekly review 1 Nov done and pushed (`277efa7`, `fdcfbb3`). "← Back" check: /build
-  after its MUI round 1 fixes (Basheer) — Backlog entry and /build's note
-  still to update (quarter → year wording too). /build reported the MUI
-  check printing "no staged .ts/.tsx files" with three staged: not looked
-  at yet.
-- Code and UI checks trial (Basheer, 28 Oct, via Build & Test): Backlog
-  "Code and UI checks — minimal-effort trial". Cap one day; show scope first.
+- "← Back" check: /build after its MUI round 1 fixes (Basheer) — Backlog
+  entry and /build's note still to update (quarter → year wording too).
+  MUI check printing "no staged .ts/.tsx files" with three staged: not
+  looked at yet.
+- Code and UI checks trial (Basheer, 28 Oct): Backlog "Code and UI checks
+  — minimal-effort trial". Cap one day; show scope first.
 
 ## Chores
 
-- UAT User Manual still says "SBU Target & Plans" (now three cards;
-  archive 23 and 26 Oct, Annual Target plan D75). **On hold** until the
-  Part 2 E2E passes, then re-read the screens and redo the 4 edits.
+- UAT User Manual says "SBU Target & Plans" (now three cards, D75): on hold until Part 2 E2E passes.
 - Delete Dev test data from Duplicate hospitals Part A (five "zz Test
   duplicate guard…" hospitals, "zz Test contact") and "kims" (Rudrappa,
   Dev role check 25 Oct); read-only check first.
