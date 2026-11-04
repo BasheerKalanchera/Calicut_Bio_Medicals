@@ -1,6 +1,6 @@
 # Exception Report (Customer with No Activity) — Implementation Plan
 
-**Status:** Approved, 2026-11-04 (Basheer). Not built.
+**Status:** Approved, 2026-11-04 (Basheer). Built on branch `worktree-build` (steps 1–2: `0741c02`, `31747a1`; review fix `a0c5a05`), pre-E2E code review done 4 Nov, not yet merged into `main`. Migration `0065` not applied (after the merge, Basheer 4 Nov). E2E pending.
 **Traceability rows:** 11.1 "Exception report: zero lead activity over 3 months" (PRD 5.7, Appendix A.3.6)
 **Design / discussion:** `docs/Discussion-Overdue-Next-Actions-2026-11.md`, proposal point 5 and question 6
 
