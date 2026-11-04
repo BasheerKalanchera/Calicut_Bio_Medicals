@@ -215,9 +215,10 @@ class TestRepositoryViewAs:
 class TestServiceRules:
     TODAY = date(2026, 11, 4)
 
-    def _service(self, rows: list[dict]) -> ReportingService:
+    def _service(self, rows: list[dict], show_zone_picker: bool = False) -> ReportingService:
         repo = MagicMock()
         repo.no_activity_customers.return_value = rows
+        repo.show_no_activity_zone_picker.return_value = show_zone_picker
         return ReportingService(repository=repo)
 
     @staticmethod
@@ -278,13 +279,57 @@ class TestServiceRules:
         result = self._call([])
         assert (result.rows, result.gone_quiet_count, result.never_contacted_count) == ([], 0, 0)
 
+    def test_zone_picker_flag_comes_from_the_repository_for_the_viewer(self):
+        viewer = _make_user("Sales Staff")
+        for flag in (True, False):
+            service = self._service([], show_zone_picker=flag)
+            assert service.no_activity_customers(viewer).show_zone_picker is flag
+            service.repository.show_no_activity_zone_picker.assert_called_once_with(viewer)
+
+
+class TestZonePickerFlag:
+    """D13: shown to anyone holding more than one zone, counting the zones below."""
+
+    @staticmethod
+    def _flag(user, zone_count):
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = zone_count
+        return ReportingRepository(mock_db).show_no_activity_zone_picker(user), mock_db
+
+    def test_admin_gm_and_sbu_manager_always_get_it(self):
+        for role in ("Admin", "General Manager", "SBU Manager"):
+            flag, db = self._flag(_make_user(role), 0)
+            assert flag is True
+            db.scalar.assert_not_called()
+
+    def test_one_zone_with_nothing_below_does_not(self):
+        # e.g. someone holding only Mangalore, which has no zones below it
+        assert self._flag(_make_user("Sales Staff"), 1)[0] is False
+
+    def test_one_held_zone_with_zones_below_does(self):
+        # e.g. someone holding only North Kerala: it plus its districts
+        assert self._flag(_make_user("Sales Staff"), 6)[0] is True
+
+    def test_no_zones_at_all_does_not(self):
+        assert self._flag(_make_user("Sales Staff"), 0)[0] is False
+        assert self._flag(_make_user("Sales Staff"), None)[0] is False
+
+    def test_counts_the_viewers_own_zones_and_those_below_not_the_teams(self):
+        user = _make_user("Area Manager")
+        _, db = self._flag(user, 2)
+        sql = _compiled(db.scalar.call_args.args[0])
+        assert "user_zone" in sql
+        assert "zone_closure.descendant_zone_id" in sql
+        assert user.id.hex in sql
+        assert "manager_id" not in sql
+
 
 class TestEndpoint:
     def test_query_params_reach_the_service(self):
         zone_id, user_id = uuid.uuid4(), uuid.uuid4()
         mock_service = MagicMock(spec=ReportingService)
         mock_service.no_activity_customers.return_value = NoActivityCustomersResponse(
-            threshold_days=90, gone_quiet_count=0, never_contacted_count=0, rows=[]
+            threshold_days=90, gone_quiet_count=0, never_contacted_count=0, show_zone_picker=True, rows=[]
         )
         viewer = _make_user("Admin", is_active=True)
         app.dependency_overrides[get_current_user] = lambda: viewer
@@ -300,7 +345,8 @@ class TestEndpoint:
 
         assert response.status_code == 200
         assert response.json()["data"] == {
-            "threshold_days": 90, "gone_quiet_count": 0, "never_contacted_count": 0, "rows": []
+            "threshold_days": 90, "gone_quiet_count": 0, "never_contacted_count": 0,
+            "show_zone_picker": True, "rows": [],
         }
         assert mock_service.no_activity_customers.call_args.kwargs == {"zone_id": zone_id, "user_id": user_id}
 

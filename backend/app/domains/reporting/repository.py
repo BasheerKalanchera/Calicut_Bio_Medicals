@@ -684,6 +684,20 @@ class ReportingRepository:
             people = or_(people, scope_builder(subject))
         return select(UserZone.zone_id).where(UserZone.user_id.in_(select(UserProfile.id).where(people)))
 
+    def show_no_activity_zone_picker(self, current_user: UserProfile) -> bool:
+        """D13: the Zone picker is useful only to someone holding more than one
+        zone, counting the zones below the ones they hold. SBU Manager, GM and
+        Admin hold every zone. The viewer's own zones, not the team's: the
+        picker lists the viewer's own zones and what is below them."""
+        if current_user.role.role_name in UNRESTRICTED_ROLES or current_user.role.role_name == "SBU Manager":
+            return True
+        zone_count = self.db.scalar(
+            select(func.count(func.distinct(ZoneClosure.descendant_zone_id))).where(
+                ZoneClosure.ancestor_zone_id.in_(select(UserZone.zone_id).where(UserZone.user_id == current_user.id))
+            )
+        )
+        return (zone_count or 0) > 1
+
     def no_activity_customers(
         self,
         current_user: UserProfile,

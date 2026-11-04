@@ -13,7 +13,16 @@ import type {
   SalesSummaryResponse,
   StagnantDealsResponse,
 } from "../types/reporting";
-import type { WeeklyFollowupResponse } from "../types/api-aliases";
+import type { NoActivityCustomersResponse, WeeklyFollowupResponse } from "../types/api-aliases";
+
+// Customer with No Activity (docs/Exception-Report-Implementation-Plan.md):
+// the server fixes the 90 days (D6), so only the two pickers are sent.
+export async function getNoActivityCustomers(
+  filters: { zone_id?: string; user_id?: string } = {},
+): Promise<NoActivityCustomersResponse> {
+  const r = await api.get("/reporting/no-activity-customers", { params: filters });
+  return r.data.data;
+}
 
 // My Work (docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md): one
 // person's five lists in one request (D24). userId left out = the viewer.

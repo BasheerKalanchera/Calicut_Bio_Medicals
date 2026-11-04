@@ -444,5 +444,6 @@ class ReportingService:
             threshold_days=NO_ACTIVITY_DAYS,
             gone_quiet_count=len(gone_quiet),
             never_contacted_count=len(never_contacted),
+            show_zone_picker=self.repository.show_no_activity_zone_picker(current_user),
             rows=gone_quiet + never_contacted,
         )

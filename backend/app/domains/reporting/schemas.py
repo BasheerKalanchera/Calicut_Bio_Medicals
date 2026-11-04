@@ -263,4 +263,7 @@ class NoActivityCustomersResponse(BaseModel):
     threshold_days: int
     gone_quiet_count: int
     never_contacted_count: int
+    # D13: the Zone picker shows only to someone holding more than one zone,
+    # counting the zones below the ones they hold.
+    show_zone_picker: bool
     rows: list[NoActivityCustomerRow]

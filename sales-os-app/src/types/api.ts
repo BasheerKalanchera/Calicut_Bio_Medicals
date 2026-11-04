@@ -4227,6 +4227,8 @@ export interface components {
             gone_quiet_count: number;
             /** Never Contacted Count */
             never_contacted_count: number;
+            /** Show Zone Picker */
+            show_zone_picker: boolean;
             /** Rows */
             rows: components["schemas"]["NoActivityCustomerRow"][];
         };
