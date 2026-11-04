@@ -23,10 +23,18 @@ session edits this note._
   the app back for 0.7 s). Fixed in `AuthContext.tsx` + `api.ts` (reload
   removed, "signed out" marker, old reason cleared at sign-in). Idle, refused
   session, Sign Out button, sign-in after sign-out: all Pass on Dev. Detail:
-  Progress-Archive 4 Nov (last entry). Docs for it still uncommitted (docs batch).
-- **Next:** (d) TvA plan: 37 lettered steps, 5 re-run 3 Nov, about 32 not
-  (approximate, counted from the plan). Further fixes go in a new `fix:`
-  commit at the end. Then MUI step 8 below.
+  Progress-Archive 4 Nov. Docs and retro (8 corrections): `b22e3e0`, pushed.
+- **Next (5 Nov):** re-test the sign-out change, then MUI step 8 below.
+- **4 Nov: TvA E2E done, 37 of 37 Pass** (recorded in the plan, entry in
+  Progress-Archive 4 Nov, retro 4 corrections; docs batch next commit). Fix commit `a3018c2`,
+  **pushed to origin/main**: (1) GM's (Haroon's) Target cell reads "Same as
+  SBU target" (backend flag `is_general_manager`, api.ts, 3 screens, test);
+  re-checked as Haroon, Pass. (2) `AuthContext.tsx` one line: a real login
+  from another tab ends this tab's sign-out (code review finding on
+  `70b517a`); **NOT re-tested**, Basheer skipped it for 4 Nov. To do 5 Nov:
+  sign out (button, idle), sign in again, then sign out in tab A and log in
+  in tab B, A should open the app; anything failing is fixed after. Code
+  review of `413abf8`, `70b517a` and fix (1): nothing else to fix.
 - Open: Sales Report and Opportunities On Hold likely need the same fixed
   header (Backlog, 3 Nov). Year view "of plan" parked for Plan & Chore.
 - Dev read 3 Nov (P3c): own targets Oct–Dec 2026 only; SBU Imaging ₹280.0L,

@@ -967,3 +967,64 @@ a push counts as a push, as before (seen once while testing).
 
 No tracker line: nothing touched live data, UAT or lost work, and no tool check
 would have caught it.
+
+## 2026-11-04 — Build & Test: Target vs Actuals full re-run, 37 of 37 Pass
+
+Whole plan (`docs/Target-vs-Actuals-Redesign-Manual-E2E-Test-Plan.md`) run again
+by Basheer on the five-tab layout with the fixed headers (`a1f0147`,
+`70b517a`): A1–A6, B1–B6, C1–C6, D1–D11, E1–E4, F1–F4 all Pass, each recorded
+in the plan as "Run 4 Nov". Dev backend restarted first (Basheer).
+
+- **Checks before the run:** pytest 1508 passed; ruff clean; tsc no errors;
+  eslint 0 errors, 135 warnings (not compared with an earlier run).
+- **Figures (P3c, Dev read-only, the app's own code run as Haroon and Fazal,
+  all three RLS settings verified):** all unchanged from 2 Nov (Imaging ₹280.0 L
+  / ₹34.0 L / ₹16.0 L / 12.14 %; Company ₹465.0 L, 7.31 %; Overdue 32 as
+  Haroon, 5 as Fazal). One addition: Haroon has an approved Imaging plan of
+  ₹30.0 L and no personal target.
+- **Finding (fix list, one `fix:` commit at the end):** Haroon's Target cell
+  shows a dash because no personal target is set for the GM (BR-PL-12; the SBU
+  target is not given to a person). Basheer decided it reads "Same as SBU
+  target" (Quarter, Year, phone blocks; Won % unchanged). Likely needs one
+  small server addition (the person rows don't say who is the GM), so a Dev
+  backend restart before the re-check.
+- **Questions answered, no change:** the bottom note "2 Opportunities past
+  Order have no PO date…" is expected (`no_po_date_counts`,
+  `planning/repository.py:742`; Basheer K's 2 in the P3c read).
+- **Not yet done:** code review of `413abf8` (Planning tabs, Team Plans) and
+  `70b517a` (sign-out), landed after the 3 Nov review; Basheer put it after
+  the E2E so its fixes can join the same commit. F1 was run after the Fazal
+  steps (sign-in order), no effect on the result.
+
+### 2026-11-04 — Build & Test: fix commit `a3018c2` (pushed), code review
+
+- **Built and pushed `a3018c2`:** (1) the GM's Target cell reads "Same as SBU
+  target" in Quarter, Year, phone blocks and the person page (backend
+  `is_general_manager` flag on both person rows, `personTarget()` helper on the
+  screens, one new test, api.ts regenerated); pytest 1509 passed, ruff, tsc and
+  lint clean; re-checked as Haroon at 390/768/1280 px: Pass. (2) `AuthContext.tsx`:
+  a real SIGNED_IN from another tab clears the "signed out" marker.
+- **Code review (medium) of `413abf8`, `70b517a` and the fix:** nothing found
+  in the GM fix. One real, minor finding on `70b517a` (a login in a second tab
+  was ignored by a tab that had signed out), fixed in (2). Not acted on:
+  a un-awaited `signOut()` in `api.ts` on a network drop, and the "signed out"
+  marker cleared before the password check (both need unusual timing; left
+  alone as code just tested Pass). Dismissed after reading the code: the
+  opening-tab blank-screen worry in `TargetPlanningScreen.tsx` (the refetch
+  function should be stable; not checked in this repo), "across N people" and
+  the name sort (Tabs plan D18), and the GM-with-a-target wording (by design).
+- **Not re-tested:** (2) the sign-out change. Basheer skipped it for 4 Nov and
+  committed it anyway ("we will fix anything we see not working tomorrow after
+  the testing"). To do 5 Nov: sign out by button and by idle, sign in again,
+  then sign out in tab A and log in in tab B: A should open the app.
+
+### 2026-11-04 — Retro, Build & Test (Target vs Actuals re-run and fix commit)
+
+- **Corrections from Basheer this session: 4.** (1) I asked for the same
+  confirmations twice before he answered the backend-restart question; (2) he
+  asked for the code review to come after the E2E, not before; (3) "What is
+  the check I should be doing?" — I had said "re-check as Haroon" without
+  listing the steps; (4) he had to say "skip the test altogether for today"
+  after I first said the check wasn't needed right now.
+- No tracker line: none of these was a slip a tool check could stop, and none
+  touched live data, UAT or lost work.
