@@ -750,6 +750,45 @@ once; CLAUDE.md batches small fixes to the end of the feature's E2E. No
 tracker line: none touched live data, UAT or lost work, and no tool check
 would have caught them.
 
+## 4 Nov 2026 — Plan & Chore
+
+**UAT backup:** `cabio_uat_2026-11-04_0649.dump` (876,892 bytes, 535 TOC
+entries verified); pruned `cabio_uat_2026-10-21_0740.dump`, 14 kept.
+Docker took about 1 min 20 s to start (06:47:57 to 06:49:18 by the log;
+the script logged "10s") and was force-closed at the end (30 s timeout).
+Google Drive copy done by Basheer.
+
+**Exception Report plan, UAT count (D14, Basheer's go-ahead):** one
+read-only transaction, rolled back, 08:13 IST. 762 hospitals counted (769
+accounts less 7 dealers). If anyone's contact counts, 42 are listed (2 gone
+quiet). Per SBU, Critical Care lists 620 (1 gone quiet) and Imaging 113
+(1 gone quiet); the rest have never been contacted. Figures are in the plan.
+
+**Exception Report plan approved, E2E plan written:** all decisions answered,
+report named "Customer with No Activity" (Basheer), rule BR-ACC-06 added, E2E
+plan 37 steps. Dev had no usable accessory product and no dealer, so the E2E
+adds permanent test data (list in the E2E plan). Zone picker counts the zones
+below the ones a person holds (D13, Basheer).
+
+**Competitive Loss plan, first look at Dev:** 5 lost Opportunities, all
+Imaging, ₹74 Lakhs (read-only, rolled back, 12:21 IST). 3 are Competitor Won,
+with names typed as "ge", "Philips" and "siemens". Those same 3 have no
+closing date recorded, so a filter by period would miss them. Paused: I started
+this without asking; Basheer stopped it. UAT check not run, no plan file.
+
+**Retro — corrections from Basheer this session: 8.**
+1. My explanation of counting a colleague's visit wasn't clear (D15).
+2. My explanation of the two count tiles wasn't clear (D8a).
+3. I left dealers out; "Dealers are customers" (D10).
+4. The report's name: "Customer with No Activity", not a hospital report.
+5. I offered a Rep picker to reps (D13).
+6. I treated Q6 as waiting on Haroon; "Q6 already we decided".
+7. I treated D3 as open; "D3 also we decided".
+8. I started the Competitive Loss plan unasked ("Why asked you…").
+
+No tracker line: none touched live data or lost work, and no tool check would
+have caught them.
+
 ## 4 Nov 2026 — Build & Test: Planning tabs E2E on the five-tab layout, 30 of 30 recorded
 
 **Result:** P2, A1–A10, B1–B5, C1–C4, D1–D5, E1–E4, F1–F2 all recorded Pass.

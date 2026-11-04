@@ -1,7 +1,7 @@
 # Discussion: Bringing overdue next actions under control — 2026-11-03
 
 **Status:** Discussion — for Haroon to agree the team routine (Q1–Q3) and
-for Haroon and Basheer to decide Q4–Q6. Nothing built.
+for Haroon and Basheer to decide Q4 and Q5 (Q6 answered, section 6). Nothing built.
 **Participants:** Basheer (decisions), Haroon / Cabio leadership (business
 sign-off), Claude (options and analysis).
 **Origin:** UAT data-quality report, 3 Nov 2026. Basheer: "Why did overdue
@@ -139,4 +139,8 @@ scope.
 
 ## 6. Answers
 
-_None yet._
+**Q6, what counts as activity (Basheer, 2026-11-04):** visits, calls,
+meetings and emails all count.
+
+**Q6, who sees it (Basheer, 2026-11-04):** each rep sees their own list;
+managers see their own and their team's.

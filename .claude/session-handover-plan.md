@@ -7,10 +7,16 @@ session edits this note._
 
 - Forecast plan (untracked, written by Antigravity — Basheer 27 Oct): commit it, and by which session? Open. At review, line 110 → BR-FIN-09.
 
+## 4 Nov — Competitive Loss and Demo-to-sale plans: paused
+
+- Don't start either until Basheer says so (he stopped me, 4 Nov). Only a Dev
+  look so far (Progress-Archive); UAT check not run, no plan file.
+
 ## 3 Nov — papers with Haroon; scorecard republish
 
 - Overdue next actions paper `docs/Discussion-Overdue-Next-Actions-2026-11.md`
-  (Q1–Q6). **Next:** Basheer sends the WhatsApp summary to Haroon.
+  (Q1–Q6), committed and pushed `58e7de2`. **Next:** Basheer sends the
+  WhatsApp summary to Haroon.
 - Salesperson Performance paper section 10 (`d5b6a96`). **Next:** Basheer
   sends 10.4 to Haroon. Product-cost question: Basheer checking with him.
 - **Next:** republish both client scorecard pages (diff shown 3 Nov,
@@ -23,18 +29,16 @@ session edits this note._
   checked 31 Oct 15:20 IST; `8c7a445`). Simpler table and Planning tabs
   are built and in `main`. Plan & Chore confirms plan and step before
   each `/build` starts.
+- Then: Customer with No Activity (`docs/Exception-Report-Implementation-Plan.md`,
+  Approved 4 Nov; E2E `docs/Customer-No-Activity-Report-Manual-E2E-Test-Plan.md`,
+  37 steps). Activity Type first is my recommendation; Basheer to confirm.
 
 ## Rollout: when planning counts — to plan (Basheer, 30 Oct)
 
-- Planning in the system won't be done properly in Oct–Dec; July–Sep Opportunities
-  were entered without targets (paper only). Backlog "Rollout: when
-  planning starts to count". Q1 decided (B — Oct–Dec learning quarter,
-  Jan–Mar 2027 first proper one). App today counts from Oct–Dec
-  (`FIRST_SAVED_PERIOD`, service.py:649). Q2 decided: (a) "Learning
-  quarter, not counted", fix during the Simpler Table E2E; Backlog +
-  Annual Target D66 updated. Still to add it to Simpler Table plan
-  Decisions, its E2E plan, Business-Rules. Q3 decided: paper targets stay
-  on paper. **Next:** Q4 (exit criteria); then ADR.
+- Backlog "Rollout: when planning starts to count" holds Q1–Q3 (decided).
+  App counts from Oct–Dec today (`FIRST_SAVED_PERIOD`, service.py:649).
+  Still to add Q2 to Simpler Table plan Decisions, its E2E plan,
+  Business-Rules. **Next:** Q4 (exit criteria); then ADR.
 
 ## After the UAT move (25 Oct, details in the archive)
 
