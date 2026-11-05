@@ -153,7 +153,10 @@ export default function MyWorkScreen({ isActive, onSelectAccount, onSelectOpport
     enabled: isManagerTier,
     queryFn: () => listUsers("scoped"),
   });
-  const others = team.filter((u) => u.id !== profile?.id);
+  // A Marketing User never owns Opportunities or follow-ups, so there is nothing
+  // to show for them; the Admin/GM list includes them (see Backlog "Marketing
+  // Users in the Rep pickers").
+  const others = team.filter((u) => u.id !== profile?.id && u.role_name !== "Marketing User");
 
   const query = useQuery({
     queryKey: ["reporting", "weekly-followup", userId, idleDays],
