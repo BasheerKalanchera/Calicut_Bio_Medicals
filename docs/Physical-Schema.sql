@@ -11,8 +11,8 @@
 -- it is not consumed by Alembic or the application at runtime, and cannot be
 -- used as an `alembic stamp <rev>` checkpoint.
 --
--- Regenerated 2026-10-25 from the Dev database, catching up migration
--- 0064: brand_vendor_target.set_by_hand: a brand quarter the GM typed by hand
+-- Regenerated 2026-11-05 from the Dev database, catching up migration
+-- 0065: cabio_app_account_last_contact(): last contact, logger and Active count per hospital
 -- See docs/Backend-Implementation-Standards.md's migration workflow.
 --
 -- Regenerate with: .\scripts\regen_physical_schema.ps1
@@ -22,7 +22,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict eT4ublxkQVGwsBCLmfNyb8aMnBCVynjAEOTbwg4oaqLoTcfzwaTjR4wSogDp7J6
+\restrict ky9OiwPSp8pkAdbKaOaosg6Juw8QFxN6DeMfRZfgxQa9zo5HwBiBhg0gbegbR43
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.11 (Debian 17.11-1.pgdg13+2)
@@ -128,6 +128,58 @@ BEGIN
     RETURN NULL;
 END;
 $_$;
+
+
+--
+-- Name: cabio_app_account_last_contact(uuid[], uuid, text[]); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.cabio_app_account_last_contact(p_account_ids uuid[], p_sbu_id uuid, p_contact_types text[]) RETURNS TABLE(account_id uuid, last_contact_at timestamp with time zone, last_contact_by text, active_opportunity_count integer)
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+            SELECT
+                ids.account_id,
+                lc.activity_date,
+                lc.display_name::text,
+                COALESCE(ao.n, 0)::integer
+            FROM unnest(p_account_ids) AS ids(account_id)
+            LEFT JOIN LATERAL (
+                SELECT act.activity_date, up.display_name
+                FROM activity act
+                JOIN user_profile up ON up.id = act.user_id
+                WHERE act.account_id = ids.account_id
+                  AND act.activity_type = ANY (p_contact_types)
+                  AND act.activity_date <= now()
+                  AND (p_sbu_id IS NULL OR up.sbu_id IS NULL OR up.sbu_id = p_sbu_id)
+                  AND NOT (
+                      act.opportunity_id IS NOT NULL
+                      AND EXISTS (
+                          SELECT 1 FROM opportunity_item oi
+                          WHERE oi.opportunity_id = act.opportunity_id AND oi.line_type <> 'BUYBACK'
+                      )
+                      AND NOT EXISTS (
+                          SELECT 1 FROM opportunity_item oi
+                          JOIN product p ON p.id = oi.product_id
+                          WHERE oi.opportunity_id = act.opportunity_id
+                            AND oi.line_type <> 'BUYBACK'
+                            AND p.product_type <> 'ACCESSORY'
+                      )
+                  )
+                ORDER BY act.activity_date DESC, act.created_at DESC
+                LIMIT 1
+            ) lc ON true
+            LEFT JOIN LATERAL (
+                SELECT count(*) AS n
+                FROM opportunity o
+                JOIN opportunity_status os ON os.id = o.status_id
+                WHERE o.account_id = ids.account_id
+                  AND os.status_code = 'ACTIVE'
+                  AND (p_sbu_id IS NULL OR o.sbu_id = p_sbu_id)
+            ) ao ON true
+            WHERE cabio_app_role_name() IN ('Admin', 'General Manager')
+               OR (p_sbu_id IS NOT NULL AND p_sbu_id = cabio_app_sbu_id())
+        $$;
 
 
 --
@@ -3962,5 +4014,5 @@ CREATE POLICY target_plan_write ON public.target_plan FOR INSERT WITH CHECK ((us
 -- PostgreSQL database dump complete
 --
 
-\unrestrict eT4ublxkQVGwsBCLmfNyb8aMnBCVynjAEOTbwg4oaqLoTcfzwaTjR4wSogDp7J6
+\unrestrict ky9OiwPSp8pkAdbKaOaosg6Juw8QFxN6DeMfRZfgxQa9zo5HwBiBhg0gbegbR43
 

@@ -1279,13 +1279,6 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   decision — a demo happened if `demo_start_date` is set, and win/loss is
   already tracked via `opportunity_status` — but not scoped or built yet.
 
-- **Exception report: zero lead activity over 3 months — not built, no
-  design started.** PRD 5.7 (Exception Reports) asks for a report flagging
-  accounts/leads with no logged Activity in the last 3 months, to catch a
-  relationship going quiet before it's lost. Found missing 2026-09-14. Not
-  blocked on a decision — the data (`activity.activity_date` per account) is
-  already there — just not scoped or built yet.
-
 - **"Stuck in stage" (BR-OP-06 as reworded) — later, once reps log
   regularly (Basheer, 2026-10-11).** An Opportunity sitting in one stage
   longer than that stage's limit becomes Stalled; moving to a new stage or

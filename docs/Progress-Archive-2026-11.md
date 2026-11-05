@@ -1149,3 +1149,23 @@ file names as `Desktop\cabio\MUI-Round1-Before`, into
   scratchpad, 26 rows. Not opened in a browser by me (the tool cannot open
   local files); Basheer has not viewed it yet.
 - **Not done:** combined E2E, and removing the Backlog "File deletes" entry.
+
+## 5 Nov 2026 — Build: Customer with No Activity merged into main and migration 0065 applied
+
+- **Merge:** `main` brought into `worktree-build` as `4fe882d` (pytest 1547
+  passed, tsc clean, lint 0 errors), branch pushed, then merged into `main`
+  as `28112eb` and pushed. Plan `docs/Exception-Report-Implementation-Plan.md`
+  (steps 1-2 `0741c02`, `31747a1`, review fix `a0c5a05`).
+- **Two text clashes, both in this file** (both sides appended; this file has
+  mixed line endings, so git saw the whole file as changed). Fixed by
+  normalising endings, a 3-way merge, keeping both sides; no entry lost.
+  The first merge into `main` was also blocked until Build & Test committed
+  its uncommitted entries here (Basheer asked it to).
+- **Migration 0065 applied to Dev** by Basheer (his own `alembic upgrade
+  head`; the tool blocks Claude's run). `alembic current` = `0065 (head)`.
+  `docs/Physical-Schema.sql` regenerated with `scripts/regen_physical_schema.ps1`;
+  the diff is only the new function `cabio_app_account_last_contact` plus the
+  header and the dump's random tags. Backlog entry "Exception report: zero
+  lead activity over 3 months" removed.
+- **Not done:** the 37-step E2E on Dev (first real run of the function);
+  Traceability row 11.1 and scorecard wait for it.
