@@ -108,6 +108,9 @@ def _repo(**overrides) -> MagicMock:
     repo.managers_of.return_value = {}
     repo.summary_totals.return_value = (Decimal(0), Decimal(0), Decimal(0))
     for k, v in overrides.items():
+        if k == "roster":
+            # Rows are (id, name) or (id, name, role_name); a plain person is an Area Manager.
+            v = [row if len(row) == 3 else (*row, "Area Manager") for row in v]
         getattr(repo, k).return_value = v
     return repo
 
@@ -186,6 +189,19 @@ def test_roster_member_without_a_plan_gets_a_not_started_row(monkeypatch):
     assert ravi.plan_status == RosterStatus.NOT_STARTED
     assert (ravi.planned_lakhs, ravi.won_lakhs, ravi.percent_of_target) == (Decimal(0), Decimal(0), None)
     assert (resp.roster_count, resp.not_submitted_count) == (1, 1)
+
+
+def test_only_the_general_manager_row_is_flagged_for_the_same_as_sbu_target_wording(monkeypatch):
+    # Quarter and Year views: the GM has no personal target, so the screen
+    # reads "Same as SBU target" for them (Basheer, 4 Nov).
+    gm, rep = uuid.uuid4(), uuid.uuid4()
+    repo = _repo(roster=[(gm, "Haroon", "General Manager"), (rep, "Asha", "Area Manager")])
+    monkeypatch.setattr(service_module, "today_ist", lambda: IN_QUARTER)
+    user = _user_with_role("General Manager", sbu_id=None)
+    quarter = TargetVsActualService(repo).get_target_vs_actual(SBU_ID, PERIOD, current_user=user)
+    assert {p.display_name: p.is_general_manager for p in quarter.people} == {"Haroon": True, "Asha": False}
+    year = TargetVsActualService(repo).get_target_vs_actual_year(SBU_ID, 2026, current_user=user)
+    assert {p.display_name: p.is_general_manager for p in year.people} == {"Haroon": True, "Asha": False}
 
 
 def test_owner_outside_the_roster_has_no_row_but_still_counts_in_totals(monkeypatch):

@@ -259,6 +259,9 @@ class TargetVsActualPerson(BaseModel):
     # Who they report to: the screen lists a manager's team under them, as
     # their targets are a share of the manager's (D76).
     manager_id: uuid.UUID | None = None
+    # The General Manager has no personal target; the screen reads "Same as
+    # SBU target" in their Target cell.
+    is_general_manager: bool = False
     # Only waiting and approved plans count towards planned; a draft or
     # rejected plan shows its status with no figures.
     plan_status: RosterStatus
@@ -339,6 +342,7 @@ class TargetVsActualYearPerson(BaseModel):
     user_id: uuid.UUID
     display_name: str
     manager_id: uuid.UUID | None = None
+    is_general_manager: bool = False
     # Target so far; None when a quarter so far has no target for them (D81).
     target_lakhs: Decimal | None
     # PO received so far (Simpler Table D4): added up over the same quarters.

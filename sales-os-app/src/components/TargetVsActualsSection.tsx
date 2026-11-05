@@ -12,7 +12,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { listSbus } from "../services/masterData";
 import { getTargetVsActual, getTargetVsActualYear } from "../services/targetPlanning";
 import type { QuarterState } from "../types/targetPlanning";
-import { lakhs, noteSx, numCellSx, summaryLines } from "../utils/targetVsActuals";
+import { lakhs, noteSx, numCellSx, personTarget, summaryLines } from "../utils/targetVsActuals";
 import { formatFiscalYear, formatPlanningPeriod, getCurrentPlanningPeriod, getFiscalYearOfPeriod, shiftPlanningPeriod } from "../utils/formatter";
 import { asTree } from "../utils/reportingTree";
 
@@ -220,7 +220,7 @@ export default function TargetVsActualsSection({ onPersonOpenChange }: Props) {
                     </ButtonBase>
                     {managerName && <Box sx={{ ...noteSx, fontWeight: 400 }}>reports to {managerName}</Box>}
                   </TocCell>
-                  <TocCell label="Target" align="right" sx={numCellSx}>{lakhs(p.target_lakhs)}</TocCell>
+                  <TocCell label="Target" align="right" sx={numCellSx}>{personTarget(p)}</TocCell>
                   <TocCell label="Won (paid)" align="right" sx={numCellSx}>{lakhs(p.won_lakhs)}</TocCell>
                   <TocCell label="PO received" align="right" sx={numCellSx}>{lakhs(p.po_received_lakhs)}</TocCell>
                   <TocCell label="Won %">

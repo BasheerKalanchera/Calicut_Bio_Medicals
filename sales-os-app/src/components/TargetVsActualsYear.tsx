@@ -5,7 +5,7 @@ import { WonBar } from "./TargetVsActualsParts";
 import type { TargetVsActualYearResponse } from "../types/targetPlanning";
 import { formatFiscalYear, formatPlanningPeriod, getCurrentPlanningPeriod, getFiscalYearOfPeriod } from "../utils/formatter";
 import { asTree } from "../utils/reportingTree";
-import { lakhs, noteSx, numCellSx, summaryLines } from "../utils/targetVsActuals";
+import { lakhs, noteSx, numCellSx, personTarget, summaryLines } from "../utils/targetVsActuals";
 
 // Target vs Actuals, Year view (Redesign D2, D6; Annual Target Planning D66,
 // D81; Simpler Table D2, D4): one table of running totals from the year's
@@ -66,7 +66,7 @@ export default function TargetVsActualsYear({ data, isTeamView, sbuName }: { dat
                 {p.display_name}
                 {managerName && <Box sx={{ ...noteSx, fontWeight: 400 }}>reports to {managerName}</Box>}
               </TocCell>
-              <TocCell label="Target so far" align="right" sx={numCellSx}>{lakhs(p.target_lakhs)}</TocCell>
+              <TocCell label="Target so far" align="right" sx={numCellSx}>{personTarget(p)}</TocCell>
               <TocCell label="Won (paid) so far" align="right" sx={numCellSx}>{lakhs(p.won_lakhs)}</TocCell>
               <TocCell label="PO received so far" align="right" sx={numCellSx}>{lakhs(p.po_received_lakhs)}</TocCell>
               <TocCell label="Won % of target"><WonBar wonPct={p.percent_of_target} /></TocCell>

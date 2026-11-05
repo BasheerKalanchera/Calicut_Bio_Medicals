@@ -5939,6 +5939,11 @@ export interface components {
             display_name: string;
             /** Manager Id */
             manager_id?: string | null;
+            /**
+             * Is General Manager
+             * @default false
+             */
+            is_general_manager: boolean;
             plan_status: components["schemas"]["RosterStatus"];
             /** Previous Approved Total Lakhs */
             previous_approved_total_lakhs: string | null;
@@ -6043,6 +6048,11 @@ export interface components {
             display_name: string;
             /** Manager Id */
             manager_id?: string | null;
+            /**
+             * Is General Manager
+             * @default false
+             */
+            is_general_manager: boolean;
             /** Target Lakhs */
             target_lakhs: string | null;
             /** Po Received Lakhs */

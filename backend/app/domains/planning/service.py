@@ -541,6 +541,9 @@ class _RosterEntry:
     # False for a plan owner outside the roster (another SBU's person, someone
     # since deactivated): no row, but their plan still counts in the totals.
     on_roster: bool
+    # The General Manager has no personal target: the screen reads "Same as
+    # SBU target" for them (Basheer, 4 Nov).
+    is_general_manager: bool = False
     status: RosterStatus = RosterStatus.NOT_STARTED
     plan: TargetPlan | None = None
     counted: Decimal = _ZERO
@@ -564,8 +567,9 @@ def _build_roster(
     Target vs Actuals and the Target Planning roster so the two screens list
     the same people, statuses and totals (Target-Coverage-Roster plan)."""
     entries: dict[uuid.UUID, _RosterEntry] = {}
-    for user_id, name in repo.roster(current_user, sbu_id):
-        entries[user_id] = _RosterEntry(user_id, name, on_roster=True)
+    for user_id, name, role_name in repo.roster(current_user, sbu_id):
+        is_gm = role_name == "General Manager"
+        entries[user_id] = _RosterEntry(user_id, name, on_roster=True, is_general_manager=is_gm)
     for plan in repo.list_plans(current_user, sbu_id, planning_period):
         entry = entries.get(plan.user_id)
         if entry is None:
@@ -589,6 +593,7 @@ class _PersonAcc:
         self.user_id = user_id
         self.display_name = display_name
         self.plan_status = RosterStatus.NOT_STARTED
+        self.is_general_manager = False
         self.previous_approved_total: Decimal | None = None
         # Rejected revision counted at its last approved total (BR-PL-05).
         self.approved_fallback = False
@@ -1004,6 +1009,7 @@ class TargetVsActualService:
         for entry in roster:
             acc = person(entry.user_id, entry.display_name)
             acc.plan_status = entry.status
+            acc.is_general_manager = entry.is_general_manager
             acc.plan_total = entry.counted
             acc.approved_fallback = entry.approved_fallback
             plan = entry.plan
@@ -1228,14 +1234,15 @@ class TargetVsActualService:
 
         # D2: a person's row is their year so far -- target and Won for the
         # counted quarters up to the one we are in.
-        names: dict[uuid.UUID, tuple[str, uuid.UUID | None]] = {}
+        names: dict[uuid.UUID, tuple[str, uuid.UUID | None, bool]] = {}
         quarter_rows: dict[uuid.UUID, dict[str, TargetVsActualPerson]] = {}
         for p, r in by_period.items():
             for row in r.people:
-                names[row.user_id] = (row.display_name, row.manager_id)  # latest quarter's line manager
+                # latest quarter's line manager
+                names[row.user_id] = (row.display_name, row.manager_id, row.is_general_manager)
                 quarter_rows.setdefault(row.user_id, {})[p] = row
         people = []
-        for user_id, (name, manager_id) in sorted(names.items(), key=lambda kv: kv[1][0].lower()):
+        for user_id, (name, manager_id, is_gm) in sorted(names.items(), key=lambda kv: kv[1][0].lower()):
             own = quarter_rows[user_id]
             target_run: Decimal | None = None
             target_gap = False
@@ -1257,6 +1264,7 @@ class TargetVsActualService:
                     user_id=user_id,
                     display_name=name,
                     manager_id=manager_id,
+                    is_general_manager=is_gm,
                     target_lakhs=target_so_far,
                     po_received_lakhs=po_run,
                     won_lakhs=won_run,
@@ -1349,6 +1357,7 @@ class TargetVsActualService:
             user_id=p.user_id,
             display_name=p.display_name,
             manager_id=manager_id,
+            is_general_manager=p.is_general_manager,
             plan_status=p.plan_status,
             previous_approved_total_lakhs=p.previous_approved_total,
             target_lakhs=target,

@@ -5,7 +5,7 @@ import { StatTile } from "./ReportingUI";
 import TableOrCards, { TocCell, TocRow } from "./TableOrCards";
 import { NoPoDateNote, TileCell, TileGrid, WonBar } from "./TargetVsActualsParts";
 import type { TargetVsActualPerson } from "../types/targetPlanning";
-import { lakhs, noteSx, numCellSx, percent, ratio } from "../utils/targetVsActuals";
+import { lakhs, noteSx, numCellSx, percent, personTarget, ratio } from "../utils/targetVsActuals";
 
 // One person's own screen in Target vs Actuals' Quarter view (Redesign D4,
 // D10; Simpler Table D7): their three boxes, By hospital and By brand
@@ -82,7 +82,7 @@ export default function TargetVsActualsPerson({
       </Box>
 
       <TileGrid columns={3}>
-        <TileCell><StatTile inGrid label="Target" value={lakhs(person.target_lakhs)} /></TileCell>
+        <TileCell><StatTile inGrid label="Target" value={personTarget(person)} /></TileCell>
         <TileCell>
           <StatTile inGrid label="Won (paid)" value={lakhs(person.won_lakhs)} sublabel={`PO received ${lakhs(person.po_received_lakhs)}`} />
         </TileCell>
