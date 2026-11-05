@@ -1235,3 +1235,8 @@ not done here).
 
 - **Corrections from Basheer this session: 3.** (1) He redirected me from the MUI step 8 E2E to the Customer with No Activity E2E. (2) I wrote "28 are on your list" without saying it was my own sum of the two tiles (1 + 27); he had to ask what it meant. (3) I dropped the zone part of the D16 caption without telling him; his follow-up question exposed it. Counted from the messages visible after the context summary.
 - No tracker line: none touched live data or UAT, and no tool check could have stopped them.
+
+## 5 Nov 2026 — Build (parallel): retro
+
+- **Corrections from Basheer this session: 3.** (1) I started the test run on the merged copy before Build & Test had finished the sign-out testing; he stopped it and asked me to wait. (2) I proposed a separate docs commit for the handover note before the merge; he asked to hold it for the docs batch after the merge. (3) He asked whether it was time for a session refresh and I answered with a retro and a commit proposal instead; he had to repeat the question.
+- No tracker line: none of the three touched live data or lost work.

@@ -17,12 +17,12 @@ the build branch, and reaches `main` at the merge (Basheer, 2026-10-17)._
   regenerated (new function `cabio_app_account_last_contact` only). Backlog
   entry "Exception report: zero lead activity over 3 months" removed.
 - **Docs batch for the merge** (this note, plan Status, Backlog,
-  Physical-Schema, Progress-Archive) is uncommitted in the main folder until
-  Basheer approves it.
-- Not seen in a browser; the function has had no real run yet. **Next:**
-  `/test` (or Build & Test) runs the 37-step E2E on Dev (its section C
-  writes permanent test data, shown to Basheer first). Fixes it finds come
-  back here, each its own shown-first commit.
+  Physical-Schema, Progress-Archive) committed and pushed as `b5fe33a`.
+- **E2E started 5 Nov by Build & Test** (`14ccf77`): 4 of 37 Pass so far
+  (P1, P2, A1, A2), D16 caption decided, a My Work fix `ec8b9e2`. **Next:**
+  the rest of the 37 steps (section C writes permanent test data on Dev,
+  shown to Basheer first). Fixes it finds come back here, each its own
+  shown-first commit.
 - The `worktree-build` branch/folder still exists (kept). Before the next
   build: `git merge main` into it (its uncommitted copy of this note is
   stale; discard it).
