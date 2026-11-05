@@ -744,6 +744,22 @@ look of `StatTile` and `SectionCard` in `ReportingUI.tsx`. Possibly in the
 own. Also open: D16 is seen only on a phone; 768 and 1280 px not yet
 looked at.
 
+### Marketing Users in the Rep pickers — My Work fixed, other screens not started (5 Nov 2026)
+
+My Work's "Showing" list showed Marketing Users to the Admin and the General
+Manager, because their list is every active user and a Marketing User is
+one; an SBU Manager or Area Manager never sees them (they have no SBU). Fixed
+on My Work only, in `MyWorkScreen.tsx` (leaves out `role_name` "Marketing
+User"), committed and pushed as `ec8b9e2`. Basheer chose the
+screen-only fix (5 Nov): the same list also feeds the User Directory, which
+must still show Marketing Users, and Opportunity Owner reassignment.
+
+Other screens that use the same list (`listUsers("scoped")`): the Rep picker
+on Customer with No Activity, Stagnant Opportunities, and the Opportunity
+Pipeline owner filter. These would show Marketing Test User to Haroon and
+Admin too. Not opened or confirmed. If Basheer wants them done the same way:
+the same one-line role check on each screen, or one shared helper.
+
 ### Team Targets: let the GM (and Admin) see reps' targets, view only — waits for the leadership demo (Basheer, 4 Nov 2026)
 
 Found in the Tabs E2E (section C2, 4 Nov). On Team Targets the GM and Admin

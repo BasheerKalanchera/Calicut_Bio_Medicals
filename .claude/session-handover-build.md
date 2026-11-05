@@ -13,29 +13,30 @@ session edits this note._
   hotfix-branch route (`docs/Deployment-Topology.md` "Fix to UAT ahead
   of a full promotion").
 
-## NOW (3 Nov) — fixed headers pushed (`a1f0147`); docs batch + retro pushed (`c3c7ae9`)
-- 3 Nov work (D13–D17 merged, `a1f0147`, `7fa039c`, docs `c3c7ae9`/`fe0bd00`)
-  is pushed and in Progress-Archive 3 Nov.
-- 4 Nov: Tabs E2E 30 of 30 Pass (`413abf8`), sign-out fix (`70b517a`), TvA
-  E2E 37 of 37 Pass (`a3018c2`): all pushed, detail in Progress-Archive 4 Nov.
-- **5 Nov: sign-out re-test 4 of 4 Pass.** Docs `b36522c` on main, not pushed.
-- **5 Nov: MUI step 8 pictures done, 26 of 26 each side.** "After" in
-  `Desktop\cabio\MUI-Round1-After\`; "before" RETAKEN from the old code in
-  `Desktop\cabio\MUI-Round1-Before-2026-11-05\` (old Before folder kept for
-  Plan & Chore's post mortem). Comparison page (not yet viewed by Basheer):
-  scratchpad `MUI-Round1-Before-After.html`; joined pairs in `pairs\`.
-- **5 Nov: all 26 pairs looked at.** Fixes visible: Stakeholders card fits
-  the phone with Edit reachable; "Date", "Team Member", "Zone", "Logged For"
-  names; Delete pop-up. No layout break at 390/768/1280. For Basheer's eye:
-  Product Catalogue avatar letter lighter (bold to regular), rows 2-3 px
-  tighter; Customer 360 tab order differs (Next Actions after Activity now),
-  cause not checked. Basheer's view: pictures cover the look check, so shrink
-  the E2E. The Dev server on 5173 was stopped by low memory: restart only
-  when Basheer asks.
-- **Next:** draft a short E2E for what pictures can't show (delete Cancel and
-  Delete on a throwaway link as Haroon, stakeholder Edit tap, filters, contact
-  box after choosing an account). Fix plan wording "21 pictures" to 26.
-  Session is over 2 h: Basheer to /exit.
+## NOW (5 Nov) — Customer with No Activity E2E running
+- Finished and pushed (detail in Progress-Archive 3–5 Nov): Tabs E2E, TvA E2E
+  37 of 37, sign-out re-test 4 of 4, MUI step 8 pictures 26 of 26 and pair
+  review (docs `44a1999`). Pictures cover the look check, so the step 8 E2E
+  is to be short. Dev server on 5173: restart only when Basheer asks.
+- **5 Nov, later: Customer with No Activity E2E is running** (plan
+  `docs/Customer-No-Activity-Report-Manual-E2E-Test-Plan.md`, 37 steps).
+  P1, P2, A1, A2 Pass = 4 of 37. P2 re-run on Dev 5 Nov: Nishad K V 22 (not
+  21), Elite 125 days; plan edited, uncommitted. **Next: A3** (Basheer, his
+  Basheer K login, on Dev), then A4–A7, then B.
+- **D16 added** to `docs/Exception-Report-Implementation-Plan.md` (uncommitted):
+  a line above the tiles with SBU, zones, which contacts count, "28 of 38
+  hospitals"; no per-row hint, no DB change. **Not built.** Files to touch:
+  `reporting/service.py`, `schemas.py` (+ test), `types/api.ts` via
+  `check-api-types.sh --write`, `NoActivityCustomersReportScreen.tsx`. Waiting
+  on Basheer: build before B, or finish A3–A7 first (my suggestion). Needs a
+  pre-E2E review of the change, then goes in the small-fixes `fix:` batch.
+  Then update E2E A2/B wording. Log of the finding: Progress-Archive 5 Nov.
+- **Small fix committed and pushed:** `ec8b9e2` — My Work "Showing" list
+  leaves out Marketing Users (`MyWorkScreen.tsx`; Backlog "Marketing Users
+  in the Rep pickers" for the other screens). tsc and lint passed 5 Nov.
+  Break 5 Nov; E2E resumes next day at A3.
+- MUI step 8 combined E2E (short, only what pictures can't show) is parked
+  behind this one; fix plan wording "21 pictures" to 26 when resumed.
 - Open: Sales Report and Opportunities On Hold likely need the same fixed
   header (Backlog, 3 Nov). Year view "of plan" parked for Plan & Chore.
 - Dev read 3 Nov (P3c): own targets Oct–Dec 2026 only; SBU Imaging ₹280.0L,

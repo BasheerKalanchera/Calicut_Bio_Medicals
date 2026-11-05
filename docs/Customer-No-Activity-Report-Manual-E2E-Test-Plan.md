@@ -3,7 +3,7 @@
 
 **Covers:** `docs/Exception-Report-Implementation-Plan.md`, D2–D13 and D15,
 one run after the build. Written 2026-11-04, ahead of the build.
-**Built:** on branch `worktree-build`, not yet merged into `main`: `0741c02` (step 1, migration `0065` and report data), `31747a1` (step 2, screen and menu item), `a0c5a05` (pre-E2E review fix: list dims while a new Rep or Zone pick loads). Migration `0065` is applied to Dev only after the merge.
+**Built:** merged into `main` (`28112eb`): `0741c02` (step 1, migration `0065` and report data), `31747a1` (step 2, screen and menu item), `a0c5a05` (pre-E2E review fix: list dims while a new Rep or Zone pick loads). Migration `0065` applied to Dev, `alembic current` = `0065` (head) (read 5 Nov 2026).
 **Where:** Dev.
 
 **What this run proves.** The right customers are on each person's list,
@@ -13,15 +13,17 @@ each one moves a customer on or off the list as decided.
 
 ## Checked against live data
 
-Checked read-only on Dev, 2026-11-04 09:04–09:08 IST, app connection as
-Abdul Latheef P (Admin), all three RLS settings set and verified, rolled
-back. **These lists change with the calendar:** P2 re-runs the check just
-before the run and updates the expected figures below.
+Checked read-only on Dev, 2026-11-04 09:04–09:08 IST and re-run
+2026-11-05 10:59 IST (P2), app connection as Abdul Latheef P (Admin), all
+three RLS settings set and verified, rolled back. **These lists change with
+the calendar:** the figures below are the 5 Nov re-run.
 
 - **Who sees:** Haroon Sidheeq (General Manager, all customers) 27 listed:
   1 gone quiet, 26 never contacted. Basheer K (SBU Manager, Imaging, all
   customers) 28 listed: 1 gone quiet, 27 never contacted. Nishad K V (Area
-  Manager, Critical Care, no team) 21, all never contacted. Arun Adarsh
+  Manager, Critical Care, no team) 22: 1 gone quiet ("Al Shifa Hospital
+  Perinthalmanna", 91 days, last contact Haroon Sidheeq 6 Aug, 3 Active
+  Opportunities), 21 never contacted. Arun Adarsh
   (Area Manager, Critical Care, team: Vivek) 3. Fazal (Area Manager,
   Imaging, team: Fahad) 7. Shruthi (Area Manager, Imaging, team: Rudrappa)
   4. Vivek (Sales Staff, Critical Care) 2. Fahad (Sales Staff, Imaging) 1.
@@ -52,8 +54,11 @@ before the run and updates the expected figures below.
 Labels on existing forms are taken from the code (`QuickLeadModal.tsx`,
 `CloseReminderModal.tsx`, `LogActivityModal.tsx`, `AddHospitalModal.tsx`,
 `ProductCatalogScreen.tsx`, `OpportunityItemAddRow.tsx`, read 2026-11-04).
-The new screen doesn't exist yet: its tile wording and empty message are
-read from the built code at P2, and written into the steps.
+The new screen's wording is from `NoActivityCustomersReportScreen.tsx`, read
+2026-11-05: tiles "Gone quiet" (under it "No activity for 90+ days") and
+"Never contacted" (under it "No visit, call, meeting or email yet"); pickers
+"Rep" (first option "All reps") and "Zone" (placeholder "All Zones"); empty
+message "No customers without activity. Nice."
 
 ## Figures and sources
 
@@ -61,11 +66,15 @@ read from the built code at P2, and written into the steps.
   read-only Dev queries, 2026-11-04 09:04–09:08 IST (scratchpad
   `exception_e2e_dev_data.txt`, `exception_e2e_expected.txt`,
   `exception_e2e_accessory.txt`, `exception_e2e_zones.txt`)
-- Dates that will change the lists: Al Shifa Hospital Perinthalmanna joins
-  Nishad K V's list from 5 Nov 2026 (Haroon Sidheeq's contact of 6 Aug);
-  Test Bangalore Customer joins the Imaging lists from 14 Nov 2026 (Abdul
-  Latheef P's contact of 16 Aug) and Maulana from 16 Nov 2026 (18 Aug) —
-  worked out from the same queries
+- 5 Nov re-run (P2): read-only Dev queries, 2026-11-05 10:59 IST (scratchpad
+  `noact_p1_p2_dev.py` / `noact_p1_p2_dev.txt`)
+- Dates that will change the lists: Al Shifa Hospital Perinthalmanna joined
+  Nishad K V's list on 5 Nov 2026 (Haroon Sidheeq's contact of 6 Aug, 91
+  days); Test Bangalore Customer joins the Imaging lists from 14 Nov 2026
+  (Abdul Latheef P's contact of 16 Aug) and Maulana from 16 Nov 2026 (18
+  Aug) — worked out from the same queries
+- Tile and empty-message wording, pickers — `NoActivityCustomersReportScreen.tsx:71-109`,
+  read 2026-11-05
 - Only General Manager and Admin add products — `ProductCatalogScreen.tsx:30`
 - Accessories are offered through "+ Add Accessory" — `OpportunityItemAddRow.tsx:155`
 - Creating an Opportunity opens the "First activity" pop-up —
@@ -107,23 +116,31 @@ Visit. Activities can't be deleted.
 
 - P1. [Simple] Dev backend restarted after the build's last backend
   change; `alembic current` on Dev = the new head; Physical-Schema.sql
-  regenerated. —
+  regenerated. **Result 5 Nov — Pass (Dev `alembic_version` = `0065`, lookup
+  function present; `cabio_app_account_last_contact` is in
+  `docs/Physical-Schema.sql`; Basheer restarted both servers).** —
 - P2. [Simple] Live-data check re-run (Claude, read-only): every list
   count and name below updated for the day of the run; no Dealer added;
   "Test customer 3", "Test Hospital" and "Test hospital 3" still with no
   activity; hide-check people still outside those zones. Tile wording and
-  empty message read from the built code and written into the steps. —
+  empty message read from the built code and written into the steps.
+  **Result 5 Nov — Pass (two figures changed: Nishad K V 22, Elite
+  Diagnostics 125 days; no Dealer, 38 customers, no future-dated activity;
+  wording read from the screen).** —
 - P3. [Simple] Signed in as Basheer K in one window; private windows for
   the other testers as each section asks. —
 
 ## A — The screen (Basheer K)
 
 1. [Simple] Open the Reports menu. **Expected:** "Customer with No
-   Activity" is listed; tapping it opens the screen with that title. —
-2. [Simple] Look above the list. **Expected:** two number tiles, gone quiet
-   1 and never contacted 27. No box to change the 90 days (D6, D8a). —
+   Activity" is listed; tapping it opens the screen with that title.
+   **Result 5 Nov — Pass (Basheer).** —
+2. [Simple] Look above the list. **Expected:** two number tiles: "Gone
+   quiet" 1 (under it "No activity for 90+ days") and "Never contacted" 27
+   (under it "No visit, call, meeting or email yet"). No box to change the
+   90 days (D6, D8a). **Result 5 Nov — Pass (Basheer).** —
 3. [Simple] Read the first row. **Expected:** Elite Diagnostics, North
-   Kerala, last activity 3 Jul 2026, Basheer K, 124 days, 1 Active
+   Kerala, last activity 3 Jul 2026, Basheer K, 125 days, 1 Active
    Opportunity, 1 installed asset (D8, D9; days go up by one each day). —
 4. [Simple] Read the second row. **Expected:** "Never contacted", with no
    date, name or days; every row after it is the same (D8). —
@@ -145,9 +162,12 @@ Visit. Activities can't be deleted.
 3. [Simple] Haroon: Rep picker → Vivek. **Expected:** exactly "KIMS Hospital
    Trivandrum" and "Test hospital 3", the same as Vivek's own list in B8
    (plan section 1). —
-4. [Complex: cross-role] Nishad K V: open the screen. **Expected:** 21
-   listed, including "astar" (Kasaragod), which sits in a zone below North
-   Kerala (D4). No Rep picker: no team (D13). —
+4. [Complex: cross-role] Nishad K V: open the screen. **Expected:** 22
+   listed (tiles: Gone quiet 1, Never contacted 21). First row: "Al Shifa
+   Hospital Perinthalmanna" (Malappuram), last activity 6 Aug 2026, Haroon
+   Sidheeq, 91 days (92 from 6 Nov), 3 Active Opportunities, 1 installed
+   asset. The list also includes "astar" (Kasaragod), which sits in a zone
+   below North Kerala (D4). No Rep picker: no team (D13). —
 5. [Simple] Nishad K V: find "EMS Hospital" and "Aster MIMS Calicut".
    **Expected:** EMS Hospital is listed as "Never contacted" with 1 Active
    Opportunity: Fahad's Imaging contact doesn't count (D5). Aster MIMS
@@ -176,14 +196,17 @@ Visit. Activities can't be deleted.
     including "kims" (Cluster 1, Rudrappa's zone). Pick Rudrappa.
     **Expected:** only "kims" (D3, D4). —
 13. [Complex: cross-role] Marketing Test User, who has no zones: open the
-    screen. **Expected:** the clear empty message, no error (plan
-    addendum). —
+    screen. **Expected:** the empty message "No customers without activity.
+    Nice." (read from the screen, 5 Nov), no error (plan addendum). If the
+    menu item isn't offered to this role, note that instead. —
 14. [Simple] Nishad K V: Zone picker → Kozhikode. **Expected:** the picker
     shows, though Nishad holds only North Kerala, and offers it and the 5
     zones below it. The list narrows to "aster", "aster hospital" and "Aster
     MIMS Mother Hospital Areekode". "Government Medical College Kozhikode" and
     "Meitra Hospital Kozhikode" drop out: they are filed under North Kerala
-    itself (D13, plan's "Known limit"). —
+    itself (D13, plan's "Known limit"). "Al Shifa Hospital Perinthalmanna"
+    (Malappuram, the gone-quiet row in B4) drops out too; back on All Zones
+    it returns as the first row. —
 
 ## C — What moves a customer on or off the list (saves; Basheer clicks, Claude watches)
 

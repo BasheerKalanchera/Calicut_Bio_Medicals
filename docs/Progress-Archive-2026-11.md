@@ -1222,3 +1222,16 @@ not done here).
   lead activity over 3 months" removed.
 - **Not done:** the 37-step E2E on Dev (first real run of the function);
   Traceability row 11.1 and scorecard wait for it.
+
+## 5 Nov 2026 — Build & Test: Customer with No Activity E2E
+
+- **P1, P2 Pass; A1, A2 Pass (Basheer).** P2 re-run on Dev 10:59 IST: Nishad K V 22 (not 21: Al Shifa Hospital Perinthalmanna went quiet, 91 days), Elite Diagnostics 125 days; plan edited (not committed).
+- **Finding (A2 question):** the screen doesn't say whose list it is, which SBU's contacts count (D5), or how many hospitals are in scope. Example: for Basheer K "Test hospital 2" shows "Never contacted" though Vivek (Critical Care) visited on 29 Oct, with nothing on screen saying why. Decision pending with Basheer: a caption only, or per-row hints (the latter may cross the SBU security boundary).
+- **Decided (Basheer):** caption only, with the fuller line (SBU; zones; which contacts count; "N of M hospitals"); no DB change. Written as D16 in the implementation plan. Not built; timing (before section B, or after A3–A7) still open.
+- **Quick fix, My Work "Showing" list:** the Admin/GM list is every active user, so Marketing Users appeared. Basheer chose the screen-only fix: `MyWorkScreen.tsx` now leaves out `role_name` "Marketing User". Other screens using the same list (Rep pickers on Customer with No Activity and Stagnant Opportunities, Opportunity Pipeline owner filter) not opened; Backlog entry "Marketing Users in the Rep pickers". tsc and lint pass (exit 0); the frontend has no test script and no backend file changed.
+- **Stopped for the day at 4 of 37 (11 %).** Next: A3 with the Basheer K login.
+
+## 5 Nov 2026 — Build & Test: retro
+
+- **Corrections from Basheer this session: 3.** (1) He redirected me from the MUI step 8 E2E to the Customer with No Activity E2E. (2) I wrote "28 are on your list" without saying it was my own sum of the two tiles (1 + 27); he had to ask what it meant. (3) I dropped the zone part of the D16 caption without telling him; his follow-up question exposed it. Counted from the messages visible after the context summary.
+- No tracker line: none touched live data or UAT, and no tool check could have stopped them.
