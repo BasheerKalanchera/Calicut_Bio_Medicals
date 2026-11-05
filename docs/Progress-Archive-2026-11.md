@@ -1223,6 +1223,31 @@ not done here).
 - **Not done:** the 37-step E2E on Dev (first real run of the function);
   Traceability row 11.1 and scorecard wait for it.
 
+## 5 Nov 2026 — Build (parallel): retro
+
+- **Corrections from Basheer this session: 3.** (1) I started the test run on the merged copy before Build & Test had finished the sign-out testing; he stopped it and asked me to wait. (2) I proposed a separate docs commit for the handover note before the merge; he asked to hold it for the docs batch after the merge. (3) He asked whether it was time for a session refresh and I answered with a retro and a commit proposal instead; he had to repeat the question.
+- No tracker line: none of the three touched live data or lost work.
+
+## 5 Nov 2026 — Plan & Chore: UAT backup; separate archives per session looked into
+
+- **UAT backup** (Basheer yes): `cabio_uat_2026-11-05_0657.dump`, 897,298 bytes, 535 entries (backup log). Pruned the 22 Oct copy; 14 kept. Basheer copied it to Google Drive.
+- **Separate Progress-Archive per session** (Basheer's question; proposal only, nothing changed). Recommended: yes, from 1 Dec, as `Progress-Archive-2026-12-PC.md`, `-BT.md`, `-B.md`; `/test` writes to the Build & Test file (the two never run together); November stays one file; no old file renamed. Three decisions open: split or not, where `/test` writes, start date.
+- Evidence: 15 of the 18 merges since 17 Oct had the archive changed on both sides (actual text clashes not counted); 202 of the 392 commits since 1 Oct touch the archive; P68 tracker count 5 (also covers handover and Backlog); entry filed twice (October archive, line 690). Not fixed by a split: Backlog and Process-Improvements stay shared.
+- Basheer then widened the topic: a proper doc set for running 2–3 sessions in parallel, on his return from a break.
+- Later the same day Basheer rejected the 1 Dec start ("waiting till Dec 1 does not work for me"); the split can start now. Still waiting on his yes to three files and his description of the collisions.
+- Noted: CLAUDE.md still says the UAT data-quality check is paused, but `58e7de2` resumed it on 3 Nov. Correction not yet made.
+- **Demo to Haroon** done from the deck (https://claude.ai/artifact/W2TW2zT2ujES7t5P3spB3w). Basheer: the demo was fine, but Haroon didn't get the full target and planning picture. One-page picture published, private: https://claude.ai/artifact/KGBPpfiLUw8n39LTBbqCnd.
+- **UAT team list** (one read-only query, Basheer asked for it; rolled back; Admin context, whose SBU setting is empty; 18 rows, all active). Critical Care: Arun Adarsh → Vivek; Nishad K V → Adydev. Imaging: Fazal → Fahad, Gopika pv; Shruthi → Dhanushma, Om Hiremath, Ravi Kumar, Rudrappa Deevatagi; Naeem → nobody. Irfan (Imaging rep) has no manager. All five Area Managers report to Haroon. Before the query I opened UAT's sign-in page by mistake; nothing was entered, and the tab was closed.
+- **Training sessions, proposal, not decided:** Session 1 Haroon + Latheef Bhai (mock, Dev); Session 2 once per SBU with Area Managers (mock, Dev); Session 3 one per Area Manager's team (real, UAT after the move). Open with Basheer: Irfan's manager, Session 3 shape, fixes before real targets (share kept by a selling manager shows as "short"; a rejected plan still counts in Team committed). The picture's steps 3 and 4 need correcting.
+- **Basheer's answers, later the same day:** Gopika pv and Fahad both report to Fazal; all Area Managers sell. His example: Haroon gives Fazal ₹100 L and Fazal submits a ₹100 L plan. Code read: Brand Target Tracking's Team committed and Target vs Actuals' team plan figure add up every person's plan, so a ₹100 L manager plan plus the reps' plans counts the reps' share twice. Proposed, not decided: the manager's plan covers only their own share. Also found: Target vs Actuals' Year view measures the manager's own row (own Won) against the whole team target; the "Your team" row is right.
+- **Order agreed (Basheer):** dry run, fix blockers, Session 1, the four fixes, Sessions 2a and 2b, UAT move, Session 3. Plan with the 19-step dry-run list: `docs/Target-Plan-Training-Implementation-Plan.md`, Draft. Irfan may be leaving; Basheer is checking with Haroon. Sign-in code read: normal and incognito give two logins; more needs Chrome profiles, not yet tested. Dev query (read-only, as Haroon, rolled back): Dev has no Naeem or Gopika pv, Imaging has only SonoScape, Basheer K is an SBU Manager, and no 2028 data exists.
+- **Stopped for the day (Basheer).** Plan holds the dry-run steps, picture changes (shown, not published), four fixes, Session 1 questions and session list. Waiting on him: dry run in Critical Care for 2028, and the picture changes. Not run today: UAT data-quality check and doc tidy-up (asked, not answered). Archive split not started.
+
+## 5 Nov 2026 — Plan & Chore: retro
+
+- **Corrections from Basheer this session: 10.** (1) Took "From 1 dec" as agreement; he had to say it doesn't work for him. (2) He asked me to double-check my claim that Annual Target testing was unfinished. (3) Called full screens pop-ups. (4) Assumed an SBU Manager on UAT; there is none. (5) Mock with Area Managers would have shown how Haroon stretches targets. (6) Proposed Area Managers sign in as their reps. (7) Opened UAT's sign-in page when a read-only query was enough ("Why are you logging into UAT?"). (8) Gave an untested Chrome-profile tip on logins; he questioned the limit. (9) Mentioned "3. Docs commit" without saying what it was; he asked. (10) Mentioned "the 3 fixes and the rejected-plan fix" without saying which; he asked. Counted from the list of his messages in the session summary, as the earlier ones are no longer visible.
+- Tracker: (7) touched UAT, new line in `docs/Process-Improvements.md`.
+
 ## 5 Nov 2026 — Build & Test: Customer with No Activity E2E
 
 - **P1, P2 Pass; A1, A2 Pass (Basheer).** P2 re-run on Dev 10:59 IST: Nishad K V 22 (not 21: Al Shifa Hospital Perinthalmanna went quiet, 91 days), Elite Diagnostics 125 days; plan edited (not committed).
@@ -1235,8 +1260,3 @@ not done here).
 
 - **Corrections from Basheer this session: 3.** (1) He redirected me from the MUI step 8 E2E to the Customer with No Activity E2E. (2) I wrote "28 are on your list" without saying it was my own sum of the two tiles (1 + 27); he had to ask what it meant. (3) I dropped the zone part of the D16 caption without telling him; his follow-up question exposed it. Counted from the messages visible after the context summary.
 - No tracker line: none touched live data or UAT, and no tool check could have stopped them.
-
-## 5 Nov 2026 — Build (parallel): retro
-
-- **Corrections from Basheer this session: 3.** (1) I started the test run on the merged copy before Build & Test had finished the sign-out testing; he stopped it and asked me to wait. (2) I proposed a separate docs commit for the handover note before the merge; he asked to hold it for the docs batch after the merge. (3) He asked whether it was time for a session refresh and I answered with a retro and a commit proposal instead; he had to repeat the question.
-- No tracker line: none of the three touched live data or lost work.

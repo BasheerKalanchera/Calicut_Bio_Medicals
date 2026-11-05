@@ -5,6 +5,8 @@ items go to Progress-Archive; unstarted work goes to Backlog. Build & Test
 keeps its own note: `.claude/session-handover-build.md`. Only the Plan & Chore
 session edits this note._
 
+- 5 Nov. **In progress: Target and plan training sessions for Haroon's team** (archive 5 Nov has the session plan and UAT team list). Order agreed, plan `docs/Target-Plan-Training-Implementation-Plan.md` (Draft, holds the dry-run step list). **Next:** Basheer answers two questions: dry run in Critical Care for 2028 (recommended yes), and the picture changes in the plan (recommended yes; https://claude.ai/artifact/KGBPpfiLUw8n39LTBbqCnd, not yet republished). Then the dry run with him, in a fresh session, on Dev. Naeem and Gopika pv aren't on Dev: decide after the dry run. Haroon's questions for Session 1: selling manager's own share, credit for supporting a rep. Basheer checking with Haroon whether Irfan is leaving. Mock logins need one Chrome profile per person (normal + incognito gives only two).
+- **Also urgent:** doc set for running 2–3 sessions in parallel, including the archive split (three decisions open). Not done 5 Nov: UAT data-quality check, doc tidy-up (asked, not answered). UAT backup done.
 - Forecast plan (untracked, written by Antigravity — Basheer 27 Oct): commit it, and by which session? Open. At review, line 110 → BR-FIN-09.
 - Parked to 5 Nov (Basheer): `docs/Marketing-Lead-To-Project-Implementation-Plan.md`, Draft. **Next:** discuss D1–D9.
 
@@ -29,9 +31,6 @@ session edits this note._
   checked 31 Oct 15:20 IST; `8c7a445`). Simpler table and Planning tabs
   are built and in `main`. Plan & Chore confirms plan and step before
   each `/build` starts.
-- Then: Customer with No Activity (`docs/Exception-Report-Implementation-Plan.md`,
-  Approved 4 Nov, pushed `8fa30af`; E2E `docs/Customer-No-Activity-Report-Manual-E2E-Test-Plan.md`,
-  37 steps). Activity Type first is my recommendation; Basheer to confirm.
 
 ## Rollout: when planning counts — to plan (Basheer, 30 Oct)
 
