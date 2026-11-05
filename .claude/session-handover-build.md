@@ -18,23 +18,19 @@ session edits this note._
   is pushed and in Progress-Archive 3 Nov.
 - **4 Nov: Tabs E2E done, 30 of 30, all Pass.** Fixes `413abf8`, pushed.
   Detail, retro and the Backlog entry: Progress-Archive 4 Nov.
-- **4 Nov: (c) sign-out follow-up built and tested, Pass; committed `70b517a`, pushed to origin/main.**
-  Idle sign-out showed the login screen twice (a late token renewal brought
-  the app back for 0.7 s). Fixed in `AuthContext.tsx` + `api.ts` (reload
-  removed, "signed out" marker, old reason cleared at sign-in). Idle, refused
-  session, Sign Out button, sign-in after sign-out: all Pass on Dev. Detail:
-  Progress-Archive 4 Nov. Docs and retro (8 corrections): `b22e3e0`, pushed.
-- **Next (5 Nov):** re-test the sign-out change, then MUI step 8 below.
-- **4 Nov: TvA E2E done, 37 of 37 Pass** (recorded in the plan, entry in
-  Progress-Archive 4 Nov, retro 4 corrections; docs batch next commit). Fix commit `a3018c2`,
-  **pushed to origin/main**: (1) GM's (Haroon's) Target cell reads "Same as
-  SBU target" (backend flag `is_general_manager`, api.ts, 3 screens, test);
-  re-checked as Haroon, Pass. (2) `AuthContext.tsx` one line: a real login
-  from another tab ends this tab's sign-out (code review finding on
-  `70b517a`); **NOT re-tested**, Basheer skipped it for 4 Nov. To do 5 Nov:
-  sign out (button, idle), sign in again, then sign out in tab A and log in
-  in tab B, A should open the app; anything failing is fixed after. Code
-  review of `413abf8`, `70b517a` and fix (1): nothing else to fix.
+- **4 Nov: sign-out double login screen fixed** (`70b517a`, pushed; docs
+  `b22e3e0`). Detail: Progress-Archive 4 Nov.
+- **5 Nov: sign-out re-test of `a3018c2` done, 4 of 4 Pass** (button, sign-in,
+  two tabs, idle by clock jump). Entry in Progress-Archive 5 Nov, uncommitted.
+- **5 Nov: MUI step 8 "after" pictures done, 26 of 26**, in
+  `Desktop\cabio\MUI-Round1-After\` (same file names as the Before folder;
+  03 and 11c taken as Haroon, rest as Basheer K). Comparison page built (not
+  yet viewed by Basheer): scratchpad `MUI-Round1-Before-After.html`.
+- **Next (5 Nov):** combined MUI round 1 E2E (steps 1–7 are all in main).
+  Draft it, tag Simple/Complex, then run with Basheer.
+- **4 Nov: TvA E2E done, 37 of 37 Pass**; fix commit `a3018c2` (GM Target
+  cell, tab sign-out line), pushed; docs `1f6fea2`. Detail and retro:
+  Progress-Archive 4 Nov.
 - Open: Sales Report and Opportunities On Hold likely need the same fixed
   header (Backlog, 3 Nov). Year view "of plan" parked for Plan & Chore.
 - Dev read 3 Nov (P3c): own targets Oct–Dec 2026 only; SBU Imaging ₹280.0L,
@@ -50,12 +46,10 @@ session edits this note._
   point (SBU Target card) was settled: stays on Team Targets (`c23478a`).
 
 ## MUI round 1 Part 1 — step 8 is mine (Basheer, 1 Nov)
-- Steps 1–4 done (`6a417cb`, `f8c61b3`, `394444a`); 5–7 are `/build`'s
-  (5 `06a304b`, 6 `0c4f728` done; 7 Close Next Action + Next Actions next).
-- Step 8: 21 "after" pictures into `Desktop\cabio\MUI-Round1-After\`,
-  before-and-after page, one combined E2E; take it AFTER the Tabs fixes
-  merge so the pictures show the final app. Remove Backlog "File deletes:
-  ask 'Are you sure?' first" only when that E2E passes.
+- Steps 1–7 are in main (1–4 `6a417cb`, `f8c61b3`, `394444a`; 5 `06a304b`,
+  6 `0c4f728`; 7 `b1fdb3f`, `33293b8`, `5c26ed3`; all in main, git 5 Nov).
+- Step 8: pictures done (26, see NOW); still to do: combined E2E. Remove
+  Backlog "File deletes: ask 'Are you sure?' first" only when that E2E passes.
 - Product Catalogue "before" pictures done (`Desktop\cabio\MUI-Round1-
   Before\11*`). "After" detail picture: use Haroon or Admin.
 - Part 2 (wording sweep) comes later; check report 1 Nov: 33 files / 862

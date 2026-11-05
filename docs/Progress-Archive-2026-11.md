@@ -1028,3 +1028,49 @@ in the plan as "Run 4 Nov". Dev backend restarted first (Basheer).
   after I first said the check wasn't needed right now.
 - No tracker line: none of these was a slip a tool check could stop, and none
   touched live data, UAT or lost work.
+
+## 5 Nov 2026 — Build & Test: sign-out re-test (`a3018c2`), 4 of 4 Pass
+
+**Screens:** the Sign Out button, the login screen, the 60-minute idle
+sign-out, and two browser tabs. Dev, backend restarted first. Steps 1–3 run
+by Basheer; step 4 by me in the browser.
+- **1 Sign Out button — Pass.** Login screen showed once (Basheer).
+- **2 Sign in again, same tab, no refresh — Pass** (Basheer).
+- **3 Two tabs — Pass.** Sign out in tab A, log in in tab B: tab A opened the
+  app without a refresh (Basheer). This is the one-line `AuthContext.tsx`
+  change in `a3018c2`, tested for the first time.
+- **4 Idle sign-out — Pass (clock jump, not a real hour).** Date moved
+  forward 61 min in the page, then a visibility event: the page-watcher saw
+  the app change to the login screen once and never back; the inactivity line
+  showed; the page marker survived (no reload); 0 refused requests among the
+  30 the browser recorded.
+- **Caveats:** the 29 data requests in that list all returned 200 and were
+  most likely the screen still loading when I jumped the clock (not proved).
+  Supabase's own sign-out call (`/auth/v1/logout?scope=global`) returned 503
+  during the jump; the app still signed out locally. Not checked whether that
+  recurs in a normal sign-out. A real hour of idle was not tested.
+- Dev's login is shared across Chrome tabs, so the idle test also signed
+  Basheer's other tabs out.
+
+## 5 Nov 2026 — Build & Test: MUI round 1 Part 1, step 8 "after" pictures (26 of 26)
+
+**Screens:** all 26 pictures of the "before" set (Account Management,
+Customer 360 and its Stakeholders tab, Opportunity Detail, Next Actions,
+Daily Activity Report, Log Activity, New Stakeholder, Edit Opportunity, Close
+Next Action, New Customer, Product Catalogue, Product Detail). Taken on Dev
+in the browser (phone, tablet and laptop widths by a same-page frame), same
+file names as `Desktop\cabio\MUI-Round1-Before`, into
+`Desktop\cabio\MUI-Round1-After`. Nothing saved or deleted in the app.
+- **Logins:** Basheer K (SBU Manager, Imaging, no product edit rights) for
+  most, including 11b. Haroon (General Manager) for 03 and 11c: ICU Monitor
+  is Critical Care, so Basheer K cannot see it; 11c needs edit rights.
+- **Records:** Product Detail = SonoScape E2 (found from the "before"
+  pictures). Edit Opportunity used "New Fastrack deal direct to Order"
+  (Al Shifa Hospital Perinthalmanna), not the "before" record (not known).
+- **11c:** the ✕ now opens "Delete this file?" (Cancel / Delete); picture
+  taken with Cancel pressed. Before, the ✕ deleted at once. Code read first
+  (`ProductCatalogScreen.tsx`, `ConfirmDialog`).
+- **Comparison page:** `MUI-Round1-Before-After.html` in the session
+  scratchpad, 26 rows. Not opened in a browser by me (the tool cannot open
+  local files); Basheer has not viewed it yet.
+- **Not done:** combined E2E, and removing the Backlog "File deletes" entry.
