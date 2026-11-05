@@ -3,7 +3,7 @@
 
 **Covers:** `docs/Exception-Report-Implementation-Plan.md`, D2–D13 and D15,
 one run after the build. Written 2026-11-04, ahead of the build.
-**Built:** not yet built.
+**Built:** on branch `worktree-build`, not yet merged into `main`: `0741c02` (step 1, migration `0065` and report data), `31747a1` (step 2, screen and menu item), `a0c5a05` (pre-E2E review fix: list dims while a new Rep or Zone pick loads). Migration `0065` is applied to Dev only after the merge.
 **Where:** Dev.
 
 **What this run proves.** The right customers are on each person's list,

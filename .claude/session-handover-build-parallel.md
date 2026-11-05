@@ -7,60 +7,50 @@ and Build & Test keep their own notes (`.claude/session-handover-plan.md`,
 note. While a `/build` worktree exists, the live copy is the one in it, on
 the build branch, and reaches `main` at the merge (Basheer, 2026-10-17)._
 
-## State on 2 Nov: seven code commits + docs batch on `worktree-build`, pushed, NOT merged
-- **Merged into `main` and pushed (2 Nov): `main` = `a1c9d67`** (fast-forward,
-  28 files, no migration): Planning tabs fixes D12–D16, Target vs Actuals
-  fixes (wording, Fix 4, tab row hidden on a person's own screen), Insights
-  Overdue tab, Sales Report dates/labels. Details and the review (ten
-  findings, none taken) are in Progress-Archive 2026-11 (1 and 2 Nov
-  Build entries). Build & Test / `/test` must restart the Dev backend
-  (Overdue `is_active`) before re-checking.
-- **On the branch since, not merged:**
-  - `a07e97d` — Opportunity Pipeline screen to the MUI standard (theme
-    colours and text sizes, Owner/Zone named above the box, icon
-    search/clear). Not seen in a browser; re-check at 390/768/1280. tsc,
-    ESLint, MUI check clean. Backlog edited, uncommitted (2 Nov): screen
-    removed from "Front-end standardisation fixes, by screen", counts now
-    24 files / 325 lines.
-  - `bd81bcb` — Sign out no longer reloads the page (login screen loaded
-    twice): `api.ts` skips its 401 sign-out + reload while a deliberate
-    sign-out is on (`setDeliberateSignOut`, set in `signOut()`, cleared in
-    `signIn()`). A hypothesis from reading code, not reproduced. Dev only
-    sees it after the merge; Basheer re-tests sign-out then. Backlog entry
-    "Sign out loaded the login screen twice" added, uncommitted.
-  - `cfa886c` — Tabs plan step 4 (D17): My Targets tab, My Plans rename,
-    new tab order/opening tab, GM's SBU-target card, filled Annual "Plan"
-    button. `main` merged in first (`3b82bf9`). Plan Status/progress lines
-    still to update in the docs batch.
-  - `14888f8` — Target vs Actuals Quarter view: "of plan ₹X L" under each
-    person's percentage (Basheer's write-up; Simpler Table D13 not yet in
-    that plan). `ab6a039` — Overdue tab "Sort by" box, Most overdue first /
-    Name A–Z (D14 not yet in that plan either).
-  - **Pre-E2E code review done (2 Nov, medium, `main..HEAD`):** 8 findings
-    checked against code; 3 taken in `19141b8` (My Targets spinner while
-    the GM's SBU loads; "deal" → "Opportunity" in the Pipeline file;
-    sign-out flag also cleared when a session is restored), 5 not real.
-    "No deals" remains in `src/App.jsx:7686` (outside this review).
-  - All: screen only, tsc/ESLint/MUI check clean, not seen in a browser;
-    E2E checks 390/768/1280 px.
+## In progress (4 Nov): Customer with No Activity — built, reviewed, not merged
+- Plan `docs/Exception-Report-Implementation-Plan.md` (Approved, D1–D15).
+  Commits on `worktree-build`, all pushed: step 1 `0741c02` (migration
+  `0065`, report data, tests), step 2 `31747a1` (screen, Reports menu item,
+  `show_zone_picker` from the server, D13, Basheer chose "server says"),
+  review fix `a0c5a05` (list dims while a new Rep/Zone pick loads).
+- **Pre-E2E code review done (4 Nov, medium):** 7 findings, 6 dismissed
+  after reading the code, 1 fixed. pytest 1546 passed, ruff, tsc, MUI check
+  clean, lint 0 errors. Not seen in a browser. Area Manager's Zone picker
+  lists own zones + below only (team's zones via the Rep picker).
+- **Docs batch** (plan Status, E2E plan "Built:", Progress-Archive, this
+  note, retro: 0 corrections) written 4 Nov; commit hash in `git log`.
+- **Migration 0065 is NOT applied** (Basheer: after the merge into `main`,
+  4 Nov). Until then the function is untested against a real database: the
+  E2E on Dev is its first real run. After the merge: apply to Dev, record
+  `alembic current`, regenerate `docs/Physical-Schema.sql`. The Backlog entry
+  "Exception report: zero lead activity over 3 months" is removed then.
+- **Next:** Basheer says go for the merge (still open: bring `main`
+  `70b517a`, the sign-out fix, into the branch — asked twice, unanswered).
+  Then `/test` runs the 37-step E2E (its section C writes permanent test
+  data on Dev, shown to Basheer first).
+
+## Next merge to `main`
+- Only when Basheer says go: bring `main` in, re-run tests, push the
+  branch, `ExitWorktree` keep, merge, push, apply `0065`, then
+  `cabio-post-commit`. If the main folder has an uncommitted copy of a file
+  the merge changes, git refuses: ask before discarding it.
+- Work in the worktree only. Don't edit the E2E plans (Build & Test's),
+  except the one "Built:" line named above.
+- Each fix Build & Test sends: its own shown-first commit.
+
+## Carried over
+- 3 Nov state (everything then merged into `main` `1bf0260`) and the 4 Nov
+  merge of `main` `8fa30af` as `4d42087`: see Progress-Archive 2026-11.
 - **MUI round 1 Part 1:** steps 1–7 done (last `5c26ed3`); step 8 (21
   "after" screenshots, before-and-after page, combined E2E) is Build &
   Test's. Plan: `docs/MUI-Good-Practice-Implementation-Plan.md`.
-
-## Next
-- Docs batch at session refresh (Basheer, 2 Nov): Backlog edits + this
-  note + a Progress-Archive line, shown first, one commit on the branch.
 - Still open from 1 Nov: check the "Me (default)" wording in Frontend
   standards and Process-Improvements (Backlog block "Found in MUI round 1
-  steps 5–7"). Don't edit the E2E plans (Build & Test's).
-- Then build whatever Build & Test sends, each fix its own shown-first commit.
-- **Merge to `main`:** only when Basheer says go: bring `main` in, re-run
-  tests, push the branch, `ExitWorktree` keep, merge, push, then
-  `cabio-post-commit`.
+  steps 5–7").
 - **To tell Plan & Chore (via Basheer):** add ◀ and "← Back" to
   `check-mui-standard.js`; the commit check prints "no staged .ts/.tsx
-  files" even when some are staged (seen again 2 Nov on both commits).
+  files" even when some are staged (seen again 4 Nov on `a0c5a05`).
 - **After the E2Es (Build & Test's):** `cabio-post-commit` paperwork
   (Traceability, scorecard, plan Status). User manual and in-app help wait
   for the UAT move (Simpler Table D8).
-- Migration number last chosen: none.
+- Migration number last chosen: 0065 (not applied).

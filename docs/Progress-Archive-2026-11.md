@@ -618,6 +618,28 @@ entries verified); pruned `cabio_uat_2026-10-20_0654.dump`, 14 kept.
 Docker took about 2½ min to start (script logged "20s") and needed a
 forced close; backup unaffected. Google Drive copy done by Basheer.
 
+## 3 Nov 2026 (Build, parallel) — D14 fix; `main` merged; `main` = `1bf0260`
+- D14 (Insights Dashboard, Overdue tab): the "Sort by" choice stayed
+  after leaving the screen (the screen stays loaded; only the tab was
+  reset). Fixed in `4744b34`: the sort is reset to "Most overdue first"
+  with the tab; comment corrected. Read from code, not seen in a browser.
+- Merge prep: `main` merged into the branch twice (`f9cfaa0`; `1bf0260`
+  after Plan & Chore's `6f3df39`). The only clash was Progress-Archive
+  (kept both). pytest 1,508 passed after the first merge; tsc clean;
+  ESLint 0 errors, 135 warnings. The second merge was docs only, tests
+  not re-run.
+- Merge into `main`: blocked once by an old uncommitted copy of the
+  handover note in the main folder (discarded after Basheer's go; its
+  content was already in the branch's note), then a normal merge.
+  Pushed: `main` = `1bf0260`.
+- Retro. **Corrections from Basheer this session: 2.** (1) Offered to
+  write and commit the docs batch right after the merge; he had decided
+  on 2 Nov to do it at the session refresh ("Wait."). (2) Stayed in the
+  main folder after the merge instead of going back into the worktree.
+  No tracker line: no tool check could stop either, nothing touched live
+  data, UAT or lost work. Not counted: a command I suggested to him could
+  not run from the main folder while the session was in the worktree.
+
 **Doc tidy-up (Plan & Chore, 3 Nov):** Traceability's Weekly Follow-up
 Report row moved to Done: it was built as My Work, merged 28 Oct, E2E
 51 of 51 Pass. Its stale Backlog entry was removed, and the "still
@@ -860,6 +882,59 @@ Pattern: three of the four are test-step or fix wording written without
 reading the matching Quarter-view code or the role's screen first. No tracker
 line: none touched live data, UAT or lost work, and no tool check would have
 caught them.
+
+## 2026-11-04 — Customer with No Activity built and reviewed, not merged (Build, parallel)
+
+Plan `docs/Exception-Report-Implementation-Plan.md` (Approved 4 Nov, D1–D15),
+built in the worktree on `worktree-build`; all commits pushed.
+- Branch prep: `main` (`8fa30af`, Build & Test's screen fixes, e.g.
+  `413abf8`, `7fa039c`) merged into the branch as `4d42087`; the only clash was
+  Progress-Archive, both sides kept.
+- **Step 1 `0741c02`:** migration `0065` (`cabio_app_account_last_contact`,
+  SECURITY DEFINER, read-only), `GET /reporting/no-activity-customers`
+  (repository, service, schemas, router), mocked tests, `api.ts` regenerated.
+  Never-contacted hospitals are ordered by name (D8): I first took that as an
+  open question, but the plan and the built service already did it.
+- **Step 2 `31747a1`:** `NoActivityCustomersReportScreen.tsx`, Reports menu
+  item, `getNoActivityCustomers`, type aliases. The D13 Zone picker (shown only
+  to someone holding more than one zone, counting zones below) could not be
+  worked out in the browser, so Basheer chose Option A: the server sends
+  `show_zone_picker`. Known limit: an Area Manager's Zone picker lists own
+  zones and those below; team-only zones are reached through the Rep picker.
+- **Pre-E2E code review (medium, `main..HEAD`):** 7 findings, each checked
+  against the code. Dismissed: a manager picking a rep of another SBU (an
+  Area Manager's and SBU Manager's team are limited to their own SBU,
+  `TEAM_SCOPE_BUILDERS`); the SECURITY DEFINER function being callable for any
+  hospital (hospitals have no row restrictions, it returns only date, name and
+  count, and has no REVOKE exactly like `cabio_app_plan_overlap`, 0055, as D15
+  accepted); a missing index (`idx_activity_account_id` exists,
+  `Physical-Schema.sql:1659`); hospitals dropped if the function returns fewer
+  rows (it returns one row per hospital asked about; a refusal is handled);
+  uneven row building in the service (tidiness only); no Zone picker for an
+  Area Manager with one own zone (Option A limit above); rep and zone with no
+  overlap showing "Nice." (the empty result is correct). **Fixed, `a0c5a05`:**
+  the tiles and list dim while a new Rep or Zone pick loads, so the old list
+  isn't read as the new pick's.
+- **Checks:** pytest 1546 passed (1540 after step 1), ruff clean, `tsc` clean,
+  lint 0 errors (135 existing warnings, none in the new files), MUI check
+  clean. Not seen in a browser; the 390/768/1280 px look is Basheer's step in
+  the E2E.
+- **Migration `0065` not applied** (Basheer, 4 Nov: after the merge into
+  `main`). Differs from the plan's step 1, where Basheer runs it on Dev. The
+  function is untested against a real database; the E2E on Dev is its first
+  real run. After the merge: apply, record `alembic current`, regenerate
+  `docs/Physical-Schema.sql`, remove the Backlog entry "Exception report: zero
+  lead activity over 3 months".
+- Open: bring `main` `70b517a` (sign-out fix) into the branch? Asked twice,
+  unanswered.
+
+**Retro — corrections from Basheer this session: 0.** Counted from his
+messages: the `/build` start, "build step 2", "Go with Option A", "commit +
+push", "run code review", "Fix it", "commit + push", and the retro request.
+Two slips of mine were caught before they reached him (the D8 order treated as
+open; the `main` merge question asked twice), so they are not corrections. No
+tracker line: nothing touched live data, UAT or lost work, and no tool check
+would have caught them.
 
 ## 4 Nov 2026 — Build & Test: sign-out double screen after idle sign-out, found and fixed (`70b517a`, pushed)
 

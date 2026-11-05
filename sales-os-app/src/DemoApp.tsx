@@ -24,6 +24,7 @@ import UrgentNotificationDialog from "./components/UrgentNotificationDialog";
 import DailyActivityReportScreen from "./screens/DailyActivityReportScreen";
 import InsightsDashboardScreen from "./screens/InsightsDashboardScreen";
 import StagnantDealsReportScreen from "./screens/StagnantDealsReportScreen";
+import NoActivityCustomersReportScreen from "./screens/NoActivityCustomersReportScreen";
 import OpportunitiesOnHoldReportScreen from "./screens/OpportunitiesOnHoldReportScreen";
 import ProductPerformanceReportScreen from "./screens/ProductPerformanceReportScreen";
 import PipelineReportScreen from "./screens/PipelineReportScreen";
@@ -77,6 +78,7 @@ const REPORTS_SECTION = {
   items: [
     { id: "dailyActivity", label: "Daily Activity Report", icon: "📋" },
     { id: "stagnantDeals", label: "Stagnant Opportunities", icon: "🥶" },
+    { id: "noActivityCustomers", label: "Customer with No Activity", icon: "💤" },
     { id: "opportunitiesOnHold", label: "Opportunities On Hold", icon: "⏸️" },
     { id: "productPerformance", label: "Product Performance", icon: "🏆" },
     { id: "pipelineReport", label: "Pipeline Report", icon: "🧭" },
@@ -928,6 +930,15 @@ export default function DemoApp() {
               </Typography>
             </Box>
             <StagnantDealsReportScreen onSelectOpportunity={handleSelectOpportunity} />
+          </Box>
+
+          <Box sx={{ flex: 1, overflow: "hidden", display: view === "noActivityCustomers" ? "flex" : "none", flexDirection: "column" }}>
+            <Box sx={{ px: 2, py: 1.5, bgcolor: "background.paper", borderBottom: 1, borderColor: "gray.100", flexShrink: 0 }}>
+              <Typography component="h2" sx={{ typography: "h5", fontWeight: 800, color: "gray.800", letterSpacing: "-0.025em" }}>
+                Customer with No Activity
+              </Typography>
+            </Box>
+            <NoActivityCustomersReportScreen onSelectAccount={handleSelectAccount} />
           </Box>
 
           <Box sx={{ flex: 1, overflow: "hidden", display: view === "opportunitiesOnHold" ? "flex" : "none", flexDirection: "column" }}>
