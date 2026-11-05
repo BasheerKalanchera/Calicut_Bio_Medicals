@@ -1150,6 +1150,59 @@ file names as `Desktop\cabio\MUI-Round1-Before`, into
   local files); Basheer has not viewed it yet.
 - **Not done:** combined E2E, and removing the Backlog "File deletes" entry.
 
+## 5 Nov 2026 — Build & Test: MUI round 1 step 8, "before" pictures retaken (26 of 26)
+
+**Why:** the 26 Oct "before" pictures were unusable. They were saved as
+zooms at half or less of full size (about 162-202 px wide for the phone view,
+392 for tablet, 647 for laptop) and did not match the "after" records or
+logins. No original exists to recover. Basheer kept
+`Desktop\cabio\MUI-Round1-Before` untouched for a post mortem (Plan & Chore's,
+not done here).
+- **New set:** `Desktop\cabio\MUI-Round1-Before-2026-11-05\`, 26 files, names
+  identical to the After folder, every picture full size (392, 769 or 1281
+  wide, 879 high). Nothing saved or deleted in the app; every pop-up closed
+  with Cancel, no ✕ clicked on a file link.
+- **How:** the old code (commit `c9c44f5`, the parent of MUI step 1) ran from
+  a temporary git worktree on port 5173 (the backend only accepts that
+  address), with the same logins, records and widths as the "after" set
+  (Haroon for 03 and 11c, Basheer K for the rest). Checked the served old code
+  had no `ConfirmDialog`. The worktree is removed and the current code is back
+  on 5173 (served `ProductCatalogScreen.tsx` has `ConfirmDialog`).
+- **Not recorded in 26 Oct:** which login and records were used. This
+  retake's login and record sheet is the "after" entry above.
+- **Comparison page** regenerated against the new folder (scratchpad
+  `MUI-Round1-Before-After.html`); Basheer has not viewed it yet.
+- **All 26 pairs looked at by Claude** (before and after joined side by
+  side, scratchpad `pairs\`). Round 1 fixes visible: the Stakeholders card
+  fits the phone and its Edit button is reachable; "Date", "Team Member",
+  "Zone" and "Logged For" names present; the file ✕ opens "Delete this
+  file?". No layout break at 390, 768 or 1280. Two differences for
+  Basheer's eye, cause not checked: Product Catalogue avatar letter lighter
+  (bold to regular) with rows 2-3 px tighter; Customer 360 tab order now
+  has Next Actions after Activity.
+- **Dev server:** the old-code worktree was removed and the current code
+  restarted on 5173, then the system stopped that server for low memory
+  while Basheer was away. Not restarted; only when Basheer asks.
+- **Decision (Basheer's view):** the pictures cover the look check, so the
+  combined E2E is shortened to click-only steps (delete Cancel and Delete
+  on a throwaway link as Haroon, stakeholder Edit tap, filters, Log Activity
+  contact box after choosing an account). Plan wording "21 pictures" is
+  stale (26). Not drafted yet.
+
+## 5 Nov 2026 — Build & Test: retro
+
+- **Corrections from Basheer this session: 6** (counted from the messages
+  visible after the earlier summary; the part before it is an estimate, not
+  counted): (1) disappointed in the before and after approach: no login or
+  record sheet, tiny pictures; (2) I proposed retaking the 18 "after"
+  pictures, he said only the "before" set; (3) keep the old Before folder
+  for a post mortem; (4) don't do the post mortem now, it is Plan & Chore's;
+  (5) the full E2E I proposed repeated what the pictures already covered;
+  (6) I asked him to review the comparison page when I could look at the
+  pictures myself.
+- No tracker line: nothing touched live data or UAT. The 26 Oct "before" set
+  loss was that session's slip and goes to Plan & Chore's post mortem.
+
 ## 5 Nov 2026 — Build: Customer with No Activity merged into main and migration 0065 applied
 
 - **Merge:** `main` brought into `worktree-build` as `4fe882d` (pytest 1547
