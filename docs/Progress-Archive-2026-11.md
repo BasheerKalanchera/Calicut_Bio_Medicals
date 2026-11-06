@@ -1310,6 +1310,12 @@ not done here).
 - **Corrections from Basheer this session: 13.** (1) What "3 Chrome profiles" meant. (2) Still not clear on the steps; asked me to show them. (3) How to set up profiles without their Gmail ids. (4) New profiles asked him to sign in, so my steps didn't work. (5) The sign-in message was on the window, not in the menu. (6) What the "4 training fixes" were. (7) I listed the Overdue paper as still to send; it had already gone. (8) Questioned my suggestion of three plans from Fazal's team. (9) He raised My hospitals, which I hadn't covered. (10) "Becoming a bit complicated"; asked to step back. (11) Why Fazal's plan wasn't required in Option 1. (12) My Option 1 recommendation looked odd. (13) What "commit date" meant; I raised it without explaining it. Counted from the list of his messages, part of it in summary form, so it may be incomplete.
 - No tracker line: none touched live data or UAT, and no tool check could have stopped them.
 
+## 6 Nov 2026 — Plan & Chore: retro (training stretch)
+
+- **Corrections from Basheer this session: 8**, counted from the session's 22 messages in the transcript. (1) I had the dry run waiting for the Customer with No Activity E2E to finish; he said it had to happen today. (2) The slide looked "very busy"; he asked for a minimalist one. (3) The redesigned slide still wasn't clear; he couldn't follow how the figures connected. (4) I showed more than one Imaging brand; Imaging has only SonoScape. (5) He changed my slide heading to his wording. (6) He didn't understand what dry run steps 17–19 were for. (7) He asked again about their relevance, and what the dry run had actually proved. (8) He asked why the four fixes couldn't be done now, and for my reasoning.
+- No tracker line: none touched live data or UAT, and no tool check could have stopped them.
+- Not counted: his decisions, such as dropping the alert to Latheef Bhai and changing his mind on fixes 1 and 4. The mistaken Imaging pattern was his own slip, and it went with the clean-up.
+
 ## 6 Nov 2026 — Build & Test (second session): Customer with No Activity, search box (D17), E2E at 21 of 39
 
 - **E2E:** A4–A7, B2, B4–B9 Pass (Basheer, on the logins the plan names) and new B16 (search) Pass. Now 21 of 39 (54 %): P1, P2, A1–A7, B1–B9, B15, B16, C1. Resume at B10 (Fahad, hide-check), then B11–B14, C2 onward (C2 uses C1's accessory), D.
