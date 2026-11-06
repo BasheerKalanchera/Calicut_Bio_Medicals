@@ -9,6 +9,7 @@ from app.api.schemas import APIResponse
 from app.core.periods import period_bounds
 from app.db.session import get_db
 from app.domains.organization.models import UserProfile
+from app.domains.reference.schemas import ZoneSearchResult
 from app.domains.reporting.repository import ReportingRepository
 from app.domains.reporting.schemas import (
     NoActivityCustomersResponse,
@@ -137,6 +138,19 @@ def get_no_activity_customers(
     service: ReportingService = Depends(_get_service),
 ) -> APIResponse[NoActivityCustomersResponse]:
     return APIResponse(data=service.no_activity_customers(current_user, zone_id=zone_id, user_id=user_id))
+
+
+# The report's Zone picker once a Rep is picked: zones in that person's scope.
+# Separate from /master-data/zones/search-for-hospital, which is about the
+# viewer's own territory (Add/Edit Hospital) and stays so.
+@router.get("/no-activity-customers/zones")
+def search_no_activity_zones(
+    q: str = Query(min_length=2),
+    user_id: uuid.UUID = Query(),
+    current_user: UserProfile = Depends(get_current_user),
+    service: ReportingService = Depends(_get_service),
+) -> APIResponse[list[ZoneSearchResult]]:
+    return APIResponse(data=service.no_activity_zone_search(current_user, user_id, q))
 
 
 @router.get("/sales-headline")

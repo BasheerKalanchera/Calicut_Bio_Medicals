@@ -19,6 +19,10 @@ interface ZonePickerProps {
   // the rep's own territory server-side -- every other caller keeps the
   // default unrestricted searchZones.
   searchFn?: (q: string) => Promise<ZoneSearchResult[]>;
+  // Only for a searchFn whose results depend on something else on the screen
+  // (e.g. the Rep picked): kept in the cache key so one pick's results are
+  // never shown for another.
+  searchKey?: string;
 }
 
 function optionLabel(o: ZoneSearchResult): string {
@@ -35,12 +39,13 @@ export default function ZonePicker({
   fullWidth = true,
   disabled = false,
   searchFn = searchZones,
+  searchKey = "",
 }: ZonePickerProps) {
   const [searchInput, setSearchInput] = useState("");
   const debouncedSearch = useDebouncedValue(searchInput);
 
   const { data: options = [], isFetching } = useQuery({
-    queryKey: ["zones", "search", searchFn === searchZones ? "all" : "hospital", debouncedSearch],
+    queryKey: ["zones", "search", searchFn === searchZones ? "all" : "hospital", searchKey, debouncedSearch],
     enabled: debouncedSearch.trim().length >= 2,
     queryFn: () => searchFn(debouncedSearch.trim()),
   });

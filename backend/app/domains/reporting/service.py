@@ -7,6 +7,7 @@ from app.core.periods import ist_midnight, quarter_of, today_ist
 from app.domains.activity.schemas import ReminderResponse
 from app.domains.organization.models import UserProfile
 from app.domains.organization.repository import TEAM_SCOPE_BUILDERS, UNRESTRICTED_ROLES
+from app.domains.reference.schemas import ZoneSearchResult
 from app.domains.reporting.repository import ReportingRepository
 from app.domains.reporting.schemas import (
     NoActivityCustomerRow,
@@ -413,6 +414,27 @@ class ReportingService:
         rows = self.repository.opportunities_on_hold(current_user, sbu_id=sbu_id, zone_id=zone_id, user_id=user_id)
         return OpportunitiesOnHoldResponse(rows=[OpportunityOnHoldRow.model_validate(r) for r in rows])
 
+    @staticmethod
+    def _no_activity_zone_scope(current_user: UserProfile) -> str:
+        """D16: which zones the viewer's own list covers, as the caption names
+        them. SBU Manager, GM and Admin hold every zone; an Area Manager their
+        own plus the team's; anyone else their own."""
+        role_name = current_user.role.role_name
+        if role_name in UNRESTRICTED_ROLES or role_name == "SBU Manager":
+            return "all"
+        if role_name in TEAM_SCOPE_BUILDERS:
+            return "own_and_team"
+        return "own"
+
+    def no_activity_zone_search(
+        self, current_user: UserProfile, user_id: uuid.UUID | None, q: str
+    ) -> list[ZoneSearchResult]:
+        """Zones the Zone picker offers once a Rep is picked on the Customer
+        with No Activity report."""
+        return [
+            ZoneSearchResult(**z) for z in self.repository.no_activity_zone_search(current_user, user_id, q)
+        ]
+
     def no_activity_customers(
         self,
         current_user: UserProfile,
@@ -426,7 +448,8 @@ class ReportingService:
         today = today_ist()
         gone_quiet: list[NoActivityCustomerRow] = []
         never_contacted: list[NoActivityCustomerRow] = []
-        for r in self.repository.no_activity_customers(current_user, zone_id=zone_id, user_id=user_id):
+        hospitals = self.repository.no_activity_customers(current_user, zone_id=zone_id, user_id=user_id)
+        for r in hospitals:
             last_contact_at = r["last_contact_at"]
             if last_contact_at is None:
                 never_contacted.append(NoActivityCustomerRow.model_validate({**r, "days_silent": None}))
@@ -445,5 +468,8 @@ class ReportingService:
             gone_quiet_count=len(gone_quiet),
             never_contacted_count=len(never_contacted),
             show_zone_picker=self.repository.show_no_activity_zone_picker(current_user),
+            hospitals_in_view=len(hospitals),
+            zone_scope=self._no_activity_zone_scope(current_user),
+            **self.repository.no_activity_caption(current_user, user_id),
             rows=gone_quiet + never_contacted,
         )

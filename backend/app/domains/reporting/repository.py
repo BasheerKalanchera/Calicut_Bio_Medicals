@@ -23,6 +23,7 @@ from app.domains.reference.models import (
     Zone,
     ZoneClosure,
 )
+from app.domains.reference.repository import ZoneRepository
 
 # Net line value: BR-FIN-03 nets BUYBACK lines against PRODUCT lines --
 # extended_value_lakhs itself always stores a plain positive amount, the
@@ -697,6 +698,39 @@ class ReportingRepository:
             )
         )
         return (zone_count or 0) > 1
+
+    def no_activity_zone_search(self, current_user: UserProfile, user_id: uuid.UUID | None, q: str) -> list[dict]:
+        """The Zone picker's search on the Customer-with-No-Activity report when
+        a Rep is picked: zones matching `q` that fall in the picked person's
+        report scope (the same zones the report lists for them, plus the zones
+        below). A pick outside the viewer's team gets nothing, as the report
+        does (D4). Not the shared hospital-zone search: that one is about the
+        viewer's own territory and must stay so (Add/Edit Hospital)."""
+        subject = self._no_activity_subject(current_user, user_id)
+        if subject is None:
+            return []
+        zone_repo = ZoneRepository(self.db)
+        scope_zones = self._no_activity_scope_zones(subject)
+        if scope_zones is None:
+            zones = zone_repo.search_by_name(q)
+        else:
+            zone_ids = list(self.db.scalars(scope_zones).all())
+            zones = zone_repo.search_by_name(q, within_zone_ids=zone_ids) if zone_ids else []
+        return [{"id": z.id, "name": z.name, "path": zone_repo.build_breadcrumb(z)} for z in zones]
+
+    def no_activity_caption(self, current_user: UserProfile, user_id: uuid.UUID | None) -> dict:
+        """D16: whose contacts count, for the caption line. Mirrors the SBU
+        choice in no_activity_customers below: the picked person's (else the
+        viewer's) SBU; Admin/GM looking at everything count anyone's contact.
+        A refused pick or a user without an SBU gets neither (empty list)."""
+        subject = self._no_activity_subject(current_user, user_id)
+        if subject is None:
+            return {"sbu_name": None, "counts_all_sbus": False}
+        if subject.role.role_name in UNRESTRICTED_ROLES:
+            return {"sbu_name": None, "counts_all_sbus": True}
+        if subject.sbu_id is None or subject.sbu is None:
+            return {"sbu_name": None, "counts_all_sbus": False}
+        return {"sbu_name": subject.sbu.name, "counts_all_sbus": False}
 
     def no_activity_customers(
         self,

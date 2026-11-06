@@ -219,6 +219,7 @@ class TestServiceRules:
         repo = MagicMock()
         repo.no_activity_customers.return_value = rows
         repo.show_no_activity_zone_picker.return_value = show_zone_picker
+        repo.no_activity_caption.return_value = {"sbu_name": "Imaging", "counts_all_sbus": False}
         return ReportingService(repository=repo)
 
     @staticmethod
@@ -287,6 +288,70 @@ class TestServiceRules:
             service.repository.show_no_activity_zone_picker.assert_called_once_with(viewer)
 
 
+class TestCaption:
+    """D16: the line above the tiles -- hospitals in view, whose contacts count,
+    which zones the viewer's list covers."""
+
+    @staticmethod
+    def _repo_caption(subject_role: str, *, sbu_name="Imaging", sbu_id="keep", picked=False):
+        subject = _make_user(subject_role)
+        if sbu_id is None:
+            subject.sbu_id = None
+        subject.sbu = SimpleNamespace(name=sbu_name) if sbu_name else None
+        mock_db = MagicMock()
+        mock_db.scalars.return_value.first.return_value = subject
+        viewer = subject if not picked else _make_user("General Manager")
+        return ReportingRepository(mock_db).no_activity_caption(viewer, subject.id if picked else None)
+
+    def test_hospitals_in_view_counts_every_hospital_not_just_the_quiet_ones(self):
+        rows = [TestServiceRules._row(f"H{i}", datetime(2026, 11, 1, tzinfo=UTC)) for i in range(3)]
+        rows.append(TestServiceRules._row("Quiet", datetime(2026, 1, 1, tzinfo=UTC)))
+        rows.append(TestServiceRules._row("Never", None))
+        with patch("app.domains.reporting.service.today_ist", return_value=date(2026, 11, 4)):
+            result = TestServiceRules()._service(rows).no_activity_customers(_make_user("Sales Staff"))
+        assert result.hospitals_in_view == 5
+        assert (result.gone_quiet_count, result.never_contacted_count) == (1, 1)
+
+    def test_zone_scope_follows_the_viewers_role(self):
+        expected = {
+            "Admin": "all",
+            "General Manager": "all",
+            "SBU Manager": "all",
+            "Area Manager": "own_and_team",
+            "Sales Staff": "own",
+        }
+        for role, scope in expected.items():
+            result = TestServiceRules()._service([]).no_activity_customers(_make_user(role))
+            assert result.zone_scope == scope, role
+
+    def test_caption_fields_come_from_the_repository_for_the_viewer_and_pick(self):
+        viewer, picked = _make_user("General Manager"), uuid.uuid4()
+        service = TestServiceRules()._service([])
+        result = service.no_activity_customers(viewer, user_id=picked)
+        assert (result.sbu_name, result.counts_all_sbus) == ("Imaging", False)
+        service.repository.no_activity_caption.assert_called_once_with(viewer, picked)
+
+    def test_sbu_manager_and_sales_staff_name_their_own_sbu(self):
+        for role in ("SBU Manager", "Area Manager", "Sales Staff"):
+            assert self._repo_caption(role) == {"sbu_name": "Imaging", "counts_all_sbus": False}, role
+
+    def test_admin_and_gm_count_anyones_contact(self):
+        for role in ("Admin", "General Manager"):
+            assert self._repo_caption(role) == {"sbu_name": None, "counts_all_sbus": True}, role
+
+    def test_gm_picking_a_rep_names_the_reps_sbu_not_all_sbus(self):
+        assert self._repo_caption("Sales Staff", picked=True) == {"sbu_name": "Imaging", "counts_all_sbus": False}
+
+    def test_refused_pick_gets_no_caption(self):
+        mock_db = MagicMock()
+        mock_db.scalars.return_value.first.return_value = None
+        caption = ReportingRepository(mock_db).no_activity_caption(_make_user("Area Manager"), uuid.uuid4())
+        assert caption == {"sbu_name": None, "counts_all_sbus": False}
+
+    def test_user_without_an_sbu_gets_no_caption(self):
+        assert self._repo_caption("Sales Staff", sbu_id=None) == {"sbu_name": None, "counts_all_sbus": False}
+
+
 class TestZonePickerFlag:
     """D13: shown to anyone holding more than one zone, counting the zones below."""
 
@@ -324,12 +389,108 @@ class TestZonePickerFlag:
         assert "manager_id" not in sql
 
 
+class TestZoneSearch:
+    """The Zone picker once a Rep is picked: zones in the picked person's scope."""
+
+    @staticmethod
+    def _zone(name: str) -> SimpleNamespace:
+        return SimpleNamespace(id=uuid.uuid4(), name=name)
+
+    def _search(self, viewer, subject, scope_zone_ids=None, user_id=None):
+        """subject None = the pick was refused. Returns (result, db, zone repo mock)."""
+        mock_db = MagicMock()
+        mock_db.scalars.side_effect = [
+            MagicMock(first=MagicMock(return_value=subject)),
+            MagicMock(all=MagicMock(return_value=scope_zone_ids or [])),
+        ]
+        with patch("app.domains.reporting.repository.ZoneRepository") as mock_zone_repo:
+            repo = mock_zone_repo.return_value
+            repo.search_by_name.return_value = [self._zone("Kollam")]
+            repo.build_breadcrumb.return_value = "Kerala"
+            result = ReportingRepository(mock_db).no_activity_zone_search(viewer, user_id or uuid.uuid4(), "Kol")
+        return result, mock_db, repo
+
+    def test_pick_outside_the_viewers_team_gets_nothing_and_searches_nothing(self):
+        result, _, repo = self._search(_make_user("Area Manager"), None)
+        assert result == []
+        repo.search_by_name.assert_not_called()
+
+    def test_picked_rep_searches_only_inside_their_zones(self):
+        rep = _make_user("Sales Staff")
+        held = [uuid.uuid4(), uuid.uuid4()]
+        result, db, repo = self._search(_make_user("SBU Manager"), rep, scope_zone_ids=held, user_id=rep.id)
+        assert repo.search_by_name.call_args.kwargs["within_zone_ids"] == held
+        assert result[0]["name"] == "Kollam" and result[0]["path"] == "Kerala"
+        # the scope is the picked person's, not the viewer's
+        assert rep.id.hex in _compiled(db.scalars.call_args_list[1].args[0])
+
+    def test_picked_area_manager_includes_their_team_zones(self):
+        am = _make_user("Area Manager")
+        _, db, _ = self._search(_make_user("General Manager"), am, scope_zone_ids=[uuid.uuid4()], user_id=am.id)
+        sql = _compiled(db.scalars.call_args_list[1].args[0])
+        assert "manager_id" in sql
+
+    def test_picked_person_who_holds_every_zone_searches_all_zones(self):
+        sbu_manager = _make_user("SBU Manager")
+        _, _, repo = self._search(_make_user("Admin"), sbu_manager, user_id=sbu_manager.id)
+        repo.search_by_name.assert_called_once_with("Kol")
+
+    def test_picked_rep_with_no_zones_gets_nothing(self):
+        rep = _make_user("Sales Staff")
+        result, _, repo = self._search(_make_user("SBU Manager"), rep, scope_zone_ids=[], user_id=rep.id)
+        assert result == []
+        repo.search_by_name.assert_not_called()
+
+    def test_service_returns_zone_search_results(self):
+        zone_id = uuid.uuid4()
+        repo = MagicMock(spec=ReportingRepository)
+        repo.no_activity_zone_search.return_value = [{"id": zone_id, "name": "Kollam", "path": "Kerala"}]
+        out = ReportingService(repository=repo).no_activity_zone_search(_make_user("Admin"), uuid.uuid4(), "Kol")
+        assert [(z.id, z.name, z.path) for z in out] == [(zone_id, "Kollam", "Kerala")]
+
+
 class TestEndpoint:
+    def test_zone_search_params_reach_the_service(self):
+        user_id, zone_id = uuid.uuid4(), uuid.uuid4()
+        mock_service = MagicMock(spec=ReportingService)
+        mock_service.no_activity_zone_search.return_value = [
+            {"id": zone_id, "name": "Kollam", "path": "Kerala"}
+        ]
+        viewer = _make_user("Admin", is_active=True)
+        app.dependency_overrides[get_current_user] = lambda: viewer
+        app.dependency_overrides[_get_service] = lambda: mock_service
+        from fastapi.testclient import TestClient
+
+        try:
+            response = TestClient(app).get(
+                "/api/v1/reporting/no-activity-customers/zones", params={"q": "Kol", "user_id": str(user_id)}
+            )
+            too_short = TestClient(app).get(
+                "/api/v1/reporting/no-activity-customers/zones", params={"q": "K", "user_id": str(user_id)}
+            )
+            no_user = TestClient(app).get("/api/v1/reporting/no-activity-customers/zones", params={"q": "Kol"})
+        finally:
+            app.dependency_overrides.clear()
+
+        assert response.status_code == 200
+        assert response.json()["data"] == [{"id": str(zone_id), "name": "Kollam", "path": "Kerala"}]
+        assert mock_service.no_activity_zone_search.call_args.args[1:] == (user_id, "Kol")
+        assert too_short.status_code == 422
+        assert no_user.status_code == 422  # the person is always named; no silent "yourself"
+
     def test_query_params_reach_the_service(self):
         zone_id, user_id = uuid.uuid4(), uuid.uuid4()
         mock_service = MagicMock(spec=ReportingService)
         mock_service.no_activity_customers.return_value = NoActivityCustomersResponse(
-            threshold_days=90, gone_quiet_count=0, never_contacted_count=0, show_zone_picker=True, rows=[]
+            threshold_days=90,
+            gone_quiet_count=0,
+            never_contacted_count=0,
+            show_zone_picker=True,
+            hospitals_in_view=0,
+            sbu_name="Imaging",
+            counts_all_sbus=False,
+            zone_scope="all",
+            rows=[],
         )
         viewer = _make_user("Admin", is_active=True)
         app.dependency_overrides[get_current_user] = lambda: viewer
@@ -346,7 +507,8 @@ class TestEndpoint:
         assert response.status_code == 200
         assert response.json()["data"] == {
             "threshold_days": 90, "gone_quiet_count": 0, "never_contacted_count": 0,
-            "show_zone_picker": True, "rows": [],
+            "show_zone_picker": True, "hospitals_in_view": 0, "sbu_name": "Imaging",
+            "counts_all_sbus": False, "zone_scope": "all", "rows": [],
         }
         assert mock_service.no_activity_customers.call_args.kwargs == {"zone_id": zone_id, "user_id": user_id}
 

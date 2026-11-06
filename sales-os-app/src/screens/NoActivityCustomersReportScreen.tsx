@@ -1,12 +1,14 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Box, Link, MenuItem, TextField } from "@mui/material";
+import { Box, Link, MenuItem, TextField, Typography } from "@mui/material";
 import TableOrCards, { TocCell, TocRow } from "../components/TableOrCards";
 import ZonePicker from "../components/ZonePicker";
 import { LoadingOrEmpty, StatTile } from "../components/ReportingUI";
-import { listUsers, searchZonesForHospital, type ZoneSearchResult } from "../services/masterData";
-import { getNoActivityCustomers } from "../services/reporting";
+import { listRepUsers, searchZonesForHospital, type ZoneSearchResult } from "../services/masterData";
+import { getNoActivityCustomers, searchNoActivityZones } from "../services/reporting";
 import { statusColors } from "../theme/statusColors";
+import { useAuth } from "../contexts/AuthContext";
+import type { NoActivityCustomersResponse } from "../types/api-aliases";
 
 // Customer with No Activity (docs/Exception-Report-Implementation-Plan.md).
 // The server decides who counts as quiet (90 days or more, D6), who sees which
@@ -17,6 +19,33 @@ import { statusColors } from "../theme/statusColors";
 function formatDay(iso: string): string {
   const [y, m, d] = iso.split("-").map(Number);
   return new Date(y, m - 1, d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+}
+
+// D16: the line above the tiles -- whose list this is, which contacts count,
+// and how many of the hospitals in view are listed. The server sends the facts;
+// the Rep and Zone picks are the screen's own, so the wording is put together
+// here. Picking yourself in the Rep picker is no pick (the server treats it so).
+function captionLine(
+  data: NoActivityCustomersResponse,
+  repName: string | null,
+  zoneName: string | null,
+): string | null {
+  // Neither SBU nor "all SBUs": the server refused the pick or the user has no
+  // SBU, so the list is empty and a line would only mislead.
+  if (!data.counts_all_sbus && !data.sbu_name) return null;
+  const sbuPart = data.counts_all_sbus ? "All SBUs" : data.sbu_name;
+  const baseZones =
+    data.zone_scope === "all" ? "all zones" : data.zone_scope === "own_and_team" ? "your zones and your team's" : "your zones";
+  let zonePart = baseZones;
+  if (repName && zoneName) zonePart = `${zoneName} and the zones below it, within ${repName}'s zones`;
+  else if (repName) zonePart = `${repName}'s zones`;
+  else if (zoneName) zonePart = `${zoneName} and the zones below it`;
+  const contactsPart = data.counts_all_sbus
+    ? "anyone's contact counts"
+    : `only ${data.sbu_name} visits, calls, meetings and emails count`;
+  const listed = data.gone_quiet_count + data.never_contacted_count;
+  const total = data.hospitals_in_view;
+  return `${sbuPart} · ${zonePart} · ${contactsPart} · ${listed} of ${total} ${total === 1 ? "hospital" : "hospitals"}`;
 }
 
 function NameLink({ children, onClick }: { children: string; onClick: () => void }) {
@@ -38,8 +67,8 @@ export default function NoActivityCustomersReportScreen({
   // Rep picker: the people this user may see, same list as Stagnant
   // Opportunities; shown only when there is someone to pick (D13).
   const { data: reps = [] } = useQuery({
-    queryKey: ["users", "scoped"],
-    queryFn: () => listUsers("scoped"),
+    queryKey: ["users", "reps", "scoped"],
+    queryFn: () => listRepUsers("scoped"),
   });
 
   const query = useQuery({
@@ -57,6 +86,22 @@ export default function NoActivityCustomersReportScreen({
   // The server says whether the viewer holds more than one zone (D13).
   const showZonePicker = query.data?.show_zone_picker ?? false;
   const showRepPicker = reps.length > 1;
+  const { userProfile } = useAuth();
+  const viewerId = (userProfile as { id?: string } | null)?.id;
+  const pickedOther = Boolean(userId) && userId !== viewerId;
+  const pickedRep = pickedOther ? reps.find((u) => u.id === userId) : undefined;
+  // The Zone picker follows the Rep pick: another person's zones once they are
+  // picked, your own zones otherwise.
+  const searchZonesForPick = useCallback(
+    (q: string) => (pickedOther ? searchNoActivityZones(q, userId) : searchZonesForHospital(q)),
+    [pickedOther, userId],
+  );
+  // No line while a new pick loads (the data on screen is still the old
+  // pick's) or when the picked person's name isn't to hand.
+  const caption =
+    query.data && !query.isPlaceholderData && !(pickedOther && !pickedRep)
+      ? captionLine(query.data, pickedRep?.display_name ?? null, zone?.name ?? null)
+      : null;
 
   return (
     <Box sx={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", bgcolor: "background.default" }}>
@@ -70,7 +115,11 @@ export default function NoActivityCustomersReportScreen({
                 size="small"
                 label="Rep"
                 value={userId}
-                onChange={(e) => setUserId(e.target.value)}
+                onChange={(e) => {
+                  setUserId(e.target.value);
+                  // A zone picked for the last person may not be in this one's.
+                  setZone(null);
+                }}
                 slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
                 sx={{ minWidth: 200, flex: { xs: "1 1 100%", sm: "0 0 auto" }, mt: 1 }}
               >
@@ -87,11 +136,17 @@ export default function NoActivityCustomersReportScreen({
                   placeholder="All Zones"
                   value={zone}
                   onChange={setZone}
-                  searchFn={searchZonesForHospital}
+                  searchFn={searchZonesForPick}
+                  searchKey={pickedOther ? userId : ""}
                 />
               </Box>
             )}
           </Box>
+        )}
+        {caption && (
+          <Typography variant="body2" color="text.secondary" sx={{ opacity: dimmed ? 0.5 : 1, transition: "opacity 0.2s" }}>
+            {caption}
+          </Typography>
         )}
         {query.data && (
           <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: "1fr 1fr", opacity: dimmed ? 0.5 : 1, transition: "opacity 0.2s" }}>

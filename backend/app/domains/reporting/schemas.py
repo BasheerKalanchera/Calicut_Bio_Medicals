@@ -266,4 +266,14 @@ class NoActivityCustomersResponse(BaseModel):
     # D13: the Zone picker shows only to someone holding more than one zone,
     # counting the zones below the ones they hold.
     show_zone_picker: bool
+    # D16: the caption line above the tiles. Every hospital in view before the
+    # quiet ones are picked out ("28 of 38 hospitals").
+    hospitals_in_view: int
+    # Whose contacts count: the picked person's SBU, else the viewer's. With no
+    # SBU and counts_all_sbus false (a refused pick, or a user without an SBU)
+    # the list is empty and the screen leaves the caption out.
+    sbu_name: str | None
+    counts_all_sbus: bool
+    # Which zones the viewer's own list covers (before any Rep or Zone pick).
+    zone_scope: Literal["all", "own_and_team", "own"]
     rows: list[NoActivityCustomerRow]

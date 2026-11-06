@@ -14,6 +14,7 @@ import type {
   StagnantDealsResponse,
 } from "../types/reporting";
 import type { NoActivityCustomersResponse, WeeklyFollowupResponse } from "../types/api-aliases";
+import type { ZoneSearchResult } from "./masterData";
 
 // Customer with No Activity (docs/Exception-Report-Implementation-Plan.md):
 // the server fixes the 90 days (D6), so only the two pickers are sent.
@@ -21,6 +22,14 @@ export async function getNoActivityCustomers(
   filters: { zone_id?: string; user_id?: string } = {},
 ): Promise<NoActivityCustomersResponse> {
   const r = await api.get("/reporting/no-activity-customers", { params: filters });
+  return r.data.data;
+}
+
+// The report's Zone picker once another Rep is picked: zones in that
+// person's scope. With nobody (or yourself) picked the screen keeps using
+// searchZonesForHospital, your own zones.
+export async function searchNoActivityZones(q: string, userId: string): Promise<ZoneSearchResult[]> {
+  const r = await api.get("/reporting/no-activity-customers/zones", { params: { q, user_id: userId } });
   return r.data.data;
 }
 

@@ -1322,6 +1322,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/reporting/no-activity-customers/zones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search No Activity Zones */
+        get: operations["search_no_activity_zones_api_v1_reporting_no_activity_customers_zones_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/reporting/sales-headline": {
         parameters: {
             query?: never;
@@ -4229,6 +4246,17 @@ export interface components {
             never_contacted_count: number;
             /** Show Zone Picker */
             show_zone_picker: boolean;
+            /** Hospitals In View */
+            hospitals_in_view: number;
+            /** Sbu Name */
+            sbu_name: string | null;
+            /** Counts All Sbus */
+            counts_all_sbus: boolean;
+            /**
+             * Zone Scope
+             * @enum {string}
+             */
+            zone_scope: "all" | "own_and_team" | "own";
             /** Rows */
             rows: components["schemas"]["NoActivityCustomerRow"][];
         };
@@ -10111,6 +10139,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["APIResponse_NoActivityCustomersResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_no_activity_zones_api_v1_reporting_no_activity_customers_zones_get: {
+        parameters: {
+            query: {
+                q: string;
+                user_id: string;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_list_ZoneSearchResult__"];
                 };
             };
             /** @description Validation Error */
