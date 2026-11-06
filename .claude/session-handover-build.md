@@ -23,26 +23,27 @@ session edits this note._
   P1, P2, A1, A2 Pass = 4 of 37. P2 re-run on Dev 5 Nov: Nishad K V 22 (not
   21), Elite 125 days (E2E plan already in git). **Next: A3** (Basheer, his
   Basheer K login, on Dev), then A4–A7, then B.
-- **Committed 6 Nov, NOT pushed:** `1b70908` fix: shared `listRepUsers` drops
-  Marketing Users from Stagnant, Pipeline, Daily Activity, My Work Rep lists;
-  `cff3635` feat: Customer with No Activity caption line (D16) + Zone picker
-  follows the Rep picked (`GET /reporting/no-activity-customers/zones`,
-  `user_id` required; `ZonePicker` `searchKey`; Zone cleared on Rep change) +
-  Marketing Users out of its Rep list. Full pytest 1562, tsc, eslint, ruff
-  clean; `/code-review medium` done, findings triaged. Left as is (Basheer):
-  a GM or SBU Manager picking an Area Manager reads "<name>'s zones". 26 (GM)
-  vs 27 (SBU Manager) never-contacted is by design (D5, D16).
-- **E2E parked 6 Nov at 9 of 38 (24 %)** (plan now 38 steps: new B15
-  Zone-follows-Rep). Pass: P1–P2, A1–A3, B1, B3, B15, C1 (Haroon's login;
-  Dev now holds "zz NoActivity accessory"). New fields and zones endpoint
-  were live. **Resume at A4** with the Basheer K login, then A5–A7, B2, then
-  B4–B14 (one login each), then C2 onward (C2 uses C1's accessory).
-- **Next, in order:** (1) docs batch (plan results, this note,
-  Progress-Archive, Backlog Marketing sweep entry) — needs his yes; (2) push
-  is his call (then `cabio-post-commit`); (3) update plan wording for A2
-  (caption line) if he wants it. Marketing User sweep is parked in the
-  Backlog (needs planning). Stray `B`, `BT`, `PC` files are not mine.
-- Break 5 Nov; E2E resumes at A3 once the above is settled.
+- `1b70908` (Marketing Users out of Rep lists) and `cff3635` (caption D16,
+  Zone follows the Rep, `/reporting/no-activity-customers/zones`) are on
+  origin/main (git 6 Nov after fetch; the old "not pushed" was wrong). Whether
+  `cabio-post-commit` ran for them is not recorded: check first.
+  Left as is (Basheer): a GM or SBU Manager picking an Area Manager reads
+  "<name>'s zones". 26 (GM) vs 27 (SBU Manager) never-contacted is by design.
+- **6 Nov, later: search box (D17) committed `28d1516`, pushed with the docs
+  batch.** Screen `NoActivityCustomersReportScreen.tsx`; D17 in the
+  Exception-Report plan; test plan B16 and D1 wording, E2E results.
+  `/code-review medium` done: 1 fixed, 4 left (detail: Progress-Archive 6 Nov).
+  tsc and eslint clean; pytest not run (no server change).
+- **E2E parked 6 Nov at 21 of 39 (54 %).** Pass: P1, P2, A1–A7, B1–B9, B15,
+  B16, C1 (Dev holds "zz NoActivity accessory"). **Resume at B10** (Fahad,
+  hide-check), B11 Fazal, B12 Shruthi, B13 Marketing Test User, B14 Nishad K V
+  Zone picker; then C2 onward (C2 uses C1's accessory), then D.
+  Re-check each window's login first: the search edits reloaded the app.
+- **Next, in order:** (1) `cabio-post-commit` for the push of `28d1516` and
+  the docs commit; (2) Backlog entry for a shared search box is proposed, not
+  agreed; (3) A2 plan wording if he wants it.
+  Marketing User sweep is parked in the Backlog. Stray `B`, `BT`, `PC` files
+  are not mine.
 - MUI step 8 combined E2E (short, only what pictures can't show) is parked
   behind this one; fix plan wording "21 pictures" to 26 when resumed.
 - Open: Sales Report and Opportunities On Hold likely need the same fixed

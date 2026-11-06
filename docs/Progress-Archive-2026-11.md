@@ -1309,3 +1309,17 @@ not done here).
 
 - **Corrections from Basheer this session: 13.** (1) What "3 Chrome profiles" meant. (2) Still not clear on the steps; asked me to show them. (3) How to set up profiles without their Gmail ids. (4) New profiles asked him to sign in, so my steps didn't work. (5) The sign-in message was on the window, not in the menu. (6) What the "4 training fixes" were. (7) I listed the Overdue paper as still to send; it had already gone. (8) Questioned my suggestion of three plans from Fazal's team. (9) He raised My hospitals, which I hadn't covered. (10) "Becoming a bit complicated"; asked to step back. (11) Why Fazal's plan wasn't required in Option 1. (12) My Option 1 recommendation looked odd. (13) What "commit date" meant; I raised it without explaining it. Counted from the list of his messages, part of it in summary form, so it may be incomplete.
 - No tracker line: none touched live data or UAT, and no tool check could have stopped them.
+
+## 6 Nov 2026 — Build & Test (second session): Customer with No Activity, search box (D17), E2E at 21 of 39
+
+- **E2E:** A4–A7, B2, B4–B9 Pass (Basheer, on the logins the plan names) and new B16 (search) Pass. Now 21 of 39 (54 %): P1, P2, A1–A7, B1–B9, B15, B16, C1. Resume at B10 (Fahad, hide-check), then B11–B14, C2 onward (C2 uses C1's accessory), D.
+- **Search box (D17), asked for after B5:** Basheer wants it because UAT has far more hospitals than Dev, and it eases testing. A "Search customers..." box above the pickers; narrows the loaded list to names containing the typed letters, ignoring capitals; the two tiles and the D16 line keep counting the whole list; a Rep or Zone pick clears it; "No customers match your search." when nothing fits. No server change. Decision written to `docs/Exception-Report-Implementation-Plan.md` D17; plan now 39 steps (B16 new, D1 wording). **Not committed.**
+- **Slip of mine, caught by reading the code:** I first said Account Management matches only the start of a name. That came from the old copy in `App.jsx`; the live screen (`CustomerDirectoryScreen.tsx`, server `ilike %text%`) matches anywhere. Corrected in chat before any code was written.
+- **`/code-review medium` on the screen:** 5 findings. Fixed one (the box vanished when a pick returned no rows; it now shows whenever the report has loaded). Left four: missing hospital name (API always sends one), search applied to old list while a pick loads (a pick clears it), search cleared in two handlers (only two routes today), copied search box (also in Account Management, Opportunity Pipeline, Rate Hospitals; shared component not agreed, no Backlog entry yet). `tsc` and `eslint` clean on the screen; pytest not run (no server change).
+- **Handover correction:** the note said `1b70908` and `cff3635` were not pushed; git on 6 Nov (after fetch) shows main level with origin/main. Whether `cabio-post-commit` was run for them is not recorded.
+- **Not done this session:** UAT data-quality check, doc tidy-up, weekly Harness Engineering review (skipped by design for Build & Test).
+
+## 6 Nov 2026 — Build & Test (second session): retro
+
+- **Corrections from Basheer this session: 0** (counted from his messages). One slip of mine, the wrong "start of name" claim above, was caught by me before it cost him anything.
+- No tracker line: no live data touched, no guard could have stopped it.

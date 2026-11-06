@@ -144,14 +144,17 @@ Visit. Activities can't be deleted.
    Opportunity, 1 installed asset (D8, D9; days go up by one each day).
    **Result 6 Nov — Pass (Basheer).** —
 4. [Simple] Read the second row. **Expected:** "Never contacted", with no
-   date, name or days; every row after it is the same (D8). —
+   date, name or days; every row after it is the same (D8). **Result 6 Nov —
+   Pass (Basheer).** —
 5. [Simple] Find "asdf - Test Regression", then look for "Al Shifa Hospital
    Perinthalmanna". **Expected:** the branch is listed; the main hospital
-   isn't (D11). —
+   isn't (D11). **Result 6 Nov — Pass (Basheer).** —
 6. [Simple] Tap "Elite Diagnostics". **Expected:** its customer page opens.
-   Go back. **Expected:** the report list again (D13). —
+   Go back. **Expected:** the report list again (D13). **Result 6 Nov — Pass
+   (Basheer).** —
 7. [Simple] Open Reports → Stagnant Opportunities, then Reports → Daily
-   Activity Report. **Expected:** both open as before (plan section 3). —
+   Activity Report. **Expected:** both open as before (plan section 3).
+   **Result 6 Nov — Pass (Basheer).** —
 
 ## B — Who sees what
 
@@ -159,7 +162,8 @@ Visit. Activities can't be deleted.
    26. "Test hospital 2" isn't listed: Vivek's contact counts in the
    all-customers view (D5). **Result 6 Nov — Pass (Basheer, as Haroon).** —
 2. [Simple] Basheer K: find "Test hospital 2". **Expected:** listed as
-   "Never contacted": an Imaging list ignores a Critical Care contact (D5). —
+   "Never contacted": an Imaging list ignores a Critical Care contact (D5).
+   **Result 6 Nov — Pass (Basheer).** —
 3. [Simple] Haroon: Rep picker → Vivek. **Expected:** exactly "KIMS Hospital
    Trivandrum" and "Test hospital 3", the same as Vivek's own list in B8
    (plan section 1). The Rep picker doesn't offer Marketing Test User
@@ -169,24 +173,27 @@ Visit. Activities can't be deleted.
    Hospital Perinthalmanna" (Malappuram), last activity 6 Aug 2026, Haroon
    Sidheeq, 91 days (92 from 6 Nov), 3 Active Opportunities, 1 installed
    asset. The list also includes "astar" (Kasaragod), which sits in a zone
-   below North Kerala (D4). No Rep picker: no team (D13). —
+   below North Kerala (D4). No Rep picker: no team (D13). **Result 6 Nov — Pass (Basheer).** —
 5. [Simple] Nishad K V: find "EMS Hospital" and "Aster MIMS Calicut".
    **Expected:** EMS Hospital is listed as "Never contacted" with 1 Active
    Opportunity: Fahad's Imaging contact doesn't count (D5). Aster MIMS
    Calicut isn't listed: Haroon's contact of 31 Oct counts for both SBUs
-   (D5). —
+   (D5). **Result 6 Nov — Pass (Basheer).** —
 6. [Complex: cross-role] Arun Adarsh: open the screen. **Expected:** 3
    listed: "EMS cooperative hospital Cherpulassery", "KIMS Hospital
    Trivandrum", "Test hospital 3". "Test hospital 2" isn't listed: Vivek's
-   contact counts for their manager too (D3, D5). —
+   contact counts for their manager too (D3, D5). **Result 6 Nov — Pass
+   (Basheer).** —
 7. [Simple] Arun Adarsh: Rep picker. **Expected:** offers Arun Adarsh and
-   Vivek, nobody else. Pick Vivek. **Expected:** 2 listed (D3). —
+   Vivek, nobody else. Pick Vivek. **Expected:** 2 listed (D3). **Result 6 Nov —
+   Pass (Basheer).** —
 8. [Complex: hide-check, cross-role] Vivek: open the screen. **Expected:**
    exactly "KIMS Hospital Trivandrum" and "Test hospital 3". "new customer"
    and "EMS cooperative hospital Cherpulassery" are NOT listed. No Rep
-   picker. Zone picker offers Vivek's 6 zones (D3, D4, D13). —
+   picker. Zone picker offers Vivek's 6 zones (D3, D4, D13). **Result 6 Nov —
+   Pass (Basheer).** —
 9. [Simple] Vivek: Zone picker → Kottayam. **Expected:** only "Test hospital
-   3". —
+   3". **Result 6 Nov — Pass (Basheer).** —
 10. [Complex: hide-check, cross-role] Fahad: open the screen. **Expected:**
     exactly "new customer". "Test hospital 3" and "astar" are NOT listed. No
     Rep picker, no Zone picker: one zone, none below (D13). —
@@ -216,6 +223,13 @@ Visit. Activities can't be deleted.
     Kottayam: only "Test hospital 3". Change the Rep to All reps: the Zone
     box clears, and "Mang" offers Mangalore again. **Result 6 Nov — Pass
     (Basheer, as Haroon).** —
+16. [Simple] Basheer K: use the "Search customers..." box above the list
+    (added 6 Nov, D17). **Expected:** typing "aster" leaves only hospitals
+    with "aster" in the name, capitals ignored (e.g. "Aster MIMS Calicut" if
+    it is on the list). The two tiles and the line above them do not change.
+    Typing "zzzz" shows "No customers match your search." Tap ✕: the full
+    list returns. Type "aster" again, then change the Zone (or, as Haroon, the
+    Rep): the box clears. **Result 6 Nov — Pass (Basheer, as Basheer K).** —
 
 ## C — What moves a customer on or off the list (saves; Basheer clicks, Claude watches)
 
@@ -270,7 +284,7 @@ Visit. Activities can't be deleted.
 ## D — Phone, tablet, laptop
 
 1. [Complex: phone layout] Basheer K at 390, 768 and 1280 px, this screen,
-   scrolling the whole list and using each picker. **Expected:** at 390 each
+   scrolling the whole list and using the search box and each picker. **Expected:** at 390 each
    customer is a card (name, zone, last activity or "Never contacted", days
    badge, counts); at 768 and 1280, a table. Title, pickers and two tiles
    stay fixed while the list scrolls. Nothing runs past the card. —
