@@ -11,7 +11,7 @@ import CloseReminderModal from "../components/CloseReminderModal";
 import LogActivityModal from "../components/LogActivityModal";
 import { useAuth } from "../contexts/AuthContext";
 import { getWeeklyFollowup } from "../services/reporting";
-import { listUsers } from "../services/masterData";
+import { listRepUsers } from "../services/masterData";
 import { formatLakhs, formatPlanningPeriod } from "../utils/formatter";
 import { statusColors } from "../theme/statusColors";
 import { shadows } from "../theme/shadows";
@@ -149,14 +149,13 @@ export default function MyWorkScreen({ isActive, onSelectAccount, onSelectOpport
   if (typed >= 1 && typed <= MAX_IDLE_DAYS && typed !== idleDays) setIdleDays(typed);
 
   const { data: team = [] } = useQuery({
-    queryKey: ["users", "scoped"],
+    queryKey: ["users", "reps", "scoped"],
     enabled: isManagerTier,
-    queryFn: () => listUsers("scoped"),
+    queryFn: () => listRepUsers("scoped"),
   });
-  // A Marketing User never owns Opportunities or follow-ups, so there is nothing
-  // to show for them; the Admin/GM list includes them (see Backlog "Marketing
-  // Users in the Rep pickers").
-  const others = team.filter((u) => u.id !== profile?.id && u.role_name !== "Marketing User");
+  // listRepUsers leaves out Marketing Users (they own no Opportunities or
+  // follow-ups); only the viewer is dropped here.
+  const others = team.filter((u) => u.id !== profile?.id);
 
   const query = useQuery({
     queryKey: ["reporting", "weekly-followup", userId, idleDays],

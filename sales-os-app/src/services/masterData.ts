@@ -61,6 +61,22 @@ export async function listUsers(
   return response.data.data.items;
 }
 
+// The people a screen offers as "which rep?": the same list as listUsers, minus
+// Marketing Users. A Marketing User owns no Opportunities or follow-ups and
+// belongs to the Marketing module only, so a rep picker or filter must never
+// offer one. Use this for every rep picker; use listUsers only where the full
+// list is wanted (the User Directory). Callers use their own query key
+// (["users", "reps", ...]) so this filtered list never shares a cache entry
+// with the full one. Wider sweep: docs/Backlog.md "Marketing User sees only
+// the Marketing module".
+export async function listRepUsers(
+  scope: "scoped" | "sbu" | "all" = "scoped",
+  includeInactive = false
+): Promise<UserListResponse[]> {
+  const users = await listUsers(scope, includeInactive);
+  return users.filter((u) => u.role_name !== "Marketing User");
+}
+
 export async function getUserBlastRadius(userId: string): Promise<UserBlastRadius> {
   const response = await api.get(`/users/${userId}/blast-radius`);
   return response.data.data;

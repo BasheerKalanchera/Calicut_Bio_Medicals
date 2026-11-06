@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Box, MenuItem, TextField } from "@mui/material";
 import { LoadingOrEmpty } from "../components/ReportingUI";
-import { listUsers } from "../services/masterData";
+import { listRepUsers } from "../services/masterData";
 import { getStagnantDeals } from "../services/reporting";
 import { statusColors } from "../theme/statusColors";
 import { shadows } from "../theme/shadows";
@@ -29,8 +29,8 @@ export default function StagnantDealsReportScreen({
   // "Showing"). The server applies the same visibility rules to user_id.
   const [userId, setUserId] = useState("");
   const { data: reps = [] } = useQuery({
-    queryKey: ["users", "scoped"],
-    queryFn: () => listUsers("scoped"),
+    queryKey: ["users", "reps", "scoped"],
+    queryFn: () => listRepUsers("scoped"),
   });
 
   const query = useQuery({

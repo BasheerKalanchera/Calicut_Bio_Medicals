@@ -4,7 +4,7 @@ import { Alert, Box, Button, MenuItem, TextField } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs, { Dayjs } from "dayjs";
 import { listActivityReport } from "../services/activities";
-import { listUsers } from "../services/masterData";
+import { listRepUsers } from "../services/masterData";
 import { ACTIVITY_TYPE_CONFIG } from "../utils/activityTypes";
 import { shadows } from "../theme/shadows";
 import type { ActivityReportRow } from "../types/api-aliases";
@@ -135,8 +135,8 @@ export default function DailyActivityReportScreen({
   const [userFilter, setUserFilter] = useState<string>("");
 
   const { data: users = [] } = useQuery({
-    queryKey: ["users"],
-    queryFn: async () => (await listUsers()) as UserOption[],
+    queryKey: ["users", "reps", "scoped"],
+    queryFn: async () => (await listRepUsers()) as UserOption[],
     staleTime: Infinity,
   });
 

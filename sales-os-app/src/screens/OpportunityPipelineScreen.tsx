@@ -18,7 +18,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import { shadows } from "../theme/shadows";
 import { statusColors } from "../theme/statusColors";
 import { listPipeline } from "../services/opportunities";
-import { listStages, listUsers } from "../services/masterData";
+import { listStages, listRepUsers } from "../services/masterData";
 import { isReactivationOverdue } from "../utils/opportunityStatus";
 import ZonePicker from "../components/ZonePicker";
 import type { PipelineOpportunity } from "../types/api-aliases";
@@ -338,12 +338,12 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMod
   });
 
   const { data: users = [] } = useQuery({
-    queryKey: ["users", "include-inactive"],
+    queryKey: ["users", "reps", "include-inactive"],
     // include_inactive=true -- this is a filter over existing Opportunities, not an
     // assignment picker, so a deactivated owner's opportunities still need
     // to be findable here (unlike the assignee/reassignment pickers, which
     // correctly stay active-only).
-    queryFn: async () => (await listUsers("scoped", true)) as UserOption[],
+    queryFn: async () => (await listRepUsers("scoped", true)) as UserOption[],
     staleTime: Infinity,
   });
   const activeOwners = users.filter((u) => u.is_active !== false);
