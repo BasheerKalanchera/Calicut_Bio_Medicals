@@ -1260,3 +1260,18 @@ not done here).
 
 - **Corrections from Basheer this session: 3.** (1) He redirected me from the MUI step 8 E2E to the Customer with No Activity E2E. (2) I wrote "28 are on your list" without saying it was my own sum of the two tiles (1 + 27); he had to ask what it meant. (3) I dropped the zone part of the D16 caption without telling him; his follow-up question exposed it. Counted from the messages visible after the context summary.
 - No tracker line: none touched live data or UAT, and no tool check could have stopped them.
+
+## 6 Nov 2026 — Build & Test: Customer with No Activity, caption, Rep lists, Zone picker
+
+- **Committed, not pushed:** `1b70908` fix (shared `listRepUsers` drops Marketing Users from the Rep lists of Stagnant Opportunities, Pipeline, Daily Activity, My Work); `cff3635` feat (D16 caption line above the tiles; Zone picker follows the Rep picked via the new `GET /reporting/no-activity-customers/zones`, `user_id` required; Zone cleared on Rep change; Marketing Users out of the report's Rep list). Full pytest 1562 passed (9 new tests), tsc, eslint, ruff clean. `/code-review medium` on the zone code: one finding fixed (`user_id` made required); the rest left (approved Rep-list change on Daily Activity and Pipeline; D16 duplication and caption wording; untyped profile cast follows the codebase's habit).
+- **Decisions (Basheer):** Marketing Users out of the five Rep lists, built; the wider "Marketing User sees only the Marketing module" work is parked as a Backlog code fix sweep needing proper planning. Zone picker: a report-owned search, shared master-data search untouched ("Yes. Go ahead with option (a).").
+- **Counts corrected:** other user-list call sites are 17, not "about 10" (grep and read).
+- **26 vs 27 never contacted** (GM vs SBU Manager) is by design (D5): one Critical Care-only hospital; no per-row note (D16).
+- **E2E results, Dev:** A3 Pass (Basheer K). As Haroon: B1 Pass, B3 Pass (Marketing Test User not offered in the Rep picker), new step B15 Zone-follows-Rep Pass, C1 Pass (reported done, not read back by Claude). Plan now 38 steps; 9 recorded (24 %). A4–A7, B2 and B4–B14 and C2 onward remain.
+- **Parked by Basheer (6 Nov):** E2E paused after C1; resumes at A4 with the Basheer K login. Dev backend reload for the new fields was not separately checked; A3, B1, B3 and B15 passing shows the new fields and endpoint were live.
+- **Not done this session:** UAT data-quality check, doc tidy-up, weekly Harness Engineering review (all skipped by design for Build & Test).
+
+## 6 Nov 2026 — Build & Test: retro
+
+- **Corrections from Basheer this session: 5.** (1) Wrong Area Manager team and superset statement. (2) He asked why I called it the "D16 plan". (3) I used the wrong report name ("Exception report"); the E2E is Customer with No Activity. (4) I said "about 10" other user-list places; there were 17. (5) He pushed back on a shared zone search ("no need for it yet"), which led to option (a). Counted from the session summary and the messages visible after it, so it may be incomplete.
+- No tracker line: none touched live data or UAT, and no tool check could have stopped them.

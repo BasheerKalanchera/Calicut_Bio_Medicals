@@ -21,35 +21,36 @@ session edits this note._
 - **5 Nov, later: Customer with No Activity E2E is running** (plan
   `docs/Customer-No-Activity-Report-Manual-E2E-Test-Plan.md`, 37 steps).
   P1, P2, A1, A2 Pass = 4 of 37. P2 re-run on Dev 5 Nov: Nishad K V 22 (not
-  21), Elite 125 days; plan edited, uncommitted. **Next: A3** (Basheer, his
+  21), Elite 125 days (E2E plan already in git). **Next: A3** (Basheer, his
   Basheer K login, on Dev), then A4–A7, then B.
-- **D16 added** to `docs/Exception-Report-Implementation-Plan.md` (uncommitted):
-  a line above the tiles with SBU, zones, which contacts count, "28 of 38
-  hospitals"; no per-row hint, no DB change. **Not built.** Files to touch:
-  `reporting/service.py`, `schemas.py` (+ test), `types/api.ts` via
-  `check-api-types.sh --write`, `NoActivityCustomersReportScreen.tsx`. Waiting
-  on Basheer: build before B, or finish A3–A7 first (my suggestion). Needs a
-  pre-E2E review of the change, then goes in the small-fixes `fix:` batch.
-  Then update E2E A2/B wording. Log of the finding: Progress-Archive 5 Nov.
-- **Small fix committed and pushed:** `ec8b9e2` — My Work "Showing" list
-  leaves out Marketing Users (`MyWorkScreen.tsx`; Backlog "Marketing Users
-  in the Rep pickers" for the other screens). tsc and lint passed 5 Nov.
-  Break 5 Nov; E2E resumes next day at A3.
+- **Committed 6 Nov, NOT pushed:** `1b70908` fix: shared `listRepUsers` drops
+  Marketing Users from Stagnant, Pipeline, Daily Activity, My Work Rep lists;
+  `cff3635` feat: Customer with No Activity caption line (D16) + Zone picker
+  follows the Rep picked (`GET /reporting/no-activity-customers/zones`,
+  `user_id` required; `ZonePicker` `searchKey`; Zone cleared on Rep change) +
+  Marketing Users out of its Rep list. Full pytest 1562, tsc, eslint, ruff
+  clean; `/code-review medium` done, findings triaged. Left as is (Basheer):
+  a GM or SBU Manager picking an Area Manager reads "<name>'s zones". 26 (GM)
+  vs 27 (SBU Manager) never-contacted is by design (D5, D16).
+- **E2E parked 6 Nov at 9 of 38 (24 %)** (plan now 38 steps: new B15
+  Zone-follows-Rep). Pass: P1–P2, A1–A3, B1, B3, B15, C1 (Haroon's login;
+  Dev now holds "zz NoActivity accessory"). New fields and zones endpoint
+  were live. **Resume at A4** with the Basheer K login, then A5–A7, B2, then
+  B4–B14 (one login each), then C2 onward (C2 uses C1's accessory).
+- **Next, in order:** (1) docs batch (plan results, this note,
+  Progress-Archive, Backlog Marketing sweep entry) — needs his yes; (2) push
+  is his call (then `cabio-post-commit`); (3) update plan wording for A2
+  (caption line) if he wants it. Marketing User sweep is parked in the
+  Backlog (needs planning). Stray `B`, `BT`, `PC` files are not mine.
+- Break 5 Nov; E2E resumes at A3 once the above is settled.
 - MUI step 8 combined E2E (short, only what pictures can't show) is parked
   behind this one; fix plan wording "21 pictures" to 26 when resumed.
 - Open: Sales Report and Opportunities On Hold likely need the same fixed
   header (Backlog, 3 Nov). Year view "of plan" parked for Plan & Chore.
-- Dev read 3 Nov (P3c): own targets Oct–Dec 2026 only; SBU Imaging ₹280.0L,
-  Critical Care ₹185.0L (+ ₹10.0L Jan–Mar 2027). Script in scratchpad.
 
-## Earlier results (detail: Progress-Archive 2 Nov, committed)
-- Target vs Actuals E2E: 41 of 41 recorded 2 Nov; 3 Fails (B6, C6, D10)
-  fixed by `/build` and re-checked Pass after the `a1c9d67` merge. Findings
-  D13, D14 are now built (above). About 24 steps not re-run: estimate, not
-  counted; count from the plan before the wider regression.
-- Tabs plan: on `a1c9d67`, P1, P3b, A2, B3 passed on the OLD layout; every
-  Tabs step re-runs on the new one. P2 (sign-ins) unrecorded. D17's open
-  point (SBU Target card) was settled: stays on Team Targets (`c23478a`).
+## Earlier results (detail: Progress-Archive 2–5 Nov, committed)
+- Target vs Actuals E2E 41 of 41 and Tabs E2E done; about 24 TvA steps not
+  re-run for the wider regression (estimate, not counted).
 
 ## MUI round 1 Part 1 — step 8 is mine (Basheer, 1 Nov)
 - Steps 1–7 are in main (1–4 `6a417cb`, `f8c61b3`, `394444a`; 5 `06a304b`,

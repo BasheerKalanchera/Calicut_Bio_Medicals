@@ -141,7 +141,8 @@ Visit. Activities can't be deleted.
    90 days (D6, D8a). **Result 5 Nov — Pass (Basheer).** —
 3. [Simple] Read the first row. **Expected:** Elite Diagnostics, North
    Kerala, last activity 3 Jul 2026, Basheer K, 125 days, 1 Active
-   Opportunity, 1 installed asset (D8, D9; days go up by one each day). —
+   Opportunity, 1 installed asset (D8, D9; days go up by one each day).
+   **Result 6 Nov — Pass (Basheer).** —
 4. [Simple] Read the second row. **Expected:** "Never contacted", with no
    date, name or days; every row after it is the same (D8). —
 5. [Simple] Find "asdf - Test Regression", then look for "Al Shifa Hospital
@@ -156,12 +157,13 @@ Visit. Activities can't be deleted.
 
 1. [Complex: cross-role] Haroon: open the screen. **Expected:** tiles 1 and
    26. "Test hospital 2" isn't listed: Vivek's contact counts in the
-   all-customers view (D5). —
+   all-customers view (D5). **Result 6 Nov — Pass (Basheer, as Haroon).** —
 2. [Simple] Basheer K: find "Test hospital 2". **Expected:** listed as
    "Never contacted": an Imaging list ignores a Critical Care contact (D5). —
 3. [Simple] Haroon: Rep picker → Vivek. **Expected:** exactly "KIMS Hospital
    Trivandrum" and "Test hospital 3", the same as Vivek's own list in B8
-   (plan section 1). —
+   (plan section 1). The Rep picker doesn't offer Marketing Test User
+   (`1b70908`). **Result 6 Nov — Pass (Basheer, as Haroon).** —
 4. [Complex: cross-role] Nishad K V: open the screen. **Expected:** 22
    listed (tiles: Gone quiet 1, Never contacted 21). First row: "Al Shifa
    Hospital Perinthalmanna" (Malappuram), last activity 6 Aug 2026, Haroon
@@ -207,13 +209,22 @@ Visit. Activities can't be deleted.
     itself (D13, plan's "Known limit"). "Al Shifa Hospital Perinthalmanna"
     (Malappuram, the gone-quiet row in B4) drops out too; back on All Zones
     it returns as the first row. —
+15. [Simple] Haroon: pick Vivek in the Rep picker, then use the Zone picker
+    (added 6 Nov for `cff3635`, the Zone picker follows the Rep; zones come
+    from Vivek's zones, B8 / B9). **Expected:** typing "Kott" offers
+    Kottayam; typing "Mang" offers nothing (Mangalore is not Vivek's). Pick
+    Kottayam: only "Test hospital 3". Change the Rep to All reps: the Zone
+    box clears, and "Mang" offers Mangalore again. **Result 6 Nov — Pass
+    (Basheer, as Haroon).** —
 
 ## C — What moves a customer on or off the list (saves; Basheer clicks, Claude watches)
 
 1. [Complex: saves to Dev] Haroon: Product Catalog → Add Product. SBU
    Imaging, any Imaging Brand, "+ Add new model", New model name "zz NoActivity
    accessory", any Category offered, Add Model. Product Type Accessory, Add
-   Product. **Expected:** saved, and listed in the catalogue as Accessory. —
+   Product. **Expected:** saved, and listed in the catalogue as Accessory.
+   **Result 6 Nov — Pass (Basheer, as Haroon; reported done, not read back by
+   Claude).** —
 2. [Complex: saves to Dev] Basheer K: New Opportunity. Name "zz NoActivity
    accessory opp", Account "Test customer 3", Stage Lead, Owner Basheer K,
    Win Probability 10. "+ Add Products" → "+ Add Accessory" → "zz NoActivity

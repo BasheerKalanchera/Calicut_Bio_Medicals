@@ -744,21 +744,33 @@ look of `StatTile` and `SectionCard` in `ReportingUI.tsx`. Possibly in the
 own. Also open: D16 is seen only on a phone; 768 and 1280 px not yet
 looked at.
 
-### Marketing Users in the Rep pickers — My Work fixed, other screens not started (5 Nov 2026)
+### Marketing User sees only the Marketing module — code fix sweep, needs planning (6 Nov 2026)
 
-My Work's "Showing" list showed Marketing Users to the Admin and the General
-Manager, because their list is every active user and a Marketing User is
-one; an SBU Manager or Area Manager never sees them (they have no SBU). Fixed
-on My Work only, in `MyWorkScreen.tsx` (leaves out `role_name` "Marketing
-User"), committed and pushed as `ec8b9e2`. Basheer chose the
-screen-only fix (5 Nov): the same list also feeds the User Directory, which
-must still show Marketing Users, and Opportunity Owner reassignment.
+Basheer (6 Nov): a Marketing User is an anomaly. They should see only the
+Marketing module (today just the Marketing Leads entry screen, more to come)
+and be blocked from every user list in the app. Needs a proper plan before
+any more code.
 
-Other screens that use the same list (`listUsers("scoped")`): the Rep picker
-on Customer with No Activity, Stagnant Opportunities, and the Opportunity
-Pipeline owner filter. These would show Marketing Test User to Haroon and
-Admin too. Not opened or confirmed. If Basheer wants them done the same way:
-the same one-line role check on each screen, or one shared helper.
+Done so far (the filter-only part, 6 Nov): `listRepUsers` in
+`masterData.ts` leaves Marketing Users out of the list; used by the rep
+filters on Customer with No Activity, Stagnant Opportunities, Opportunity
+Pipeline (owner), Daily Activity Report (team member) and My Work
+("Showing", which had its own inline check from `ec8b9e2`). Frontend only.
+
+Left for the sweep (read 6 Nov, all 17 places that fetch the user list):
+- Pickers where a person is chosen for a record, 8 places: Opportunity
+  owner (Quick Lead pop-up, Opportunity Edit pop-up), Opportunity Splits
+  tab, project owner (Customer 360, Project Directory), next-action
+  assignee (Log Activity, Close Reminder). Not checked: whether the server
+  already refuses a Marketing User as owner. Next-action pickers ask for
+  the "all users" list, so every role sees Marketing Users there; the
+  others only Admin and General Manager.
+- Lists that need everyone, to be decided case by case: User Directory
+  (must keep Marketing Users), the approver and "colleague who referred it"
+  pickers on the Quick Lead and Opportunity Edit pop-ups.
+- Server side: a rule on `/users` and the other lists, rather than each
+  screen filtering. Target vs Actuals people list (entry above, 25 Oct).
+- Marketing Lead pop-ups already leave them out (`NON_REP_ROLES`).
 
 ### Team Targets: let the GM (and Admin) see reps' targets, view only — waits for the leadership demo (Basheer, 4 Nov 2026)
 
