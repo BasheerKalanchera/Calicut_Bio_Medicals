@@ -1296,6 +1296,15 @@ not done here).
   9. Plan handover line 8 split (done 6 Nov with this entry); tidy-up marked done once the rest are in.
   Log line when applied: `- 2026-11-06 | found N | fixed N | deferred N | broken links 26 (+0 in code comments) | slice: Target-vs-Actuals-Redesign plan, Part-2-Screens plan, Exception-Report plan (memory empty) | …`.
 
+## 6 Nov 2026 — Plan & Chore: training dry run passed, Session 1 ready
+
+- **Due today:** UAT data-quality check and documentation tidy-up both skipped for today (`.claude/due-today-skipped`).
+- **Dry run on Dev:** steps 1–19 all passed (Basheer, 6 Nov), with three logins holding after refresh: normal Edge as Haroon, Chrome Incognito as Arun Adarsh, normal Chrome as Vivek. Steps 17–19 were side checks and proved little: Target vs Actuals shows nothing for a 2028 year. They are left out of the Session 1 guide. Basheer also added an Imaging pattern for 2028 by mistake; it went with the clean-up.
+- **Clean-up on Dev, applied on Basheer's yes:** notification 6, target_plan 2, person_quarter_target 3, brand_vendor_target 8, brand_annual_target 2, sbu_seasonal_pattern 2. Re-check showed no 2028 rows left.
+- **Four fixes:** Basheer first asked for fixes 1 and 4 today, then changed his mind. Session 1 runs with the app as it is; the fixes go in with whatever Haroon suggests. The writeup for Build & Test is withdrawn. Found while writing it: the last approved brand split isn't kept, only the total (`planning/service.py:377-378`), so fix 4 can't fall back to it as I had said.
+- **Latheef Bhai's alert:** left out for now; Backlog "Alert Latheef Bhai when Haroon submits a plan".
+- **Slide and guide:** redesigned on Basheer's comments (Imaging as SonoScape only, his heading), then the Session 1 guide added as a second slide on the same page (https://claude.ai/artifact/KGBPpfiLUw8n39LTBbqCnd, version 8). Every figure on both is made up.
+
 ## 6 Nov 2026 — Plan & Chore: retro
 
 - **Corrections from Basheer this session: 13.** (1) What "3 Chrome profiles" meant. (2) Still not clear on the steps; asked me to show them. (3) How to set up profiles without their Gmail ids. (4) New profiles asked him to sign in, so my steps didn't work. (5) The sign-in message was on the window, not in the menu. (6) What the "4 training fixes" were. (7) I listed the Overdue paper as still to send; it had already gone. (8) Questioned my suggestion of three plans from Fazal's team. (9) He raised My hospitals, which I hadn't covered. (10) "Becoming a bit complicated"; asked to step back. (11) Why Fazal's plan wasn't required in Option 1. (12) My Option 1 recommendation looked odd. (13) What "commit date" meant; I raised it without explaining it. Counted from the list of his messages, part of it in summary form, so it may be incomplete.

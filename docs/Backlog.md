@@ -1067,6 +1067,13 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
 
 ## Deferred / undecided items
 
+- **Alert Latheef Bhai when Haroon submits a plan (deferred, Basheer,
+  2026-11-06).** Target & Coverage Planning: when someone with no manager
+  submits a plan, nobody gets the bell (Annual Target plan D18, D69), and
+  Latheef Bhai finds it in Needs Your Approval. Left out of the training
+  plan for now. Building it would reverse D18 and D69, and on UAT Irfan's
+  plans would alert Latheef Bhai too, not Haroon.
+
 - **The server doesn't check who closes a next action (found 2026-10-16,
   next-action rules pre-E2E review; deferred).** Every screen offers
   "Close" only on one's own next actions (Next Actions screen, the
