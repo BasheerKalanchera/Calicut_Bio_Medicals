@@ -1275,3 +1275,28 @@ not done here).
 
 - **Corrections from Basheer this session: 5.** (1) Wrong Area Manager team and superset statement. (2) He asked why I called it the "D16 plan". (3) I used the wrong report name ("Exception report"); the E2E is Customer with No Activity. (4) I said "about 10" other user-list places; there were 17. (5) He pushed back on a shared zone search ("no need for it yet"), which led to option (a). Counted from the session summary and the messages visible after it, so it may be incomplete.
 - No tracker line: none touched live data or UAT, and no tool check could have stopped them.
+
+## 6 Nov 2026 — Plan & Chore: manager's plan decided, UAT backup, tidy-up checks
+
+- **UAT backup:** done; Basheer copied it to Google Drive.
+- **Manager's plan:** Option 2 (one figure for the whole target, with a "My team" line). Haroon confirmed by phone to Basheer, and wants to see each rep's target and plan detail. Questions 2–8 decided by Basheer on my recommendations; Haroon hasn't heard them, and Session 1 walks him through them. All in `docs/Target-Plan-Training-Implementation-Plan.md` Decisions. Two left "proposed": commit date not enforced by the app; bell to the Admin when someone with no manager submits (code: `planning/service.py:109-115`). Not checked on Dev or UAT: that Haroon has no manager and Latheef Bhai's login is Admin.
+- **Research behind Option 2:** Gong, Glyphic, Clari, Salesforce, Oracle material read this session; managers commit team numbers. I first recommended Option 1 after the future-situation test, then withdrew it.
+- **Row 11.1, zero lead activity:** Partial while the Customer with No Activity E2E runs. Tally 35 Done, 12 Partial, 3 Not started; `--check` passed. Client pages not republished.
+- **Questions still with Haroon (9–20):** Irfan; export on Customer with No Activity; product cost; Performance tab additions; fuller page; Finance download; NPS; similar-name warning; Collections 4 questions; Activity privacy; Customer Tiering; Zone paper 5–7.
+- **Instalments, recommended, not decided:** an optional agreed final payment date and note on Payment Pending; the 60 days count from it; Won needs full payment; built with the alert.
+- **Tidy-up checks done, 9 fixes not approved, so no sweep-log line yet:**
+  1. `CLAUDE.md`: remove "**Paused** until the next-action rules feature is built (that plan's step 5 resumes it) — reason in `.claude/dq-check-paused`."; date tag *(2026-09-24, 2026-10-15, 2026-11-03)*.
+  2. Tidy-up skill, Frequency: "was tied to the UAT data-quality check, which is now paused" → "was tied to the UAT data-quality check".
+  3. Simpler Table plan Status → "Built — `c490eb9` (2026-10-31), in `main`; E2E 37 of 37 Pass, 4 Nov (`1f6fea2`). Approved 2026-10-31. Build steps below are complete; kept as the original plan."
+  4. Redesign plan: "E2E (A–F) pending, run by `/test`." → "E2E done: 37 of 37 Pass, 4 Nov (`1f6fea2`)."
+  5. Part 2 plan: "section L is waiting for the Target & Coverage Planning tabs build." → "section L is parked, to be re-read against the new tabs (built, E2E 30 of 30, 4 Nov)."
+  6. Hospital Next Action plan: "tab move (after Activity) is edited but uncommitted — it goes in with Customer 360's MUI round 1 commit." → "tab move (after Activity) shipped in `6a417cb`."
+  7. Backlog line 312: "(built, awaiting merge)" → "(built, in `main`)".
+  8. Backlog Waiting on people, new lines: Overdue Q1–Q5 (sent to leadership; `docs/Discussion-Overdue-Next-Actions-2026-11.md`); Irfan leaving (Basheer checking; raised 2026-11-05).
+  9. Plan handover line 8 split (done 6 Nov with this entry); tidy-up marked done once the rest are in.
+  Log line when applied: `- 2026-11-06 | found N | fixed N | deferred N | broken links 26 (+0 in code comments) | slice: Target-vs-Actuals-Redesign plan, Part-2-Screens plan, Exception-Report plan (memory empty) | …`.
+
+## 6 Nov 2026 — Plan & Chore: retro
+
+- **Corrections from Basheer this session: 13.** (1) What "3 Chrome profiles" meant. (2) Still not clear on the steps; asked me to show them. (3) How to set up profiles without their Gmail ids. (4) New profiles asked him to sign in, so my steps didn't work. (5) The sign-in message was on the window, not in the menu. (6) What the "4 training fixes" were. (7) I listed the Overdue paper as still to send; it had already gone. (8) Questioned my suggestion of three plans from Fazal's team. (9) He raised My hospitals, which I hadn't covered. (10) "Becoming a bit complicated"; asked to step back. (11) Why Fazal's plan wasn't required in Option 1. (12) My Option 1 recommendation looked odd. (13) What "commit date" meant; I raised it without explaining it. Counted from the list of his messages, part of it in summary form, so it may be incomplete.
+- No tracker line: none touched live data or UAT, and no tool check could have stopped them.

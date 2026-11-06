@@ -300,8 +300,8 @@
     <div class="rail" id="rail">
       <div class="rail-title">Modules</div>
       <a href="#done" data-n="done"><span>Done</span><span class="n">35</span></a>
-      <a href="#partial" data-n="partial"><span>Partial</span><span class="n">11</span></a>
-      <a href="#not-started" data-n="not-started"><span>Not Started</span><span class="n">4</span></a>
+      <a href="#partial" data-n="partial"><span>Partial</span><span class="n">12</span></a>
+      <a href="#not-started" data-n="not-started"><span>Not Started</span><span class="n">3</span></a>
       <a href="#new-features" data-n="+"><span>Commitment beyond contract</span><span class="n">19</span></a>
       <a href="#requested" data-n="!"><span>Requested</span><span class="n">3</span></a>
       <a href="#pending" data-n="?"><span>Pending Decision</span><span class="n">1</span></a>
@@ -321,11 +321,11 @@
             <div class="lbl"><span class="swatch" style="background:var(--done)"></span>Done</div>
           </div>
           <div class="stat">
-            <div class="num" style="color:var(--partial)">11</div>
+            <div class="num" style="color:var(--partial)">12</div>
             <div class="lbl"><span class="swatch" style="background:var(--partial)"></span>Partly done</div>
           </div>
           <div class="stat">
-            <div class="num" style="color:var(--not-started)">4</div>
+            <div class="num" style="color:var(--not-started)">3</div>
             <div class="lbl"><span class="swatch" style="background:var(--not-started)"></span>Not started</div>
           </div>
           <div class="stat">
@@ -345,9 +345,9 @@
         <div class="traceblock">
           <div class="trace-caption">
             <span>Of <b>50</b> signed requirements &mdash; two honest reads of "done"</span>
-            <span><b style="color:var(--ink)">70.0%</b> strict &nbsp;&middot;&nbsp; <b style="color:var(--accent)">81.0%</b> counting partial as half&#8209;credit</span>
+            <span><b style="color:var(--ink)">70.0%</b> strict &nbsp;&middot;&nbsp; <b style="color:var(--accent)">82.0%</b> counting partial as half&#8209;credit</span>
           </div>
-          <svg class="trace" viewBox="0 0 900 92" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Progress scale from 0 to 100 percent, marking 70.0 percent strict completion and 81.0 percent weighted completion">
+          <svg class="trace" viewBox="0 0 900 92" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Progress scale from 0 to 100 percent, marking 70.0 percent strict completion and 82.0 percent weighted completion">
             <line class="axis" x1="20" y1="54" x2="880" y2="54"/>
             <g class="tick">
               <line x1="20" y1="49" x2="20" y2="59"/>
@@ -366,9 +366,9 @@
             <line x1="20" y1="54" x2="622" y2="54" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" opacity="0.32"/>
             <circle class="mark-strict" cx="622" cy="54" r="6"/>
             <text class="lbl-strong" x="622" y="14" text-anchor="middle">70.0% strict</text>
-            <circle class="mark-weighted" cx="717" cy="54" r="6"/>
-            <text class="lbl-strong" x="717" y="30" text-anchor="middle" fill="var(--accent)">81.0% weighted</text>
-            <line x1="622" y1="54" x2="717" y2="54" stroke="var(--accent)" stroke-width="2" stroke-dasharray="1 5" stroke-linecap="round"/>
+            <circle class="mark-weighted" cx="725" cy="54" r="6"/>
+            <text class="lbl-strong" x="725" y="30" text-anchor="middle" fill="var(--accent)">82.0% weighted</text>
+            <line x1="622" y1="54" x2="725" y2="54" stroke="var(--accent)" stroke-width="2" stroke-dasharray="1 5" stroke-linecap="round"/>
           </svg>
         </div>
       </div>
@@ -652,7 +652,7 @@
     <section class="mod" id="partial">
       <div class="mod-head">
         <h2>Partial</h2>
-        <div class="tally"><span>11 of 50 requirements</span></div>
+        <div class="tally"><span>12 of 50 requirements</span></div>
       </div>
 
       <div class="subgroup-label">Customer Account Management</div>
@@ -763,6 +763,15 @@
           <div class="rn">45</div>
           <div class="ids"><span class="idchip">11.1</span></div>
           <div>
+            <div class="req">Exception report: zero lead activity over 3 months</div>
+            <div class="note">The Customer with No Activity report is built and is being tested.</div>
+          </div>
+          <div class="col-status"><span class="pill partial"><span class="d"></span>Partial</span></div>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">46</div>
+          <div class="ids"><span class="idchip">11.1</span></div>
+          <div>
             <div class="req">Phase 1 analytics: conversion, pipeline aging, salesperson performance</div>
             <div class="note">Conversion figures are available today; pipeline-aging analysis (how long deals linger at each stage over time) is deferred to a later phase.</div>
           </div>
@@ -775,7 +784,7 @@
           <span>#</span><span>Feature&nbsp;ID</span><span>Requirement &amp; Notes</span><span>Status</span>
         </div>
         <div class="row no-prd">
-          <div class="rn">46</div>
+          <div class="rn">47</div>
           <div class="ids"><span class="idchip">16.1</span><span class="idchip">16.2</span><span class="idchip">16.3</span><span class="idchip">16.4</span></div>
           <div>
             <div class="req">Cloud deployment; hybrid DB; role-based access, encryption, backup/DR frequency</div>
@@ -789,7 +798,7 @@
     <section class="mod" id="not-started">
       <div class="mod-head">
         <h2>Not Started</h2>
-        <div class="tally"><span>4 of 50 requirements</span></div>
+        <div class="tally"><span>3 of 50 requirements</span></div>
       </div>
 
       <div class="subgroup-label">Reporting &amp; Review</div>
@@ -798,15 +807,9 @@
           <span>#</span><span>Feature&nbsp;ID</span><span>Requirement &amp; Notes</span><span>Status</span>
         </div>
         <div class="row no-prd">
-          <div class="rn">47</div>
+          <div class="rn">48</div>
           <div class="ids"><span class="idchip">6.1</span></div>
           <div><div class="req">Demo-to-sale conversion report</div></div>
-          <div class="col-status"><span class="pill not-started"><span class="d"></span>Not started</span></div>
-        </div>
-        <div class="row no-prd">
-          <div class="rn">48</div>
-          <div class="ids"><span class="idchip">11.1</span></div>
-          <div><div class="req">Exception report: zero lead activity over 3 months</div></div>
           <div class="col-status"><span class="pill not-started"><span class="d"></span>Not started</span></div>
         </div>
         <div class="row no-prd">
@@ -881,7 +884,7 @@
 
     <footer class="foot">
       <span>Cabio Sales OS &middot; Phase 1 Delivery Scorecard &mdash; By Status</span>
-      <span>50 requirements &middot; 35 done &middot; 11 partial &middot; 4 not started &middot; 19 bonus &middot; 3 requested &middot; 1 pending</span>
+      <span>50 requirements &middot; 35 done &middot; 12 partial &middot; 3 not started &middot; 19 bonus &middot; 3 requested &middot; 1 pending</span>
     </footer>
     </div>
   </main>

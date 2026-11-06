@@ -5,8 +5,9 @@ items go to Progress-Archive; unstarted work goes to Backlog. Build & Test
 keeps its own note: `.claude/session-handover-build.md`. Only the Plan & Chore
 session edits this note._
 
-- 5 Nov. **In progress: Target and plan training sessions for Haroon's team** (archive 5 Nov has the session plan and UAT team list). Order agreed, plan `docs/Target-Plan-Training-Implementation-Plan.md` (Draft, holds the dry-run step list). **Next:** Basheer answers two questions: dry run in Critical Care for 2028 (recommended yes), and the picture changes in the plan (recommended yes; https://claude.ai/artifact/KGBPpfiLUw8n39LTBbqCnd, not yet republished). Then the dry run with him, in a fresh session, on Dev. Naeem and Gopika pv aren't on Dev: decide after the dry run. Haroon's questions for Session 1: selling manager's own share, credit for supporting a rep. Basheer checking with Haroon whether Irfan is leaving. Mock logins need one Chrome profile per person (normal + incognito gives only two).
-- **Also urgent:** doc set for running 2–3 sessions in parallel, including the archive split (three decisions open). Not done 5 Nov: UAT data-quality check, doc tidy-up (asked, not answered). UAT backup done.
+- 5 Nov. **In progress: Target and plan training sessions for Haroon's team** (archive 5 Nov has the session plan and UAT team list). Order agreed, plan `docs/Target-Plan-Training-Implementation-Plan.md` (Draft, holds the dry-run step list; pushed `690c771`). 6 Nov: decisions recorded in the plan (uncommitted); picture republished, version 2 (https://claude.ai/artifact/KGBPpfiLUw8n39LTBbqCnd). Mock 2028 figures removed after the dry run and after Sessions 1, 2a and 2b (Basheer; script shown first, not written yet). **Next:** Basheer finishes the Customer with No Activity E2E first. Then a read-only Dev check that 2028 is still empty, and the dry run with him, in a fresh session, on Dev. Logins: normal Chrome, Incognito, Edge (Basheer, 6 Nov; Edge InPrivate as the fourth); not yet tested. Naeem and Gopika pv aren't on Dev: decide after the dry run. Basheer checking with Haroon whether Irfan is leaving.
+- **Also urgent:** doc set for running 2–3 sessions in parallel, including the archive split (three decisions open).
+- 6 Nov: Option 2 for a manager's plan (one figure for the whole target, with a "My team" line), confirmed by Haroon by phone, who also wants to see each rep's target and plan detail; in the training plan, uncommitted. Design questions 2–8 decided by Basheer, also in the plan. **Next:** Basheer answers the plan's two "proposed" Decisions (commit date, bell for Latheef Bhai); write the fixes' own plan; correct the picture's steps 4 and 8, diff first; Haroon's answers to questions 9–20 (archive 6 Nov). Answers also awaited: instalments; 9 tidy-up fixes (exact wording, archive 6 Nov).
 - Forecast plan (untracked, written by Antigravity — Basheer 27 Oct): commit it, and by which session? Open. At review, line 110 → BR-FIN-09.
 - Parked to 5 Nov (Basheer): `docs/Marketing-Lead-To-Project-Implementation-Plan.md`, Draft. **Next:** discuss D1–D9.
 
@@ -17,8 +18,8 @@ session edits this note._
 ## 3 Nov — papers with Haroon; scorecard republish
 
 - Overdue next actions paper `docs/Discussion-Overdue-Next-Actions-2026-11.md`
-  (Q1–Q6), committed and pushed `58e7de2`. **Next:** Basheer sends the
-  WhatsApp summary to Haroon.
+  (Q1–Q6), committed and pushed `58e7de2`. Already sent to the Cabio
+  leadership team (Basheer, 6 Nov). **Next:** record their answers.
 - Salesperson Performance paper section 10 (`d5b6a96`). **Next:** Basheer
   sends 10.4 to Haroon. Product-cost question: Basheer checking with him.
 - **Next:** republish both client scorecard pages (diff shown 3 Nov,
