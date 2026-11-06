@@ -1,6 +1,8 @@
 import { useCallback, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Box, Link, MenuItem, TextField, Typography } from "@mui/material";
+import { Box, IconButton, InputAdornment, Link, MenuItem, TextField, Typography } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
+import ClearIcon from "@mui/icons-material/Clear";
 import TableOrCards, { TocCell, TocRow } from "../components/TableOrCards";
 import ZonePicker from "../components/ZonePicker";
 import { LoadingOrEmpty, StatTile } from "../components/ReportingUI";
@@ -63,6 +65,9 @@ export default function NoActivityCustomersReportScreen({
 }) {
   const [userId, setUserId] = useState("");
   const [zone, setZone] = useState<ZoneSearchResult | null>(null);
+  // D17: narrows the list on screen by hospital name; the tiles and the caption
+  // keep counting the whole list. Cleared on a Rep or Zone pick.
+  const [search, setSearch] = useState("");
 
   // Rep picker: the people this user may see, same list as Stagnant
   // Opportunities; shown only when there is someone to pick (D13).
@@ -82,7 +87,9 @@ export default function NoActivityCustomersReportScreen({
   // After a new pick, the old list stays up until the new one arrives: dim it
   // so it isn't read as the new pick's list.
   const dimmed = query.isPlaceholderData;
-  const rows = query.data?.rows ?? [];
+  const allRows = query.data?.rows ?? [];
+  const searchTerm = search.trim().toLowerCase();
+  const rows = searchTerm ? allRows.filter((r) => r.account_name.toLowerCase().includes(searchTerm)) : allRows;
   // The server says whether the viewer holds more than one zone (D13).
   const showZonePicker = query.data?.show_zone_picker ?? false;
   const showRepPicker = reps.length > 1;
@@ -107,6 +114,32 @@ export default function NoActivityCustomersReportScreen({
     <Box sx={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", bgcolor: "background.default" }}>
       {/* Fixed while the list scrolls (Simpler Table D15, D16). */}
       <Box sx={{ px: 2, pt: 2, pb: 1, bgcolor: "background.default", flexShrink: 0, display: "flex", flexDirection: "column", gap: 1.5 }}>
+        {query.data && (
+          <TextField
+            placeholder="Search customers..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            size="small"
+            fullWidth
+            autoComplete="off"
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" />
+                  </InputAdornment>
+                ),
+                endAdornment: search ? (
+                  <InputAdornment position="end">
+                    <IconButton size="small" aria-label="Clear search" onClick={() => setSearch("")}>
+                      <ClearIcon fontSize="small" />
+                    </IconButton>
+                  </InputAdornment>
+                ) : undefined,
+              },
+            }}
+          />
+        )}
         {(showRepPicker || showZonePicker) && (
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
             {showRepPicker && (
@@ -117,6 +150,7 @@ export default function NoActivityCustomersReportScreen({
                 value={userId}
                 onChange={(e) => {
                   setUserId(e.target.value);
+                  setSearch("");
                   // A zone picked for the last person may not be in this one's.
                   setZone(null);
                 }}
@@ -135,7 +169,10 @@ export default function NoActivityCustomersReportScreen({
                   label="Zone"
                   placeholder="All Zones"
                   value={zone}
-                  onChange={setZone}
+                  onChange={(z) => {
+                    setZone(z);
+                    setSearch("");
+                  }}
                   searchFn={searchZonesForPick}
                   searchKey={pickedOther ? userId : ""}
                 />
@@ -161,7 +198,7 @@ export default function NoActivityCustomersReportScreen({
           isLoading={query.isLoading}
           isError={query.isError}
           isEmpty={rows.length === 0}
-          emptyText="No customers without activity. Nice."
+          emptyText={allRows.length > 0 ? "No customers match your search." : "No customers without activity. Nice."}
           errorText="Couldn't load the Customer with No Activity report."
           onRetry={() => query.refetch()}
         />
