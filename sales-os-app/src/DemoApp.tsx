@@ -938,7 +938,7 @@ export default function DemoApp() {
                 Customer with No Activity
               </Typography>
             </Box>
-            <NoActivityCustomersReportScreen onSelectAccount={handleSelectAccount} />
+            <NoActivityCustomersReportScreen isActive={view === "noActivityCustomers"} onSelectAccount={handleSelectAccount} />
           </Box>
 
           <Box sx={{ flex: 1, overflow: "hidden", display: view === "opportunitiesOnHold" ? "flex" : "none", flexDirection: "column" }}>

@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Box, IconButton, InputAdornment, Link, MenuItem, TextField, Typography } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
@@ -59,8 +59,12 @@ function NameLink({ children, onClick }: { children: string; onClick: () => void
 }
 
 export default function NoActivityCustomersReportScreen({
+  isActive,
   onSelectAccount,
 }: {
+  // DemoApp keeps this screen mounted while hidden, so "opened again" never
+  // happens; the list is reloaded when it becomes the visible screen.
+  isActive: boolean;
   onSelectAccount?: (account: { id: string; name: string }) => void;
 }) {
   const [userId, setUserId] = useState("");
@@ -83,6 +87,16 @@ export default function NoActivityCustomersReportScreen({
     // Keep the pickers on screen while a new pick loads.
     placeholderData: (previous) => previous,
   });
+
+  // A save made elsewhere (Log Activity, a new Opportunity or customer) changes
+  // the list, and the global 30 s staleTime would show the old one: reload each
+  // time this screen becomes visible (not on first load, the query already runs).
+  const { refetch } = query;
+  const wasActive = useRef(isActive);
+  useEffect(() => {
+    if (isActive && !wasActive.current) void refetch();
+    wasActive.current = isActive;
+  }, [isActive, refetch]);
 
   // After a new pick, the old list stays up until the new one arrives: dim it
   // so it isn't read as the new pick's list.
