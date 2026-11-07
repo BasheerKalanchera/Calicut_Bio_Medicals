@@ -2,7 +2,7 @@
 
 **Status:** Draft, 2026-11-05.
 **Traceability rows:** none; training, no app change in this plan. The fixes in step 4 of the order get their own short plan.
-**Design / discussion:** `docs/Progress-Archive-2026-11.md`, 5 Nov. Picture: https://claude.ai/artifact/KGBPpfiLUw8n39LTBbqCnd
+**Design / discussion:** `docs/Progress-Archive-2026-11.md`, 5 Nov. Session 1 deck (picture, guide, decisions waiting on Haroon): https://claude.ai/artifact/QrpyAogcd8fFc9uMs1Xf32. Earlier picture and guide: https://claude.ai/artifact/KGBPpfiLUw8n39LTBbqCnd
 
 ## Decisions
 
@@ -14,16 +14,17 @@
 - The picture carries the label "For Haroon and Latheef Bhai only" — Basheer, 2026-11-06
 - The Customer with No Activity E2E pauses for the dry run and Session 1, so no test runs on Dev during them; it no longer has to finish first, because Session 1 is the morning of 7 Nov — Basheer, 2026-11-06
 - The mock 2028 figures are removed from Dev after the dry run and again after each mock session, by a script shown first — Basheer, 2026-11-06
+- For training, the app header shows the signed-in person's name beside Sign Out at every window size; temporary, removed before the UAT move (Backlog "Temporary: name in app header for training") — Basheer, 2026-11-07
 - Each mock login gets its own browser window: normal Edge, Chrome Incognito, normal Chrome, and Edge InPrivate when a fourth is needed. Chrome profiles dropped, because a new profile asked Basheer to sign in — Basheer, 2026-11-06
-- A manager commits one figure for their whole target. A manager who sells lists their own hospitals plus one "My team" figure with a brand split; a manager who doesn't sell has only the figure and split. Reps plan their hospitals as today, and the manager approves them. Haroon approves each manager's figure, and Team committed counts those figures (Option 2, lighter form). Haroon also wants to see each rep's target and plan detail — Basheer, and Haroon by phone via Basheer, 2026-11-06
-- A manager commits first, then sets their reps' targets. This is the expected order, not a lock: the manager's approval by Haroon and the reps' target setting and plan approval by the manager run independently, and neither waits for the other. If Haroon rejects or changes a manager's figure later, reps' plans already approved stay approved; the manager sees any mismatch and decides whether to revise them — Basheer, 2026-11-06
-- A manager's figure below their target is allowed with a warning, and Haroon decides whether to approve it — Basheer, 2026-11-06
-- When reps' plans don't match a manager's commitment, the manager sees it at once and Haroon sees it when he opens that manager's team — Basheer, 2026-11-06
-- Moving an amount between reps with the team total unchanged needs no approval from Haroon. A change to the manager's total or brand split needs a note and his approval — Basheer, 2026-11-06
-- Target vs Actuals judges a manager mainly on the team's Won against their target, with their own Won shown separately — Basheer, 2026-11-06
-- When a manager helps a rep close an Opportunity, the credit stays with the rep unless they agree to split it; either way it counts towards the manager's team — Basheer, 2026-11-06
-- Haroon's own plan counts in Team committed alongside his managers' figures. Latheef Bhai, Admin in the system, approves it — Basheer, 2026-11-06
-- Team Plans gets a Target column, so Haroon sees each rep's target beside their plan — Basheer, 2026-11-06
+- A manager commits one figure for their whole target. A manager who sells lists their own hospitals plus one "My team" figure with a brand split; a manager who doesn't sell has only the figure and split. Reps plan their hospitals as today, and the manager approves them. Haroon approves each manager's figure, and Team committed counts those figures (Option 2, lighter form). Haroon also wants to see each rep's target and plan detail — Basheer, and Haroon by phone via Basheer, 2026-11-06. Confirmed again by Haroon at Session 1, with the example: Fazal commits one ₹160 L figure, his own hospitals for ₹20 L plus one "My team" line for the reps' ₹140 L, and Haroon approves that one figure — Basheer, 2026-11-07
+- A manager commits first, then sets their reps' targets. This is the expected order, not a lock: the manager's approval by Haroon and the reps' target setting and plan approval by the manager run independently, and neither waits for the other. If Haroon rejects or changes a manager's figure later, reps' plans already approved stay approved; the manager sees any mismatch and decides whether to revise them — Basheer, 2026-11-06. Confirmed after Session 1: no lock, for now — Basheer, 2026-11-07
+- A manager's figure below their target is allowed with a warning, and Haroon decides whether to approve it — Basheer, 2026-11-06. Changed at Session 1: a plan, a manager's or a rep's, can be below or above the target, and the approver decides. Haroon's case: a rep who missed the target in one quarter can plan above target in the next to make up the shortfall — Haroon via Basheer, 2026-11-07. The app says when a plan is above or below target, worded neutrally, not as a warning — Basheer, 2026-11-07
+- When reps' plans don't match a manager's commitment, the manager sees it at once and Haroon sees it when he opens that manager's team — Basheer, 2026-11-06. Confirmed at Session 1: Haroon wants to see it too — Haroon via Basheer, 2026-11-07. It also shows on Haroon's list of managers (e.g. "Fazal: reps ₹10 L below"), so he needn't open each team; no bell alert — Basheer, 2026-11-07
+- Moving an amount between reps with the team total unchanged needs no approval from Haroon. A change to the manager's total or brand split needs a note and his approval — Basheer, 2026-11-06. Confirmed by Haroon at Session 1 — Haroon via Basheer, 2026-11-07
+- Target vs Actuals judges a manager mainly on the team's Won against their target, with their own Won shown separately — Basheer, 2026-11-06. Confirmed after Session 1 — Basheer, 2026-11-07
+- When a manager helps a rep close an Opportunity, the credit stays with the rep unless they agree to split it; either way it counts towards the manager's team — Basheer, 2026-11-06. Confirmed after Session 1 — Basheer, 2026-11-07
+- Haroon's own plan counts in Team committed alongside his managers' figures. Latheef Bhai, Admin in the system, approves it — Basheer, 2026-11-06. Confirmed after Session 1, where the approval step worked live — Basheer, 2026-11-07
+- Team Plans gets a Target column, so Haroon sees each rep's target beside their plan — Basheer, 2026-11-06. Confirmed after Session 1; with decision 2, the row also says when a plan is above or below target — Basheer, 2026-11-07
 - No commit date for now: nothing in the app and nothing in this plan, because it is over-engineering — Basheer, 2026-11-06
 - No alert to Latheef Bhai for now: when Haroon submits a plan nobody gets the bell, as today (Annual Target plan D18, D69), and Latheef Bhai finds it in Needs Your Approval — Basheer, 2026-11-06
 
@@ -139,7 +140,7 @@ None left: decided above, Basheer, 2026-11-06. Session 1 walks Haroon through th
 
 ### Sessions after the dry run (proposed)
 
-- **Session 1:** morning of 7 Nov, ready by end of 6 Nov (Basheer, 6 Nov). Haroon and Basheer; Latheef Bhai may join (Basheer, 6 Nov). Dev mock. Guide: the second slide at the picture's link (Basheer, 6 Nov).
+- **Session 1:** morning of 7 Nov, ready by end of 6 Nov (Basheer, 6 Nov). Haroon, Latheef Bhai and Basheer (Basheer, 7 Nov). Dev mock. Sequence ends with Haroon submitting an own plan and Latheef Bhai approving it, live, in a fourth window (Edge InPrivate); these two steps weren't in the dry run (Basheer, 7 Nov). Picture, guide and the decisions waiting on Haroon: four-slide deck, https://claude.ai/artifact/QrpyAogcd8fFc9uMs1Xf32 (Basheer, 7 Nov).
 - **Session 2a, Imaging:** Haroon, Fazal, Shruthi, Naeem; Dev mock. **Session 2b, Critical Care:** Haroon, Arun Adarsh, Nishad K V; Dev mock. Basheer drives on Google Meet, each login in its own browser window (three in Session 1's example steps, four for 2a, three for 2b).
 - **Then** the UAT move and real targets.
 - **Session 3:** one per Area Manager's team with a rep (Shruthi, Fazal, Arun Adarsh, Nishad K V), on UAT with real figures and own logins. Whether it's one per team is still Basheer's to confirm. Naeem has no reps on UAT.

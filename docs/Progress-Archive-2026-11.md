@@ -1329,3 +1329,22 @@ not done here).
 
 - **Corrections from Basheer this session: 0** (counted from his messages). One slip of mine, the wrong "start of name" claim above, was caught by me before it cost him anything.
 - No tracker line: no live data touched, no guard could have stopped it.
+
+## 7 Nov 2026 — Plan & Chore: UAT backup
+
+- **UAT backup** (Basheer yes): `cabio_uat_2026-11-07_0645.dump`, 920,056 bytes, 535 entries (backup log). Pruned the 24 Oct copy; 14 kept. Google Drive copy done by Basheer.
+- **Session 1 deck** (Basheer): the picture and guide became a four-slide deck in the "Sales OS Demo: What's New" colours, https://claude.ai/artifact/QrpyAogcd8fFc9uMs1Xf32: picture, targets come down, plans go up, decisions waiting on Haroon. Old link left as it was. Added at his request: Latheef Bhai approving Haroon's own plan, live. Made-up amounts: Haroon's plan ₹20 L, all EDAN, so Team committed ₹130 L, Gap ₹45 L. Code read, not tried on screen: a GM may plan in any SBU and isn't limited by territory (`planning/service.py:72,83-87,309-341`); nobody approves their own plan, and Admin may approve (`:404-450`); a plan with no manager rings no bell (`:106-115`) but appears in the Admin's queue (`repository.py:92-123`); Team committed counts every plan that isn't a draft, so it rises at submit (`repository.py:194-211`).
+- **Decisions list:** 21 items on the slide. 1–8 from the training plan; 9–20 from the 6 Nov list, with "fuller page" reworded because the Performance tab replaced the dedicated page on 3 Nov (Salesperson paper section 8); 21 added from Backlog (vendor pipeline report fields). "Collections 4 questions" read as that paper's Q1–Q4.
+
+## 7 Nov 2026 — Plan & Chore: Session 1 held; Haroon's decisions 1–8
+
+- **Session 1** with Haroon and Latheef Bhai, morning of 7 Nov on Dev: went well (Basheer). Latheef Bhai's approval of Haroon's own plan worked live. The name in the header helped (Basheer).
+- **Temporary header name:** Backlog entry "Temporary: name in app header for training" added; remove before the UAT move (Basheer).
+- **Decisions 1–8** (slide 4), each recorded in the training plan's Decisions: Option 2 confirmed again by Haroon with the Fazal ₹160 L example (own ₹20 L plus "My team" ₹140 L). 1 no lock, for now. 2 **changed**: a plan may be below or above target (Haroon's case: a rep short in one quarter plans above target in the next), and the app says so, worded neutrally. 3 Haroon sees the mismatch too, also on his list of managers; no bell. 4 confirmed by Haroon; "confirmed" taken to cover the total/brand-split half, Basheer to say if not. 5–8 confirmed.
+- **Code read for decisions 1 and 2** (not tried on screen): setting a target and approving a plan don't check or change anyone else's plan (`planning/service.py:404-469,925-957`); saving a plan never compares it with the target (`:224-244`).
+- **Not done:** questions 9–21 and Haroon's suggestions; mock 2028 data still on Dev (removal script rehearsal, then run on Basheer's yes); UAT data-quality check and doc tidy-up not answered.
+
+## 7 Nov 2026 — Plan & Chore: retro
+
+- **Corrections from Basheer this session: 1** — my decision 1 reply talked only about plans, so he had to ask whether the agreed Fahad ₹100 L / Gopika pv ₹40 L / Own ₹20 L format still stood.
+- No tracker line: no live data or UAT touched.

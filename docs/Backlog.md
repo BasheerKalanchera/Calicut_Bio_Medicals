@@ -97,6 +97,12 @@ goes into that move's plan.
   merge tool, Admin approval to pass the warning.
 - **Close** when the plan's parts are on UAT and the pairs are resolved.
 
+### Temporary: name in app header for training — remove before the UAT move (Basheer, 2026-11-07)
+
+- **What:** the signed-in person's name in the top header, beside Sign Out, at every window size, so it's clear whose window is whose during Sessions 1, 2a and 2b (`docs/Target-Plan-Training-Implementation-Plan.md`). The side menu's name stays. Requested of Build & Test on 7 Nov; check git for whether it's built.
+- **Remove:** before the UAT move, so it never reaches UAT or Session 3 (Basheer, 2026-11-07). Undo its own commit, and remove the code comment pointing here.
+- **Close** when it's removed from `main`.
+
 ### Similar-hospital warning: also mention same-name hospitals in other zones — not started, needs Haroon (2026-10-25)
 
 - **Found (Dev role check, 2026-10-25):** Rudrappa (Bangalore) added
