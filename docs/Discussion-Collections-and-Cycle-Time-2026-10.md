@@ -1,7 +1,10 @@
 # Discussion: Payment collection and order cycle time — 2026-10-13
 
 **Status:** Draft — questions in section 5 are proposed, not answered,
-except Q6 (parked, Basheer 2026-10-16).
+except Q6 (parked, Basheer 2026-10-16). **Q1–Q4 on hold (Haroon via
+Basheer, 2026-11-07):** wait until the team is used to moving an
+Opportunity into Payment Pending (live since the 25 Oct UAT move), then
+bring in more tightening once everyone is comfortable with it.
 **Participants:** Latheef Bhai (raised it; wants to work out the solution
 together), Basheer (decisions), Haroon / Cabio leadership (business
 sign-off), Claude (options and analysis).
@@ -123,7 +126,8 @@ the Phase 2 discussion he mentions.
 
 ## 5. Questions
 
-All proposed — not yet answered.
+All proposed — not yet answered. Q1–Q4 on hold until the team is
+comfortable with Payment Pending (Haroon via Basheer, 2026-11-07).
 
 **Q1. From what date do the 60 days count?** Example: Fahad moves
 SonoScape E1 Exp to Payment Pending on the day installation is done. The

@@ -24,9 +24,6 @@ about any line older than 14 days (Basheer, 2026-10-16).
   2026-09-14, BR-CAT-04, not built): who keeps the cost figures up to
   date, and is it needed in Phase 1 or can it wait for Phase 2? The signed
   Margin Report (Traceability 11.1) depends on it.
-- **Haroon** (to be asked; raised 2026-10-26) — remove the NPS Score from
-  contacts and keep Sentiment only (Basheer's preference)? Also what
-  happens to the 19 saved scores. Backlog NPS entry (Stakeholders, item 1).
 
 ## Parked initiatives
 
@@ -1159,6 +1156,9 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   limit, retention and "fully paid") are now its questions 3, 1–2 and 6.
   Detail: `docs/Discussion-Collections-and-Cycle-Time-2026-10.md`;
   Traceability beyond-contract row 3.
+  **On hold, 2026-11-07 (Haroon via Basheer):** Q1–Q4 wait until the team
+  is used to moving Opportunities into Payment Pending (live since 25 Oct);
+  tightening comes once everyone is comfortable. No date set.
   **Retention orders (Q6), 2026-10-16 (Basheer):** about 5 % of
   Opportunities take almost a year to be fully paid. Starting idea: the
   GM approves closing one as Won once everything except the agreed
@@ -2414,8 +2414,9 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   people (Fahad 74). So Sentiment is in real use; the score barely is.
   Shown only on Customer 360 → Stakeholders; no report reads either.
   **Basheer's preference 2026-10-26:** keep Sentiment only; remove the
-  NPS Score. **Not decided — needs customer buy-in first** (Basheer);
-  BR-ACC-01 and ADR-007 stay unchanged until then. Also open: what
+  NPS Score. **Decided 2026-11-07: remove it from the Stakeholders tab
+  (Haroon via Basheer);** BR-ACC-01 and ADR-007 note the change. Still
+  open: what
   happens to the 19 saved scores (hide them, or delete them with a
   database change), and "Neutral" vs "Passive" (signed requirement 5.2
   says "Promoter / Neutral / Detractor"). Once agreed: update BR-ACC-01,

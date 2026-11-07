@@ -508,6 +508,7 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 
 ### BR-ACC-01: Stakeholder Sentiment (ADR-007)
 *   **Rule:** NPS and Sentiment are attributes of the **Stakeholder**, not the Account.
+*   **Change decided, not built (Haroon via Basheer, 2026-11-07):** the NPS Score is removed from Customer 360 → Stakeholders; Sentiment (Promoter / Neutral / Detractor, signed requirement 5.2) stays. What happens to the scores already saved is still open — see `docs/Backlog.md` "NPS field range enforcement".
 *   **Logic:** Changing a Stakeholder's sentiment does not automatically change the Account's status, but it contributes to the aggregated "Account Health" calculation.
 
 ### BR-ACC-02: Payer Behavior

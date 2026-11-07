@@ -456,6 +456,15 @@ these do you want — yes or no for each?"
    sharing with people who don't use the app, and keeping a record of
    how a quarter looked. *Suggested: yes, Excel.*
 
+**Haroon's answer (via Basheer, 2026-11-07):** he wants only Wins and the
+number of qualified demos conducted, per person. So 1 (win rate), 2 (lost
+and reasons) and 4 (activities by type) are no. Not yet settled: 3 (a past
+month), 5 (download), and what counts as a "qualified demo conducted" —
+the app has no Demo Activity type and no demo outcome field today; an
+Opportunity records only its demo dates, entered when it moves from
+Qualified to Demo (`opportunity/models.py:80-81`, BR-OP-01). Put back to
+Basheer 7 Nov.
+
 ### 10.5 What leading products do (searched 3 Nov)
 
 All four put three measures at the core and read them together: % of

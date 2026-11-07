@@ -36,7 +36,7 @@
 - Every amount in the step list, and 15/20/30/35 as the 2028 pattern — made-up example
 - Three browser windows — counted from the step list: Haroon, Arun Adarsh, Vivek
 - About 45 minutes for the dry run — estimate, not counted
-- Irfan possibly leaving — Basheer, 2026-11-05; to be confirmed with Haroon
+- Irfan is leaving; his UAT login is to be deactivated — Haroon via Basheer, 2026-11-07
 - Haroon has no manager; Abdul Latheef P is the only active Admin — Dev query as Abdul Latheef P (Admin), 2026-11-06, settings verified, rolled back. Not checked on UAT
 
 ## 1. In plain terms
@@ -49,7 +49,7 @@ The dry run is Basheer doing every step of the chain on Dev, on his laptop, sign
 - Basheer K is an SBU Manager on Dev, so Haroon's Imaging list shows Basheer K beside Fazal and Shruthi. UAT has no SBU Manager.
 - Imaging has one brand on Dev, SonoScape.
 
-**Irfan.** Irfan reports to no one on UAT, so Haroon's Imaging list on Team Targets will include Irfan until the login is deactivated or given a manager. Basheer is checking with Haroon. This matters only from the UAT move onwards, as Irfan isn't on Dev.
+**Irfan.** Irfan reports to no one on UAT, so Haroon's Imaging list on Team Targets will include Irfan until the login is deactivated or given a manager. Irfan is leaving, so the login is deactivated on UAT (Haroon via Basheer, 2026-11-07). This matters only from the UAT move onwards, as Irfan isn't on Dev.
 
 ### On a phone
 

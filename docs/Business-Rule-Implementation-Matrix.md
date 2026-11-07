@@ -61,7 +61,7 @@ nothing enforces it yet.
 | BR-FIN-07 | Referral Credit | `OpportunityCreate`/`OpportunityUpdate._check_referral_not_both`; `ck_opportunity_referral_not_both`; clearing on Lead Source change is in the screens | |
 | BR-FIN-08 | Split Editing Authority | `OpportunityService._split_edit_refusal` (used by `replace_splits` and `can_edit_splits`) | |
 | BR-FIN-09 | Credit on Shared Opportunities | `TargetVsActualRepository._credit` and its won / expected queries (`domains/planning/repository.py`) | Target vs Actuals only so far; built on Dev `2e2e4c0`, E2E pending. Other reports follow with their own plan. |
-| BR-ACC-01 | Stakeholder Sentiment | `stakeholder.nps_score` (`ck_stakeholder_nps_score`), `stakeholder.sentiment` | "Account Health" aggregate not built. |
+| BR-ACC-01 | Stakeholder Sentiment | `stakeholder.nps_score` (`ck_stakeholder_nps_score`), `stakeholder.sentiment` | "Account Health" aggregate not built. NPS Score removal from the Stakeholders tab decided 2026-11-07, not built. |
 | BR-ACC-02 | Payer Behavior | `ck_account_payer_behavior` | |
 | BR-ACC-03 | Near-Duplicate Hospital Warning | `AccountRepository.find_similar_by_name`, `account/duplicate_matching.py`; `AccountService.create_account` (`force_create`, `PossibleDuplicateError` → 409); `sales-os-app/` `AddHospitalModal.tsx` (opened from `CustomerDirectoryScreen.tsx` and `QuickLeadModal.tsx`) | |
 | BR-ACC-04 | Hospital Business Potential Rating | `AccountService.set_business_potential`; `redact_business_potential_notes` (`account/schemas.py`) | |

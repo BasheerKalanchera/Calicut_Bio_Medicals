@@ -141,7 +141,7 @@ This document serves as the formal Architecture Decision Register for the Cabio 
 
 ### ADR-007: Stakeholder-Centric Sentiment Modeling
 *   **Decision:** Track NPS (Net Promoter Score) and Sentiment at the `Stakeholder` (Contact) level rather than the `Account` level.
-*   **Status:** Accepted (Prototype Commit 0584715)
+*   **Status:** Accepted (Prototype Commit 0584715). Amended 2026-11-07 (Haroon via Basheer): the NPS Score is dropped from the Stakeholders tab and Sentiment alone is tracked; not built yet (BR-ACC-01).
 *   **Rationale:** Medical sales involves diverse stakeholders (HODs, Purchase, Biomed) with conflicting views. Individual tracking allows for precise influence mapping.
 *   **Impact:** 1:M relationship for sentiments. Enables algorithmic calculation of overall Account Health based on aggregated stakeholder sentiment and influence levels.
 *   **Affected Modules:** Account Management, Stakeholder Matrix.
