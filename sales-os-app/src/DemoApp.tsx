@@ -131,6 +131,8 @@ export default function DemoApp() {
   const { userProfile, signOut } = useAuth();
   const queryClient = useQueryClient();
   const isMarketingUser = (userProfile as { role_name?: string } | null)?.role_name === MARKETING_ROLE;
+  // Temporary, training only (see the header comment below).
+  const headerName = (userProfile as { display_name?: string } | null)?.display_name;
   // Lazy initializer -- AuthGate only mounts DemoApp once auth has resolved,
   // so userProfile is already populated at first render here; reading it
   // once up front avoids a flash of the wrong starting view before a later
@@ -567,7 +569,7 @@ export default function DemoApp() {
             </Box>
           </Box>
 
-          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0.5, sm: 1 } }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0.5, sm: 1 }, minWidth: 0 }}>
             {/* Hidden for Marketing User: creating an Opportunity directly here
                 bypasses the whole Convert/Discard review workflow this role
                 exists to enforce (docs/Lead-Management-Implementation-Plan.md).
@@ -617,6 +619,17 @@ export default function DemoApp() {
               >
                 <Box component="span" sx={{ typography: "body1", fontWeight: 900 }}>?</Box>
               </IconButton>
+            )}
+            {/* Temporary, for training only: see docs/Backlog.md "Temporary: name
+                in app header for training". Name only, shown at every width. */}
+            {headerName && (
+              <Typography
+                noWrap
+                title={headerName}
+                sx={{ typography: "caption", fontWeight: 700, color: "gray.600", minWidth: 0, maxWidth: { xs: "7rem", sm: "12rem" }, flexShrink: 1 }}
+              >
+                {headerName}
+              </Typography>
             )}
             <Button
               onClick={() => signOut()}
