@@ -5,15 +5,15 @@
 
 ## Summary
 
-Of **50** signed requirements: **35 done, 12 partly done, 3 not started** — plus **19 additional features built beyond the signed contract**: some requested by the Cabio leadership team for immediate business needs, others added by our team to make the system safer and easier to use (see "Commitment beyond contract" at the end). **3 more have been requested by Cabio leadership and are pending to build** (see "Requested" below that), and **1 more has been proposed but not yet decided** (see "Pending").
+Of **50** signed requirements: **36 done, 11 partly done, 3 not started** — plus **19 additional features built beyond the signed contract**: some requested by the Cabio leadership team for immediate business needs, others added by our team to make the system safer and easier to use (see "Commitment beyond contract" at the end). **3 more have been requested by Cabio leadership and are pending to build** (see "Requested" below that), and **1 more has been proposed but not yet decided** (see "Pending").
 
 | Done | Partly done | Not started | Commitment beyond contract |
 | :---: | :---: | :---: | :---: |
-| 35 | 12 | 3 | 19 |
+| 36 | 11 | 3 | 19 |
 
 **Real progress, two honest ways to read it:**
-- **Strictly done:** 35 of 50 = **70.0%**
-- **Counting partly-done items as half-credit** (the fairer "real progress" number, since 12 items aren't zero — they're mid-flight): (35 + 12×0.5) ÷ 50 = **82.0%**
+- **Strictly done:** 36 of 50 = **72.0%**
+- **Counting partly-done items as half-credit** (the fairer "real progress" number, since 11 items aren't zero — they're mid-flight): (36 + 11×0.5) ÷ 50 = **83.0%**
 
 ---
 
@@ -84,7 +84,7 @@ Where leadership and managers see how the business is doing.
 | 31 | 4.3 | Revenue per product/brand analytics | Appendix A.1 Reporting Principles (also 5.6 Core Reports) | Partial | Revenue and brand-level reporting is live today. Margin reporting (cost versus price) is approved and scheduled, restricted to senior roles only. |
 | 32 | 6.1 | Demo-to-sale conversion report | 4.2 Demo Management | Not started |  |
 | 33 | 11.1 | Core reports: sales, pipeline, product qty/price/margin | 5.6 Core Reports | Partial | Sales, Pipeline, and Product Performance reports are all live today. The Margin report (cost versus price) is approved and scheduled, restricted to senior roles only. |
-| 34 | 11.1 | Exception report: zero lead activity over 3 months | 5.7 Exception Reports | Partial | The Customer with No Activity report is built and is being tested. |
+| 34 | 11.1 | Exception report: zero lead activity over 3 months | 5.7 Exception Reports | Done | Live as Customer with No Activity: hospitals and dealers with no visit, call, meeting or email in the last 90 days, or never contacted, with Rep and Zone pickers. Each person sees the customers in their own zones and team. |
 | 35 | 11.1 | Phase 1 analytics: conversion, pipeline aging, salesperson performance | Appendix A.1 Reporting Principles | Partial | Conversion figures are available today; pipeline-aging analysis (how long deals linger at each stage over time) is deferred to a later phase. |
 | 36 | 1.4 | Competitive Loss Report | Appendix A.3.5 Competitive Loss Report (also 5.5 GM Dashboard) | Not started |  |
 | 37 | 11.1 | Weekly Follow-up Report | 5.8 Weekly Follow-up Report | Done | Live as My Work: each person's high-priority Opportunities and those 70 %+ likely to close, Opportunities with no activity for 30 days or more, closing dates passed, and overdue next actions. |

@@ -1322,7 +1322,7 @@ not done here).
 - **Search box (D17), asked for after B5:** Basheer wants it because UAT has far more hospitals than Dev, and it eases testing. A "Search customers..." box above the pickers; narrows the loaded list to names containing the typed letters, ignoring capitals; the two tiles and the D16 line keep counting the whole list; a Rep or Zone pick clears it; "No customers match your search." when nothing fits. No server change. Decision written to `docs/Exception-Report-Implementation-Plan.md` D17; plan now 39 steps (B16 new, D1 wording). **Not committed.**
 - **Slip of mine, caught by reading the code:** I first said Account Management matches only the start of a name. That came from the old copy in `App.jsx`; the live screen (`CustomerDirectoryScreen.tsx`, server `ilike %text%`) matches anywhere. Corrected in chat before any code was written.
 - **`/code-review medium` on the screen:** 5 findings. Fixed one (the box vanished when a pick returned no rows; it now shows whenever the report has loaded). Left four: missing hospital name (API always sends one), search applied to old list while a pick loads (a pick clears it), search cleared in two handlers (only two routes today), copied search box (also in Account Management, Opportunity Pipeline, Rate Hospitals; shared component not agreed, no Backlog entry yet). `tsc` and `eslint` clean on the screen; pytest not run (no server change).
-- **Handover correction:** the note said `1b70908` and `cff3635` were not pushed; git on 6 Nov (after fetch) shows main level with origin/main. Whether `cabio-post-commit` was run for them is not recorded.
+- **Handover correction:** the note said `1b70908` and `cff3635` were not pushed; git on 6 Nov (after fetch) shows main level with origin/main. Whether `cabio-post-commit` was run for them is not recorded (settled 7 Nov: not run as a set; checked then, nothing owed, see the 7 Nov "later session" entry).
 - **Not done this session:** UAT data-quality check, doc tidy-up, weekly Harness Engineering review (skipped by design for Build & Test).
 
 ## 6 Nov 2026 — Build & Test (second session): retro
@@ -1348,3 +1348,27 @@ not done here).
 
 - **Corrections from Basheer this session: 1** — my decision 1 reply talked only about plans, so he had to ask whether the agreed Fahad ₹100 L / Gopika pv ₹40 L / Own ₹20 L format still stood.
 - No tracker line: no live data or UAT touched.
+
+## 7 Nov 2026 — Build & Test: Customer with No Activity, E2E at 33 of 39
+
+- **E2E:** B10–B14 and C2–C9 Pass (Basheer, on the logins the plan names), now 33 of 39 (85 %). Paused at C10 (Vivek) for the training header request; resume at C10, then C11, D1, D2. C2's step wording corrected in the plan (the new Opportunity does not open by itself; look at the customer's page).
+- **Bug found in C5 and C7: the report did not update after a save until a hard refresh.** Cause: `DemoApp.tsx` keeps every screen mounted and hidden (`display: none`), so a "reload when opened" setting never fires. The first fix (`refetchOnMount: "always"`) did nothing and was removed. Second fix: an `isActive` prop on `NoActivityCustomersReportScreen.tsx`, passed at `DemoApp.tsx:941`, reloads the list when the screen becomes visible. Confirmed in C9 (no hard refresh). Uncommitted; not yet code-reviewed. Likely the same on Stagnant Opportunities, Sales Report and Opportunities On Hold (Backlog).
+- **C6** passes but does not test the fix: signing in loads the app fresh.
+- **C9:** the old list stayed up for a while before "Test hospital 3" left it. Timed in Claude's tab as Arun Adarsh (read through the page's own timings, 7 Nov): 3 reloads, 596–739 ms, so not the server. Cause not found; left as is (Basheer).
+- **Header name for training** (request from Plan & Chore, Basheer approved): name before Sign Out in `DemoApp.tsx`, built on Dev, uncommitted, own commit when approved. tsc and eslint clean (11 warnings, same as before). Look-check at 390/768/1280 px still to do. The Backlog entry its comment points to ("Temporary: name in app header for training") does not exist yet.
+- **Not done this session:** UAT data-quality check, UAT backup and doc tidy-up (left to Plan & Chore by design), weekly Harness Engineering review.
+
+## 7 Nov 2026 — Build & Test: retro
+
+- **Corrections from Basheer this session: 3** (counted from his messages): C2's step said the new Opportunity opens by itself; my first reload fix did nothing because I had not read how DemoApp keeps screens mounted; I wrote C6 as an auto-reload test although signing in loads the app fresh.
+- Not counted: his C4/C5 mix-up, and his asking me to run the network timing in my own tab.
+- No tracker line: no live data or UAT touched, and no tool check could have stopped them.
+
+## 7 Nov 2026 — Build & Test (later session): Customer with No Activity E2E finished, fixes pushed
+
+- **E2E: 39 of 39 Pass** (`docs/Customer-No-Activity-Report-Manual-E2E-Test-Plan.md`; counted from the plan 7 Nov). C10 (Vivek, hide-check), C11, D1 and D2 (phone, tablet, laptop, including the temporary header name) Pass, all reported by Basheer, not read back by Claude. P3 recorded as Pass, set up differently: every login used from one page. Earlier handover said "33 of 39"; the plan counts 34 at that point (one too low).
+- **Auto-reload fix:** only C9 truly tested it (a fresh sign-in loads the app anew, so C6, C7 and C10 can't). Code read before C10: refetch fires only when the screen goes from hidden to visible, not on first load.
+- **Checks before the commits (7 Nov):** pytest 1562 passed, ruff clean, tsc clean, eslint 0 errors (135 "any" warnings, older, not compared with a clean checkout), Tailwind and MUI checks pass.
+- **Pushed 7 Nov** (main level with origin): `0756234` fix, report reloads when opened (`isActive`); `2ac7f25` feat, temporary header name for training (remove before the UAT move). Scorecard check after the push: in sync, 35 Done, 12 Partial, 3 Not started.
+- **Post-commit paperwork (Basheer approved):** Traceability row 11.1 flipped Partial to Done and the scorecard regenerated (36 Done, 11 Partial, 3 Not started; `--check` passes); the plan's Status line in `docs/Exception-Report-Implementation-Plan.md` updated with all six later commits. For `1b70908` and `cff3635` the checklist was not run as a set at the time, but gone through now: archive entries (6 Nov), Backlog sweep entry and test plan "Built:" line already covered them; nothing else owed.
+- **Open:** client scorecard pages not republished yet (Basheer: later); same not-reloading risk likely on Stagnant Opportunities, Sales Report and Opportunities On Hold (not checked), for Plan & Chore.
