@@ -6,7 +6,7 @@
 
 ## Decisions
 
-- Order: dry run, fix blockers, Session 1 with the app as it is, build the four fixes together with any changes Haroon suggests, Sessions 2a and 2b, UAT move, Session 3 — Basheer, 2026-11-05 and 2026-11-06
+- Order: dry run, fix blockers, Session 1 with the app as it is, build the four fixes together with any changes Haroon suggests, Sessions 2a and 2b, UAT move, Session 3 — Basheer, 2026-11-05 and 2026-11-06. Changed: the first UAT move (`docs/UAT-Promotion-2026-11-Plan.md`) goes before the fixes; the fixes are then built, Sessions 2a and 2b run on Dev with them, the fixes go to UAT in a second move, then Session 3 on UAT — Basheer, 2026-11-09
 - Before the dry run: one-page step list, and the picture corrected with the changes shown first — Basheer, 2026-11-05
 - The dry run follows Critical Care (Haroon → Arun Adarsh → Vivek), because Imaging has one brand on Dev and the brand split can't be shown — Basheer, 2026-11-06
 - The dry run uses calendar year 2028 and the quarter Oct–Dec 2028, which hold no Dev data and which no test uses — Basheer, 2026-11-06
@@ -142,7 +142,7 @@ None left: decided above, Basheer, 2026-11-06. Session 1 walks Haroon through th
 
 - **Session 1:** morning of 7 Nov, ready by end of 6 Nov (Basheer, 6 Nov). Haroon, Latheef Bhai and Basheer (Basheer, 7 Nov). Dev mock. Sequence ends with Haroon submitting an own plan and Latheef Bhai approving it, live, in a fourth window (Edge InPrivate); these two steps weren't in the dry run (Basheer, 7 Nov). Picture, guide and the decisions waiting on Haroon: four-slide deck, https://claude.ai/artifact/QrpyAogcd8fFc9uMs1Xf32 (Basheer, 7 Nov).
 - **Session 2a, Imaging:** Haroon, Fazal, Shruthi, Naeem; Dev mock. **Session 2b, Critical Care:** Haroon, Arun Adarsh, Nishad K V; Dev mock. Basheer drives on Google Meet, each login in its own browser window (three in Session 1's example steps, four for 2a, three for 2b).
-- **Then** the UAT move and real targets.
+- **Then** the second UAT move (the fixes) and real targets. Sessions 2a and 2b stay on Dev, after the fixes are built (Basheer, 2026-11-09).
 - **Session 3:** one per Area Manager's team with a rep (Shruthi, Fazal, Arun Adarsh, Nishad K V), on UAT with real figures and own logins. Whether it's one per team is still Basheer's to confirm. Naeem has no reps on UAT.
 
 ## 3. What could be affected
@@ -154,7 +154,7 @@ None left: decided above, Basheer, 2026-11-06. Session 1 walks Haroon through th
 ## 4. Not in this plan (with reasons)
 
 - The four fixes: they get their own short plan.
-- The UAT move: planned after Session 2.
+- The UAT moves: the first, before the fixes, has its own plan (`docs/UAT-Promotion-2026-11-Plan.md`); the second carries the fixes, after Sessions 2a and 2b (Basheer, 2026-11-09).
 - The shorter picture for Area Managers and the guides for Sessions 2a and 2b: written later. Session 1's guide is done (section 2).
 
 ## 5. Business rules and records to update

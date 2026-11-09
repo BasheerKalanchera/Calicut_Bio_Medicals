@@ -17,7 +17,7 @@ targets and sets his Area Managers' targets on UAT).
   don't save next-quarter plans until then — Basheer, 2026-11-08
 - D3. **When:** an early weekday morning, before the team starts; day not
   yet chosen (Basheer told Haroon "early morning, weekdays") — Basheer,
-  2026-11-09. Day — proposed: to choose
+  2026-11-09. Day: **Tuesday 10 Nov, 07:00 IST** — Basheer, 2026-11-09
 - D4. **Backup:** a fresh backup on the morning of the move, after both
   services are switched off — the rollback point (replaces the 8 Nov idea
   of reusing that day's 16:48 backup). It is also that day's daily UAT
@@ -30,7 +30,8 @@ targets and sets his Area Managers' targets on UAT).
   tell the team **1 hour** (as in October) — Basheer, 2026-11-09
 - D7. **New passwords in the same window**, so the team is interrupted
   once: everyone still active gets their own password, in this order:
-  Haroon, the three Area Managers, then top down from the User Directory;
+  Haroon, the five Area Managers (Shruthi, Fazal, Arun Adarsh, Nishad K V,
+  Naeem — Basheer, 2026-11-09), then top down from the User Directory;
   existing sign-ins are ended too; each password sent privately before
   the team starts — Basheer, 2026-11-09
 - D8. **Optional pilot before the day:** Haroon and Latheef Bhai get their
@@ -39,7 +40,10 @@ targets and sets his Area Managers' targets on UAT).
 - D9. **Team message** (Claude drafts once the day is fixed, Haroon sends
   the day before): the hour the app is off; "a new password from Basheer
   that morning"; managers don't save next-quarter plans yet (D2); the app
-  now opens on My Work — Basheer, 2026-11-09
+  now opens on My Work — Basheer, 2026-11-09. Sent 9 Nov by Basheer
+  (team WhatsApp group), timing only: app off 7–8 am Tue 10 Nov, asking
+  for any issue with the timing. Password, managers' note and what's new
+  not in it yet
 - D10. **Read-only check for a rejected plan this quarter** before the
   move (fix 4 matters only if there is one), run with the step-2 version
   check — Basheer, 2026-11-09
@@ -131,8 +135,9 @@ On the day (**B** = Basheer; **C** = Claude, after your go-ahead):
 **Rollback** (step 4 or 5 fails, or step 8 finds a problem that can't be
 fixed forward): restore the backup with `scripts\restore_uat.ps1`; if the
 code was already pushed, push `8b2ec8a` back. Passwords are not affected
-by a restore of the app's data (they live in Supabase's sign-in
-settings — to confirm before the day). Basheer's call on the day.
+by a restore of the app's data: the backup holds only the app's tables,
+not the sign-in details (`scripts/backup_uat.ps1:117`, `pg_dump
+--schema=public`; checked 2026-11-09). Basheer's call on the day.
 
 ## 3. What could be affected
 
