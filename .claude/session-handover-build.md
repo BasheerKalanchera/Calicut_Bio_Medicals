@@ -13,19 +13,19 @@ session edits this note._
   hotfix-branch route (`docs/Deployment-Topology.md` "Fix to UAT ahead
   of a full promotion").
 
-## NOW (7 Nov) — Customer with No Activity: pushed; paperwork waiting for approval
-- E2E 39 of 39 and both fixes pushed 7 Nov (`0756234`, `2ac7f25`); detail in
-  Progress-Archive 7 Nov. Scorecard check passes (35 Done, 12 Partial).
-- **Waiting on Basheer (proposed, not done):** flip Traceability row 11.1 to
-  Done and regenerate the scorecard; plan Status line in
-  `docs/Exception-Report-Implementation-Plan.md` (still says "E2E pending").
-- Uncommitted docs for one docs batch (needs approval): the test plan, this
-  note, Progress-Archive-2026-11.md (not all mine). Progress-Archive-2026-08.md,
-  stray `B`, `BT`, `PC` files and other sessions' untracked docs are not mine.
-- **Next:** (1) paperwork above; (2) docs batch commit + retro
-  (`harness-engineering`); (3) tell Plan & Chore about the not-reloading risk
-  on Stagnant Opportunities, Sales Report, Opportunities On Hold; (4) ask
-  whether `cabio-post-commit` was ever run for `1b70908` and `cff3635`.
+## NOW (7 Nov) — Customer with No Activity closed; next is MUI step 8
+- E2E 39 of 39, fixes `0756234` and `2ac7f25`, and the paperwork (row 11.1
+  Done, scorecard 36 Done / 11 Partial, plan Status) are all pushed, docs
+  batch `6ad9c20`. Detail: Progress-Archive 7 Nov.
+- **Waiting on Basheer:** republishing the two client scorecard pages (he
+  said "later"; `docs/Scorecard-Maintenance-Process.md` step 5; show the
+  diff first). The live pages still show 35 Done / 12 Partial.
+- **Next:** (1) MUI step 8 paperwork after the E2E passed (below); (2) tell
+  Plan & Chore about the not-reloading risk on Stagnant Opportunities, Sales
+  Report, Opportunities On Hold (not checked); (3) end-of-session retro line
+  for the later session (1 correction so far: P3 logins from one page).
+- Not mine: Progress-Archive-2026-08.md, Target-Plan-Training plan, the
+  Plan & Chore "second session" archive entry, stray `B`, `BT`, `PC` files.
 
 ## Earlier results (detail: Progress-Archive 2–6 Nov, committed)
 - Target vs Actuals E2E 41 of 41 and Tabs E2E done; about 24 TvA steps not
@@ -35,11 +35,25 @@ session edits this note._
 ## MUI round 1 Part 1 — step 8 is mine (Basheer, 1 Nov)
 - Steps 1–7 are in main (1–4 `6a417cb`, `f8c61b3`, `394444a`; 5 `06a304b`,
   6 `0c4f728`; 7 `b1fdb3f`, `33293b8`, `5c26ed3`; all in main, git 5 Nov).
-- Step 8: pictures done (26); still to do: combined E2E (short, only what
-  pictures can't show; fix plan wording "21 pictures" to 26). Remove
-  Backlog "File deletes: ask 'Are you sure?' first" only when it passes.
+- Step 8: pictures done (26); combined E2E 7 of 7 Pass 7 Nov (plan
+  `docs/MUI-Round1-Combined-E2E-Test-Plan.md`, uncommitted). Still to do,
+  waiting on Basheer's yes:
+  fix MUI plan wording ("21 pictures" to 26; "contact box" to "Logged For
+  box"), then remove
+  Backlog "File deletes: ask 'Are you sure?' first" (it passed).
+  **Note from Plan & Chore, 9 Nov (Basheer's yes to write here):** all of
+  the above was done in Plan & Chore on 9 Nov — plan wording, Backlog entry
+  removed, test plan pointer reworded (archive 9 Nov). Nothing left; drop
+  this item.
+  **Also committed for you (Basheer's yes, 9 Nov):** your three unsaved
+  7 Nov items went into Plan & Chore's 9 Nov docs batch ("docs: Plan &
+  Chore, 9 Nov — UAT backup …"): the test plan
+  `docs/MUI-Round1-Combined-E2E-Test-Plan.md`, your two archive entries
+  (combined E2E 7 of 7; later-session retro, 2 corrections), and this
+  note as it stood. Nothing of yours is left uncommitted; check `git log`
+  for the hash.
 - Part 2 (wording sweep) comes later; check report 1 Nov: 33 files / 862
-  lines. Log Activity contact-box name still to check.
+  lines. Log Activity "Logged For" name checked (E2E step 7, Pass).
 
 ## Parked
 - Annual Target E2E section L (11 steps, three widths): re-read against the

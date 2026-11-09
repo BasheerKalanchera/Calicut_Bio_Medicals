@@ -101,9 +101,10 @@ code or changing structure. On any conflict, the document wins over this file.
 - **UAT data-quality check:** every alternate day, run by Claude under
   Basheer's supervision (still ask first, per the UAT rule). The SessionStart
   hook reminds when it's due. Steps in the `cabio-db-and-scripting` skill.
-  **Paused** until the next-action rules feature is built (that plan's step
-  5 resumes it) — reason in `.claude/dq-check-paused`. *(2026-09-24,
-  2026-10-15)*
+  **Paused** until the customer-level bulk next actions feature is on UAT
+  and the reps have used it for about a week (Basheer, 2026-11-09; also
+  paused 15 Oct–3 Nov) — reason in `.claude/dq-check-paused`.
+  *(2026-09-24, 2026-10-15, 2026-11-09)*
 - **Surfacing hook reminders:** Basheer never sees SessionStart hook output —
   only Claude does. Whenever it reports something due, the first reply of the
   session opens with a short "Due today" list, asking whether to run each item,

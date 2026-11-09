@@ -10,7 +10,8 @@ Plan-vs-Actuals note; tests, ruff, tsc, lint green; `/code-review`
 medium, one cleanup). The user manual waits for the UAT move (D8). On
 the merge, My Work's new small tabs replaced the scroll to a list: the
 Overdue tab's counts now pick the matching small tab. No migration. E2E
-(A–F) pending, run by `/test`.
+done 4 Nov: full re-run 37 of 37 Pass
+(`docs/Target-vs-Actuals-Redesign-Manual-E2E-Test-Plan.md`).
 **Traceability rows:** signed 3.2 ("Real-time actual-vs-target via
 role-specific dashboards").
 **Design / discussion:** mock-up

@@ -1,9 +1,10 @@
 # Target vs Actuals: Simpler Table — Implementation Plan
 
-**Status:** Approved, 2026-10-31 — Basheer agreed the mock-up.
-**Build progress:** steps 1–2 (server and screens) built 2026-10-31, commit
-`c490eb9`, pushed; step 3 (docs, pre-E2E review, E2E) pending. Merge into
-`main` pending the E2E. No migration.
+**Status:** Built — `c490eb9` (31 Oct), merged into `main` 1 Nov
+(`515a2f2`); header fixes `a1f0147`; E2E 4 Nov 37 of 37 Pass (shared test
+plan with the redesign, `docs/Target-vs-Actuals-Redesign-Manual-E2E-Test-Plan.md`).
+Build steps below are complete; kept as the original plan. Approved
+2026-10-31 — Basheer agreed the mock-up. No migration.
 **Traceability rows:** signed 3.2 ("Real-time actual-vs-target via
 role-specific dashboards").
 **Design / discussion:** follows `docs/Target-vs-Actuals-Redesign-Implementation-Plan.md`

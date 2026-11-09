@@ -255,7 +255,8 @@ step.
    review and one manual E2E. After the UAT move: delete
    `.claude/dq-check-paused` and run the UAT data-quality check (ask
    Basheer first) to confirm most of today's issues are gone — the check
-   is paused until then (Basheer, 2026-10-15).
+   is paused until then (Basheer, 2026-10-15). Resumed 3 Nov (`58e7de2`);
+   paused again 9 Nov — see `.claude/dq-check-paused`.
 
 ## 3. What could be affected
 

@@ -1,0 +1,7 @@
+UAT data-quality check paused — Basheer, 2026-11-09.
+
+Reason: wait until the customer-level bulk next actions feature reaches
+UAT, then give the reps about one week of using it.
+Resume: delete this file and run the check on UAT (ask Basheer first,
+UAT rule).
+While this file exists the SessionStart hook (block 2) does not remind.

@@ -1389,3 +1389,74 @@ not done here).
 
 - **Corrections from Basheer this session: 1** — I read Haroon's "pricing sheet" as the September pricing paper's price levels, so he had to explain it was Haroon's existing sheet to make available.
 - No tracker line: Dev write was shown first and approved; no UAT touched.
+
+## 7 Nov 2026 — Build & Test: MUI round 1 Part 1, combined E2E (7 of 7 Pass)
+
+**Screens:** Product Catalogue (Add Link, delete), Opportunity Detail →
+Documents (delete), Customer 360 → Stakeholders (phone Edit), Daily Activity
+Report and Account Management filters, Log Activity pop-up. Plan:
+`docs/MUI-Round1-Combined-E2E-Test-Plan.md`. Run by Basheer on Dev; test
+link and file created and deleted again (Basheer's report).
+- Both file-delete buttons ask "Delete this file?" first; Cancel keeps the
+  file, Delete removes it.
+- **My error caught before the run:** I wrote step 7 as "the Logged For box
+  shows that account's contacts". Basheer said it lists all sales staff;
+  the code (`LogActivityModal.tsx` 428–439) confirms: "Me (default)" then
+  staff. The plan's finding "the contact box has no name" meant this box.
+  Step 7 rewritten, then passed.
+- **Not yet done (asked Basheer):** fix MUI plan wording ("21 pictures" to
+  26; "contact box" to "Logged For box") and remove Backlog "File deletes:
+  ask 'Are you sure?' first".
+
+## 7 Nov 2026 — Build & Test (later session): retro
+
+- **Corrections from Basheer this session: 2** (counted from the messages
+  in this session; the first came before the context summary and is taken
+  from it): (1) P3 of the Customer with No Activity E2E: I wrote it as if
+  the logins were in separate windows and said the reload fix was checked
+  again in C10; he said all logins were used from one page, so only C9
+  tested the fix. (2) MUI E2E step 7: I wrote that the "Logged For" box
+  shows the account's contacts without reading the code; he said it lists
+  the sales staff (code confirms).
+- No tracker line: nothing touched live data or UAT; Dev saves were
+  Basheer's own and deleted again.
+- Open at wind-up: MUI plan wording fix and Backlog removal (waiting on
+  Basheer's yes), client scorecard pages not republished, Plan &
+  Chore not yet told about the not-reloading risk on three report screens.
+
+## 8 Nov 2026 — Plan & Chore: UAT backup; due-today skips
+
+- **UAT backup** (Basheer yes): `cabio_uat_2026-11-08_1648.dump`, 927,321 bytes, 535 entries (backup log). Pruned the 25 Oct copy (named to Basheer before the run); 14 kept. Google Drive copy: Basheer, by hand.
+- Skipped today (Basheer): UAT data-quality check (paused, `.claude/dq-check-paused`), doc tidy-up, weekly Harness Engineering review; written to `.claude/due-today-skipped`.
+- **Irfan deactivated on UAT** by Basheer (0 Opportunities). Adydev: read-only UAT check proposed (his reports, open next actions, referred Opportunities, plans, last activity), not run yet.
+- **UAT move planned** (model: `docs/UAT-Promotion-2026-10-Plan.md`): push `0756234` to `uat` (leaves out `2ac7f25`, the temporary header name); migrations 0064, 0065. Fresh backup on the morning of the move, after the app is switched off (Basheer, 9 Nov; replaces the idea of reusing the 8 Nov 16:48 backup). Practice run on a copy skipped (Claude recommended; read-only pre-check instead). The four fixes go in a second, smaller move. **An early weekday morning, day still open** (Basheer told Haroon).
+
+## 9 Nov 2026 — Plan & Chore: own passwords on UAT
+
+- Until now every UAT login shared one password set by Basheer. The app has no change-password or forgot-password screen (`sales-os-app/src/services/auth.ts`). Supabase's user panel has no "set password" box, only a recovery email, and the @cabio-uat.com addresses can't receive mail (Claude's guess, not checked).
+- Method: one SQL Editor command per person, run by Basheer (`update auth.users set encrypted_password = extensions.crypt(..., extensions.gen_salt('bf', 10)) where email = ... returning email`). Claude watched through Claude in Chrome (Basheer's choice), read-only.
+- **Basheer's own changed** 02:15 UTC (07:45 IST); 1 row; new password works on his phone, old one fails; query cleared from the editor.
+- Agreed (Basheer): the rest are changed in the UAT move's early-morning window, so the team gets one interruption. Order: Haroon, then the three Area Managers, then top down from the User Directory. Existing sign-ins are ended too (Supabase's documentation doesn't say whether a password change ends them; the app signs out after 1 hour idle, `useIdleLogout.ts:7`). Each password is sent privately. Optional pilot first with Haroon and Latheef Bhai (they sign out first). Later: a "Change my password" screen (Backlog entry to add).
+- UAT move plan drafted, `docs/UAT-Promotion-2026-11-Plan.md`: D1–D11 decided (Basheer, 8–9 Nov) except D3, the day. Fresh backup on the morning, which is that day's only UAT backup (D4). Practice run skipped (D5). Pilot passwords for Haroon and Latheef Bhai (D8). Team message drafted once the day is fixed (D9).
+- **Retro: corrections from Basheer this session: 1.** "We decided to skip the practice run right? What is this backup check then?" I treated decisions he had already made as still open, because I relied on my own summary instead of his answers. No tracker line: no guard fits it, and no live data was touched.
+
+## 9 Nov 2026 — Plan & Chore: UAT backup
+
+- **UAT backup** (Basheer yes, after the clean-up's one deletion was named to him): `cabio_uat_2026-11-09_1242.dump`, 927,814 bytes, 535 entries (backup log). Pruned `cabio_uat_2026-10-26_0651.dump`; 14 kept. Docker didn't close within 30 s, so the script forced it shut (logged). Google Drive copy done by Basheer.
+
+## 9 Nov 2026 — Plan & Chore: MUI round 1 Part 1 paperwork (Build & Test's item, done here)
+
+- **Basheer's go, 9 Nov.** The step 8 paperwork was on Build & Test's to-do list (its note, "Next (1)"); Plan & Chore did it because Basheer asked. Plan & Chore doesn't edit Build & Test's note unasked; Basheer then said yes to a short note there, so its step 8 item now says it was done in Plan & Chore on 9 Nov and can be dropped.
+- `docs/MUI-Good-Practice-Implementation-Plan.md`: Status now says step 8 done 7 Nov (26 pictures, comparison page, combined E2E 7 of 7) and Part 1 finished; finding 4 "contact box" renamed "Logged For box"; the "after" pictures line says 26.
+- **Picture count mismatch:** the plan said 21 pictures; the Before and After folders each hold 26 (counted 9 Nov) — the 21 from 26 Oct plus 5 of Product Catalogue added 2 Nov. The two 26 Oct lines keep "21" (true that day) with a note beside them (Basheer, 9 Nov).
+- Backlog "File deletes: ask 'Are you sure?' first" removed: both delete buttons ask first and passed the combined E2E 7 Nov. The test plan's one pointer to it reworded.
+- `docs/MUI-Round1-Combined-E2E-Test-Plan.md` (untracked until now), Build & Test's two 7 Nov archive entries and its handover note go in this session's 9 Nov docs batch (Basheer's yes, 9 Nov); a note in Build & Test's handover tells it so.
+
+## 9 Nov 2026 — Plan & Chore: documentation tidy-up
+
+- Found 10, fixed 8 (log line 9 Nov). Broken links 26 → 23. Fixes: CLAUDE.md said the UAT data-quality check was paused, though `58e7de2` had resumed it on 3 Nov; Target vs Actuals redesign and simpler table plans still said E2E pending (done 4 Nov, 37 of 37); two Haroon lines in Backlog "Waiting on people" already answered on 7 Nov.
+- **Data-quality check paused again (Basheer, 9 Nov):** until the customer-level bulk next actions feature is on UAT and the reps have used it for about a week. `.claude/dq-check-paused` recreated; CLAUDE.md updated.
+- **Performance tab (Basheer, 9 Nov):** only Wins and qualified demos; a past month and a download dropped. Salesperson paper 10.4.
+- **Pricing (Haroon via Basheer, 9 Nov):** for now only Haroon's pricing sheet goes into the Product Catalog; reps, managers and Haroon see the lowest price they may quote on the Opportunity. Selling to a set margin with incentives: for the Cabio leadership team. BR-CAT-04.
+- **To the Cabio leadership team (Basheer, 9 Nov):** what a "qualified demo" is, and the margin and lowest-price questions. Backlog "Waiting on people" now holds three leadership lines (overdue paper Q1–Q6 added too).
+- Corrections from Basheer: 2 — I opened by saying the data-quality check was paused (CLAUDE.md was stale; I should have checked git), and I raised the Performance tab and product cost questions again although he had answered them on 7 Nov (archive) — the Backlog lines were never removed then.

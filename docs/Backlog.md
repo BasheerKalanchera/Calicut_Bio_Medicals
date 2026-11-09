@@ -15,15 +15,15 @@ this is the single list to call from. When answered, record the answer in
 its home doc and delete the line. The tidy-up sweep (check 8) asks Basheer
 about any line older than 14 days (Basheer, 2026-10-16).
 
-- **Haroon** (asked 2026-10-16; re-worded 2026-11-03) — yes or no on four
-  additions for the new Performance tab of the Insights dashboard: win
-  rate, lost count and reasons, a past month, activities by type; and
-  whether the tab gets an Excel/PDF download.
+- **Cabio leadership team** (sent 2026-11-06) — Q1–Q6 of
+  `docs/Discussion-Overdue-Next-Actions-2026-11.md`; answers go in its
+  section 6.
+- **Cabio leadership team** (raised 2026-11-09) — should reps sell to a
+  set margin, with incentives tied to it? And the lowest price a rep may
+  quote, shown on the Opportunity (BR-CAT-04): settle before its plan.
+- **Cabio leadership team** (raised 2026-11-09) — what counts as a
+  "qualified demo conducted" for the Performance tab.
   `docs/Discussion-Salesperson-Performance-Report-2026-10.md` section 10.4.
-- **Haroon** (asked 2026-10-16) — product cost (approved by him
-  2026-09-14, BR-CAT-04, not built): who keeps the cost figures up to
-  date, and is it needed in Phase 1 or can it wait for Phase 2? The signed
-  Margin Report (Traceability 11.1) depends on it.
 
 ## Parked initiatives
 
@@ -167,33 +167,6 @@ to decide: change the code, or change the rule.
   `/build`'s Target vs Actuals simpler table and Target & Coverage Planning
   tabs plans merge (they edit the same screens). One pass, one commit, the
   manual and help text in the same commit, with its own plan and E2E.
-
-### File deletes: ask "Are you sure?" first — not started (2026-10-25)
-
-- **Found (User Manual rewrite, 2026-10-15; checked in code
-  2026-10-25):** two buttons delete a file for good on one click, with
-  no question first: **Delete** on an Opportunity's Documents tab
-  (`OpportunityDetailScreen.tsx:1177`; owner, Admin, GM) and a
-  brochure's delete in Product Catalogue (`ProductCatalogScreen.tsx:214`;
-  Admin, GM). The server removes the stored file and its row
-  (`document/service.py:123–127`), so there is no undo.
-- **Parked (Basheer, 2026-10-31):** both wait until the parallel Build
-  session's hospital next-action rule is merged. Reason: committing an
-  edit to `OpportunityDetailScreen.tsx` (179 MUI-standard breaches, 2,127
-  lines) or `ProductCatalogScreen.tsx` (29) forces a whole-file move to the
-  theme, and Build's branch has also edited the Opportunity screen. Counts
-  from `check-mui-standard.js --all`, 31 Oct.
-- **Decided (Basheer, 2026-10-25):** ask "Delete this file? This can't
-  be undone." before both. The stakeholder "×" on an Opportunity stays as
-  it is (it only removes the link; easy to add back); removing a person's
-  target stays without a question (Annual Target plan D74).
-- The app has no confirm pop-up yet — one small shared one. Build &
-  Test, in the next batch of small fixes.
-- **Progress (Basheer, 1 Nov: done inside MUI round 1 Part 1):** the shared
-  pop-up `ConfirmDialog.tsx` is built (`6a417cb`); Opportunity Detail
-  Documents tab now asks first (`f8c61b3`, not yet seen in a browser).
-  Product Catalogue brochure delete is still to do (Part 1 step 4); remove
-  this entry when it ships and its E2E passes.
 
 ### Projects: track the requirements that go to dealer partners — not started, future (2026-10-30)
 

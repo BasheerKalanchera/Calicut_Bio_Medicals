@@ -10,9 +10,10 @@ shipped `6a417cb`, Opportunity Detail `f8c61b3`, Product Catalogue
 `394444a`, Account Management `06a304b`, Daily Activity Report `0c4f728`,
 Next Actions screen and panel `b1fdb3f`, Close Next Action pop-up
 `33293b8`, Log Activity "Logged For" name `5c26ed3` (steps 1–7 done and
-pushed on `worktree-build`, 1 Nov; none seen in a browser). Step 8 (21
-"after" screenshots, the before-and-after page, the combined E2E) is
-Build & Test's. Part 2 (the wording sweep) comes after `/build`'s current
+pushed on `worktree-build`, 1 Nov; none seen in a browser). Step 8 done 7 Nov
+(Build & Test): 26 before-and-after pictures, the comparison page, and
+the combined E2E, 7 of 7 Pass (`docs/MUI-Round1-Combined-E2E-Test-Plan.md`).
+Part 1 is finished. Part 2 (the wording sweep) comes after `/build`'s current
 plans merge.
 **Traceability rows:** 14.1, 14.2 "Responsive Web App (iOS/Android), simple
 UI minimizing manual entry" (already Done; this plan keeps it true).
@@ -176,6 +177,10 @@ My Work, which is about to be built, follows the new rules from the start.
    Customer 360 is "Al Shifa Hospital Perinthalmanna", Opportunity
    Detail is its "ICU Monitor"; Daily Activity Report shows the empty
    day (no Dev activity on 14 or 23 Oct).
+   *Note (9 Nov): the folder now holds 26 files, not 21 — the 21 above
+   from 26 Oct plus 5 of Product Catalogue added 2 Nov (`11-…`, `11b-…`,
+   `11c-…`; see the Product Catalogue note below). Counted in the folder
+   9 Nov; the After folder also holds 26.*
 5. **Round 1 fixes (Build & Test), after `/build`'s hospital next-action
    merge** (was Sun 1 Nov; Basheer, 2026-10-31). One screen per
    commit; one combined E2E for round 1 at the end (D15). Findings from
@@ -189,7 +194,8 @@ My Work, which is about to be built, follows the new rules from the start.
    3. **Account Management:** the zone filter is named "All Zones";
       should be "Zone" above with "All Zones" inside, as Rate Hospitals
       does (rule 7; `CustomerDirectoryScreen.tsx:148`).
-   4. **Log Activity pop-up:** the contact box has no name.
+   4. **Log Activity pop-up:** the Logged For box (who the activity is
+      logged for: "Me (default)" or a sales staff member) has no name.
    5. **Colours and text sizes typed into each screen** — 440 lines in
       7 files (check report mode, 26 Oct): Opportunity Detail 179,
       Customer 360 165, Account Management 27, Daily Activity Report
@@ -197,8 +203,8 @@ My Work, which is about to be built, follows the new rules from the start.
    Nothing else runs past the screen edge at any width; all five
    pop-ups fill the phone; the tab rows on Customer 360 and Opportunity
    Detail scroll sideways by design.
-   **After the fixes:** Build & Test takes the same 21 pictures (same
-   records, names and widths) into `…\Desktop\cabio\MUI-Round1-After\`
+   **After the fixes:** Build & Test takes the same pictures, 26 in all
+   with Product Catalogue's 5 (same records, names and widths) into `…\Desktop\cabio\MUI-Round1-After\`
    and builds a before-and-after comparison page for Basheer, one row
    per picture.
    **Product Catalogue (added to round 1 as Part 1 step 4, not in the

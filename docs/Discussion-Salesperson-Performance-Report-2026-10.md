@@ -458,8 +458,10 @@ these do you want — yes or no for each?"
 
 **Haroon's answer (via Basheer, 2026-11-07):** he wants only Wins and the
 number of qualified demos conducted, per person. So 1 (win rate), 2 (lost
-and reasons) and 4 (activities by type) are no. Not yet settled: 3 (a past
-month), 5 (download), and what counts as a "qualified demo conducted" —
+and reasons) and 4 (activities by type) are no. 3 (a past month) and 5
+(download) dropped (Basheer, 2026-11-09). Still open, for the Cabio
+leadership team (Basheer, 2026-11-09): what counts as a "qualified demo
+conducted" —
 the app has no Demo Activity type and no demo outcome field today; an
 Opportunity records only its demo dates, entered when it moves from
 Qualified to Demo (`opportunity/models.py:80-81`, BR-OP-01). Put back to
