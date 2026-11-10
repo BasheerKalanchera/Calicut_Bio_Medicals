@@ -1528,6 +1528,97 @@ link and file created and deleted again (Basheer's report).
   1. Password SQL given by user id, though Basheer has only emails and had used the email form on 9 Nov. Lesson: reuse the command form already used and recorded, from the plan's section 6, instead of composing a new one.
   2. Asked about the step 3 backup, which had been settled on 9 Nov (D4), and the 06:58 backup covered it. Lesson: re-read the plan's Decisions before asking about a step.
 
+## 10 Nov 2026 — Plan & Chore (later session): two answers
+
+- Test Marketing User login on UAT: no password change needed (Basheer). Recorded in the move plan's D7.
+- **Adydev deactivated on UAT** by Basheer, after Haroon's approval. The read-only UAT check proposed 8 Nov was not run and is no longer needed. Irfan was deactivated earlier (archive 8 Nov), so both leavers are now off UAT.
+- Test Marketing User login stays active on Dev and UAT; it is needed on both (Basheer). The handover's open question "deactivate it?" (from 10 Oct) is dropped.
+- **Client scorecard pages** (move plan D11): `generate_scorecard.py --check` passes (36 Done, 11 Partial, 3 Not started). The live pages still show the 25 Oct republish (34 / 11 / 5; the 3 Nov diff was never answered). Exact diff shown to Basheer: two rows move to Done (Customer with No Activity, Weekly Follow-up as My Work), row 3.2 note changes to the Year view wording, strict 68 % → 72 %, weighted 79 % → 83 %. No ledger edits needed for the UAT move. Basheer approved; both pages republished 10 Nov: module page version 28 (`1794293653-9d80`), By Status page version 22 (`1794293655-10fd`). This also closes the 3 Nov republish item.
+- **Two rows to Done, one client note (Basheer, 10 Nov):** row 3.2 (target against actual on role dashboards) Done: Target vs Actuals redesign E2E 37 of 37 (4 Nov), on UAT today; the old "no GM-specific widgets" note is covered by the rows for forecast vs budget, pipeline aging and competitive loss. Row 1.1 / 5.1 (account types) Done: Cabio leadership doesn't want A/B/C/D in Phase 1, it moves to Phase 2 (Customer Tiering plan question 1 marked partly answered). Requested item 2 note: SonoScape's 27 Sep report was shared with Haroon (Basheer). Regenerated, `--check` OK: 38 Done, 9 Partial, 3 Not started; strict 72 % → 76 %, weighted 83 % → 85 %. Exact diff of both pages shown; Basheer approved; republished 10 Nov: module page version 29 (`1794306421-aa7e`), By Status page version 23 (`1794306423-7c11`).
+- Code gallery: Claude Code artifacts are listed at claude.ai/code/artifacts, not the chat app's Artifacts section; they appear there once opened from the terminal (Basheer).
+- **Demo qualification, decisions (Basheer, 10 Nov):** open questions 1, 2, 4, 5, 6 as recommended (created at Clinical Evaluation or later: checklist, no approval; send the draft list to Haroon; demos already over: left as is, not counted; "expensive" = a product category, for leadership; "Win" = PO received, for Haroon). Each part labelled signed (required demo outcome, row 6.1) or beyond contract (checklist and approval, Requested list; client diff shown first). Question 3, repeat orders: skip the checklist, no approval. Code read: repeat orders pass *through* Demo without a demo date (`validators.py:67`, `:91–95`), so the fix is "a demo date on a repeat order triggers checklist and approval", not "moving to Demo" — put to Basheer. No lead-source filter on the Opportunities list (router has no `lead_source`): my "managers can filter repeat orders" was wrong; leave it, Backlog — put to Basheer.
+- **UAT read-only check, repeat orders (Basheer approved, 10 Nov; Admin context verified twice, one transaction, rolled back; tried on Dev first):** 29 of 254 Opportunities are Repeat Order (11 %, not the August ~40 % estimate). Created at: Lead 3, Qualified 5, Negotiation 6, Order 15, none at Demo (13 created before 8 Sep, when the change history began). Now: Lead 2 (1 open, 1 Lost), Qualified 4 (3 open, 1 Lost), Negotiation 5 (2 open, 3 Won), Order 18 (2 open, 15 Won, 1 Lost); none at Demo. 2 passed through Demo (Lead → Order, Qualified → Negotiation). 1 has a demo date (Dr. Moopen's Medical College, demo 3 Sep, Won). Haroon owns 24 of 29 (counted from the detail). Script and output: session scratchpad `uat_repeat_orders.py`, `uat_repeat_orders_2026-11-10.txt`.
+- **Demo qualification paper written; D7 revised (Basheer, 10 Nov):** `docs/Discussion-Demo-Qualification-2026-11.md`, D1–D10, Q-H1–Q-H4, Q-L1, P1 (filter) proposed. Basheer pointed out the screens already hide demo-date boxes for repeat orders (`QuickLeadModal.tsx:609`, `OpportunityDetailScreen.tsx:1954–1957`), so my "the build must show them" was wrong (correction 3). D7 now: repeat orders have no demo dates; any Opportunity with a demo date needs checklist and approval before it can be marked Repeat Order. UAT read-only check (Basheer approved; Admin context checked twice, rolled back): Dr. Moopen's Edan M3A has 0 change-history rows (created 1 Sep, last changed 3 Sep; trail starts 8 Sep), so how it got a demo date can't be checked — Q-H3 for Haroon. Basheer: no need for a Dev trial run before a UAT read-only check (the Dev run was wasted). Script and output: scratchpad `uat_moopens_audit.py`, `uat_moopens_audit_2026-11-10.txt`. Salesperson paper 10.4 and Backlog "Waiting on people" updated.
+- **Retro (Plan & Chore, 10 Nov later session): 5 corrections.**
+  1. Listed switching off the test Marketing User as still open; Basheer had settled it.
+  2. Said I'd put the scorecard pages in the code gallery; they appear there once Basheer opens them from the terminal.
+  3. "The build must show the demo-date boxes for repeat orders" — useless, the screens already hide them, so a demo date can't be entered.
+  4. "Instead of guessing, check the audit log" — I'd guessed how Dr. Moopen's Opportunity got its demo date.
+  5. "What is the point for running it on dev?" — a Dev trial run before an approved UAT read-only check.
+  No guard fits these; none touched live data. No tracker change.
+
+## 10 Nov 2026 — Plan & Chore: SonoScape 2026 split on UAT (investigation)
+
+- Haroon reported SonoScape's 2026 figure "915L" shown as 600L in Jul–Sep 2026 and 315L in Oct–Dec 2026, not by the season pattern (Basheer).
+- Read-only UAT check (Basheer approved; one read-only transaction as Admin, rolled back; UAT at 0065). SonoScape: year starts January, Imaging. Yearly row: SonoScape's own figure 600L, stretch 50 % (so 900L for the year), pattern 25/15/25/35; last saved by Haroon 10 Nov 11:55 IST, amount and stretch unchanged by that save (audit log; stretch went 100 → 50 on 5 Nov). Imaging 2026 pattern 25/15/25/35, last changed by Haroon 10 Nov 10:57 IST.
+- Saved quarters: Oct–Dec 2026 (2026-Q3) 315L = 35 % of 900L, worked out by the app. Jul–Sep 2026 (2026-Q2) 600L, typed by Haroon on 28 Sep 14:34 IST under the old quarter-by-quarter screen, untouched since. Jan–Mar and Apr–Jun 2026: no figure.
+- Finding: the app followed D46a (quarters before Oct–Dec 2026 keep their earlier figures). Nothing in the app split 915; 600 + 315 = 915 is the old Jul–Sep figure plus the new Oct–Dec share. Where Haroon saw 915: not yet known (asked Basheer).
+- 915L is the Annual Total on Target Planning › Team Targets › SBU Target card (Basheer). Code read: that card covers the Indian financial year Apr 2026–Mar 2027 and adds up whichever of its four quarters have a figure (`SbuTargetBox.tsx:47–65`): Apr–Jun none, Jul–Sep 600 (old), Oct–Dec 315, Jan–Mar 2027 none (SonoScape's 2027 year not entered) = 915. Haroon's aim: 900L over Jan–Dec 2026 as 225/135/225/315 (Basheer). Jan–Mar, Apr–Jun and Jul–Sep 2026 have all ended, so the app can neither work them out (D46a) nor let them be typed (D51, D70). Options put to Basheer.
+- **Decision (Basheer, 10 Nov):** one-time UAT data fix so SonoScape's Jan–Dec 2026 year (900L) follows the pattern: Jan–Mar 225, Apr–Jun 135, Jul–Sep 225 (was 600), Oct–Dec 315 (unchanged). From 2027 the yearly figure is entered from January each year, so the normal working-out covers every quarter. Script written (rehearses unless `--apply`); not yet run, waiting for Basheer's go-ahead on the exact change.
+- Rehearsal on UAT (Basheer yes): before Jul–Sep 600, Oct–Dec 315; after Jan–Mar 225, Apr–Jun 135, Jul–Sep 225, Oct–Dec 315, year 900.00; rolled back, nothing written. Real run waiting for Basheer.
+- **Fix applied on UAT** 10 Nov 12:52 IST (Basheer yes), as Basheer K: Jan–Mar 2026 225 (new), Apr–Jun 2026 135 (new), Jul–Sep 2026 600 → 225, Oct–Dec 2026 315 unchanged; year 900.00. Re-read in a separate read-only connection: four rows, figures as above. Haroon to refresh Brand Target Tracking.
+- Critical Care, read-only UAT check (Basheer asked, 10 Nov): CC 2026 pattern now 25/15/25/35 (changed by Haroon 12:36 IST today; was 0/0/0/100). Four CC brands have a 2026 yearly figure: Aeonmed (year Apr–Mar, 90L, own pattern 0/0/0/100), AVI Health care (Apr–Mar, 15L, SBU pattern), EDAN (Jan–Dec, 400L, own 25 each), Magnamed (Jan–Dec, 105L, own 25 each). Their ended 2026 quarters still hold 28 Sep figures (Jul–Sep: Aeonmed 50, AVI 6, EDAN 200, Magnamed 100) or nothing. Six brands (ELECTROSCIENCE, Equipwell, Kolkatta, Maquet, Medion, We Make) have only 28 Sep quarter figures, no yearly figure; Datascope, Gentherm, Stockert have nothing. Questions put to Basheer (patterns, yearly figures, order).
+- People's targets, read-only UAT check (Basheer asked, 10 Nov; no SBU Manager on UAT, 0 active, confirmed): Haroon set Jan–Mar to Oct–Dec 2026 targets today for his 5 Area Managers, 20 rows. Imaging (Fazal, Naeem, Shruthi): 215 / 215 / 266.70 / 332.90 = 1029.60 for the year vs SonoScape 225 / 135 / 225 / 315 = 900. Critical Care (Arun Adarsh, Nishad K V): 102 / 110 / 126.60 / 152.80 = 491.40, while CC brand figures are still unfinished (Jul–Sep 402, Oct–Dec 281.50, nothing for Jan–Jun). Nobody else has a target; Sales Staff (7 active) all "Not set". Five of Haroon's entries were changed by him after saving (audit).
+
+## 10 Nov 2026 — Plan & Chore: Backlog clean-up, closed entries
+
+Basheer approved (10 Nov): finished entries move out of `docs/Backlog.md`;
+each one's record stays here or in its plan. These 18 had no clear record
+elsewhere, so the Backlog's own wording is summarised. Full text: git
+history of `docs/Backlog.md` before this commit.
+
+- **MUI migration list (Frontend standards §9):** done 2026-08-18;
+  `ProjectDirectoryScreen.tsx` (`1d51b6d`) was the last file.
+- **Audit trail Phase 1 (account, user, product, Opportunity):** done
+  2026-09-02, migration `0030_add_audit_log.py`, ADR-017 Phase 1;
+  `docs/Audit-Trail-Implementation-Plan.md`.
+- **UAT's `rls_auto_enable()` event trigger:** done 2026-09-10; an
+  out-of-band Supabase trigger (`ensure_rls`) on UAT that turned on RLS with
+  no policies for new tables, first seen 2026-08-05, removed. The Prod setup
+  step moved to `docs/Deployment-Topology.md`.
+- **Referral Credit Part 2 (Relationship-Support Activity):** done
+  2026-08-27, migration `0029`;
+  `docs/Referral-Credit-And-Relationship-Support-Implementation-Plan.md`.
+- **Critical Care/Imaging manager hierarchy, UAT/Prod rollout:** superseded,
+  confirmed 2026-08-22; the real hierarchy replaced the old test-account
+  blocker (Progress-Archive-2026-07, Phase 2E).
+- **`docs/Physical-Schema.sql` stale:** resolved 2026-08-03 (regenerated,
+  process fix in Backend standards); today's tool is
+  `scripts/regen_physical_schema.ps1`.
+- **Project Directory Opportunity create/update not refreshing the screen:**
+  done 2026-08-22, fixed in its MUI migration (`1d51b6d`).
+- **Admin/General Manager couldn't create Opportunities outside their home
+  SBU:** resolved 2026-08-04 (found when Haroon couldn't, UAT orientation);
+  rule in Business-Rules.
+- **New product line onboarding (Cardiology):** resolved 2026-08-06 with
+  Haroon: not a new SBU; each product sits in Imaging or Critical Care by
+  its technology.
+- **Multi-zone user assignment:** shipped as Multi-Zone Milestone 1,
+  confirmed 2026-08-17 (`docs/Regression-Test-Plan-2026-08.md` A1).
+- **Pipeline screen zone filter:** already built (entry was stale).
+- **User Directory Edit resending the manager:** done 2026-08-17 in
+  `UserDirectoryScreen.tsx`.
+- **Territory Admin checks (type check, lint, ruff):** done 2026-08-15, all
+  clean.
+- **Two open questions for Haroon/Latheef Bhai (13 Sep scorecard review):**
+  all four resolved — segmentation and tiering Done via Business Potential
+  (2026-10-01, Traceability Module 1); A/B/C/D classification parked for
+  Phase 2 (Haroon, 2026-09-14); per-stage time limits agreed 2026-09-14 (Lead
+  14d, Qualified 7d, Demo 7d, Negotiation 5d, Order 2d, Delivery &
+  Installation 30d, per SBU) — now the Backlog's "Stuck in stage" entry.
+- **High Priority flag:** decided 2026-09-14 (BR-OP-15), built 2026-09-15.
+  The entry kept only the record of the rejected idea of value thresholds;
+  BR-OP-15 is the rule.
+- **Split participant picker / cross-SBU contribution:** decided 2026-08-05,
+  all three parts built; `docs/Discussion-SplitParticipant-SBU-Scope.md`.
+- **UAT data-quality check (recurring):** the rule lives in CLAUDE.md and the
+  `cabio-db-and-scripting` skill; results in
+  `C:\Backups\CabioUAT\data_consistency_reports\data_quality_log.txt`.
+- **Rupees typed into the Lakhs field:** found 2026-09-11 (12 UAT
+  Opportunities, later more). The check log's count of Opportunities above
+  1,000 Lakhs: 31 (24 Sep), 14 (26 Sep), 0 from 29 Sep, 1 on 11–13 Oct, 0
+  from 25 Oct to the last run on 3 Nov. Basheer confirmed done (10 Nov).
+
 ## 10 Nov 2026 — Build & Test: UAT investigations
 
 Three questions from Basheer, all answered with read-only checks on UAT
@@ -1595,3 +1686,28 @@ edited in code and nothing was written to UAT.
      70 ms); Basheer asked for the experiment first (measured 150–200 ms).
   No guard fits these; none touched live data (every UAT connection approved
   first, read-only, rolled back). No tracker change.
+
+## 10 Nov 2026 — Plan & Chore (SonoScape session): Backlog review and retro
+
+- Backlog review (read-only, Basheer approved): 25 entries crossed out as
+  done, 9 done but unmarked, 6 to reword (later 7). Basheer chose to move
+  finished entries out, not mark them (10 Nov): each checked for a record in
+  the archive or its plan; 17 had one by commit, 18 got a short record in
+  "Backlog clean-up, closed entries" above. 34 removed (Backlog 2,793 →
+  2,136 lines). Kept: the Prod RLS-trigger step (now in
+  `docs/Deployment-Topology.md`) and the Opportunity cloning idea (one
+  Backlog line). Insights Dashboard plan link updated.
+- Held: Audit Trail Redesign and Milestone 2 stay until Basheer approves
+  rewordings B1–B7 (their replacements are B4 and B6).
+- Answers given (no change made): zone box shows "No options" because it
+  and the server need 2 typed letters (`ZonePicker.tsx:49`,
+  `master_data.py:113`), 8 screens; options A (message) or B (list on
+  open), A recommended. Marketing User in people lists: fix all 17 places
+  as one planned sweep with a server-side rule (Backlog entry 6 Nov).
+  Activity privacy: Basheer's 16 Oct decision, a Manager Note follows the
+  rep it is about; fix not planned yet.
+- **Retro — corrections from Basheer this session: 2.** "Why not mark them
+  as done and point them to Progress Archive?" (I proposed deleting without
+  saying where the record would live); "What are these — B1–B7?" (I
+  referred to them by label only). Neither touched live data or could be
+  stopped by a tool check, so no tracker line.

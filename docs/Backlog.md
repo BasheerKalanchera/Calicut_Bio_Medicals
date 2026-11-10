@@ -21,9 +21,15 @@ about any line older than 14 days (Basheer, 2026-10-16).
 - **Cabio leadership team** (raised 2026-11-09) — should reps sell to a
   set margin, with incentives tied to it? And the lowest price a rep may
   quote, shown on the Opportunity (BR-CAT-04): settle before its plan.
-- **Cabio leadership team** (raised 2026-11-09) — what counts as a
-  "qualified demo conducted" for the Performance tab.
-  `docs/Discussion-Salesperson-Performance-Report-2026-10.md` section 10.4.
+- **Haroon** (raised 2026-11-10) — the demo qualification checklist items
+  and which are required (Q-H1); what counts as a Win, PO received or fully
+  paid (Q-H2); the Dr. Moopen's repeat order with a demo date (Q-H3); and
+  6 repeat orders at Lead or Qualified (Q-H4).
+  `docs/Discussion-Demo-Qualification-2026-11.md` section 4.
+- **Cabio leadership team** (raised 2026-11-10) — which demos need manager
+  approval: expensive machines only, by product category (Q-L1).
+  `docs/Discussion-Demo-Qualification-2026-11.md` section 4.
+- *Not yet sent* — Basheer to send the two lines above.
 
 ## Parked initiatives
 
@@ -223,7 +229,6 @@ shows only his direct reports and people with no manager
 (`repository.py:110–114`), so he can't approve Vivek's plan on screen.
 Found in Annual Target E2E J9, 2026-10-30; skipped there.
 
-
 ### Rollout: when planning starts to count — Plan & Chore to plan, first question decided (2026-10-30, 2026-11-01)
 
 **Decided (Basheer, 2026-11-01): Option B.** Planning started in Oct–Dec
@@ -323,6 +328,18 @@ Target plan D76, shared `utils/reportingTree.ts`); Team Activity and
 Overdue Actions on the Insights Dashboard could use it too, optionally.
 Raised during Annual Target E2E G5. Basheer, 2026-10-24: Backlog for now.
 
+### Brand Target Tracking: start a new year with last year's season percentages — not started (Basheer, 2026-11-10)
+Haroon asked whether a brand's season percentages carry over to the next
+year. They don't: the SBU's pattern and a brand's own pattern are both
+saved for one year only, so each January he enters each SBU's pattern
+again (a brand's yearly figure can't be saved until it exists), and
+re-ticks and retypes any brand that has its own split. Improvement: fill
+in last year's percentages for him to confirm or change. Small change;
+needs a short plan and a build. Whether it's needed before January 2027
+is not decided.
+(Today: `set_annual` reads only that year's `sbu_seasonal_pattern`;
+`brand_annual_target.pct_*` is per brand per year.)
+
 ### Annual Target Part 2: code tidy-ups from the pre-E2E review — not started (2026-10-25)
 
 Nothing a user sees; found in the review of `f5d30d5` and `99c64ad`, left
@@ -365,11 +382,6 @@ cards.
 ### Target vs Actuals: follow-ups after the combined E2E — not started (2026-10-12)
 
 Moved from the handover note 2026-10-12; none of these blocks the E2E.
-- **Card layout (plan step 6d):** replaced by the Target vs Actuals
-  redesign (built 29 Oct, `3bafbc0`) and
-  `docs/Target-vs-Actuals-Simpler-Table-Implementation-Plan.md` (Approved
-  31 Oct); Likely finish leaves the card (simpler table D5), so the
-  Company row point is closed.
 - **Indicative Value vs products (found at G2, 2026-10-10):** "New USG
   m/c" said ₹2L while its products totalled ₹1L. BR-FIN-03 says they must
   match, but only the screen keeps them in step. Repaired on Dev by
@@ -613,16 +625,6 @@ table must fit a phone, not *how*.
   one plan.
 - **Found 28 Oct (Part 2 pre-E2E review): one shared screen header** —
   moved to "Front-end standardisation fixes, by screen" below (1 Nov).
-- **Found 26 Oct: Customer 360 → Stakeholders tab doesn't fit a phone.**
-  The "1 Opportunities" button on each stakeholder's card runs past the
-  card's right edge (measured on Dev at 390 px, Al Shifa Hospital
-  Perinthalmanna, Dr Ajmal: content 474 px wide in a 356 px space). Seen
-  while measuring the New Stakeholder pop-up for the MUI plan's commit;
-  that screen isn't in the plan's change, so not fixed there (Basheer,
-  2026-10-26). Fix when the screen is next changed or in the sweep.
-  **Built 1 Nov (`6a417cb`, MUI round 1 Part 1 step 2):** the card stacks
-  on a phone and the buttons wrap. Not yet seen on a phone; remove this
-  entry after the phone-width check (390 px) in the combined round 1 E2E.
 
 ### Front-end standardisation fixes, by screen — not started (Basheer, 2026-11-01)
 
@@ -692,18 +694,6 @@ to clear. Remove a screen from here when it is committed clean.
   Business Potential chip 0 / 1.
 - Helper files, colours only: `utils/activityTypes.ts` 13,
   `utils/businessPotential.ts` 4, `utils/marketingLeadMilestone.ts` 4.
-
-### Sign out loaded the login screen twice — fix built, not yet re-tested on Dev (2 Nov 2026)
-
-Signing out made the login screen load a second time. The cause is a
-hypothesis from reading the code, not reproduced: `api.ts` treats any 401
-(session expired) by signing out and reloading the page, and a deliberate
-sign-out can trigger that same path. **Built (`bd81bcb`, branch
-`worktree-build`, not yet in `main`):** while a deliberate sign-out is on
-(`setDeliberateSignOut`, set in `signOut()`, cleared in `signIn()`), `api.ts`
-skips its own sign-out and reload. After the merge, Basheer signs out on Dev
-and checks the login screen loads once; remove this entry if it does. If it
-still loads twice, the cause is elsewhere and this entry needs rewriting.
 
 ### Fixed header on other report screens: Sales Report, Opportunities On Hold — not started (3 Nov 2026)
 
@@ -858,7 +848,6 @@ it on Render (`PYTHON_VERSION` or a `.python-version` file), in
 `pyproject.toml` and ruff's `target-version`, and record it in
 `docs/Deployment-Topology.md`. Do it in its own window, not mid-feature.
 
-
 ### Automatic tests for the privacy (RLS) rules against a real test database — after 2 Oct (raised 2026-09-27)
 
 The backend suite (1,039 tests, ~17 s) runs against a mocked database, so
@@ -890,31 +879,6 @@ work such as the background `/code-review` agent stops prompting. Anything
 that changes files, databases or git history keeps prompting. Routes: run
 `/fewer-permission-prompts`, or edit `.claude/settings.local.json` (personal),
 not the shared `.claude/settings.json`.
-
-### UAT data-quality check — recurring, every alternate day (2026-09-24)
-
-Basheer's call: run `scripts/uat_data_quality_check.py` against UAT every
-alternate day, **by Claude under Basheer's supervision** (ask first each time,
-per the UAT rule). Each run appends a dated one-line summary of counts to
-`C:\Backups\CabioUAT\data_consistency_reports\data_quality_log.txt`; the SessionStart hook
-(`.claude/hooks/session-start.sh`) reminds when the last run is ≥2 days old.
-After each run, compare against the previous log line and raise anything new.
-Open talking points from the first run (2026-09-15) are under "Deferred /
-undecided items" below: Lakhs/Rupees mix-ups, one bulk-import Lead
-cluster with no follow-up.
-Findings doc: `docs/UAT-Data-Quality-Findings-2026-09-15.md`.
-
-### ~~MUI migration backlog (§9 of Frontend-Implementation-Standards.md)~~ — DONE, 2026-08-18
-
-**Fully complete.** `ProjectDirectoryScreen.tsx` (`1d51b6d`) was the last
-file — full triple-conversion (styling + React Query + `.jsx`→`.tsx`),
-same ritual as every prior migration on this list. `Frontend-
-Implementation-Standards.md`'s §9 table reached 0 pending, triggering its
-own post-migration cleanup instructions (Superseded blocks deleted, §9
-collapsed, doc bumped to v3.0) — full per-file migration history
-preserved in `docs/Progress-Archive-2026-08.md` before that cleanup
-removed the narrative from the standards doc itself. This backlog section
-kept only as a pointer; nothing left to pick up here.
 
 ### Live production database backup — deferred until go-live (2026-09-14)
 
@@ -1324,172 +1288,6 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   too as those grow) — worth a short standards-doc note next time that
   doc is touched, so a 5th copy of the same bug doesn't get written.
 
-- **Two open questions for Haroon/Latheef Bhai, surfaced during the
-  same 2026-09-13 Phase 1 Delivery Scorecard review — none built, both
-  waiting on a "do we actually need this" answer before being scoped:**
-  ~~(1) Feature 5.1, Account Segmentation by size/specialty/revenue potential;
-  (2) Feature 5.1, Customer Tiering (Tier 1/Tier 2 dropdown).~~ —
-  **RESOLVED 2026-10-01:** both Done via Business Potential (Hospital-wise
-  planning Part 1); specialty is the hospital type; size not wanted yet
-  (Latheef Bhai/Haroon, via Basheer). Full
-  detail and evidence for each: `docs/Signed-Requirements-to-PRD-
-  Traceability.md`, Module 1 table.
-  ~~(3) Feature 5.1, A/B/C/D hospital classification field~~ — **RESOLVED,
-  Haroon confirmed 2026-09-14: parked for Phase 2**, not required for
-  Phase 1.
-  ~~(4) Feature 1.3, letting the pipeline-stagnation time limit vary by
-  product category instead of one global 180-day threshold for
-  everything~~ — **RESOLVED, Haroon confirmed 2026-09-14.** Real per-stage
-  thresholds (Lead 14d, Qualified 7d, Demo 7d, Negotiation 5d, Order 2d,
-  Delivery & Installation 30d), configurable per SBU rather than a single
-  global number — seeded the same for Imaging and Critical Care today, can
-  diverge later without a code change. Written into `Business-Rules.md`'s
-  BR-OP-06. Not built yet — scheduled in `docs/Phase1-Completion-Sprint-
-  Plan.md`'s "This week" list.
-
-- ~~**Duplicate `_TERRITORY_ADMIN_ROLES` name used for two unrelated
-  concerns.**~~ — **DONE, 2026-09-10.** `reference/service.py` and
-  `master_data.py` each had their own private constant with the same
-  name but genuinely different meaning — territory map editing vs. zone
-  search for hospital creation. Renamed to `_TERRITORY_MAP_ADMIN_ROLES`
-  and `_ZONE_SEARCH_UNRESTRICTED_ROLES` respectively; also fixed a
-  comment in `account/service.py` that, on inspection, had been
-  referencing the wrong one of the two (its role set matched
-  `master_data.py`'s three-role set, not `reference/service.py`'s
-  two-role one). No behavior change, 740/740 backend tests pass, live
-  smoke test (Sales Staff/Area Manager scoped, Admin/GM/SBU Manager
-  unrestricted, Territory Map edit) confirmed both gates unaffected.
-  **Committed `4c1bf83`.**
-
-- ~~**Manager Note notification to the assigned rep.**~~ — **DONE.** Raised
-  via phone call, Haroon to Basheer: when a manager logs a `MANAGER_NOTE`
-  Activity (BR-ACT-02, internal manager-to-rep guidance), the rep it's
-  about gets no notification today. Built 2026-09-08 (Manager ticks an
-  "Urgent" checkbox at note-creation time, only shown for `MANAGER_NOTE`;
-  ticked pops `UrgentNotificationDialog`, unticked is bell-only), committed
-  `356933d`, full 15-case manual E2E pass completed 2026-09-09 (`docs/
-  Manager-Note-Notification-Manual-E2E-Test-Plan.md`). Full plan: `docs/
-  Manager-Note-Notification-Implementation-Plan.md`; full narrative:
-  `docs/Progress-Archive-2026-09.md`'s 2026-09-08 (later still, both
-  entries) and 2026-09-09 entries.
-- ~~**Activity Inline Comments — both phases.**~~ — **DONE, 2026-09-09.**
-  Raised 2026-09-08 (phone call: can a manager comment on an Activity the
-  Opportunity owner already logged, tied to that specific entry, not a
-  new separate `MANAGER_NOTE`?). **Decided:** anyone who can already see
-  the Activity (via `activity_tier_visibility`) can comment, real
-  two-way thread (rep can reply too), no edit/delete in v1 — enforced at
-  the database level (migration `0040`, no UPDATE/DELETE RLS policy at
-  all). **Phase 1** (the thread itself, **committed `738ef64`**), full
-  12-case E2E pass: `docs/Activity-Comment-Phase1-Manual-E2E-Test-Plan
-  .md`. **Phase 2**
-  (notifications) — the review pass had found the original design would
-  (a) never notify the person who started a thread once the Activity's
-  owner replies, and (b) collide `mark_read_for_entity` with
-  `MANAGER_NOTE_ADDED` on the same Activity, no `type` filter. Resolved:
-  notify the Activity's owner plus everyone who's already commented,
-  minus whoever's posting right now (fan-out, not a single fixed
-  target); no `mark_read_for_entity` change needed after all, confirmed
-  live — since the thread renders under its Manager Note in the same
-  card, marking the whole Activity read together matches what the
-  viewer actually saw. Full 11-case E2E pass: `docs/Activity-Comment-
-  Phase2-Notifications-Manual-E2E-Test-Plan.md`. Same-day polish: a
-  small red count badge ("Comments" + pill, or a plain "Add comment"
-  link when empty) instead of an identical "Comments" label regardless
-  of whether an Activity has any. Phase 2 + polish **committed
-  `80bef46`**. Full design: `docs/Activity-Comment-Implementation-Plan
-  .md`; narrative: `docs/Progress-Archive-2026-09.md`'s
-  2026-09-09 entries.
-- **Auto-computed "High Priority" deal flag — decided 2026-09-14
-  (BR-OP-15), built 2026-09-15; kept only as the record of the rejected
-  threshold idea.** Raised while discussing the Insights Dashboard build order:
-  the PRD (§3.9 "Deal Prioritization") calls for a High Priority flag on Opportunities,
-  but only ever says "provide a High Priority flag" — no definition of how it's set, and
-  nothing exists on the Opportunity screen today. Two shapes were possible: a manual
-  checkbox a rep ticks themselves, or an automatic flag computed from the deal's own
-  data. **Checked feasibility of the automatic version: no schema change needed.**
-  Everything it would need already exists — deal size (`SUM(opportunity_item
-  .extended_value_lakhs)`, or `indicative_value` in Mode 1 per `Business-Rules.md`'s
-  value-calculation rule) and urgency (`opportunity.expected_closure_date`, days until
-  close). **Proposed rule, not yet approved:** flag an open Opportunity as High Priority
-  when its value clears a configurable Lakhs threshold, OR its expected closure date
-  falls within a configurable number of days — either condition alone qualifies it, same
-  shape as the existing `threshold_days` pattern (Stagnant Deals) and
-  `ACCOUNT_DUPLICATE_SIMILARITY_THRESHOLD` (tunable config, not hardcoded). Computed at
-  query time, not stored — no migration, no field to keep in sync.
-
-  **Actual thresholds derived from UAT data, 2026-09-11 — pending confirmation with
-  Cabio leadership, not yet approved.** Pulled all 87 ACTIVE opportunities from UAT and
-  looked at their real value/closing-date spread rather than guessing numbers cold:
-  - **Size, split by SBU (a flat company-wide cutoff would be unfair — Critical Care's
-    typical deal is far smaller than Imaging's):** Imaging median ₹18L, top-quarter
-    cutoff ₹28L → proposed **₹30L**. Critical Care median ₹2.5L, top-quarter cutoff
-    ₹14L → proposed **₹15L**. (12 outlier deals were excluded from this analysis — see
-    the new "Lakhs/Rupees unit-entry bug" Backlog entry below; their values are
-    corrupted, not real.)
-  - **Urgency:** Expected Closure Date is only gate-required from Negotiation stage
-    onward (BR-OP-01), so most of the 87 legitimately have it blank — not a data gap.
-    Restricting to the 13 Negotiation-or-later deals (11 of which have the date filled
-    in as expected): a 30-day window catches 10 of 11, barely discriminating since
-    almost everything that far along is already inside 30 days. **Proposed: within 14
-    days, or already overdue** — catches 6 of 11, leaving the 18-50-day-out deals as
-    "in negotiation, not yet urgent."
-  - **Proposed final rule (superseded, see below):** High Priority if the deal clears
-    its SBU's size cutoff (Imaging ≥₹30L, Critical Care ≥₹15L), OR its Expected
-    Closure Date is within 14 days or has passed. This value/date-threshold version
-    was the one taken to Cabio leadership for confirmation. Full derivation still
-    useful as history: `docs/Insights-Dashboard-Implementation-Plan.md`'s
-    "High-Priority Deals" section.
-
-  **RESOLVED — Haroon confirmed a different, simpler rule, 2026-09-14.** Not the
-  value/date rule above — a stage-based rule instead:
-  - **Automatic:** any Opportunity that has moved past the Demo stage (i.e.
-    Clinical Evaluation, Negotiation, Order, or Delivery & Installation —
-    `opportunity_stage.display_order > 30`) is automatically treated as High
-    Priority. No manual action, no configurable threshold — computed at query
-    time from the stage alone, same "no schema change needed for the automatic
-    half" reasoning as before.
-  - **Manual:** for deals still in Lead, Qualified, or Demo stage
-    (`display_order` 10/20/30), Haroon wants an actual **High Priority flag** a
-    person can set by hand — these earlier-stage deals don't qualify
-    automatically, but someone should be able to mark one as high priority
-    early if it warrants it. This *does* need a schema change (a stored
-    boolean/flag on `opportunity`, unlike the automatic half), unlike the
-    original "computed at query time, no field to keep in sync" proposal.
-  Scoped as Feature 2.2's "Manual High Priority toggle" row (Module 3, PRD 3.9
-  Deal Prioritization) in `docs/Signed-Requirements-to-PRD-Traceability.md`,
-  and in `docs/Phase1-Completion-Sprint-Plan.md`'s this-week list. Still
-  unblocks the same downstream items the original proposal would have: the
-  Insights Dashboard's missing "High-Priority Deals" tile, Kanban
-  priority-sort (Feature 2.2's other row), and the Weekly Follow-up Report.
-- **Lakhs/Rupees unit-entry bug — 12 UAT opportunities with values inflated ~100,000x,
-  found 2026-09-11 while deriving High-Priority thresholds, not yet fixed.** All 12
-  values are suspiciously round multiples that divide cleanly by 100,000 into a
-  sensible equipment price (e.g. a SonoScape S70I reads ₹40,00,000 Lakhs — ₹400 Crore
-  for a portable ultrasound — instead of the ₹40L it almost certainly should be),
-  strongly suggesting the Rupee amount was typed directly into the Lakhs field rather
-  than converted. **Affected (opportunity — account — shown value — likely correct
-  value):** SonoScape S50-ELITE / Kanachur Institute of Medical Science / 4,200,000 /
-  42.00; SonoScape S70I / Ullal Diagnostic Centre / 4,000,000 / 40.00; SonoScape S70I /
-  Mangala Hospital Mangalore / 3,800,000 / 38.00; SonoScape S70I / Ambalpadi Diagnostic
-  Centre Udupi / 3,800,000 / 38.00; SonoScape S50-ELITE / Yenepoya Medical College
-  Hospital / 3,000,000 / 30.00; 30 Bed Hospital / NIMS Medicity, Neyyattinkara /
-  1,700,000 / 17.00; Critical care products / EMS Cooperative Hospital, Cherpulassery /
-  1,685,000 / 16.85; SonoScape S11PLUS / Dhanvantri Hospital / 1,300,000 / 13.00;
-  SonoScape E2 / Benaka Health Centre / 1,200,000 / 12.00; Anesthesia machine & iX
-  ETCO2 monitor / Malabar Medical College, Ulliyeri / 1,050,000 / 10.50; Magnamed
-  Oxymag / Tiruvalla Medical Mission Hospital / 800,000 / 8.00; SonoScape E1 Exp /
-  Pragathi Hospital, Puttur / 800,000 / 8.00. **Urgent because it's live now, not just
-  historical:** these 12 deals will badly distort the Pipeline Value and
-  Weighted/Unweighted Forecast tiles currently being built (Batch 1a, concurrent
-  session) unless corrected in UAT or excluded/capped before those tiles ship —
-  unbounded, an aggregate SUM across all 87 ACTIVE deals would show several lakh
-  Crore instead of the real pipeline figure. **Not yet fixed, not yet flagged to the
-  concurrent build session** — Basheer to decide whether to correct these 12 records in
-  UAT directly or route it through whoever owns that data entry.
-  **Grown to 24 as of 2026-09-15** (`scripts/uat_data_quality_check.py`'s check 2, full
-  list in `docs/UAT-Data-Quality-Findings-2026-09-15.md`) — still not fixed, and more
-  reps are hitting the same data-entry mistake, not just the original 12. Worth raising
-  as a training point (how to enter Lakhs values), not only a one-time data cleanup.
 - **Bulk-imported Leads with zero follow-up Activity — one rep, one
   batch, not yet raised.** Same check: Om Hiremath owns 15 of 56
   zero-Activity Opportunities, all identical "New USG Machine requirement"
@@ -1658,62 +1456,6 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   Shruthi (Review marks it read, same as any assignment notification) or a
   one-time `UPDATE ... SET read_at = now()` on that row.
 
-- ~~**Audit trail for account/user_profile/product/opportunity.**~~ —
-  **DONE, 2026-09-02.** Migration `0030_add_audit_log.py` per
-  `docs/Audit-Trail-Implementation-Plan.md` (ADR-017 Phase 1): one shared
-  `audit_log` table, a generic `SECURITY DEFINER` trigger function
-  (`UPDATE`/`DELETE` only — CREATE deliberately not logged, see the plan's
-  resolved question 1), Admin/GM-only RLS read policy. Applied to Dev,
-  `Physical-Schema.sql` regenerated. **Scope grew same-day beyond the
-  original DB-only plan:** built the Admin/GM "Audit Log" screen too
-  (new `backend/app/domains/audit/` domain + `AuditLogScreen.tsx`, nav-
-  gated same as Territory Map/User Directory) — originally logged as a
-  deferred follow-up below, picked up same session once Basheer saw the
-  raw-UUID `changed_by` column and asked for it. Two rounds of live
-  E2E-driven refinement beyond the base build: (1) resolved `changed_by`,
-  the row's own `record_label`, and ~18 known foreign-key fields
-  (`zone_id`, `owner_id`, `stage_id`, etc. — a hand-maintained
-  field-name→table map, a deliberate, bounded exception to the trigger's
-  own genericness) to human names instead of raw UUIDs; (2) a DELETE
-  entry's full-row snapshot (all ~29 columns) was cluttered on screen —
-  fixed by collapsing it behind a "Show all N fields" toggle, collapsed
-  by default per Basheer's explicit call. All 5 verification-plan checks
-  passed live against Dev, including RLS confirmed both at the DB level
-  (direct role-scoped query) and in the app itself (Shruthi's non-admin
-  login correctly has no Audit Log nav entry). Full build/verification
-  narrative: `docs/Progress-Archive-2026-09.md`'s 2026-09-02 entry.
-  **Not yet committed** as of this writing.
-
-- **Lead Management for Marketing-Sourced Leads — built, migrations `0031`
-  through `0034` applied to Dev, manual E2E in progress (Groups A and B
-  passed 2026-09-02; resume at Group C).**
-  **Renamed `lead`/`leads` → `marketing_lead`/`marketing-leads` mid-E2E**
-  (collided with the existing Opportunity Stage "Lead" — see
-  `docs/Progress-Archive-2026-09.md`'s 2026-09-02 entries and migration
-  `0032_rename_lead_to_marketing_lead.py`). Raised
-  2026-08-31 after a duplicate-Opportunity incident (Mount Zion Medical
-  College, assigned to Vivek, duplicated a deal he'd already entered
-  himself). New "Marketing User" role (create-and-assign only, zero
-  pipeline visibility) plus a new `marketing_lead` table — deliberately not reusing
-  `opportunity`, since a marketing/conference-sourced entry may not even
-  be a real prospect yet, and putting it directly into the pipeline table
-  would pollute forecast numbers before anyone's judged whether it's
-  real. Nothing becomes a real Opportunity until the assigned rep reviews
-  and converts it — structurally prevents the kind of duplicate that
-  triggered this, rather than trying to detect it after creation. Bundled
-  in: the IndiaMART 4-hour buylead-credit SLA moved outside Cabio
-  entirely (the lead-entry person now handles it directly on IndiaMART's
-  platform before anything reaches Sales OS), retiring the old
-  `URGENT_LEAD_SOURCE_NAMES` urgent-notification logic in
-  `notification/service.py`. Both of the plan's original open questions
-  are resolved (no Account-creation rights for Marketing User;
-  assignment picker filtered by the lead's `sbu_id`). Full design:
-  `docs/Lead-Management-Implementation-Plan.md`; E2E plan and live
-  progress: `docs/Lead-Management-Manual-E2E-Test-Plan.md`,
-  `docs/Progress-Archive-2026-09.md`.
-  Follow-up raised 2026-09-02 (new Marketing User couldn't be saved
-  without an SBU): fixed `4163971`, 2026-10-10.
-
 - **Lead follow-up comments — confirmed by Latheef Bhai, 2026-09-17,
   implementation plan written same day, not built yet.** Raised
   2026-09-17: once a rep opens a `marketing_lead` (assignment
@@ -1763,46 +1505,6 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   data-privacy decision for leadership, not an engineering call — options
   and a recommendation are laid out in the plan. Full design:
   `docs/Engagement-History-Generation-Implementation-Plan.md`.
-
-- ~~**UAT's `rls_auto_enable()` event trigger — permanent fix.**~~ —
-  **DONE, 2026-09-10.** UAT (not Dev) had an out-of-band Supabase event
-  trigger (`ensure_rls`, calling function `rls_auto_enable()`) that
-  auto-enabled RLS with zero policies on any newly created table —
-  added outside the Alembic migration chain, first surfaced 2026-08-05.
-  Caused **three separate lockout incidents** before this fix: the
-  original 18-table UAT-wide lockout on 2026-08-03, 2026-08-21's
-  `user_zone`/`zone_closure` (silently broke Territory Map's coverage
-  pills, threw a misleading CORS-looking 500 on zone assignment saves),
-  and 2026-09-08's `gate_override_reason` table (caught pre-emptively
-  that time). **Fixed by Basheer, live on UAT: `DROP EVENT TRIGGER
-  ensure_rls;`** via Supabase's SQL Editor. Verified before and after —
-  `pg_event_trigger` confirmed `ensure_rls` was UAT-only (absent on Dev,
-  restoring the parity Dev already had) before dropping it, then
-  re-queried after to confirm only the six standard Supabase-managed
-  triggers remain, matching Dev exactly. UAT migrations now behave
-  exactly as authored — a table only gets RLS/policies if its own
-  migration adds them, same as Dev, no more silent third-party
-  override. **Still worth doing when Prod is set up:** decline
-  Supabase's "enable RLS for the whole database" project-setup prompt
-  (a related but separate footgun — see `docs/Progress-Archive-2026-08
-  .md`'s "Trap for Prod" note) and confirm Prod has no equivalent
-  out-of-band trigger of its own before assuming parity.
-
-- ~~**Opportunity Notes Privacy — Haroon agreed 2026-09-05, built, migrated
-  (0039), all 8 verification steps passed live against Dev.**~~ —
-  **DONE, committed `552c0ee`.** Haroon (doing field work himself,
-  entering deals directly) didn't want his private discussion notes
-  visible to Area Managers/SBU Managers in whose territory/SBU those
-  deals sit, even though today's zone/SBU-wide visibility is intentional
-  (migration `0021`). Built: hide only the Activity-tab notes via a
-  role-hierarchy RLS rule (Area Manager can't see SBU Manager/GM/Admin
-  notes, SBU Manager can't see GM/Admin notes), looped-in split/reminder
-  carve-out grants full visibility regardless of rank, Documents and the
-  Opportunity record itself stay fully visible. Full plan:
-  `docs/Opportunity-Notes-Privacy-Implementation-Plan.md`; full brief:
-  `docs/Opportunity-Notes-Privacy-Discussion-Brief-2026-09-04.md`. Full
-  narrative: `docs/Progress-Archive-2026-09.md`'s 2026-09-04 and
-  2026-09-05 entries.
 
 - **UAT backup/disaster-recovery — offsite copy still open. Script
   verified working end to end 2026-09-10 (including the Docker shutdown
@@ -1914,106 +1616,6 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   Revisit a shared notes table (type, text, who, when) if a repeating event needs
   its own note per occurrence — e.g. an Opportunity put On Hold several times
   (each hold overwrites the last reason today) or instalment payments.
-
-- ~~**Duplicate hospital names in the Customer Directory.**~~ — **DONE,
-  live in UAT since the 2026-09-09 promotion.** Option B (soft
-  similarity-warning using Postgres `pg_trgm`) — Haroon's decision,
-  resolved in favor of shipping it. Account creation used to only block
-  an exact-name match (case-insensitive); a one-character-off name was
-  allowed through, so near-duplicate hospital records could pile up.
-  Raised 2026-08-29 (extended sales team walkthrough); built and
-  validated 2026-08-30/31 (**committed `e86d49a`**) — near-duplicate
-  warning on both create AND rename, a zone-branch lookup bug fix, and a
-  rep-territory-scoped zone picker. Backend 644/644 passing, `tsc`/`lint`
-  clean. Manual E2E: full Groups A-G pass completed 2026-09-01
-  (`docs/BR-ACC-03-Manual-E2E-Test-Plan.md`), several bugs found and
-  fixed along the way but not logged at the time — this gap is what
-  prompted the "Testing narration" rule in `CLAUDE.md`. Confirmed live in
-  UAT: `e86d49a` is an ancestor of `df0a7cc` (2026-09-09 UAT promotion
-  close-out commit). Full writeup: `docs/Duplicate-Hospital-Decision-
-  Brief-2026-08-29.md`; build narrative: `docs/Progress-Archive-2026-08
-  .md`'s 2026-08-30 and 2026-08-31 entries.
-
-- ~~**Manager-Attested Stage-Gate Override for first-time fast-tracked deals.**~~
-  — **DONE, 2026-08-27.**
-  Raised at the 2026-08-19 leadership demo, decided same-day (2026-08-25,
-  Basheer/Haroon, `docs/Discussion-FastTrack-Gate-Override-2026-08.md`) and built
-  in the same session per `docs/Manager-Attested-Gate-Override-Implementation-
-  Plan.md`: migration `0027`, `BR-OP-14` in `Business-Rules.md`, all 4 opportunity
-  entry points. Reworked 2026-08-26/27 from an auto-appearing box (rejected
-  during E2E) to an explicit "Fast-Track this Deal" checkbox; gained a
-  one-time approver notification; two audit-integrity bugs found and fixed (a
-  re-stamping/re-notifying bug on unrelated saves, and an uncheck-doesn't-
-  reblock-the-gate bug). Manual E2E complete, 20 Pass / 2 Skipped. Committed
-  `9043a50`, `a7fb786`. Full build narrative:
-  `docs/Progress-Archive-2026-08.md`'s "2026-08-25 (later)" and "2026-08-26/27"
-  entries.
-
-- ~~**`UrgentNotificationDialog` multi-item race.**~~ — **DONE.** Diagnosed
-  2026-08-25 as a gap in the 2026-08-25 Progress-Archive entry's bug #1 fix
-  ("Urgent dialog blocking the Opportunity Detail screen") — that fix covered
-  the single-item and bell-dropdown cases but left one edge case uncovered:
-  reviewing one of 2+ outstanding urgent items still popped the dialog back up
-  over the just-opened Opportunity Detail screen within ~500ms, since
-  `handleReview`'s `setTimeout(..., 500)` invalidated `["notifications"]`
-  wholesale, which by prefix-matching also swept up `urgent-unread` — the exact
-  query the earlier fix scoped `refetchOnWindowFocus: false` on specifically to
-  stop it refetching out-of-band. Fixed (confirmed live in
-  `UrgentNotificationDialog.tsx`, committed as part of `e47ccc9`, on `main`):
-  narrowed that invalidate to `["notifications", "unread-count"]` and
-  `["notifications", "list"]` only, leaving `urgent-unread` to its own
-  `refetchInterval: 60_000` — consistent with the component's own documented
-  design ("reappears on next poll, not silence-forever-able by accident").
-
-- ~~**Referral Credit Part 2 — Relationship-Support Activity.**~~ —
-  **DONE, 2026-08-27.** Split out 2026-08-18 when Part 1 (Referral Credit,
-  `BR-FIN-07`) shipped — see `docs/Progress-Archive-2026-08.md`'s
-  2026-08-18/19 entry. Built per `docs/Referral-Credit-And-Relationship-
-  Support-Implementation-Plan.md`: migration `0029` (two `SECURITY DEFINER`
-  functions + `activity_tier_visibility` RLS amendment — the
-  `referred_by_user_id`/`referred_by_note` columns were already live via
-  `0023`, not recreated), `BR-ACT-10` in `Business-Rules.md` (also amends
-  BR-ACT-04/BR-ACT-05), `LogActivityModal.tsx`'s "Related Opportunity"
-  picker, the new `GET /accounts/{account_id}/opportunities/lookup`
-  endpoint. Lets someone outside a deal's normal ownership/SBU log a
-  "relationship support" note against a specific Opportunity via a narrow
-  `SECURITY DEFINER` RLS carve-out. 11 new backend tests, 619/619 passing;
-  `tsc`/lint clean. **Two gaps found and filled beyond the original plan:**
-  `opportunity_id` and `notes` are both now required for this type (the plan
-  left both optional at the schema level, which would have let the feature
-  degrade into a meaningless unlinked, empty note). Migration applied to Dev,
-  `Physical-Schema.sql` regenerated and reviewed. **Manual verification
-  complete, all 16 cases pass** — including the cross-SBU flow (plan doc
-  step 12.3), run live as Fahad doubling as both the same-SBU sanity check
-  and the cross-SBU test subject
-  (`docs/Referral-Credit-And-Relationship-Support-Manual-E2E-Verification.md`).
-  **One finding, tighter than planned, not a bug:** a cross-SBU logger's own
-  note text reads back fine, but the linked Opportunity's *name* stays
-  invisible even on their own logged entry — the nested `opportunity`
-  relationship load still goes through Opportunity's own RLS, which they
-  still fail. The widening is even narrower in practice than "name-only in
-  the picker" as designed.
-
-  **Opportunity picker scope narrowed 2026-08-25** (architecture discussion
-  with Basheer, before the build): the "which Opportunity is this about"
-  picker in `LogActivityModal.tsx` renders **only when Activity Type =
-  Relationship Support is selected** — the earlier plan's general-purpose
-  version (available for *any* activity type logged from the Account level)
-  was explicitly dropped, not bundled in. Two options were considered and
-  rejected before landing here: (a) drop the Opportunity-level link
-  entirely, logging only at the Account level — this would have avoided the
-  cross-SBU visibility question altogether (an Account-only note already
-  works today for anyone, zero new backend code), but loses which specific
-  deal the support was about; (b) keep the general-purpose picker as
-  originally planned — rejected as unnecessarily broad exposure for a
-  narrow, informal use case, and it would have shipped the general
-  convenience as an incidental side effect rather than a deliberate
-  decision. **Important, confirmed still true as built:** the activity-type
-  gate is frontend-only — it doesn't shrink the backend security work, since
-  the lookup function itself can't know why the frontend is calling it and
-  still has to return that Account's Opportunity names to anyone who calls
-  it. Manual cross-SBU verification still required, including via a raw API
-  call, not just through the gated UI.
 
 - **Milestone 2 — Target Planning, Insights Dashboard/Reporting, Coverage Planning. All
   three fully scoped 2026-08-25, none started.** Sequencing decided the same session,
@@ -2263,15 +1865,6 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   **Decided 2026-10-16 (Basheer):** for a Manager Note, visibility follows
   the rep the note is about (`user_id`), not the writer. Ready to scope.
 
-- ~~**Critical Care/Imaging manager hierarchy — UAT/Prod rollout.**~~ —
-  **SUPERSEDED, confirmed 2026-08-22.** The 2026-07-30 entry (`docs/
-  Progress-Archive-2026-07.md`'s Phase 2E section) was about *test*
-  accounts blocked on Basheer creating new Supabase Auth UUIDs — that
-  blocker no longer applies. A real Critical Care hierarchy with real
-  staff has since been built: `docs/Zone-Hierarchy-Territory-Data-2026-08.md`
-  (2026-08-12 update) shows Nishad managing Critical Care in North Kerala
-  with Adydev reporting to him, and Adarsh's entire South Kerala cluster
-  confirmed Critical Care SBU. Nothing left to pick up under this entry.
 - **9 date-only `type="date"` fields left unconverted, on purpose.**
   Basheer's explicit scope call during the MUI migration (see the
   `@mui/x-date-pickers` archive entry) — `Customer360Screen.tsx`/
@@ -2283,63 +1876,6 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   Manager Tier Collapse elsewhere in the app. Not yet decided whether the
   prototype route is worth touching at all — Basheer's call, pending.
 
-- ~~**Make `user_profile.sbu_id` (and audit `zone_id`) properly nullable for
-  Admin/General Manager.**~~ — **DONE, confirmed 2026-08-22.** Superseded
-  2026-08-16 by `docs/Admin-GM-SBU-Agnostic-Implementation-Plan.md` (a
-  fresh full investigation — every RLS policy + every Python `.sbu_id`
-  read re-checked against current code, not this stale 2026-07-28 scope),
-  then **shipped 2026-08-17, commit `91a0906`**: migration `0022` drops
-  `sbu_id`'s `NOT NULL` and backfills Admin/GM rows to `NULL`;
-  `UserProfile` model, `UserMeResponse`/`UserListResponse`/`UserCreate`
-  schemas, and `set_rls_context()`'s None-guard all updated to match;
-  `UserDirectoryScreen.tsx` hides the SBU field for Admin/GM. Verified
-  live on Dev for all 3 real Admin/GM accounts per the commit message.
-  Nothing left to pick up here — notes below kept for history only.
-
-  Surfaced 2026-07-28 while fixing the `/users`
-  endpoint's visibility filter (see `docs/Progress-Archive-2026-07.md`) —
-  Admin/GM are an unrestricted overlay tier, not members of any SBU/zone, but
-  `sbu_id` is `NOT NULL` today so their rows carry a meaningless placeholder
-  value that can coincidentally leak into another tier's scoped view. Fixed
-  for now with a contained role-based exclusion in `UserRepository.list_active`;
-  the conceptually-correct fix is nullable columns, but that's real multi-file
-  work, not a quick follow-up:
-  1. Migration: `ALTER TABLE user_profile ALTER COLUMN sbu_id DROP NOT NULL`,
-     backfill existing Admin/GM rows to `NULL`.
-  2. `UserProfile` model: `sbu_id: Mapped[uuid.UUID | None]`,
-     `sbu: Mapped[SBU | None]`.
-  3. `set_rls_context()` (`app/db/session.py`): add the same
-     `if user.sbu_id is not None:` guard `zone_id` already has. Lower risk
-     than it first looked — confirmed `cabio_app_sbu_id()`
-     (`0009_cabio_app_rls_helper_functions.py`) already does
-     `NULLIF(current_setting(..., true), '')::uuid`, so a never-set or
-     reset-to-empty session var already resolves to a clean SQL `NULL`
-     rather than erroring; this exact problem was already solved once for
-     `zone_id` and applied uniformly to all 4 identity functions.
-  4. ~~**Open product decision, not just plumbing:** `opportunity` router
-     stamps `sbu_id=current_user.sbu_id` unconditionally on create, and
-     `opportunity.sbu_id` is `NOT NULL` — if Admin/GM has no `sbu_id`, either
-     they shouldn't create opportunities directly (business-rule gate), or
-     the create form needs an explicit SBU picker when the creator has none.
-     Needs Basheer's call before implementing.~~ — **RESOLVED 2026-08-04** as
-     BR-OP-12 (`docs/Business-Rules.md`): Admin/GM now get an explicit,
-     required SBU picker on both create forms and are never defaulted to
-     their own `sbu_id`. This code path is already forward-compatible with
-     `sbu_id` going nullable — no further change needed here when/if this
-     migration is picked up.
-  5. Audit every other unconditional read of `.sbu_id`/`.sbu` — `UserCreate`/
-     `UserUpdate`/`UserListResponse` schemas, User Directory screen
-     rendering, target/coverage plan creation.
-  6. Data migration runs against the live shared dev DB — same care as any
-     other live write.
-  7. Touches the same doc surface as Phase 2E's Task 10 pass
-     (`Physical-Schema.sql` etc., completed 2026-07-30) — update those docs
-     again in the same commit as this migration rather than creating new
-     doc debt.
-  8. Dedicated manual verification pass logging in as Admin/GM post-change,
-     same spirit as Task 8/9's role-by-role checks — confirm nothing breaks
-     now that their session carries a genuinely absent `sbu_id` for the
-     first time ever.
 - **Parent-account cycle guard — recursive-CTE optimization, not needed yet.**
   `AccountService._creates_cycle` (`backend/app/domains/account/service.py`)
   walks the ancestor chain with one DB round-trip per level; full reasoning
@@ -2538,17 +2074,6 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   connection-error resilience — on a live shared dev DB, Basheer should
   make that call deliberately, not have it bundled into a quiet perf
   patch. Not started.
-- ~~**`docs/Physical-Schema.sql` is stale and unreliable**~~ — **RESOLVED
-  2026-08-03.** Regenerated via `pg_dump --schema-only` (Docker, `postgres:17`
-  image matched to the live server's actual version — see finding below)
-  against the UAT database; confirmed all previously-missing objects are now
-  present. Process fix landed too: `Backend-Implementation-Standards.md`'s
-  migration workflow now has an explicit "Regenerate Physical-Schema.sql"
-  step, so this can't silently drift again. Full history in
-  `docs/Progress-Archive-2026-08.md`'s 2026-08-03 entry.
-  **Side finding:** both Dev and UAT are actually running **Postgres 17.6**,
-  not 16 as `CLAUDE.md` stated (corrected same day) — likely just stale from
-  the original planning-stage writeup, not an actual environment mismatch.
 - **`sales-os-app` has a real `typescript`/`openapi-typescript` peer dependency
   conflict.** Surfaced 2026-08-02 deploying the UAT frontend to Render, which
   does a genuinely clean `npm install` — `package.json` declares
@@ -2579,117 +2104,10 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   log. Performance item (code-splitting via dynamic `import()`), not a
   correctness one. Candidate approach in the build's own warning: dynamic
   imports or `build.rolldownOptions.output.codeSplitting`.
-- ~~**`ProjectDirectoryScreen.jsx`'s opportunity create/update never refreshes
-  React Query caches at all**~~ — **DONE, confirmed 2026-08-22.** Resolved
-  as part of the file's MUI + React Query + TypeScript migration
-  (`1d51b6d`, `ProjectDirectoryScreen.tsx`) — the deferral rationale below
-  ("fix it when this file's migration lands") played out exactly as
-  planned. Confirmed 10 `queryClient.invalidateQueries(...)` calls now
-  present across the opportunity/project create/update handlers,
-  including `["opportunities", "byAccount", ...]` and `["pipeline"]`.
-  Nothing left to pick up here.
-- ~~**Opportunity create forms are missing stage-gate fields (Demo Date,
-  Expected Closure Date, PO Number) — BR-OP-00 direct-to-advanced-stage
-  creation fails.**~~ — **SHIPPED 2026-08-05, `main` commit `6a8e841`.**
-  Surfaced 2026-08-04, UAT orientation session — a rep creating an
-  Opportunity directly at Order stage hit a server rejection for a
-  missing Demo Date, a field that screen didn't even show. Turned into
-  two decisions, both now shipped: (1) all 4 opportunity create/edit
-  entry points brought to field parity — Demo Start/End Date, Expected
-  Closure Date, PO Number, and (found during Basheer's manual
-  verification) Hold/Lost/Won status-gated fields that Project Detail's
-  edit modal was missing entirely; (2) a new `REPEAT_ORDER` lead-source value
-  relaxes the Demo/Clinical Evaluation gates (`BR-OP-13`) for customers
-  repeat-ordering the exact same equipment (~40% of the pipeline, per Haroon),
-  while Order Value/Product Details stay required. Full decision record
-  and implementation summary in
-  `docs/Discussion-FastTrack-Opportunity-Creation.md`. **Still
-  outstanding:** not yet pushed to `uat`; `REPEAT_ORDER` seed row applied to
-  Dev only, needs the same on UAT once this ships there; verified working
-  on Dev by Basheer, UAT not yet checked.
-  **Opportunity cloning** (auto-fill a REPEAT_ORDER deal from the
-  customer's last order) was considered and deliberately kept separate —
-  logged here as a future item, not picked up yet.
-- **Split participant picker / cross-SBU contribution — DECIDED 2026-08-05,
-  ready to build.** Surfaced 2026-08-04, UAT orientation session — team
-  expected to be able to split a deal with anyone regardless of SBU. Turned
-  out to bundle three separate needs, each resolved on its own terms with
-  Haroon — full record in `docs/Discussion-SplitParticipant-SBU-Scope.md`
-  (v6):
-  1. **Split stays same-SBU, any-zone — SHIPPED 2026-08-07.** Cross-SBU
-     splits remain deliberately disallowed (ADR-037/`BR-FIN-06`) — not
-     reopened. The picker's `listUsers()` scope was renamed from
-     `sbu_zone` to `sbu` and its zone check dropped (small backend change,
-     see `Discussion-SplitParticipant-SBU-Scope.md` SS3.1 for why "no
-     backend change" turned out not to hold).
-  2. **Referral credit** — new `referred_by_user_id` on Opportunity, any
-     SBU/zone (reuses the existing `scope="all"` picker), one-time, no
-     revenue/visibility impact.
-  3. **Relationship-support activity** — self-reported `Activity` logged
-     against the Account with a structured `opportunity_id` link,
-     `activity_type = RELATIONSHIP_SUPPORT`. Needs one new Postgres function
-     (`cabio_app_opportunity_in_account`, mirrors the existing
-     `cabio_app_has_split` pattern) and a small `activity_tier_visibility`
-     RLS amendment (`OR user_id = cabio_app_uid()`, so a cross-SBU
-     contributor can read back their own logged activity) — both confirmed
-     against the live policy source, not assumed.
-  **Nothing implemented yet** — this entry moves once picked up.
-- ~~**Admin/General Manager can't create Opportunities outside their own home
-  SBU, despite RLS already granting them unrestricted cross-SBU access.**~~ —
-  **RESOLVED 2026-08-04.** Surfaced during the UAT orientation session —
-  Haroon Sidheeq (General Manager role) unable to enter opportunities in the
-  SBU other than his own. Root cause was `opportunity/router.py` hardcoding
-  `sbu_id=current_user.sbu_id` for every caller unconditionally, with no way
-  for any role to override it — contradicting the `opportunity_tier_visibility`
-  RLS policy (ADR-009), which already granted Admin/General Manager
-  unrestricted cross-SBU write access at the database level. Fixed as
-  **BR-OP-12** (`docs/Business-Rules.md`): `OpportunityCreate` gained an
-  optional `sbu_id` field, honored only for Admin/General Manager
-  (`OpportunityService.create_opportunity` — `AuthorizationError` for any
-  other role attempting an override, `NotFoundError` for a nonexistent SBU;
-  BR-OP-11's item-SBU check validates against the overridden SBU, not the
-  caller's own). Both opportunity-create entry points got a role-gated SBU
-  dropdown wired to it: `Customer360Screen.tsx`'s "Add Opportunity" modal and
-  the global "+ Lead" `QuickLeadModal.tsx` — the Products picker in each now
-  filters by the selected SBU too, not just the caller's own.
-  **Follow-up (2026-08-04, same day):** the SBU field was initially optional
-  with a "My own SBU" default — Basheer flagged that a default doesn't make
-  sense for a role with no meaningful "own" SBU, and that leaving it
-  untouched would silently create the Opportunity in the caller's
-  placeholder `sbu_id`. Tightened so Admin/GM must always explicitly choose
-  (no default, `"My own SBU"` removed from both pickers, label changed to
-  "SBU *"): backend rejects with `BusinessRuleViolation` if `role_name` is
-  Admin/GM and `sbu_id` is omitted; frontend blocks submission client-side
-  too. Also considered and rejected (again) giving Admin/GM a real
-  `SBU = "Corporate"` row instead of a placeholder — same objection as the
-  2026-07-28 finding in `docs/Progress-Archive-2026-07.md`: it would leak
-  into every other SBU-scoped picker/report (Product Catalog filters, User
-  Directory's SBU assignment dropdown, Target/Coverage Planning's SBU
-  dimension) and only holds if every future Admin/GM account remembers the
-  convention. The role-gated dropdown already avoids needing any sentinel
-  value. Also hid the "SBU: {name}" placeholder chip in the sidebar user
-  footer (`DemoApp.tsx`) for Admin/GM, same reasoning. 9 new/updated backend
-  unit tests total, 397/397 backend suite passing, `npx tsc --noEmit` and
-  `npm run lint` clean. Not yet manually verified on Dev/UAT by Basheer.
-  **Still separate/unresolved:** the "Make `user_profile.sbu_id` ... nullable"
-  item above — that's Admin/GM having *no* home SBU value at all in the DB
-  (vs. today's placeholder value that the app now knows to ignore). Point 4
-  of that item (the open product decision about opportunity creation) is
-  now effectively answered by this fix and needs no further work whenever
-  that migration is eventually picked up — the create-opportunity path
-  never relies on Admin/GM's own `sbu_id` being meaningful in the first
-  place. The sidebar/zone display (line 272 of `DemoApp.tsx`, same
-  meaningless-placeholder problem) was raised but deliberately left alone —
-  not asked for.
-- ~~**New product line onboarding (e.g., Cardiology) — not yet conceptualized.**~~
-  — **RESOLVED 2026-08-06, confirmed with Haroon.** Not a new SBU — Cardiology
-  sells under whichever existing SBU (Imaging or Critical Care) each product's
-  technology fits; no dedicated team yet means no case for SBU-level
-  infrastructure. No new tracking field either — `category_name` isn't being
-  repurposed (confirmed dead/unused in the codebase). Current Cardiology
-  inventory is entirely refurbished stock (confirmed 2026-08-13). Full
-  reasoning, and the cutover plan for whenever Cardiology does graduate to its
-  own SBU, in `docs/Discussion-Strategic-Growth-Topics-2026-08.md` §1.
+- **Opportunity cloning: fill a Repeat Order Opportunity from the
+  customer's last order — idea, not planned (2026-08-05).** Considered
+  with the Fast-Track work and kept separate.
+
 - **Account Manager concept — relationship ownership distinct from
   Opportunity ownership — not yet conceptualized.** Raised in leadership
   discussion, 2026-08-05. Idea: a named Account Manager owns the overall
@@ -2717,59 +2135,3 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   entity throughout. No design work started; likely the largest-scope item
   of the four raised in this meeting, worth scoping carefully before
   committing to a data-model direction.
-- ~~**Multi-zone user assignment — decided 2026-08-07, moved to
-  `active_progress.md` as the next build item.**~~ — **SHIPPED, stale
-  entry corrected 2026-08-17.** Built as Multi-Zone Milestone 1 — confirmed
-  live and covered in the 2026-08-17 regression pass
-  (`docs/Regression-Test-Plan-2026-08.md`'s A1, verifying a multi-zone
-  Area Manager sees data from every assigned zone together). This entry
-  was never marked done when the feature shipped. One narrower question
-  from design doc `docs/Multi-Zone-Assignment-Technical-Design.md`'s §7
-  (Target/Coverage Planning's `target_plan.zone_id` nullability) wasn't
-  re-verified tonight — check that doc directly if it matters, not
-  re-litigated here.
-- ~~Document/photo upload on Opportunity~~ — **DONE, 2026-08-11**, commit
-  `49c4c1d`, pushed to `origin/main`. Turned out to need real Storage
-  infrastructure, not just a frontend gap as first scoped here — see
-  `docs/Opportunity-Document-Upload-Implementation-Plan.md`.
-- ~~**Activity Notes field silently blocks multi-line entry**~~ — **DONE,
-  2026-08-17 (`c9861a0`).** Root cause was exactly as suspected:
-  `FormModal.tsx`'s `<form onKeyDown>` handler blocked Enter on both
-  `INPUT` and `TEXTAREA` tags; dropped `TEXTAREA` from the check. Follow-on
-  found during verification: three read-only display sites (Activity
-  Timeline, Daily Activity Report, a closed reminder's activity) needed
-  `whiteSpace: "pre-wrap"` since newlines were saving correctly but
-  collapsing visually — fixed same commit. Two more instances of the same
-  display gap found and fixed in `1a3738d`: buyback item descriptions and
-  product descriptions.
-- ~~**Pipeline screen zone filter**~~ — **DONE**, confirmed live in
-  `OpportunityPipelineScreen.tsx` (`listPipeline({ zone_id: zoneFilter,
-  ... })`) — already built and committed; this entry was stale.
-- ~~**Change default landing screen from Account Management to Pipeline**~~ —
-  **DONE, 2026-08-12.** `DemoApp.tsx:47`, `useState("customers")` →
-  `useState("opportunities")`. Back-navigation return-view state
-  (`accountReturnView`, `opportunityReturnView`, etc.) and `accountSubTab`
-  are independent `useState`s, confirmed unaffected. **Reversed
-  2026-10-19** (`508ff42`): everyone except Marketing Users lands on
-  Account Management again (Weekly Follow-up plan D9a).
-- ~~**User Directory's Edit form always resends a user's existing
-  `manager_id`, even when untouched.**~~ — **DONE, 2026-08-17.** Fixed
-  exactly as discussed when this was surfaced (2026-08-12): the SBU
-  `TextField`'s `onChange` in `UserDirectoryScreen.tsx` now looks up the
-  currently-selected manager in the already-fetched `users` list, and
-  clears `form.manager_id` back to `""` (visibly, in the form) if that
-  manager is a normal (non-Admin/GM) person whose `sbu_id` no longer
-  matches the newly-selected SBU — Admin/GM managers stay exempt, mirroring
-  the backend's own exemption. Forces an explicit re-pick instead of
-  silently resending a now-invalid value. Frontend-only, no backend/
-  migration change; `tsc --noEmit`/`npm run lint` clean.
-- ~~**Run `tsc --noEmit` / `npm run lint` / `ruff check` on the Territory
-  Admin session's changes (2026-08-15).**~~ — **DONE 2026-08-15.** All
-  four clean: `tsc --noEmit` (whole project, including legacy `.jsx` —
-  nothing pre-existing surfaced either), `npm run lint`, `ruff check
-  app/domains/reference/`, and a backend module-import + `FastAPI` app
-  build check (`from app.main import app`, 16 routes). Covered the full
-  batch: duplicate-zone-name 409 fix, clear-Parent-Zone-to-top-level fix +
-  explicit top-level checkbox, alphabetical child-zone sort, and the soft
-  "name exists elsewhere in the tree" warning. Still not manually
-  exercised on Dev.

@@ -144,7 +144,10 @@ These affect each other, so they should be answered together:
 1. **Size vs A/B/C/D.** Haroon parked the A/B/C/D class for Phase 2 on
    2026-09-14. Should Latheef Bhai's Large / Medium / Small / Clinic
    *replace* A/B/C/D, and be un-parked for Phase 1? If they're different
-   things, what does A/B/C/D mean?
+   things, what does A/B/C/D mean? **Partly answered 2026-11-10 (Basheer):
+   Cabio leadership doesn't want A/B/C/D in Phase 1; it stays Phase 2**
+   (Traceability row 1.1 Done on that basis). What A/B/C/D means, and
+   whether size replaces it, is a Phase 2 question.
 2. **One tier per customer, or one per business line?** A hospital could be
    Tier 1 for Imaging and Tier 3 for Critical Care.
 3. **Hospital groups.** For a chain with several branches, is the tier set

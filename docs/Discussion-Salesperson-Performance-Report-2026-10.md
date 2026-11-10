@@ -465,7 +465,11 @@ conducted" —
 the app has no Demo Activity type and no demo outcome field today; an
 Opportunity records only its demo dates, entered when it moves from
 Qualified to Demo (`opportunity/models.py:80-81`, BR-OP-01). Put back to
-Basheer 7 Nov.
+Basheer 7 Nov. **Answered (Basheer, 9–10 Nov):** a qualified demo is one
+given after a qualification checklist and the manager's approval; it
+becomes a column on Target vs Actuals, not a Performance tab. Detail,
+decisions and the questions still open for Haroon and leadership:
+`docs/Discussion-Demo-Qualification-2026-11.md`.
 
 ### 10.5 What leading products do (searched 3 Nov)
 

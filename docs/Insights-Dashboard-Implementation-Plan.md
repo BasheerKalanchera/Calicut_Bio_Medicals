@@ -262,7 +262,8 @@ spread from UAT's 87 ACTIVE opportunities:
   packages. Top-quarter cutoffs: Imaging ₹28L, Critical Care ₹14L.
   **Proposed, rounded: Imaging ≥₹30L, Critical Care ≥₹15L.**
   **12 opportunities were excluded from this analysis as data outliers** — see
-  `docs/Backlog.md`'s new "Lakhs/Rupees unit-entry bug" entry; their values are
+  the "Lakhs/Rupees unit-entry bug" (fixed; record in
+  `docs/Progress-Archive-2026-11.md`, "Backlog clean-up, closed entries"); their values were
   inflated ~100,000x by an apparent Rupees-typed-into-a-Lakhs-field mistake, not real.
 - **Urgency:** `expected_closure_date` is only gate-required from Negotiation stage
   onward (BR-OP-01) — of the 87 ACTIVE deals, only 13 have reached Negotiation or

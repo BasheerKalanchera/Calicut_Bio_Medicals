@@ -115,6 +115,13 @@ copying 5 + 5, and update the Cost table above, which still assumes the
 free tier. Run the Plan vs Actuals and Next Actions screens against a
 realistic data volume before go-live.
 
+**Automatic RLS trigger:** when Prod is set up, decline Supabase's
+"enable RLS for the whole database" prompt and check Prod has no
+out-of-band event trigger like the `ensure_rls` / `rls_auto_enable()` one
+removed from UAT on 2026-09-10 (`docs/Progress-Archive-2026-11.md`, "Backlog
+clean-up, closed entries"). A table should get RLS only from its own
+migration.
+
 **Keep-alive:** no longer needed once Prod runs on Render's Starter tier (doesn't spin
 down). The UptimeRobot monitor set up 2026-08-03 for the free-tier backend can be
 retired once Prod is live on Starter.

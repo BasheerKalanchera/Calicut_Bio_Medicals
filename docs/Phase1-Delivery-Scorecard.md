@@ -5,15 +5,15 @@
 
 ## Summary
 
-Of **50** signed requirements: **36 done, 11 partly done, 3 not started** — plus **19 additional features built beyond the signed contract**: some requested by the Cabio leadership team for immediate business needs, others added by our team to make the system safer and easier to use (see "Commitment beyond contract" at the end). **3 more have been requested by Cabio leadership and are pending to build** (see "Requested" below that), and **1 more has been proposed but not yet decided** (see "Pending").
+Of **50** signed requirements: **38 done, 9 partly done, 3 not started** — plus **19 additional features built beyond the signed contract**: some requested by the Cabio leadership team for immediate business needs, others added by our team to make the system safer and easier to use (see "Commitment beyond contract" at the end). **3 more have been requested by Cabio leadership and are pending to build** (see "Requested" below that), and **1 more has been proposed but not yet decided** (see "Pending").
 
 | Done | Partly done | Not started | Commitment beyond contract |
 | :---: | :---: | :---: | :---: |
-| 36 | 11 | 3 | 19 |
+| 38 | 9 | 3 | 19 |
 
 **Real progress, two honest ways to read it:**
-- **Strictly done:** 36 of 50 = **72.0%**
-- **Counting partly-done items as half-credit** (the fairer "real progress" number, since 11 items aren't zero — they're mid-flight): (36 + 11×0.5) ÷ 50 = **83.0%**
+- **Strictly done:** 38 of 50 = **76.0%**
+- **Counting partly-done items as half-credit** (the fairer "real progress" number, since 9 items aren't zero — they're mid-flight): (38 + 9×0.5) ÷ 50 = **85.0%**
 
 ---
 
@@ -23,7 +23,7 @@ Where every hospital, clinic and dealer account is set up, described and tracked
 
 | # | Signed Feature ID | Requirement | PRD Section | Status | Notes |
 | :---: | :--- | :--- | :--- | :--- | :--- |
-| 1 | 5.1 | Account types (multi-location corporate, A/B/C/D class, diagnostic centers, clinics, dealers) | 1.1 Account Structure & Hierarchy | Partial | Hospital records capture type and corporate grouping today; the A/B/C/D classification tier is parked for a later phase. |
+| 1 | 5.1 | Account types (multi-location corporate, A/B/C/D class, diagnostic centers, clinics, dealers) | 1.1 Account Structure & Hierarchy | Done | Hospital records capture type and corporate grouping today. The A/B/C/D classification tier moves to Phase 2, as agreed with Cabio leadership. |
 | 2 | 5.1 | Account segmentation by size, specialty, revenue potential | 1.2 Account Segmentation | Done |  |
 | 3 | 5.1 | Tier 1 / Tier 2 dropdown | 1.3 Customer Tiering | Done |  |
 | 4 | 5.2 | Stakeholder phone, WhatsApp, email | 1.4 Customer Profile Management → Stakeholder Management | Done |  |
@@ -80,7 +80,7 @@ Where leadership and managers see how the business is doing.
 | # | Signed Feature ID | Requirement | PRD Section | Status | Notes |
 | :---: | :--- | :--- | :--- | :--- | :--- |
 | 29 | 2.5 | Weighted/unweighted forecasting by month/quarter/product; <3x-target low-pipeline alert | 5.1 Forecasting + 5.2 Pipeline Coverage Monitoring | Partial | Forecasting broken down by product is live today. Forecasting by month/quarter, and an early-warning alert for a thin pipeline, are no longer blocked on Target Management but still not built. |
-| 30 | 3.2 | Real-time actual-vs-target via role-specific dashboards | 5.3/5.4/5.5 Salesperson/Manager/GM Dashboard | Partial | Role-based dashboards are live today. Target vs Actuals on the Insights Dashboard shows each person's target, plan, PO received and Won, rolling up to team, SBU and company for leadership. A Year view shows the whole year's target against Won so far. |
+| 30 | 3.2 | Real-time actual-vs-target via role-specific dashboards | 5.3/5.4/5.5 Salesperson/Manager/GM Dashboard | Done | Role-based dashboards are live today. Target vs Actuals on the Insights Dashboard shows each person's target, plan, PO received and Won, rolling up to team, SBU and company for leadership, with a Quarter view and a Year view. |
 | 31 | 4.3 | Revenue per product/brand analytics | Appendix A.1 Reporting Principles (also 5.6 Core Reports) | Partial | Revenue and brand-level reporting is live today. Margin reporting (cost versus price) is approved and scheduled, restricted to senior roles only. |
 | 32 | 6.1 | Demo-to-sale conversion report | 4.2 Demo Management | Not started |  |
 | 33 | 11.1 | Core reports: sales, pipeline, product qty/price/margin | 5.6 Core Reports | Partial | Sales, Pipeline, and Product Performance reports are all live today. The Margin report (cost versus price) is approved and scheduled, restricted to senior roles only. |
@@ -156,7 +156,7 @@ Asked for by Cabio leadership beyond the signed scope and confirmed to build; no
 | # | What's requested | Status |
 | :---: | :--- | :--- |
 | 1 | Marketing staff can see at a glance which of their leads have new comments from the sales team. | Requested by Haroon and Latheef Bhai at the 24 Sep demo. On hold until mid-October, while the team uses lead comments; not yet built. |
-| 2 | A quarterly pipeline report for each brand vendor (SonoScape first, then EDAN and others), in that vendor's own Excel layout, which Admin/GM can download themselves. Not in the signed Phase 1 scope; the closest item in the future-phases list is 17.3, Vendor/OEM Management. | Requested by Haroon, 26 Sep. This quarter's SonoScape report will be prepared by us once the pipeline data is corrected; the in-app download is not yet built. |
+| 2 | A quarterly pipeline report for each brand vendor (SonoScape first, then EDAN and others), in that vendor's own Excel layout, which Admin/GM can download themselves. Not in the signed Phase 1 scope; the closest item in the future-phases list is 17.3, Vendor/OEM Management. | Requested by Haroon, 26 Sep. We prepared SonoScape's pipeline report on 27 Sep and shared it with Haroon; the in-app download for Admin and GM is not yet built. |
 | 3 | Tighter control of payment collection: each order's payment terms (when each payment is due), and automatic reminders when a payment is late — to the salesperson, their manager and the sales head, and optionally the accounts team — so no payment stays overdue beyond 60 days. Not in the signed Phase 1 scope, which leaves payments and collections to Finance's own system. | Requested by Latheef Bhai, 13 Oct. Shape still being discussed with Cabio leadership, including which parts belong to Phase 1 and which to Phase 2; not yet built. `docs/Discussion-Collections-and-Cycle-Time-2026-10.md`. |
 
 ### Pending — proposed, not yet built

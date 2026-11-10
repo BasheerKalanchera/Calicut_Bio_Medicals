@@ -40,7 +40,9 @@ targets and sets his Area Managers' targets on UAT).
   replaces "no sign-outs" decided earlier the same morning). Renewal
   passes go with their session (`auth.refresh_tokens` ON DELETE CASCADE,
   Dev catalog 2026-11-10); a short pass already issued lasts to its
-  expiry, about an hour by Supabase's default — Basheer, 2026-11-10
+  expiry, about an hour by Supabase's default — Basheer, 2026-11-10.
+  The test Marketing User login keeps its old password, no change
+  needed — Basheer, 2026-11-10
 - D8. **Optional pilot before the day:** Haroon and Latheef Bhai get their
   new passwords first (they sign out first, then test) — Basheer,
   2026-11-09
