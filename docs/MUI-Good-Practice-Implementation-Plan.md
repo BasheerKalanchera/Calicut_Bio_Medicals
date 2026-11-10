@@ -1,6 +1,6 @@
 # MUI Good Practice on Phone, Tablet and Laptop — Implementation Plan
 
-**Status:** Approved 2026-10-26 (Basheer) — every decision below answered
+**Status:** **Work so far on UAT 2026-11-10** (steps 1–4 and round 1 Part 1; `0756234`, `docs/UAT-Promotion-2026-11-Plan.md`). Approved 2026-10-26 (Basheer) — every decision below answered
 by him the same day. Steps 1–4 done: the automatic check and shared parts
 (`2e3ddd7`, `64b5fef`, `eb1b2c6`), My Work built to the standard, round 1
 review (`10010f2`). Step 5 (round 1 fixes) is with Build & Test, split by

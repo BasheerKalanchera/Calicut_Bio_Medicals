@@ -1,6 +1,7 @@
 # UAT Promotion — November 2026 — Plan
 
-**Status:** Draft, 2026-11-09.
+**Status:** Done 2026-11-10 — UAT on `0756234`, database at 0065; outcome
+in section 7. Every decision answered 2026-11-09 (Basheer); was Draft.
 **Traceability rows:** none change status by the move itself; each
 feature's own row already records it.
 **Design / discussion:** model `docs/UAT-Promotion-2026-10-Plan.md`;
@@ -32,8 +33,14 @@ targets and sets his Area Managers' targets on UAT).
   once: everyone still active gets their own password, in this order:
   Haroon, the five Area Managers (Shruthi, Fazal, Arun Adarsh, Nishad K V,
   Naeem — Basheer, 2026-11-09), then top down from the User Directory;
-  existing sign-ins are ended too; each password sent privately before
-  the team starts — Basheer, 2026-11-09
+  each password sent privately before the team starts — Basheer,
+  2026-11-09. **Everyone signed out before the password
+  changes**, with Render still off: `delete from auth.sessions returning
+  user_id;` in the UAT SQL Editor, 14 rows (Basheer ran it 2026-11-10;
+  replaces "no sign-outs" decided earlier the same morning). Renewal
+  passes go with their session (`auth.refresh_tokens` ON DELETE CASCADE,
+  Dev catalog 2026-11-10); a short pass already issued lasts to its
+  expiry, about an hour by Supabase's default — Basheer, 2026-11-10
 - D8. **Optional pilot before the day:** Haroon and Latheef Bhai get their
   new passwords first (they sign out first, then test) — Basheer,
   2026-11-09
@@ -128,7 +135,7 @@ On the day (**B** = Basheer; **C** = Claude, after your go-ahead):
 | 4 | B | Run the 2 database changes (commands in section 6) | 1 min |
 | 5 | C | After-move checks (read-only): "ALL CHECKS PASSED" or stop | 2 min |
 | 6 | B | Push the code (`git push origin 0756234:uat`), switch both services on, confirm both are Live on that commit | 5–10 min |
-| 7 | B | New passwords and end sign-ins, one person at a time (D7); Claude watches each result | 15–20 min |
+| 7 | B | New passwords, one person at a time (D7; everyone signed out first); Claude watches each result | 15–20 min |
 | 8 | B | Smoke test, look only, nothing saved (section 3), signing in with the new passwords | 15 min |
 | 9 | B | Send each person their password privately; tell Haroon UAT is back | — |
 
@@ -206,7 +213,34 @@ Scorecard updated with the moved features, then both pages republished
 - Step 7, per person, in the UAT SQL Editor:
   `update auth.users set encrypted_password = extensions.crypt('…',
   extensions.gen_salt('bf', 10)), updated_at = now() where email = '…'
-  returning email, updated_at;` — one row each. Ending existing sign-ins
-  (`auth.sessions` / `auth.refresh_tokens` for that user): exact command
-  to confirm against Supabase's documentation before the day. Delete the
-  saved query afterwards.
+  returning email, updated_at;` — one row each. Sign-ins ended for
+  everyone beforehand (D7, 2026-11-10). Delete the saved query afterwards.
+
+## 7. Outcome (2026-11-10)
+
+- Steps 1–9 done the same morning. 9 plans' Status lines say "on UAT
+  2026-11-10".
+- Rollback point: the daily backup `cabio_uat_2026-11-10_0658.dump`, taken
+  before step 1 (Drive copy by Basheer). The step 2 check found nothing
+  changed since 06:58, so step 3 was not repeated (Basheer).
+- Step 2 before-check: UAT at 0063; 254 Opportunities ₹3,669.24 L; 2,541
+  activities; 800 hospitals; 15 target plans ₹2,355.40 L; 24 brand vendor
+  targets ₹1,518.25 L.
+- Steps 4–5: 0063 → 0065 applied by Basheer; after-check ALL CHECKS
+  PASSED, counts and totals unchanged, `set_by_hand` false on every row,
+  the function exists.
+- Step 6: `uat` 8b2ec8a → 0756234 (fast-forward, 173 commits, `2ac7f25`
+  not included); both services Live.
+- **Differences from the plan:**
+  - Everyone was signed out before the passwords (D7, changed that
+    morning): 14 sessions ended.
+  - Render was switched back on with about half the passwords done,
+    because people began signing in as passwords were shared, so it was
+    on before the step 8 check (Basheer).
+- Step 7: 13 passwords changed by email (Basheer). Two first tries matched
+  no one (capital letters, a missing letter) and changed nothing.
+- Step 8: 10 of 10 Pass. Empty My hospitals for Rudrappa and Basheer is
+  expected (no approved plan this quarter); nothing waiting for Haroon,
+  as Fahad's plan waits for Fazal, his manager.
+- Step 9: the team note with the feature list was sent, and each person
+  got their password one to one on WhatsApp (Basheer).

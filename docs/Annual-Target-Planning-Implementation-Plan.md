@@ -1,6 +1,6 @@
 # Annual Target Planning — Implementation Plan
 
-**Status:** Part 2's Target vs Actuals redesign
+**Status:** **Part 2 on UAT 2026-11-10** (`0756234`, `docs/UAT-Promotion-2026-11-Plan.md`). Part 2's Target vs Actuals redesign
 moved to its own plan, `docs/Target-vs-Actuals-Redesign-Implementation-Plan.md`
 (Basheer, 2026-10-29; was D82–D87). Part 1 approved — Basheer, 2026-10-20 (D1–D56; D57 added
 2026-10-21; D66–D73 for Part 2, 2026-10-22; D74, 2026-10-22). Replanned

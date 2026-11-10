@@ -1,6 +1,6 @@
 # Target vs Actuals Redesign — Implementation Plan
 
-**Status:** Approved — Basheer, 2026-10-29. Split out of
+**Status:** **On UAT 2026-11-10** (`0756234`, `docs/UAT-Promotion-2026-11-Plan.md`). Approved — Basheer, 2026-10-29. Split out of
 `docs/Annual-Target-Planning-Implementation-Plan.md` (its D82–D87, which
 become D1–D6 here) — Basheer, 2026-10-29 (D7).
 **Build progress:** built and merged into `main` 2026-10-29 (merge

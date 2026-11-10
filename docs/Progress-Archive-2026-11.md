@@ -1501,3 +1501,29 @@ link and file created and deleted again (Basheer's report).
 - **Corrections from Basheer this session: 2** (counted from his messages): (1) "Not when moving from Lead to Qualified…" — I put the checklist as a gate on Lead → Qualified after agreeing with his "right?", instead of asking where in Qualified it belongs; (2) he had to add "in UAT" to the count request — I had offered the count on Dev.
 - Caught by me, not counted: the 7 Nov questions were lost because the note held only their count.
 - No tracker line: UAT touched only as approved (read-only, rolled back), no live data changed, no work lost.
+
+## 10 Nov 2026 — Plan & Chore: UAT backup; UAT move to `0756234`
+
+- UAT backup (due today, Basheer yes): `cabio_uat_2026-11-10_0658.dump`, 929,602 bytes, 535 table-of-contents entries; pruned `cabio_uat_2026-10-27_1759.dump` (14 kept). Taken before the move's switch-off, so it is not the move's step 3 rollback copy. Drive copy: Basheer, by hand.
+- Move plan D7: existing sign-ins are **not** ended — "Lets not over engineer this. No sign outs for now." (Basheer, 10 Nov). Background given first: switching off Render doesn't sign anyone out, and nor does a password change. Reversed later that morning: everyone was signed out (step 7 below).
+- **UAT move, steps 1–6** (`docs/UAT-Promotion-2026-11-Plan.md`):
+  - Step 1: both Render services suspended (Basheer).
+  - Step 2: read-only before check, approved, tried on Dev first, all three RLS settings verified. Results: version 0063; 254 Opportunities ₹3,669.24 L; 2,541 activities; 800 hospitals; 15 target plans ₹2,355.40 L; 24 brand vendor targets ₹1,518.25 L. Nothing changed since 06:58, so the 06:58 backup is the rollback point and step 3 was not repeated (Basheer).
+  - Step 4: Basheer ran `alembic upgrade head`; 0063 → 0064 → 0065, current = 0065 (head).
+  - Step 5: after check ALL CHECKS PASSED: same counts and totals, `set_by_hand` true on 0 rows, the function exists.
+  - Step 6: `git push origin 0756234:uat`, `8b2ec8a..0756234`, 173 commits, header commit `2ac7f25` not included (checked).
+  - Scripts: session scratchpad `uat_move_check.py`, outputs `move_check_uat_before.txt` and `move_check_uat_after.txt`.
+- **UAT move, step 7 onwards (differs from the plan's order):**
+  - Everyone signed out first: `delete from auth.sessions returning user_id;`, 14 rows, run by Basheer (D7 updated). This was checked against the Supabase sessions docs and the Dev catalog: renewal passes cascade with their session.
+  - Passwords by email, the 9 Nov command. Two misses returned 0 rows and changed nothing: "UAT" written in capitals, and a missing letter. Arun Adarsh done.
+  - Basheer shared the new passwords as they were made. People began signing in, so he switched Render on with about half the passwords done, before step 8's look-only check. Recorded as a difference from the plan.
+  - All 13 passwords changed (Basheer). Some people not told yet.
+  - Both Render services Live on `0756234` (Basheer).
+  - Step 8 look-only check run by Basheer: **10 of 10 Pass**.
+    - Rudrappa and Basheer: My hospitals is empty, showing "No approved hospital plan for this quarter." This is expected: the list shows only the approved plan's hospitals (`MyWorkScreen.tsx:612–620`).
+    - Haroon: nothing is waiting for him. Fahad's plan is pending for Fazal, his manager (`planning/service.py:117–129`); a GM can also approve it from Team Plans.
+  - Step 9: the team note was sent with the feature list. Basheer has sent every password one to one on WhatsApp. **UAT move complete.**
+  - The plain My Work screen on Basheer's phone was not a fault: his UAT account has no records to list, so there was nothing to colour (Basheer).
+- **Retro (Plan & Chore, 10 Nov morning): 2 corrections.**
+  1. Password SQL given by user id, though Basheer has only emails and had used the email form on 9 Nov. Lesson: reuse the command form already used and recorded, from the plan's section 6, instead of composing a new one.
+  2. Asked about the step 3 backup, which had been settled on 9 Nov (D4), and the 06:58 backup covered it. Lesson: re-read the plan's Decisions before asking about a step.

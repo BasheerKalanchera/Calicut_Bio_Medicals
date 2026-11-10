@@ -1,6 +1,6 @@
 # Target vs Actuals: Simpler Table — Implementation Plan
 
-**Status:** Built — `c490eb9` (31 Oct), merged into `main` 1 Nov
+**Status:** **On UAT 2026-11-10** (`0756234`, `docs/UAT-Promotion-2026-11-Plan.md`). Built — `c490eb9` (31 Oct), merged into `main` 1 Nov
 (`515a2f2`); header fixes `a1f0147`; E2E 4 Nov 37 of 37 Pass (shared test
 plan with the redesign, `docs/Target-vs-Actuals-Redesign-Manual-E2E-Test-Plan.md`).
 Build steps below are complete; kept as the original plan. Approved

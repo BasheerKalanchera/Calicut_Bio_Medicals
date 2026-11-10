@@ -1,6 +1,6 @@
 # Hospital-Level Open Next Action Rule — Implementation Plan
 
-**Status:** Approved 2026-10-28 (Basheer), D1–D5; D6–D8 added
+**Status:** **On UAT 2026-11-10** (`0756234`, `docs/UAT-Promotion-2026-11-Plan.md`). Approved 2026-10-28 (Basheer), D1–D5; D6–D8 added
 2026-10-30 (Basheer); D9–D12 added 2026-10-30 (Basheer, Project screen).
 D13 and D14 added 2026-10-31 (Basheer, after the code review).
 Steps 1–5 built on branch `worktree-build` (31 Oct: `2b5a113`, `421fc63`,
