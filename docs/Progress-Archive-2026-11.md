@@ -1527,3 +1527,71 @@ link and file created and deleted again (Basheer's report).
 - **Retro (Plan & Chore, 10 Nov morning): 2 corrections.**
   1. Password SQL given by user id, though Basheer has only emails and had used the email form on 9 Nov. Lesson: reuse the command form already used and recorded, from the plan's section 6, instead of composing a new one.
   2. Asked about the step 3 backup, which had been settled on 9 Nov (D4), and the 06:58 backup covered it. Lesson: re-read the plan's Decisions before asking about a step.
+
+## 10 Nov 2026 — Build & Test: UAT investigations
+
+Three questions from Basheer, all answered with read-only checks on UAT
+(Basheer approved each; one read-only transaction as Admin or as the user
+being tested, settings checked first, always rolled back). Nothing was
+edited in code and nothing was written to UAT.
+
+- **44 never-contacted customers with no "Logged by" (Customer with No
+  Activity report, UAT at 0065):** by design. "Logged by" is the person who
+  logged the last visit, call, meeting or email, and these hospitals have
+  none. All 44 were added through the app by named reps between 3 Aug and
+  6 Nov 2026 (one has no creator recorded); 44 of 800 hospitals in the Admin
+  view. Gopika pv added 23 of them. Saved as
+  `docs/UAT-Never-Contacted-Customers-Origin-2026-11-10.md`.
+- **Chalukya hospital and Soiicon 2026:** "Soiicon 2026" is a conference
+  (Basheer). Chalukya hospital's only activity is a Meeting dated 28 Nov 2026,
+  entered 6 Nov by Ravi Kumar; a future date doesn't count (D12). Basheer
+  confirmed from the note text that the date was typed wrongly. The Log
+  Activity picker has no latest date (`LogActivityModal.tsx:411-416`), the
+  server has no check, and activities can't be edited or deleted. **Open:**
+  correct the one date on UAT (needs the real date) and/or block future dates
+  for Visit, Call, Meeting and Email.
+- **My Work Summary slow on first load (UAT):** one request
+  (`GET /reporting/weekly-followup`) feeds all four tabs and makes 3
+  queries. Timed from Basheer's PC against UAT: 0.9–1.7 s of database time
+  per call, repeats as slow as the first; round trip about 40 ms. Render cold
+  start ruled out (Basheer's bot pings every 5 minutes). The slow query is the
+  Opportunities one, 0.6–1.2 s even for 13–29 Active Opportunities.
+- **EXPLAIN ANALYZE:** Arun Adarsh 1,151 ms for 27 Opportunities and Fahad
+  502 ms for 19. About 1,120 ms of Arun's time is the last-contact step
+  re-run once per Opportunity (`GroupAggregate … loops=27`, about 41 ms each,
+  about 565,000 page reads); Fahad's the same (19 loops, about 25 ms each).
+  The planner guessed 1 Opportunity and chose a per-row plan.
+- **Experiment (same four people, 3 runs each):** the last-contact step as a
+  `MATERIALIZED` CTE took about 145–200 ms against 560–1,590 ms today
+  (Arun 1,223–1,587, Haroon 1,175, Nishad 790, Fahad 560); a two-step version
+  (separate grouped query) about 215–260 ms. My first estimate, about 70 ms,
+  was too low.
+- **Accuracy check, Basheer asked "does it compromise the results?":** all
+  columns of all rows compared old against new, including days since contact:
+  16 active users as viewers, managers also viewing each of the 13 owners of
+  Active Opportunities; 127 views, 737 rows, 0 mismatches. (A first run
+  crashed on a logging line of my script, after one viewer; fixed and re-run.)
+- **Correction to what I said:** the Stagnant Opportunities report does not
+  benefit. It calls the same helper with no owner (`repository.py:304`), and
+  that case was not tested, so the proposed change leaves it alone.
+- **Proposed change (not yet approved):** in `_days_since_last_contact`
+  (`reporting/repository.py:94-116`), when an owner is given, use a
+  `MATERIALIZED` CTE instead of `.subquery()`. Then tests, a Dev re-check, a
+  UAT timing, then a commit proposal. Lazy loading of the Summary tiles stays
+  an optional later step if My Work is still slow.
+- Scripts and outputs (session scratchpad, not in the repo):
+  `uat_never_contacted_origin.py`, `uat_chalukya_check.py`,
+  `uat_mywork_timing.py`, `uat_mywork_explain.py`, `uat_mywork_experiment.py`,
+  `uat_mywork_fullcompare.py` and their `_out.txt` files.
+- **Retro (Build & Test, 10 Nov): 4 corrections.**
+  1. Left "I did not check what type they are" in the report for the two
+     activity lists; Basheer had to ask (Soiicon a conference, Chalukya a
+     Meeting).
+  2. Treated a Render cold start as a possible cause of the slow load;
+     Basheer's bot already keeps it awake.
+  3. First explanation of "run once instead of once per Opportunity" didn't
+     make sense to Basheer; he asked how it could work.
+  4. Offered to write the fix up as a plan on an unmeasured estimate (about
+     70 ms); Basheer asked for the experiment first (measured 150–200 ms).
+  No guard fits these; none touched live data (every UAT connection approved
+  first, read-only, rolled back). No tracker change.
