@@ -89,45 +89,58 @@ export default function SalesReportScreen({
   const maxRevenue = Math.max(1, ...rows.map((r) => parseFloat(r.revenue_lakhs)));
 
   return (
-    <Box sx={{ flex: 1, overflowY: "auto", bgcolor: "background.default", p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
-      <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
-        <Typography variant="caption" color="text.secondary">{periodDates(period)}</Typography>
-        <TextField select size="small" label="Period" value={period} onChange={(e) => setPeriod(e.target.value as Period)} sx={{ minWidth: 140 }}>
-          {PERIOD_OPTIONS.map((o) => (
-            <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
-          ))}
-        </TextField>
-      </Box>
-
-      <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
-        <StatTile
-          label="Revenue Won"
-          value={headline ? formatLakhs(parseFloat(headline.revenue_lakhs)) : "—"}
-          sublabel={headline ? `${headline.won_count} ${headline.won_count === 1 ? "Opportunity" : "Opportunities"}` : undefined}
-        />
-        <StatTile label="Opportunities Won" value={headline ? String(headline.won_count) : "—"} />
-        <StatTile
-          label="Win Rate"
-          value={headline ? formatPercent(parseFloat(headline.win_rate)) : "—"}
-          sublabel={headline ? `${headline.won_count} won, ${headline.lost_count} lost` : undefined}
-        />
-        <StatTile
-          label="Avg Opportunity Size"
-          value={headline ? formatLakhs(parseFloat(headline.avg_deal_size_lakhs)) : "—"}
-        />
-      </Box>
-
-      <SectionCard
-        title={`Revenue Won by ${GROUP_BY_OPTIONS.find((o) => o.value === groupBy)?.label}`}
-        action={
-          <TextField select size="small" label="Group by" value={groupBy} onChange={(e) => setGroupBy(e.target.value as SalesGroupBy)} sx={{ minWidth: 110 }}>
-            {GROUP_BY_OPTIONS.map((o) => (
+    <Box sx={{ flex: 1, overflow: "hidden", bgcolor: "background.default", display: "flex", flexDirection: "column" }}>
+      {/* The period box, the four tiles and the "Revenue Won by …" title with
+          its dropdown stay put; only the bars below scroll (Frontend standards
+          §6.1, Simpler Table D15/D16, same as the Pipeline Report). */}
+      <Box sx={{ p: 2, pb: 1.5, flexShrink: 0, display: "flex", flexDirection: "column", gap: 1.5 }}>
+        <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
+          <Typography variant="caption" color="text.secondary">{periodDates(period)}</Typography>
+          <TextField select size="small" label="Period" value={period} onChange={(e) => setPeriod(e.target.value as Period)} sx={{ minWidth: 140 }}>
+            {PERIOD_OPTIONS.map((o) => (
               <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
             ))}
           </TextField>
-        }
-      >
+        </Box>
 
+        <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+          <StatTile
+            compact
+            label="Revenue Won"
+            value={headline ? formatLakhs(parseFloat(headline.revenue_lakhs)) : "—"}
+            sublabel={headline ? `${headline.won_count} ${headline.won_count === 1 ? "Opportunity" : "Opportunities"}` : undefined}
+          />
+          <StatTile compact label="Opportunities Won" value={headline ? String(headline.won_count) : "—"} />
+          <StatTile
+            compact
+            label="Win Rate"
+            value={headline ? formatPercent(parseFloat(headline.win_rate)) : "—"}
+            sublabel={headline ? `${headline.won_count} won, ${headline.lost_count} lost` : undefined}
+          />
+          <StatTile
+            compact
+            label="Avg Opportunity Size"
+            value={headline ? formatLakhs(parseFloat(headline.avg_deal_size_lakhs)) : "—"}
+          />
+        </Box>
+
+        <SectionCard
+          compact
+          title={`Revenue Won by ${GROUP_BY_OPTIONS.find((o) => o.value === groupBy)?.label}`}
+          action={
+            <TextField select size="small" label="Group by" value={groupBy} onChange={(e) => setGroupBy(e.target.value as SalesGroupBy)} sx={{ minWidth: 110 }}>
+              {GROUP_BY_OPTIONS.map((o) => (
+                <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
+              ))}
+            </TextField>
+          }
+        >
+          {null}
+        </SectionCard>
+      </Box>
+
+      <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", px: 2, pb: 2 }}>
+      <SectionCard title="Revenue Won" hideHeader>
         <LoadingOrEmpty
           isLoading={breakdownQuery.isLoading}
           isError={breakdownQuery.isError}
@@ -171,6 +184,7 @@ export default function SalesReportScreen({
         )}
         {groupBy === "zone" && rows.length > 0 && <ZoneTreeNote />}
       </SectionCard>
+      </Box>
     </Box>
   );
 }

@@ -107,7 +107,13 @@ def _days_since_last_contact(owner_id: uuid.UUID | None = None):
         last_contact_subq = last_contact_subq.where(
             Activity.opportunity_id.in_(select(Opportunity.id).where(Opportunity.owner_id == owner_id))
         )
-    last_contact_subq = last_contact_subq.subquery()
+    if owner_id is not None:
+        # My Work: force Postgres to work this out once per request. As a plain
+        # subquery it ran once per Opportunity (560-1,590 ms on UAT against
+        # 145-200 ms this way, same rows -- Progress-Archive 10 Nov).
+        last_contact_subq = last_contact_subq.cte("last_contact").prefix_with("MATERIALIZED")
+    else:
+        last_contact_subq = last_contact_subq.subquery()
     # No contact logged yet -- created_at is the only signal of "since when
     # has nobody touched this" (BR-OP-20 "No activity yet").
     last_contact_date = func.coalesce(last_contact_subq.c.last_activity_date, Opportunity.created_at)

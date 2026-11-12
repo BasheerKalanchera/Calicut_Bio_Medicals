@@ -259,7 +259,9 @@ class OpportunityRepository(BaseRepository[Opportunity]):
         if owner_team_only and current_user is not None:
             stmt = self._apply_owner_team_scope(stmt, current_user)
         # BR-OP-15: High Priority Opportunities first (automatic past-Demo or manual
-        # flag), then by win probability -- Basheer's call, 2026-09-15.
+        # flag), then by win probability -- Basheer's call, 2026-09-15. The id is
+        # the last key only so ties come back in the same order on every load
+        # (Basheer, 2026-11-12); it is not a recency order.
         is_high_priority = case(
             (
                 or_(
@@ -272,7 +274,7 @@ class OpportunityRepository(BaseRepository[Opportunity]):
         )
         stmt = (
             stmt.join(OpportunityStage, Opportunity.stage_id == OpportunityStage.id)
-            .order_by(is_high_priority.desc(), Opportunity.win_probability.desc())
+            .order_by(is_high_priority.desc(), Opportunity.win_probability.desc(), Opportunity.id)
             .offset(offset)
             .limit(limit)
         )

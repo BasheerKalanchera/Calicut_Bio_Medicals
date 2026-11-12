@@ -119,11 +119,20 @@ class TestListPipelineOrdering:
         assert "opportunity_stage.display_order > 30 OR opportunity.high_priority_manual" in sql
 
     def test_no_created_at_tiebreaker(self):
-        # Basheer's explicit call, 2026-09-15 -- ties render in whatever
-        # order Postgres happens to return them, not pinned to recency.
+        # Basheer's explicit call, 2026-09-15 -- ties are not pinned to
+        # recency (the id below only keeps their order the same on every load).
         sql = self._compiled_list_pipeline()
         order_by = sql.split("ORDER BY", 1)[1].split("LIMIT", 1)[0]
         assert "created_at" not in order_by
+
+    def test_id_is_the_last_sort_key_so_ties_keep_one_order(self):
+        # Basheer, 2026-11-12: cards with the same High Priority flag and win
+        # probability swapped places between loads; the id makes the order stable.
+        sql = self._compiled_list_pipeline()
+        order_by = sql.split("ORDER BY", 1)[1].split("LIMIT", 1)[0]
+        keys = [k.strip() for k in order_by.split(", ")]
+        assert keys[-1] == "opportunity.id"
+        assert order_by.find("opportunity.win_probability") < order_by.find("opportunity.id")
 
 
 class TestListPipelineFilters:

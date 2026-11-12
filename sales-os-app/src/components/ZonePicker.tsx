@@ -59,6 +59,9 @@ export default function ZonePicker({
       isOptionEqualToValue={(o, v) => o.id === v.id}
       value={value}
       loading={isFetching}
+      // Nothing is searched until 2 letters are typed, so an empty list before
+      // that is not "no match" -- tell the person what to do instead.
+      noOptionsText={searchInput.trim().length < 2 ? "Type 2 letters to search zones" : "No options"}
       filterOptions={(x) => x}
       onChange={(_e, newValue) => onChange(newValue)}
       onInputChange={(_e, newInputValue) => setSearchInput(newInputValue)}

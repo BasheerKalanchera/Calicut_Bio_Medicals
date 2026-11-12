@@ -316,6 +316,18 @@ class TestWeeklyFollowupOpportunities:
         assert f"opportunity_item.opportunity_id {narrowed}" in sql
         assert f"activity.opportunity_id {narrowed}" in sql
 
+    def test_last_contact_is_worked_out_once_not_per_opportunity(self):
+        # Speed fix (12 Nov): MATERIALIZED makes Postgres run the last-contact
+        # step once per request; as a plain subquery it ran once per Opportunity.
+        sql = _run("weekly_followup_opportunities", _make_current_user("Admin"), uuid.uuid4())
+        assert "AS MATERIALIZED" in sql
+
+    def test_stagnant_report_keeps_its_plain_subquery(self):
+        # The Stagnant report calls the same helper with no owner and is not
+        # part of the speed fix -- it must stay exactly as it was.
+        sql = _run("stagnant_deals", _make_current_user("Admin"))
+        assert "MATERIALIZED" not in sql
+
     def test_days_since_contact_never_negative(self):
         # A visit logged with a future date must not give "-3 days".
         sql = _run("weekly_followup_opportunities", _make_current_user("Admin"), uuid.uuid4())
