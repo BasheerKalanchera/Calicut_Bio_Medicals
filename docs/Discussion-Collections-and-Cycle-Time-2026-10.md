@@ -5,6 +5,9 @@ except Q6 (parked, Basheer 2026-10-16). **Q1–Q4 on hold (Haroon via
 Basheer, 2026-11-07):** wait until the team is used to moving an
 Opportunity into Payment Pending (live since the 25 Oct UAT move), then
 bring in more tightening once everyone is comfortable with it.
+**11 Nov:** UAT evidence on part-payment sales and a lighter first step
+added to 4c and Q4, for Basheer's discussion with Haroon and Latheef Bhai
+on 12 Nov.
 **Participants:** Latheef Bhai (raised it; wants to work out the solution
 together), Basheer (decisions), Haroon / Cabio leadership (business
 sign-off), Claude (options and analysis).
@@ -72,7 +75,7 @@ Latheef Bhai's three messages, 13 Oct 2026, summarised:
 
 | Ask | Today |
 |---|---|
-| A payment stage | **Built, tested on Dev 3 Oct, not yet on UAT** (comes with the next UAT move). After Delivery & Installation there is a last stage, Payment Pending; an Opportunity can be marked Won only from there, with "full payment received" ticked. Rule BR-OP-17. |
+| A payment stage | **Built, on UAT since the 25 Oct move.** After Delivery & Installation there is a last stage, Payment Pending; an Opportunity can be marked Won only from there, with "full payment received" ticked. Rule BR-OP-17. |
 | Reminder when payment is late | **Planned, not built.** The "stuck in stage" alerts would flag an Opportunity that sits too long in one stage and tell the rep and their manager. Payment Pending has no time limit yet (30 or 45 days had been suggested; Latheef Bhai's instruction now says 60). Two things are missing: a daily job that runs on its own, and a record of when each Opportunity moved stage. On 11 Oct Basheer decided to keep these alerts off while reps get used to the app. |
 | Reminder to Haroon and accounts staff | **Not planned.** The design only reaches the rep and their direct manager. Accounts staff don't use Sales OS; whether they get a list (and in what form) was an open question. |
 | Payment terms per order | **Not planned.** The payment-stage plan deliberately left out advance, part and retention payments. The signed requirements make Finance's own system the owner of payments and collections. |
@@ -117,6 +120,46 @@ system, and overlaps with the open retention question. Best decided after
 Payment Pending has run on UAT for a quarter, so the team knows how much
 the simpler version already catches.
 
+**How common part-payment sales are (UAT read-only check, 11 Nov).** Of
+260 Opportunities, 60 are at Order or later, or Won. Their notes show 7
+(6 hospitals) paid to Cabio in parts: Ambalpadi Udupi (two Opportunities,
+35 % upfront then 24-month EMI), City Nursing Home Karkala (EMI), Gulf
+Laboratory Areekode (10L advance, then 2 instalments), IQRAA Padne
+(18-month EMI), Mangalore Multi-speciality (EMI, at Payment Pending) and
+SABA Payyannur (post-dated cheques). That is about 1 in 9, and a lower
+bound: a sale whose terms nobody wrote in a note can't be found. Five of
+the seven are already marked Won while money is still due; none of the
+five is at Payment Pending, so all were marked Won before
+Won-only-from-Payment-Pending reached UAT on 25 Oct. A hospital
+paying from its own bank loan (Mangala Hospital) pays Cabio in one go and
+isn't counted. Four offers at earlier stages also quote part payments,
+two of them Critical Care, so this isn't only Imaging.
+
+A wider check the same day searched all 2,598 activities, including the
+1,676 logged on a hospital without an Opportunity, for any payment terms
+(advance, balance, cheque, credit, loan and others). Sorted by hand, per
+hospital: instalments after delivery agreed at **7** (the 6 above plus
+Slide Diagnostic Centre Kunnumpuram, 1-year EMI, an order with no
+Opportunity in the app); instalments offered but not agreed at **4**, plus
+2 where "payment terms" were discussed without detail; the hospital's own
+bank loan at **5** (3 of them paying late because of the loan); and
+advance then balance at delivery or installation at **20**, the normal
+practice. So instalments after delivery are a minority, but a growing
+one, and bank-loan purchases are a second cause of late payment.
+
+What it means today: the app can't tell an instalment sale from a slow
+payer. Both sit at Payment Pending, so the 60-day alert (4a) would flag
+an 18- or 24-month EMI sale that is being paid on time, and under "Won
+only after full payment" such a sale counts as Won only after the last
+instalment (for Ambalpadi, about two years).
+
+**A lighter first step (proposed).** One "Payment terms" choice on the
+Opportunity: full payment, advance plus instalments, or customer's bank
+loan (paid in one go). No amounts or due dates, so payments stay in
+Finance's system. The 60-day alert would skip instalment sales (or use a
+longer limit), and reports could show instalment sales separately. The
+full per-part schedule above stays the Phase 2 candidate.
+
 ### 4d. The wider levers
 
 Latheef Bhai's "operational and financial levers" thinking is captured in
@@ -148,6 +191,23 @@ Bhai set the days; accounts get a weekly Excel list at first, not a login.
 **Q4. Payment terms per order — Phase 1 or Phase 2?** *Recommend:*
 Phase 2 or a priced change request, decided after a quarter of Payment
 Pending on UAT, together with Q6.
+**11 Nov, two narrower questions added (proposed, for 12 Nov):**
+- **Q4a. Add the single "Payment terms" choice (4c, lighter step) in
+  Phase 1?** Example: Fahad marks SonoScape S70I at Ambalpadi as "advance
+  plus instalments", so its 24-month EMI doesn't raise the 60-day alert.
+  *Recommend:* yes, built before the 60-day alert is switched on (Q2), so
+  the alert never fires on an instalment sale paid on time.
+- **Q4b. When does an instalment sale count as Won?** Example: City
+  Nursing Home has paid two EMIs of six. Option 1, keep today's rule: Won
+  after the last instalment; it stays at Payment Pending, counted in the
+  open pipeline, with a dated "collect next EMI" next action. Option 2,
+  Won once the advance is in and the rest is on an agreed schedule, like
+  the retention idea in Q6; then the app stops prompting the rep to
+  collect. *Recommend:* Option 1: it keeps the salesperson owning
+  collection, which is Latheef Bhai's aim, and needs no build. If
+  Option 1, the three other instalment sales already Won (Gulf
+  Laboratory, IQRAA, SABA) move back to Payment Pending as a one-time
+  fix, like Ambalpadi and City Nursing Home.
 
 **Q5. Analyse last year's orders as a one-off, outside the app?**
 *Recommend:* yes, once Latheef Bhai shares Finance's order and payment
@@ -190,7 +250,11 @@ field feedback may change or roll back the rule, so nothing is built now.
 
 - Payment Pending: migrations 0057 (stage row, `stage_order` 80, default
   probability 98) and 0058 (`full_payment_note`); commits `b9e01e8`,
-  `71f07b5`, `0d0133d`, `75ac199`. Not on UAT.
+  `71f07b5`, `0d0133d`, `75ac199`. On UAT since 25 Oct.
+- 11 Nov part-payment check: read-only UAT script (archive 11 Nov), word
+  search of `activity.notes`, `activity.outcome_notes` and
+  `opportunity.full_payment_note`, each match read by hand; output kept in
+  that session's scratchpad.
 - No stage-history table exists (`docs/Physical-Schema.sql`);
   `opportunity` holds only the current `stage_id`. The audit trail records
   field changes, but the Insights Dashboard plan judged `updated_at` too
