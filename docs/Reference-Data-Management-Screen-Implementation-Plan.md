@@ -9,6 +9,11 @@ gone — Hospital-wise planning uses a **fixed list of five** visit
 frequencies instead (Basheer's choice 2), and Coverage Planning itself was
 replaced (`docs/Hospital-Wise-Target-Planning-Implementation-Plan.md`). The
 other tables' need is unchanged.
+**Update 2026-11-12 (Basheer):** Payment Terms (Full payment, Advance +
+instalments, Customer's bank loan, Cabio-facilitated loan) join this
+screen once `docs/Payment-Terms-Implementation-Plan.md` has built their
+table. Its one yes/no field (skipped by the overdue alert) is set per row,
+so a renamed or added option keeps working.
 **Update 2026-10-28 (Basheer):** activity types join this screen once
 `docs/Activity-Type-Table-Implementation-Plan.md` has built their table
 (its D5). Admin/GM can add a new type, setting its yes/no answers (counts

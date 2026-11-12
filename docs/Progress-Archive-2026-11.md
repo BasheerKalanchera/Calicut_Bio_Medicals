@@ -1740,3 +1740,108 @@ edited in code and nothing was written to UAT.
 - Teaching-note outline given in chat (generic names, change of mind edits the same Opportunity, timeline note for every change in what was sold or its payment terms, Won = fully paid). App gaps to consider as Backlog candidates: automatic timeline note on rename or product change; Won edit lock; payment-terms field.
 - **Retro — corrections from Basheer this session: 0** (3 messages: the session start, the research request, "refresh"). My own slip, not a correction: I wrote a handover entry and a UAT-check request without searching the 11 Nov archive first. No tracker line.
 
+## 12 Nov 2026 — Plan & Chore: UAT backup
+
+- UAT backup (due today, Basheer yes): `cabio_uat_2026-11-12_1025.dump`, 958,166 bytes, 537 table-of-contents entries; pruned `cabio_uat_2026-10-29_0751.dump` (14 kept). Docker Desktop needed a forced stop at the end (log 10:26:28); no effect on the dump. Drive copy: Basheer, by hand.
+
+## 12 Nov 2026 — Plan & Chore: Critical Care brand 2026 figures, re-read on UAT
+
+- Haroon says he has entered every Critical Care brand target he has received (Basheer). Read-only UAT re-check (Basheer asked; 10 Nov script re-run, one read-only transaction as Admin, rolled back; output `uat_brand_2026_splits_12nov.txt` in this session's scratchpad).
+- Since 10 Nov: ELECTROSCIENCE (20L, no stretch), Maquet (50L, no stretch) and Medion (12L, no stretch) got a 2026 yearly figure, all on the Critical Care pattern, saved by Haroon 10 Nov 15:19–15:21 IST. Nothing changed after that. Equipwell, Kolkatta and We Make still have only their 28 Sep quarter figures (Jul–Sep 2, 3, 1; Oct–Dec 2, 2, 1); Datascope, Gentherm and Stockert have nothing. EDAN, Magnamed (own 25 each) and Aeonmed (own 0/0/0/100) kept their own patterns; Critical Care pattern still 25/15/25/35. Oct–Dec 2026 onwards matches the pattern for all seven brands with a yearly figure; their earlier 2026 quarters don't (old 28 Sep figures or empty). SonoScape still matches in all four quarters.
+- Fix table put to Basheer (Lakhs; Jan–Mar / Apr–Jun / Jul–Sep 2026): EDAN 100 new / 100 new / 200 → 100; Magnamed 26.25 / 26.25 / 100 → 26.25; ELECTROSCIENCE 5 / 3 / 15 → 5; Maquet 12.50 / 7.50 / 20 → 12.50; Medion 3 / 1.80 / 5 → 3; AVI Health care (Apr–Mar year) Apr–Jun 2.25 new, Jul–Sep 6 → 3.75; Aeonmed (Apr–Mar, own 0/0/0/100) Apr–Jun 0 new, Jul–Sep 50 → 0. Oct–Dec 2026 onwards already right for all seven.
+- Three questions, with the table, sent to Haroon by Basheer (12 Nov): (1) Equipwell, Kolkatta and We Make left out on purpose (old figures then stay, still counting in the Critical Care total)? (2) EDAN, Magnamed and Aeonmed keep their own patterns? (3) Aeonmed's Apr–Jun and Jul–Sep to 0? **Waiting on Haroon**; then extend the SonoScape script to these brands, rehearse and apply, each with Basheer's yes.
+
+## 12 Nov 2026 — Plan & Chore: Backlog small batch to Build & Test; retro
+
+- **Handed to Build & Test (Basheer, 12 Nov):** zone box "No options" →
+  option A message "Type 2 letters to search zones" (8 screens, no server
+  change; `ZonePicker.tsx:49`, server `master_data.py:113` also needs 2
+  letters); Pipeline card order (Opportunity id as last sort key,
+  `opportunity/repository.py:275`); fixed header on Sales Report and
+  Opportunities On Hold. The three Backlog titles say so.
+- **B1–B7 rewordings** re-shown; facts re-checked (`2ac7f25` exists; move
+  plan D1 left the header out; no "section 9" step in the move plan;
+  Forecast plan still untracked). Waiting on Basheer's yes.
+- Still waiting on Basheer: Marketing User sweep plan, Activity privacy
+  plan, season-percentages carry-over.
+- **Retro:** 0 corrections from Basheer. Session refreshed at his request.
+
+## 12 Nov 2026 — Plan & Chore: leadership answers on instalment sales
+
+- **Payment terms plan approved (Basheer, 12 Nov):** `docs/Payment-Terms-Implementation-Plan.md`
+  written from the template and approved the same day. Loans close Won once the lender
+  pays Cabio; Cabio-loan EMI defaults followed up by a hospital next action;
+  instalments past 60 days aren't late; required at Order → Delivery & Installation;
+  editable until Won; shown on the Opportunity page and as a "Pipeline by" option on
+  the Pipeline report (no room on the list header); own lookup table, joining the
+  Reference Data screen as its 7th list; who receives the EMIs decides the option.
+  Client page: payment-terms row under "What we built" once built, Requested item 3
+  keeps due dates and reminders. Section 3 code search (read only): two entry points
+  (Edit form, New Opportunity form); repeat orders and gate overrides don't skip the
+  PO checks, so not this one either; not added to the Won check (old Payment Pending
+  ones may be blank); audit trigger covers the column; 4 test files, 68 PO lines
+  (counted). Doc tidy-up skipped 12 Nov (Basheer).
+- **Retro — corrections from Basheer this session: 5** (counted from his messages):
+  (1) "What is this 'its sales-credit row' … there is not Hospital total being kept
+  anywhere right?" (jargon, and my loose "hospital total"); (2) "5 - Didn't understand.
+  Please explain."; (3) "I didn't understand what you mean by 'Payment Collection
+  Control'?" (my own short name for Requested item 3); (4) "pipeline list header does
+  not have room" (my list-filter proposal); (5) "What is this Section 3 of the plan …
+  part?". Three of the five are unexplained shorthand in my replies — plain-language
+  rule already covers it; no guard fits, so no tracker line. My wrong claim that the
+  duplicate had a sales-credit row was caught by the rehearsal, not by Basheer, and
+  is recorded above.
+
+- Answers to the 12 Nov WhatsApp note (Basheer, 12 Nov), recorded in the
+  collections paper Q4: Payment terms choice approved with four options
+  (full payment, advance plus instalments, customer's bank loan, and a new
+  one, Cabio-facilitated loan). The first, third and fourth become Won on
+  full payment; advance plus instalments stays at Payment Pending until the
+  last instalment or post-dated cheque is paid. Both Fahad corrections
+  approved. Question 4 (Gulf Laboratory, IQRAA, SABA) was not answered
+  directly. Basheer, 12 Nov: Gulf back to Payment Pending (only 2
+  instalments); SABA back to Payment Pending until the last post-dated
+  cheque clears. IQRAA: Basheer thinks it is a Cabio-facilitated loan.
+  Read from the 11 Nov UAT check output (no new query): Haroon's 2 Sep call
+  quoted two prices, 26.75L without finance and 29.60L with finance
+  (processing charges included: advance 5.35L plus 21,400 processing
+  charge, then 18 x 1,33,550 = 24.04L EMI). 24 Sep: advance to clear by
+  month end. The Opportunity shows 26.75L, Won at Negotiation. The notes
+  don't say who the lender is or whether Cabio was paid in full. Open:
+  ask Haroon.
+- **Fahad's fix applied on UAT (Basheer yes to rehearsal, then to apply,
+  12 Nov; at 0065, as Basheer K):** rehearsal and apply both matched the
+  11 Nov check. Ambalpadi "SonoScape S80" (Won, D&I, 2 × S50 Elite @ 30 =
+  60L) → "SonoScape S50 Elite", Active at Order, 1 × 27L, chance 90%, Won
+  date cleared; Ambalpadi "SonoScape S70I" 35 → 33L; City Nursing Home
+  "City Nursing Home" (Won) → "SonoScape S50 Elite", Active at D&I, 27L;
+  duplicate "SonoScape S50-ELITE" deleted (1 product line; no activity,
+  document, lead, stakeholder, split or notification). Ambalpadi 60L, City
+  Nursing Home 27L. No timeline note written. Expected closing dates left
+  as they were and already past (31 Oct, 23 Sep, 7 Sep): Fahad to update.
+  Fallback: `cabio_uat_2026-11-12_1025.dump`. Outputs:
+  session scratchpad `uat_fahad_won_fix_rehearsal_2026-11-12.txt`,
+  `uat_fahad_won_fix_apply_2026-11-12.txt`. Correction (mine): I said the
+  duplicate had a sales-credit row; it had none.
+- WhatsApp note for Fahad and Haroon on the fix: session scratchpad
+  `WhatsApp-note-Fahad-fix-2026-11-12.txt`.
+- **Timelines for Gulf, IQRAA, SABA (UAT read-only, approved, 12 Nov, at
+  0065):** output in session scratchpad
+  `uat_three_instalment_timelines_2026-11-12.txt`.
+  Gulf Laboratory & Scan Center Areekode, "Sonoscape P40 elite USG
+  Machine" (Haroon, Order / Won, 18L: P40 Elite 23L less a 5L line with no
+  product, probably the old-machine exchange): order 23 Sep, 10L advance
+  then 2 equal instalments; advance collected by 21 Oct, "balance after
+  installation"; application support 21–24 Oct (Naeem), so probably
+  installed; no note of either instalment. IQRAA Community Hospital Padne
+  Kassargod, "Sonoscape S50elite" (Haroon, Negotiation / Won, 26.75L, PO
+  PDN-PO2627/000012): finance offer 2 Sep; 24 Sep advance due by month
+  end; 26 Oct "payment follow up done, need more call"; no note of
+  delivery, installation, the advance or a lender. Not fully paid by 26
+  Oct whichever way it is financed. SABA Hospital - Payyannur, "Sonoscape
+  S50 elite and E2" (Fazal, Order / Won, 9L, only an E2 product line):
+  PDCs handed over 10 Aug; installed 20 Sep; hospital-level notes: 7 Sep
+  "Payment got" (Fazal), 6 Nov "payment… it's closed" and 10 Nov "done the
+  payment procedures" (Gopika pv). Those may be about SABA's other Won
+  Opportunity (Edan ECG, 1L, Haroon, delivered 7 Sep). May already be
+  fully paid: check with Fazal or Accounts before any change.

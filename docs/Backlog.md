@@ -415,7 +415,9 @@ first whether to do this app-wide. Code: `TargetPlanningScreen.tsx`
 `SBU_TARGET_VIEW_ROLES` vs `service.py` `_SBU_TARGET_READ_ROLES` and the
 `sbu_target_read` policy (migration 0061).
 
-### Pipeline: cards with the same priority and chance can swap places — not started (2026-10-07)
+### Pipeline: cards with the same priority and chance can swap places — handed to Build & Test (Basheer, 2026-11-12)
+
+Small batch with the zone box message and the two fixed headers (Basheer, 12 Nov).
 
 Found in the Query Load fixes fix 3 code review (finding 1; Basheer
 2026-10-07). The Pipeline sorts by priority and chance only, so tied
@@ -423,10 +425,14 @@ cards can come back in a different order between loads (seen on the
 Order tab, unfiltered vs North Kerala). Fix: add the Opportunity's id as
 the last sort key in the Pipeline query.
 
-### Pipeline zone filter shows "No options" until a name is typed — not started (2026-10-07)
+### Pipeline zone filter shows "No options" until a name is typed — handed to Build & Test (Basheer, 2026-11-12)
 
 Seen in both rounds of the fix 3 screen check (existing behaviour, not
-caused by the fix). Fix: list the zones as soon as the box is opened.
+caused by the fix). The box and the server both wait for 2 typed letters
+(`ZonePicker.tsx:49`, `master_data.py:113`); the same box is on 8 screens.
+**Decided (Basheer, 2026-11-12): option A** — change the empty-box message
+to "Type 2 letters to search zones" (fixes all 8 screens). Option B, listing
+every zone as soon as the box opens, needs a server change too; not chosen.
 
 ### Wording: "deal" → "Opportunity" across the app and docs — decided, part done (2026-10-07, docs added 2026-10-12, names decided 2026-10-25)
 
@@ -695,7 +701,7 @@ to clear. Remove a screen from here when it is committed clean.
 - Helper files, colours only: `utils/activityTypes.ts` 13,
   `utils/businessPotential.ts` 4, `utils/marketingLeadMilestone.ts` 4.
 
-### Fixed header on other report screens: Sales Report, Opportunities On Hold — not started (3 Nov 2026)
+### Fixed header on other report screens: Sales Report, Opportunities On Hold — handed to Build & Test (Basheer, 2026-11-12)
 
 On a phone the Overdue tab, Target vs Actuals tab, Pipeline tab and Pipeline
 Report now keep their title, pickers and tiles fixed while the list scrolls

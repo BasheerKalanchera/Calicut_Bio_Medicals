@@ -208,6 +208,24 @@ Pending on UAT, together with Q6.
   Option 1, the three other instalment sales already Won (Gulf
   Laboratory, IQRAA, SABA) move back to Payment Pending as a one-time
   fix, like Ambalpadi and City Nursing Home.
+- **Answered by the leadership team, 12 Nov (via Basheer):**
+  - **Q4a: yes, with four choices:** full payment; advance plus
+    instalments; customer's bank loan; Cabio-facilitated loan (the fourth is
+    new). Plan: `docs/Payment-Terms-Implementation-Plan.md` (Approved
+    12 Nov).
+  - **Q4b: Option 1 for instalment sales.** Full payment, customer's bank
+    loan and Cabio-facilitated loan become Won as soon as full payment is
+    received. Advance plus instalments stays at Payment Pending until the
+    last instalment or post-dated cheque is paid.
+  - **The two Fahad corrections (Ambalpadi, City Nursing Home): approved.**
+  - **Gulf Laboratory: back to Payment Pending** until both instalments
+    are paid (Basheer, 12 Nov).
+  - **SABA: back to Payment Pending** until the last post-dated cheque has
+    cleared (Basheer, 12 Nov). "Paid" for a post-dated cheque means
+    cleared, not handed over.
+  - **IQRAA: open.** Basheer thinks it is a Cabio-facilitated loan. The
+    notes support that but don't prove it; checking with Haroon, who owns
+    the Opportunity.
 
 **Q5. Analyse last year's orders as a one-off, outside the app?**
 *Recommend:* yes, once Latheef Bhai shares Finance's order and payment
