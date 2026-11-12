@@ -14,7 +14,9 @@ session edits this note._
 
 ## NOW (10 Nov) — My Work Summary speed; nothing edited in code yet
 Investigation only, all read-only on UAT (detail and numbers: Progress-Archive
-10 Nov "Build & Test: UAT investigations").
+10 Nov "Build & Test: UAT investigations"). Written up, retro included, and
+pushed: `db96ca3` (this note, the never-contacted report, the archive entry).
+**Exact next step:** ask Basheer for his yes on the speed fix below.
 - **Waiting on Basheer's yes: the speed fix.** One edit in
   `backend/app/domains/reporting/repository.py`, `_days_since_last_contact`
   (lines 94-116): when an owner is given (My Work), build the last-contact
@@ -34,6 +36,13 @@ Investigation only, all read-only on UAT (detail and numbers: Progress-Archive
   (needs the real date from Ravi Kumar), and/or (2) block future dates for
   Visit, Call, Meeting and Email in the Log Activity picker and on the
   server. If (2): Business-Rules rule + Backlog entry.
+- **Fahad's two Won Opportunities: Plan & Chore's, not mine.** Its UAT check
+  and the one-time fix (on hold until Basheer confirms with Haroon) are in
+  Progress-Archive 11 Nov "Fahad's two Won Opportunities". I only read the
+  code (Won can't be reopened; rename and product edits on Won aren't
+  blocked and write no timeline note). Basheer's team teaching note (generic
+  names, customers change their mind, write changes on the timeline, Won =
+  fully paid) is still to be drafted with Antigravity.
 - **Next:** tell Plan & Chore about the not-reloading risk on Stagnant
   Opportunities, Sales Report and Opportunities On Hold (not checked), once
   Basheer says yes.

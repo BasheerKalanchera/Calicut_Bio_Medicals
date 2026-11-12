@@ -1711,3 +1711,10 @@ edited in code and nothing was written to UAT.
   saying where the record would live); "What are these — B1–B7?" (I
   referred to them by label only). Neither touched live data or could be
   stopped by a tool check, so no tracker line.
+
+## 12 Nov 2026 — Build & Test: session start, Fahad's Won Opportunities (code read only)
+
+- Handover checked against git: `db96ca3` in, no backend edit; My Work speed fix (`reporting/repository.py`, `_days_since_last_contact`) still waiting on Basheer's yes; not started.
+- Basheer asked for research on Fahad's two Won Opportunities. Read the rules and code only (BR-OP-05, 09, 17; `validators.py`, `service.py`): same findings as Plan & Chore's 11 Nov entry above. I did not know that entry existed and asked Basheer for a UAT check that was already done; the handover note now points to it.
+- Teaching-note outline given in chat (generic names, change of mind edits the same Opportunity, timeline note for every change in what was sold or its payment terms, Won = fully paid). App gaps to consider as Backlog candidates: automatic timeline note on rename or product change; Won edit lock; payment-terms field.
+- **Retro — corrections from Basheer this session: 0** (3 messages: the session start, the research request, "refresh"). My own slip, not a correction: I wrote a handover entry and a UAT-check request without searching the 11 Nov archive first. No tracker line.
