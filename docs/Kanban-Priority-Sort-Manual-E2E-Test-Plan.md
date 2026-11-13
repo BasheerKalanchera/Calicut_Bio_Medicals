@@ -11,6 +11,9 @@ ties *within* the same priority standing, so a low-probability High
 Priority deal still ranks above a high-probability non-High-Priority deal.
 No tiebreaker beyond that (Basheer's explicit call — ties render in
 whatever order the database happens to return, not pinned to recency).
+*Changed 12 Nov 2026 (`b4f6a3b`): the Opportunity's id is now the last sort
+key, so tied cards keep the same order on every load; see
+`docs/Small-Batch-12-Nov-Manual-E2E-Test-Plan.md` section B.*
 Backend-only change: neither Kanban nor List does its own client-side
 sorting, so the new order should show up automatically with no separate
 frontend logic to verify. Alongside this, the pipeline fetch cap was raised

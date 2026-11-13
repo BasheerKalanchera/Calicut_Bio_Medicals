@@ -13,62 +13,47 @@ session edits this note._
   ahead of a full promotion go by the hotfix-branch route
   (`docs/Deployment-Topology.md` "Fix to UAT ahead of a full promotion").
 
-## NOW (12 Nov, end of day) — small batch built, committed and pushed
-Basheer stopped for the day; code review is tomorrow. Detail, numbers and
-retro: Progress-Archive 12 Nov "Build & Test: small batch built". All the
-code below is in checkpoint commit `b4f6a3b` (one commit, pushed to
-origin/main 12 Nov; partial: review, Dev restart and E2E still to do).
-- **Step 0 My Work speed fix:** `backend/app/domains/reporting/repository.py`
-  (`_days_since_last_contact`, MATERIALIZED CTE when an owner is given) and
-  `backend/tests/domains/reporting/test_reporting_repository.py` (2 tests).
-  Measured on Dev and UAT: same data, My Work request median 875 → 434 ms.
-- **Step 1 zone box:** `sales-os-app/src/components/ZonePicker.tsx`
-  (`noOptionsText`, 8 screens).
-- **Step 2 Pipeline card order:** `backend/app/domains/opportunity/repository.py`
-  (id as last sort key) and its test file (1 new test).
-- **Step 3 Sales Report fixed header:** `sales-os-app/src/screens/SalesReportScreen.tsx`.
-  Opportunities On Hold stays as it is (Basheer).
-- Checks before the commit: full backend tests 1,565 passed, ruff clean,
-  tsc and lint 0 errors (135 old warnings), api.ts guard clean.
-- **Exact next step (tomorrow):** (1) `/code-review` medium on `b4f6a3b`
-  (`git show b4f6a3b`), fix findings; (2) Dev backend restart; (3) load
-  `cabio-e2e-testing`, write
-  `docs/Small-Batch-12-Nov-Manual-E2E-Test-Plan.md` (Simple/Complex tags,
-  `[Complex: phone layout]` per screen incl. the Sales Report 390 px risk,
-  hospital in brackets beside any Opportunity name, regression steps from
-  the Report-Drilldown, Sales-And-Pipeline-Report and Kanban-Priority-Sort
-  plans); (4) run it; (5) any fix from the review or E2E is proposed as a
-  commit with file list and message shown first (small wording fixes may
-  batch, per CLAUDE.md).
-- **Docs after the review:** one batch. Backlog: move "Pipeline zone filter
-  shows No options" and "Pipeline: cards with the same priority and chance
-  can swap places" to done; file the next-actions entry (Option 1 about
-  24 % on that lookup, Option 2 rule rewrite, numbers in the archive);
-  note on `Kanban-Priority-Sort-Manual-E2E-Test-Plan.md` lines 12–13.
-- **After deploy to UAT:** Basheer times `weekly-followup` in F12 Network
-  (Option B) and the Stagnant/Sales/On Hold not-reloading risk goes to Plan
-  & Chore only after his yes.
-- **Chalukya hospital (parked, waiting on Basheer):** its only Meeting is
-  dated 28 Nov 2026 (entered 6 Nov by Ravi Kumar), so it counts as never
-  contacted. He discusses it with Haroon and Shruthi first. Options: correct
-  the date on UAT, and/or block future dates for Visit, Call, Meeting, Email
-  (then a Business-Rules rule + Backlog entry).
-- **Fahad's two Won Opportunities: done by Plan & Chore on UAT, 12 Nov**
-  (Progress-Archive 12 Nov "leadership answers"). Not mine.
-- Not mine: other sessions' uncommitted docs (Backlog, plans, Plan & Chore
-  note, Progress-Archive-2026-08), stray `B`, `BT`, `PC` files.
+## NOW (13 Nov) — small batch E2E done, 28 of 29 (step 11 skipped by Basheer)
+Result and findings: `docs/Small-Batch-12-Nov-Manual-E2E-Test-Plan.md`
+(uncommitted; sign-off filled in) and Progress-Archive 13 Nov "Build & Test:
+small batch E2E". Done 13 Nov: sign-off written; tsc and lint re-run clean on
+`ZonePicker.tsx`; `fix:` commit `4a5e767` (zone box follow-up, `ZonePicker.tsx`
+only; no api.ts change) committed AND pushed to main. **Next:** docs batch,
+own approval (list below). Add `4a5e767` to the E2E plan's "Built:" line.
 
-## Earlier results (detail: Progress-Archive 2–10 Nov)
-- Customer with No Activity E2E 39 of 39; Target vs Actuals E2E 41 of 41;
-  Tabs E2E done; about 24 TvA steps not re-run for the wider regression
-  (estimate, not counted). Search box (D17) `28d1516`.
-- MUI round 1 Part 1: steps 1-7 in main, step 8 closed (pictures 26 of 26,
-  combined E2E 7 of 7, paperwork done by Plan & Chore 9 Nov). Part 2 (wording
-  sweep) comes later; check report 1 Nov: 33 files / 862 lines.
+Built in checkpoint commit `b4f6a3b` (pushed 12 Nov): My Work speed fix
+(`reporting/repository.py`, MATERIALIZED CTE; median 875 → 434 ms on UAT
+data), zone box message (`ZonePicker.tsx`, 8 screens), Pipeline card order
+(`opportunity/repository.py`, id as last sort key), Sales Report fixed
+header (`SalesReportScreen.tsx`). Code review found 1 bug, fixed in
+`ZonePicker.tsx` (`debouncedSearch`), committed in `4a5e767`. E2E needed no other fix.
+
+**Finding, not this batch (step 19):** the Sales Report headline counts only
+Won/Lost Opportunities that have a product line (`sales_headline`, inner
+join). UAT read-only, 13 Nov: Lost 25 real, 19 shown (6 have no line); win
+rate 68.9 % shown vs 62.7 %; Won 42 of 42. Basheer decided 13 Nov: build a
+"Sales Loss Report" with a Loss Reason filter (in Backlog and Traceability
+1.4, uncommitted). Open, not decided: count no-line Lost in the Sales
+Report; ask for a product line when Lost is past Lead.
+
+**Docs batch (one approval):** Backlog: move "Pipeline zone filter shows No
+options" and "cards with the same priority and chance can swap places" to
+done; file the next-actions entry (Option 1 about 24 % on that lookup,
+Option 2 rule rewrite; numbers in the 12 Nov archive) and the Sales Report
+no-line Lost undercount; note on `Kanban-Priority-Sort-Manual-E2E-Test-Plan.md`
+lines 12–13; E2E plan: add the fix commit to "Built:", correct steps 4/5
+(board also shows Won/Lost/On Hold), step 8 (Active-only counts), step 26
+(ran as Haroon, not Basheer K).
+
+**After deploy to UAT:** Basheer times `weekly-followup` in F12 Network (the
+speed check is UAT-only); the Stagnant/Sales/On Hold not-reloading risk goes
+to Plan & Chore only after his yes.
+
+Not mine: other sessions' uncommitted docs (Backlog items, plans, Plan &
+Chore note, Progress-Archive-2026-08), stray `B`, `BT`, `PC` files.
 
 ## Parked
 - Annual Target E2E section L (11 steps, three widths): re-read against the
   new screens; Tabs plan covers its L1–L3 (D11). Detail: Progress-Archive
   28–30 Oct. Dev test data left as found (Maquet ₹100 L; Medion ₹100 L).
-- Other deferred items live in the Backlog (6 rule gaps, small fixes,
-  convention audit idea, shared search box proposal).
+- Other deferred items live in the Backlog.

@@ -415,24 +415,24 @@ first whether to do this app-wide. Code: `TargetPlanningScreen.tsx`
 `SBU_TARGET_VIEW_ROLES` vs `service.py` `_SBU_TARGET_READ_ROLES` and the
 `sbu_target_read` policy (migration 0061).
 
-### Pipeline: cards with the same priority and chance can swap places — handed to Build & Test (Basheer, 2026-11-12)
+### Sales Loss Report — why Cabio loses business — decided name and first filter, plan not started (Basheer, 2026-11-13)
 
-Small batch with the zone box message and the two fixed headers (Basheer, 12 Nov).
+**Decided (Basheer, 2026-11-13):** the signed "Competitive Loss Report"
+(Traceability row 1.4) is built as the **Sales Loss Report**, with Loss
+Reason as one of its filters, so the team can analyse why Cabio is losing
+business. Today there is no list of Lost Opportunities in the Reports menu;
+Product Performance's "Lost" link reads product lines, so it can't show
+Lost Opportunities that have none. Other filters and columns: not decided.
 
-Found in the Query Load fixes fix 3 code review (finding 1; Basheer
-2026-10-07). The Pipeline sorts by priority and chance only, so tied
-cards can come back in a different order between loads (seen on the
-Order tab, unfiltered vs North Kerala). Fix: add the Opportunity's id as
-the last sort key in the Pipeline query.
-
-### Pipeline zone filter shows "No options" until a name is typed — handed to Build & Test (Basheer, 2026-11-12)
-
-Seen in both rounds of the fix 3 screen check (existing behaviour, not
-caused by the fix). The box and the server both wait for 2 typed letters
-(`ZonePicker.tsx:49`, `master_data.py:113`); the same box is on 8 screens.
-**Decided (Basheer, 2026-11-12): option A** — change the empty-box message
-to "Type 2 letters to search zones" (fixes all 8 screens). Option B, listing
-every zone as soon as the box opens, needs a server change too; not chosen.
+Raised by the Small batch 12 Nov E2E (step 19). UAT read-only check, 13
+Nov: 25 Lost Opportunities, 6 with no product line; the Sales Report
+headline counts 19 Lost, so its win rate shows 68.9 % against 62.7 % with
+all 25. Five of the six were closed from Lead although a quote or final
+rate had been given; the machine was known. Two related questions are still
+open and not decided: (1) make the Sales Report count Lost Opportunities
+with no product line (Won is unaffected, it needs a line); (2) ask for the
+product line when an Opportunity past Lead is marked Lost. The new report
+should show these six too, so it must not depend on product lines.
 
 ### Wording: "deal" → "Opportunity" across the app and docs — decided, part done (2026-10-07, docs added 2026-10-12, names decided 2026-10-25)
 
@@ -1012,6 +1012,21 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   anywhere in the app yet.
 
 ## Deferred / undecided items
+
+- **My Work and Next Actions: the next-actions lookup is slow (UAT
+  read-only check, 12 Nov 2026; decide after the small batch is on UAT).**
+  The rule that decides which next actions a person may see scans the whole
+  Activity table twice. Two ways to speed it up, neither built:
+  *Option 1* — load each next action's Activity details in a second lookup
+  (`selectinload` instead of `joinedload` on `Reminder.activity`): small and
+  safe; on UAT data, 13 people, 696 next actions, 0 responses differing,
+  per-person median 346 → 262 ms (about 24 %), 12 of 13 people faster; about
+  85 ms off the whole My Work request (estimate, not measured). *Option 2* —
+  rewrite the `reminder_select` rule in a form the database plans better
+  (such as `EXISTS`): removes the first scan, but it changes a security rule
+  on a shared table, so it needs a migration, a plan, a before/after check of
+  what every person sees, a Physical-Schema regeneration and a separate UAT
+  apply. Numbers: Progress-Archive 12 Nov.
 
 - **Alert Latheef Bhai when Haroon submits a plan (deferred, Basheer,
   2026-11-06).** Target & Coverage Planning: when someone with no manager
