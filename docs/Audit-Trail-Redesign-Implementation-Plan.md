@@ -132,7 +132,8 @@ Rough size of the work: 3–4 days.
 ## 3. Not in this plan (with reasons)
 
 - **History tab on each deal/customer/product page (option B)** — deferred
-  by choice; builds on this without rework. Goes to Backlog.
+  by choice; builds on this without rework. Goes to Backlog. **Dropped
+  2026-11-13 (Basheer):** not needed; removed from the Backlog.
 - **Changing a deal line's product in place on the deal screen** — the
   backend already supports it; whether the screen should offer it is a
   separate UI question. With this plan a remove-and-add is fully visible

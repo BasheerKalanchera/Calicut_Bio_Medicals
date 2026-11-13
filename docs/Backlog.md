@@ -33,23 +33,16 @@ about any line older than 14 days (Basheer, 2026-10-16).
 
 ## Parked initiatives
 
-### Query load fixes — fixes 1–3 on UAT; fix 4 after the next UAT move (2026-10-06)
+### Query load fixes — fixes 1–3 on UAT; fix 4 low priority, no date (2026-10-06)
 
 Eight screens fetch far more than they show (the cause of the Next Actions
 outage). Plan, priority order and progress table:
-`docs/Query-Load-Fixes-Implementation-Plan.md`. Approved by Basheer
-2026-10-06: all rows fixed on `main` and moved to UAT (hotfix route, 4
-trips) by **Sun 2026-10-11**. Changed 2026-10-07: 3 trips; fix 4 is due
-committed on `main` by Sunday and reaches UAT with the next full
-promotion (plan D9). Changed 2026-10-09 (Basheer): fix 4 due committed
-on `main` by **Mon 2026-10-12**; 9 Oct went to planning. Fixes 1–3 are
-on UAT. Changed 2026-10-14 (Basheer): fix 4 is low priority and is
-built after the next Dev → UAT move, no date; the section 9 tidy-up
-goes into that move's plan.
+`docs/Query-Load-Fixes-Implementation-Plan.md` (approved 2026-10-06).
+Fixes 1–3 are on UAT; the clean-up after fix 3 (plan section 9) is done
+(2026-10-24). Fix 4 is low priority, built after a Dev → UAT move, no
+date (Basheer, 2026-10-14).
 - **Close this entry** when every row in the plan's progress table shows
   both a `main` commit and a UAT move.
-- **If any row will miss the 11th,** say so to Basheer by Fri 2026-10-09,
-  with the reason and a new date — not on Sunday.
 
 ### Duplicate hospital and sale: Life Line Health Care, Mangalore — credit decided, clean-up plan next (2026-10-16)
 
@@ -100,10 +93,10 @@ goes into that move's plan.
   merge tool, Admin approval to pass the warning.
 - **Close** when the plan's parts are on UAT and the pairs are resolved.
 
-### Temporary: name in app header for training — remove before the UAT move (Basheer, 2026-11-07)
+### Temporary: name in app header for training — remove after Sessions 2a and 2b, before the second UAT move (Basheer, 2026-11-07)
 
-- **What:** the signed-in person's name in the top header, beside Sign Out, at every window size, so it's clear whose window is whose during Sessions 1, 2a and 2b (`docs/Target-Plan-Training-Implementation-Plan.md`). The side menu's name stays. Requested of Build & Test on 7 Nov; check git for whether it's built.
-- **Remove:** before the UAT move, so it never reaches UAT or Session 3 (Basheer, 2026-11-07). Undo its own commit, and remove the code comment pointing here.
+- **What:** the signed-in person's name in the top header, beside Sign Out, at every window size, so it's clear whose window is whose during the training sessions (`docs/Target-Plan-Training-Implementation-Plan.md`). The side menu's name stays. Built 7 Nov (`2ac7f25`), on Dev; left out of the 10 Nov UAT move on purpose (UAT move plan D1).
+- **Remove:** after Sessions 2a and 2b, before the second UAT move, so it never reaches UAT or Session 3. Undo its own commit, and remove the code comment pointing here.
 - **Close** when it's removed from `main`.
 
 ### Similar-hospital warning: also mention same-name hospitals in other zones — not started, needs Haroon (2026-10-25)
@@ -173,6 +166,11 @@ to decide: change the code, or change the rule.
   `/build`'s Target vs Actuals simpler table and Target & Coverage Planning
   tabs plans merge (they edit the same screens). One pass, one commit, the
   manual and help text in the same commit, with its own plan and E2E.
+- **Haroon asked (Basheer, WhatsApp, 2026-11-13):** "Hospital" → "Customer"
+  wherever any customer type is meant, "Hospital" kept only where a
+  hospital is meant (e.g. the Government Hospital and Medical College
+  Hospital types), wording only; also asked where the team should still
+  see "Hospital". Waiting on his reply before planning.
 
 ### Projects: track the requirements that go to dealer partners — not started, future (2026-10-30)
 
@@ -515,14 +513,6 @@ showed on no card he or anyone could open.
   Opportunity). The card's "team members' shares" note stays either way:
   it also covers shares within one SBU ("Target vs Actuals: Area Manager
   misses a member's share outside the team").
-
-### Audit Trail Redesign — built and tested on Dev; UAT move waiting (2026-10-03)
-
-Plan: `docs/Audit-Trail-Redesign-Implementation-Plan.md`. Dev E2E passed
-2026-10-03. Still to do: the UAT move (migration 0059 + steps 2–4
-together, its own approval, back up UAT `audit_log` first).
-- **Deferred (option B):** a History tab on each deal, customer and
-  product page, built on top of this later.
 
 ### Forecast by closing period — questions answered, plan not started (2026-10-01)
 

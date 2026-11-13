@@ -1,6 +1,6 @@
 # Query Load Fixes — Implementation Plan
 
-**Status:** Approved 2026-10-06 (Basheer). Deadline Sun 2026-10-11: fixes 1–3 fixed and on UAT; fix 4 committed on `main` (it reaches UAT with the next full promotion, D9) — Basheer, 2026-10-07. Fix 4 moved to **Mon 2026-10-12** — Basheer, 2026-10-09 (9 Oct went to a planning session; fixes 1–3 met the 11th). Changed 2026-10-14 (Basheer): fix 4 is low priority (Admin-only screens, rarely used) and is built **after** the next Dev → UAT move, no date set. The section 9 tidy-up (UAT's separate fix 3 copy back into `main`, remove the `uat-fix3` working copy) moves into that move's plan as its first step.
+**Status:** Approved 2026-10-06 (Basheer). Deadline Sun 2026-10-11: fixes 1–3 fixed and on UAT; fix 4 committed on `main` (it reaches UAT with the next full promotion, D9) — Basheer, 2026-10-07. Fix 4 moved to **Mon 2026-10-12** — Basheer, 2026-10-09 (9 Oct went to a planning session; fixes 1–3 met the 11th). Changed 2026-10-14 (Basheer): fix 4 is low priority (Admin-only screens, rarely used) and is built **after** the next Dev → UAT move, no date set. The section 9 tidy-up (UAT's separate fix 3 copy back into `main`, remove the `uat-fix3` working copy) moves into that move's plan as its first step. Done before that move, 2026-10-24 (merge `2547a0f`, section 9).
 **Traceability rows:** none (no signed requirement; reliability work after the
 Next Actions outage).
 **Design / discussion:** query audit on Dev, 2026-10-06 — results in
@@ -200,7 +200,7 @@ Marketing Leads.
 |---|---|---|---|
 | Opportunity page (open + save) | `90ae253` (2026-10-06) | `34737e7` + `30d545f` (2026-10-07; no payment-confirmer join, so 10 joins). Header 0.7–1.5 → 0.62–0.74 s; tabs 0.6–1.9 → 0.49–1.0 s | Detail 35 → 11 joins, ~16–24 → ~4.5 ms; lists 41–59 → 5; saves 41–45 → ≤14 |
 | Activity comments | `bc09b28` (2026-10-06) | `4e8c47d` (2026-10-07). 0.9–1.6 → 0.57–0.68 s | Thread 61 → 5 joins, ~35–42 → ~1 ms; old vs fixed code as Haroon: same 6 comments and writers |
-| Opportunity Pipeline | `8e8e075` + merge `f7d25b1` (2026-10-07) | `569209f` (2026-10-08; 10 joins, no payment-confirmer). Hard refresh: Nishad (Area Manager) 1.93 → ~1.4 s; Basheer K (Admin) 2.88 → 1.8–3.3 s, no clear change (network delay dominates). Same card counts both rounds. Only the plain view timed; full Dev comparison pending (section 9) | 36–37 → 11–12 joins, 4–10 → 4 statements; ~167–276 → ~6–35 ms across unfiltered, zone, stage, team-only and product views; old vs fixed code as Basheer K: same screens (section 8) |
+| Opportunity Pipeline | `8e8e075` + merge `f7d25b1` (2026-10-07) | `569209f` (2026-10-08; 10 joins, no payment-confirmer). Hard refresh: Nishad (Area Manager) 1.93 → ~1.4 s; Basheer K (Admin) 2.88 → 1.8–3.3 s, no clear change (network delay dominates). Same card counts both rounds. Only the plain view timed; full Dev comparison done 2026-10-24, 92 of 92 answers identical, fix 3 closed (section 9) | 36–37 → 11–12 joins, 4–10 → 4 statements; ~167–276 → ~6–35 ms across unfiltered, zone, stage, team-only and product views; old vs fixed code as Basheer K: same screens (section 8) |
 | Daily Activity Report | `bc09b28` (2026-10-06) | `4e8c47d` (2026-10-07). 5 Oct: 5.6 / 2.1 → 0.72 / 0.70 s | 57 → 6 joins, 11 → 4 statements, 60–77 → ~5 ms; old vs fixed code as Haroon (27 Aug): same 14 cards |
 | Product documents | `90ae253` (with Opportunity documents) | `34737e7` (2026-10-07). 0.84 / 1.06 → 0.55 s | List 59 → 5 joins (the 5 are the signed-in-user lookup) |
 | Audit Log | — | — | |
@@ -370,7 +370,8 @@ Checklist:
 - [x] 8. Basheer decides UAT: all match → fix 3 closed; real difference →
   rollback or correction in the next early-morning window (sooner if
   users would notice). **Fix 3 closed — Basheer, 2026-10-24.**
-- [ ] 9. Paperwork, each with its own approval: merge `uat` back into
+- [x] 9. Paperwork, each with its own approval (all done 2026-10-24: tool
+  change `0854766`, results in docs batch `1800699`; ticked 2026-11-13): merge `uat` back into
   `main` (resolve to `main`: 11 joins and its filters; pytest; push;
   then remove `.claude/worktrees/uat-fix3` and the local `uat` branch);
   the tool change as its own commit; results in the docs batch. Merge

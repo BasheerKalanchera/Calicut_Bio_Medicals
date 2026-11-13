@@ -176,8 +176,8 @@ Reports and other places:
   change.
 - **Change history:** the existing audit trigger on `opportunity` records
   every column of the row (`Physical-Schema.sql:2096`), so a change of
-  terms is recorded with no extra work; how the Change history tab labels
-  it is checked at build.
+  terms is recorded with no extra work; how the Audit Log screen (Admin
+  and GM) shows it is checked at build.
 - **Tests:** 4 test files mention PO number (68 lines, counted 12 Nov);
   tests that move or create an Opportunity at Delivery & Installation or
   later will need payment terms filled in.
