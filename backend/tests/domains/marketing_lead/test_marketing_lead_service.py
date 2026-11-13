@@ -16,6 +16,7 @@ import uuid
 from unittest.mock import MagicMock
 
 import pytest
+from pydantic import ValidationError
 
 from app.core.exceptions import AuthorizationError, BusinessRuleViolation, NotFoundError
 from app.domains.marketing_lead.models import MarketingLead
@@ -193,16 +194,23 @@ class TestDiscardLead:
 
         lead = service.discard_lead(
             LEAD_ID,
-            MarketingLeadDiscard(discard_reason="DUPLICATE", discard_note="dup of X"),
+            MarketingLeadDiscard(discard_note="dup of X"),
             role_name="Sales Executive",
             actor_sbu_id=None,
         )
 
         assert lead.status == "DISCARDED"
-        assert lead.discard_reason == "DUPLICATE"
+        # No category code is set any more (Basheer, 2026-11-13).
+        assert lead.discard_reason is None
         assert lead.discard_note == "dup of X"
         assert lead.reviewed_by == USER_ID
         assert lead.reviewed_at is not None
+
+    @pytest.mark.parametrize("blank", ["", "   ", "\n"])
+    def test_blank_reason_is_refused(self, blank):
+        # The Reason is required (Basheer, 2026-11-13); whitespace doesn't count.
+        with pytest.raises(ValidationError):
+            MarketingLeadDiscard(discard_note=blank)
 
     def test_admin_can_discard_someone_elses_lead(self):
         repo = _make_repo()
@@ -212,7 +220,7 @@ class TestDiscardLead:
         )
 
         lead = service.discard_lead(
-            LEAD_ID, MarketingLeadDiscard(discard_reason="JUNK"), role_name="Admin", actor_sbu_id=None
+            LEAD_ID, MarketingLeadDiscard(discard_note="Junk"), role_name="Admin", actor_sbu_id=None
         )
 
         assert lead.status == "DISCARDED"
@@ -225,7 +233,7 @@ class TestDiscardLead:
         )
 
         lead = service.discard_lead(
-            LEAD_ID, MarketingLeadDiscard(discard_reason="JUNK"), role_name="SBU Manager", actor_sbu_id=SBU_ID
+            LEAD_ID, MarketingLeadDiscard(discard_note="Junk"), role_name="SBU Manager", actor_sbu_id=SBU_ID
         )
 
         assert lead.status == "DISCARDED"
@@ -239,7 +247,7 @@ class TestDiscardLead:
 
         with pytest.raises(AuthorizationError):
             service.discard_lead(
-                LEAD_ID, MarketingLeadDiscard(discard_reason="JUNK"), role_name="SBU Manager", actor_sbu_id=OTHER_SBU_ID
+                LEAD_ID, MarketingLeadDiscard(discard_note="Junk"), role_name="SBU Manager", actor_sbu_id=OTHER_SBU_ID
             )
 
     def test_area_manager_can_discard_own_reports_lead(self):
@@ -251,7 +259,7 @@ class TestDiscardLead:
         )
 
         lead = service.discard_lead(
-            LEAD_ID, MarketingLeadDiscard(discard_reason="JUNK"), role_name="Area Manager", actor_sbu_id=None
+            LEAD_ID, MarketingLeadDiscard(discard_note="Junk"), role_name="Area Manager", actor_sbu_id=None
         )
 
         assert lead.status == "DISCARDED"
@@ -267,7 +275,7 @@ class TestDiscardLead:
 
         with pytest.raises(AuthorizationError):
             service.discard_lead(
-                LEAD_ID, MarketingLeadDiscard(discard_reason="JUNK"), role_name="Area Manager", actor_sbu_id=None
+                LEAD_ID, MarketingLeadDiscard(discard_note="Junk"), role_name="Area Manager", actor_sbu_id=None
             )
 
     def test_non_assigned_non_manager_cannot_discard(self):
@@ -279,7 +287,7 @@ class TestDiscardLead:
 
         with pytest.raises(AuthorizationError):
             service.discard_lead(
-                LEAD_ID, MarketingLeadDiscard(discard_reason="JUNK"), role_name="Sales Executive", actor_sbu_id=None
+                LEAD_ID, MarketingLeadDiscard(discard_note="Junk"), role_name="Sales Executive", actor_sbu_id=None
             )
 
     def test_already_reviewed_lead_cannot_be_discarded(self):
@@ -291,7 +299,7 @@ class TestDiscardLead:
 
         with pytest.raises(BusinessRuleViolation):
             service.discard_lead(
-                LEAD_ID, MarketingLeadDiscard(discard_reason="JUNK"), role_name="Sales Executive", actor_sbu_id=None
+                LEAD_ID, MarketingLeadDiscard(discard_note="Junk"), role_name="Sales Executive", actor_sbu_id=None
             )
 
     def test_missing_lead_raises_not_found(self):
@@ -303,7 +311,7 @@ class TestDiscardLead:
 
         with pytest.raises(NotFoundError):
             service.discard_lead(
-                LEAD_ID, MarketingLeadDiscard(discard_reason="JUNK"), role_name="Admin", actor_sbu_id=None
+                LEAD_ID, MarketingLeadDiscard(discard_note="Junk"), role_name="Admin", actor_sbu_id=None
             )
 
 

@@ -15,8 +15,12 @@ class MarketingLeadCreate(BaseModel):
 
 
 class MarketingLeadDiscard(BaseModel):
-    discard_reason: str = Field(pattern="^(DUPLICATE|NOT_INTERESTED|UNABLE_TO_CONTACT|JUNK)$")
-    discard_note: str | None = None
+    # Basheer, 2026-11-13: the rep types one required free-text Reason (saved
+    # in discard_note); the four discard_reason codes are no longer asked for.
+    # Old rows keep their code, so the column and its check rule stay.
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    discard_note: str = Field(min_length=1)
 
 
 class MarketingLeadMarkConverted(BaseModel):

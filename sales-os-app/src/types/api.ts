@@ -4070,10 +4070,8 @@ export interface components {
         };
         /** MarketingLeadDiscard */
         MarketingLeadDiscard: {
-            /** Discard Reason */
-            discard_reason: string;
             /** Discard Note */
-            discard_note?: string | null;
+            discard_note: string;
         };
         /** MarketingLeadMarkConverted */
         MarketingLeadMarkConverted: {

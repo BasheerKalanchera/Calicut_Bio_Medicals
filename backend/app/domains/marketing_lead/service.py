@@ -149,7 +149,6 @@ class MarketingLeadService:
     ) -> MarketingLead:
         lead = self._get_reviewable_lead(lead_id, role_name=role_name, actor_sbu_id=actor_sbu_id)
         lead.status = "DISCARDED"
-        lead.discard_reason = data.discard_reason
         lead.discard_note = data.discard_note
         lead.reviewed_by = self.user_id
         lead.reviewed_at = datetime.now(UTC)
@@ -158,7 +157,6 @@ class MarketingLeadService:
         logger.info(
             "marketing_lead_discarded",
             lead_id=str(lead_id),
-            discard_reason=data.discard_reason,
             user_id=str(self.user_id),
         )
         return lead
