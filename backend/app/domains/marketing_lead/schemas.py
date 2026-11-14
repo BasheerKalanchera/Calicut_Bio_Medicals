@@ -56,6 +56,8 @@ class MarketingLeadResponse(BaseModel):
     created_at: datetime
     first_viewed_at: datetime | None
     reviewed_by: uuid.UUID | None
+    # Name of whoever converted or discarded the lead; None while it is NEW.
+    reviewed_by_user: AssignedToNested | None = None
     reviewed_at: datetime | None
     # Resolved at read time, not denormalized onto the row -- same pattern as
     # NotificationResponse's opportunity_name/account_name.

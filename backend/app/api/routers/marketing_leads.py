@@ -67,6 +67,9 @@ def _to_response(row: MarketingLeadRow) -> MarketingLeadResponse:
         created_at=lead.created_at,
         first_viewed_at=lead.first_viewed_at,
         reviewed_by=lead.reviewed_by,
+        reviewed_by_user=(
+            AssignedToNested.model_validate(lead.reviewed_by_user) if lead.reviewed_by_user is not None else None
+        ),
         reviewed_at=lead.reviewed_at,
         account_name=account_name,
         lead_source_name=lead_source_name,

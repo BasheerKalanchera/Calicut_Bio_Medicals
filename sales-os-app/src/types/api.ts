@@ -4139,6 +4139,7 @@ export interface components {
             first_viewed_at: string | null;
             /** Reviewed By */
             reviewed_by: string | null;
+            reviewed_by_user?: components["schemas"]["AssignedToNested"] | null;
             /** Reviewed At */
             reviewed_at: string | null;
             /** Account Name */

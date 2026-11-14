@@ -9,13 +9,14 @@
 // itself is untouched in the DB/API (still just NEW/CONVERTED/DISCARDED --
 // that's what governs the Convert/Discard authorization gate), this is
 // purely a display refinement. DISCARDED reuses OpportunityPipelineScreen's
-// LOST color for consistency (`#fee2e2`/`#dc2626`) -- same "negative outcome,
-// not an error" register.
+// LOST color for consistency (red.100 / red.600) -- same "negative outcome,
+// not an error" register. Theme colour names, not typed hex codes (Frontend
+// standards 6.11); they are the same colours as before (14 Nov 2026).
 export const MARKETING_LEAD_MILESTONE_STYLES: Record<string, { bg: string; color: string }> = {
-  NEW: { bg: "#eff6ff", color: "#2563eb" },
-  SEEN: { bg: "#fffbeb", color: "#d97706" },
-  CONVERTED: { bg: "#f0fdf4", color: "#16a34a" },
-  DISCARDED: { bg: "#fee2e2", color: "#dc2626" },
+  NEW: { bg: "blue.50", color: "blue.600" },
+  SEEN: { bg: "amber.50", color: "amber.600" },
+  CONVERTED: { bg: "green.50", color: "green.600" },
+  DISCARDED: { bg: "red.100", color: "red.600" },
 };
 
 // Short, stable per-lead reference tag (e.g. "#A1B2C3") shown wherever a
@@ -31,6 +32,16 @@ export function marketingLeadRef(id: string) {
 
 export function formatMarketingLeadDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: true });
+}
+
+// "Converted by <name>" / "Discarded by <name>" -- so the Marketing User and the
+// managers can see who acted, which can differ from the assigned rep (Basheer,
+// 2026-11-14). Nothing while the lead is still NEW, or if the name is missing.
+export function marketingLeadReviewedByText(lead: { status: string; reviewed_by_user?: { display_name: string } | null }) {
+  if (!lead.reviewed_by_user) return null;
+  if (lead.status === "CONVERTED") return `Converted by ${lead.reviewed_by_user.display_name}`;
+  if (lead.status === "DISCARDED") return `Discarded by ${lead.reviewed_by_user.display_name}`;
+  return null;
 }
 
 // One rotating milestone, not a history line -- whichever is furthest along

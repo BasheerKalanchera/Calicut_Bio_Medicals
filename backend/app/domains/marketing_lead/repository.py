@@ -43,7 +43,7 @@ class MarketingLeadRepository(BaseRepository[MarketingLead]):
             .outerjoin(Account, Account.id == MarketingLead.account_id)
             .join(LeadSource, LeadSource.id == MarketingLead.lead_source_id)
             .outerjoin(Product, Product.id == MarketingLead.product_id)
-            .options(joinedload(MarketingLead.assigned_to_user))
+            .options(joinedload(MarketingLead.assigned_to_user), joinedload(MarketingLead.reviewed_by_user))
         )
 
     def list_all(self) -> list[MarketingLeadRow]:
@@ -55,7 +55,15 @@ class MarketingLeadRepository(BaseRepository[MarketingLead]):
         return list(self.db.execute(stmt).all())
 
     def get_enriched_by_id(self, lead_id: uuid.UUID) -> MarketingLeadRow | None:
-        stmt = self._enriched_select().where(MarketingLead.id == lead_id)
+        # populate_existing: Discard/Convert/Reassign change the lead in this
+        # same session and then re-read it here. Without it the session hands
+        # back the copy it already holds, so reviewed_by_user (and a new
+        # assignee's name) would still show the old value in that response.
+        stmt = (
+            self._enriched_select()
+            .where(MarketingLead.id == lead_id)
+            .execution_options(populate_existing=True)
+        )
         return self.db.execute(stmt).first()
 
     def mark_first_viewed(self, user_id: uuid.UUID) -> None:

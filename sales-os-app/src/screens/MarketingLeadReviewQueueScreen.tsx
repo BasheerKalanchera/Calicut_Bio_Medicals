@@ -7,7 +7,7 @@ import MarketingLeadDiscardModal, { REASONS as DISCARD_REASONS } from "../compon
 import MarketingLeadReassignModal from "../components/MarketingLeadReassignModal";
 import { listMarketingLeads, markMarketingLeadConverted, type MarketingLead } from "../services/marketingLeads";
 import { useAuth } from "../contexts/AuthContext";
-import { MARKETING_LEAD_MILESTONE_STYLES, formatMarketingLeadDate, marketingLeadMilestone, marketingLeadRef } from "../utils/marketingLeadMilestone";
+import { MARKETING_LEAD_MILESTONE_STYLES, formatMarketingLeadDate, marketingLeadMilestone, marketingLeadRef, marketingLeadReviewedByText } from "../utils/marketingLeadMilestone";
 
 // Matches marketing_lead_update's RLS policy shape (0036_marketing_lead_
 // manager_update_rights.py): Admin/GM (any lead), SBU Manager (own SBU), or
@@ -160,6 +160,7 @@ export default function MarketingLeadReviewQueueScreen({ active }: { active: boo
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
               {others.map((lead) => {
                 const { pill, date } = marketingLeadMilestone(lead);
+                const reviewedByText = marketingLeadReviewedByText(lead);
                 const pillStyle = MARKETING_LEAD_MILESTONE_STYLES[pill] ?? MARKETING_LEAD_MILESTONE_STYLES.NEW;
                 const canAct = isManager && lead.status === "NEW";
                 return (
@@ -195,6 +196,9 @@ export default function MarketingLeadReviewQueueScreen({ active }: { active: boo
                           lead.discard_note,
                         ].filter(Boolean).join(" — ")}
                       </Typography>
+                    )}
+                    {reviewedByText && (
+                      <Typography variant="body3" sx={{ color: "gray.500" }}>{reviewedByText}</Typography>
                     )}
                     {canAct && (
                       <Box sx={{ display: "flex", gap: 1, mt: 0.5 }}>

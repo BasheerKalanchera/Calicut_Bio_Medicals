@@ -5,7 +5,7 @@ import MarketingLeadCommentThread from "../components/MarketingLeadCommentThread
 import MarketingLeadCreateModal from "../components/MarketingLeadCreateModal";
 import { REASONS as DISCARD_REASONS } from "../components/MarketingLeadDiscardModal";
 import { listMarketingLeads } from "../services/marketingLeads";
-import { MARKETING_LEAD_MILESTONE_STYLES, formatMarketingLeadDate, marketingLeadMilestone, marketingLeadRef } from "../utils/marketingLeadMilestone";
+import { MARKETING_LEAD_MILESTONE_STYLES, formatMarketingLeadDate, marketingLeadMilestone, marketingLeadRef, marketingLeadReviewedByText } from "../utils/marketingLeadMilestone";
 
 export default function MarketingLeadEntryScreen({ active }: { active: boolean }) {
   const queryClient = useQueryClient();
@@ -68,6 +68,7 @@ export default function MarketingLeadEntryScreen({ active }: { active: boolean }
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
             {leads.map((lead) => {
               const { pill, date } = marketingLeadMilestone(lead);
+              const reviewedByText = marketingLeadReviewedByText(lead);
               const pillStyle = MARKETING_LEAD_MILESTONE_STYLES[pill] ?? MARKETING_LEAD_MILESTONE_STYLES.NEW;
               return (
                 <Box
@@ -101,6 +102,9 @@ export default function MarketingLeadEntryScreen({ active }: { active: boolean }
                         lead.discard_note,
                       ].filter(Boolean).join(" — ")}
                     </Typography>
+                  )}
+                  {reviewedByText && (
+                    <Typography variant="body3" sx={{ color: "gray.500" }}>{reviewedByText}</Typography>
                   )}
                   <MarketingLeadCommentThread leadId={lead.id} commentCount={lead.comment_count} />
                 </Box>

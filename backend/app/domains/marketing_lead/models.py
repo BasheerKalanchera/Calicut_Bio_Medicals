@@ -61,6 +61,12 @@ class MarketingLead(Base):
     assigned_to_user: Mapped["UserProfile"] = relationship(
         foreign_keys=[assigned_to_user_id], lazy="joined"
     )
+    # Who converted or discarded the lead (reviewed_by) -- so the cards can
+    # show "Converted by / Discarded by <name>" (Basheer, 2026-11-14).
+    # Loaded only by MarketingLeadRepository._enriched_select (outer join, the
+    # FK is nullable), not on every lookup. One-directional, same as
+    # assigned_to_user above.
+    reviewed_by_user: Mapped["UserProfile | None"] = relationship(foreign_keys=[reviewed_by])
 
 
 class MarketingLeadComment(Base):

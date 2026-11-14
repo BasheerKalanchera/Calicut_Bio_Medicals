@@ -152,7 +152,10 @@ def test_all_relationships_resolve():
     # one-directional onto SBU.
     # 116, not 117: Annual Target Planning dropped SbuTarget.sbu (0062); its
     # three new tables have no relationships.
-    assert rel_count == 116, f"Expected 116 relationships, found {rel_count}"
+    # 117, not 116: Marketing Lead "Converted by / Discarded by" (2026-11-14)
+    # added MarketingLead.reviewed_by_user -- one-directional onto UserProfile,
+    # like MarketingLead.assigned_to_user; no migration (reviewed_by existed).
+    assert rel_count == 117, f"Expected 117 relationships, found {rel_count}"
 
 
 def test_reference_models_importable():
