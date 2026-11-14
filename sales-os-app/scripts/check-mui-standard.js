@@ -1,8 +1,12 @@
-// Fails if a .tsx or .ts file staged for commit breaks the MUI standard
-// (docs/Frontend-Implementation-Standards.md §6.11; Part 2 plan D9: only the
-// commit's own files are checked, so an untouched screen never blocks one).
-// Run by `npm run lint`, which the pre-commit hook runs. Helper .ts files are
-// checked too (they hold colours screens use); the theme folder is not.
+// Fails if a .tsx or .ts file changed since the last commit breaks the MUI
+// standard (docs/Frontend-Implementation-Standards.md §6.11; Part 2 plan D9:
+// only the files being changed are checked, so an untouched screen never
+// blocks one). "Changed" means staged, edited but not yet staged, or new and
+// not yet added — so `npm run lint` during a build sees the same files the
+// commit will (14 Nov 2026: it used to read staged files only and passed a
+// build whose typed colours the commit then refused). Run by `npm run lint`,
+// which the pre-commit hook runs. Helper .ts files are checked too (they hold
+// colours screens use); the theme folder is not.
 //
 // Flags, outside comments:
 //   - a typed colour (`#9ca3af`, `rgba(0, 0, 0, 0.05)`) — use a theme name
@@ -48,14 +52,27 @@ const RULES = [
   { name: "old phone-table styling", pattern: /\bSTACK_ON_PHONE\b|\bdata-label\b|\bphone-hidden\b|\bphone-chevron\b/ },
 ];
 
-function stagedFiles() {
-  let out;
+function gitLines(args) {
   try {
-    out = execFileSync("git", ["diff", "--cached", "--name-only", "--diff-filter=ACMR", "--relative"], { cwd: APP_DIR, encoding: "utf8" });
+    return execFileSync("git", args, { cwd: APP_DIR, encoding: "utf8" })
+      .split("\n").map((f) => f.trim()).filter((f) => f.startsWith("src/"));
   } catch {
     return [];
   }
-  return out.split("\n").map((f) => f.trim()).filter((f) => f.startsWith("src/"));
+}
+
+// Staged files (what the commit holds).
+function stagedFiles() {
+  return gitLines(["diff", "--cached", "--name-only", "--diff-filter=ACMR", "--relative"]);
+}
+
+// Everything changed since the last commit: staged, edited-but-unstaged, and
+// new files git does not know yet.
+function changedFiles() {
+  return [...new Set([
+    ...gitLines(["diff", "HEAD", "--name-only", "--diff-filter=ACMR", "--relative"]),
+    ...gitLines(["ls-files", "--others", "--exclude-standard"]),
+  ])];
 }
 
 function allFiles(dir = SRC_DIR, files = []) {
@@ -67,7 +84,9 @@ function allFiles(dir = SRC_DIR, files = []) {
   return files;
 }
 
-// Staged content, not the working copy, is what gets committed.
+// The staged copy, which can differ from the working copy when a file was
+// edited again after `git add`; both are checked, since the commit holds the
+// staged one and the developer's screen runs the working one.
 function readStaged(relPath) {
   try {
     return execFileSync("git", ["show", `:./${relPath}`], { cwd: APP_DIR, encoding: "utf8" });
@@ -131,12 +150,18 @@ function breaches(text) {
 }
 
 const reportAll = process.argv.includes("--all");
-const files = (reportAll ? allFiles() : stagedFiles()).filter(isChecked);
+const staged = new Set(stagedFiles());
+const files = (reportAll ? allFiles() : [...new Set([...changedFiles(), ...staged])]).filter(isChecked);
 
 const results = [];
 for (const f of files) {
-  const text = reportAll ? readFileSync(join(APP_DIR, f), "utf8") : readStaged(f);
-  for (const b of breaches(text)) results.push({ file: f, ...b });
+  // The working copy, and the staged copy too when it is different.
+  const texts = new Set();
+  if (existsSync(join(APP_DIR, f))) texts.add(readFileSync(join(APP_DIR, f), "utf8"));
+  if (!reportAll && staged.has(f)) texts.add(readStaged(f));
+  for (const text of texts) {
+    for (const b of breaches(text)) results.push({ file: f, ...b });
+  }
 }
 
 if (reportAll) {
@@ -157,7 +182,7 @@ if (results.length > 0 && urgentExempt) {
 }
 
 if (results.length > 0) {
-  console.error("These staged files break the MUI standard (docs/Frontend-Implementation-Standards.md §6.11):\n");
+  console.error("These changed files break the MUI standard (docs/Frontend-Implementation-Standards.md §6.11):\n");
   for (const r of results) console.error(`  ${r.file}:${r.lineNo}  [${r.rule}]  ${r.line}`);
   console.error(
     "\nA changed screen must follow the whole standard before it is committed: colours from the theme" +
@@ -167,4 +192,4 @@ if (results.length > 0) {
   process.exit(1);
 }
 
-console.log(files.length ? `MUI standard: ${files.length} staged .ts/.tsx file(s) pass.` : "MUI standard: no staged .ts/.tsx files.");
+console.log(files.length ? `MUI standard: ${files.length} changed .ts/.tsx file(s) pass.` : "MUI standard: no changed .ts/.tsx files.");
