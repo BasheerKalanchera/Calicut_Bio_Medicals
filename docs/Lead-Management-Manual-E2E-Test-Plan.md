@@ -190,6 +190,13 @@ one to temporarily reassign per Setup step 3, or create a throwaway user:
 
 ## Group E — Rep: Discard flow
 
+**Changed 13–14 Nov 2026 (Basheer):** the Discard pop-up no longer has a
+Reason dropdown. It has one required typed **Reason** box, saved in
+`discard_note`, and `discard_reason` stays empty for new discards. Steps 3–5
+and 7 below record the original test as it was run; for the current
+behaviour see `docs/Marketing-Lead-Discard-Reason-Manual-E2E-Test-Plan.md`.
+Both lead screens also show "Converted by / Discarded by <name>" now.
+
 1. Create a second test lead (Group B), assigned to the same rep.
 2. From Marketing Lead Queue, click **Discard**.
 3. Expect: a small dialog with a required Reason dropdown (Duplicate / Not

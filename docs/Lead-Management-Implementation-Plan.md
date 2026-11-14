@@ -96,6 +96,19 @@ engine exists to give.
      `lead.status = DISCARDED`. Given the volume of junk expected, this
      needs to be the *fast* path in the UI, not an afterthought next to a
      heavier Convert flow.
+     **Changed (Basheer, 2026-11-13):** the reason dropdown is dropped; the
+     rep types a required free-text **Reason** (saved in `discard_note`).
+     New discards get no `discard_reason` code; the four codes stay valid in
+     the database and the 5 leads discarded before the change keep theirs
+     (UAT read-only check, 13 Nov: 2 Not interested, 2 Unable to contact,
+     1 Junk). Counting discards by category is no longer possible for new
+     ones; nothing reads it today. No migration.
+     **Added (Basheer, 2026-11-14):** both lead screens (Marketing Leads and
+     Marketing Lead Review Queue, including Team Marketing Leads) show a grey
+     "Converted by <name>" / "Discarded by <name>" line under a reviewed lead,
+     so the Marketing User and the managers see who acted, who can differ from
+     the assigned rep. Reads the existing `reviewed_by`; no migration. Built
+     `8a59b20`.
    - The `lead` row is never deleted either way — it's the permanent
      record of "this came in, and here's what became of it."
 

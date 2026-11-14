@@ -1208,7 +1208,12 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   approved 2026-10-01: `docs/User-Manual-And-Help-Catchup-Implementation-Plan.md`
   (current step: the plan's Status line). Include: editing an Opportunity
   now happens only on its own page (Edit on a customer or project opens
-  it) — UAT hotfix 2026-10-03.
+  it) — UAT hotfix 2026-10-03. Also include (14 Nov 2026, Basheer): the
+  Marketing Lead Discard pop-up now asks for one typed Reason, not the four
+  options, and both lead screens show "Converted by / Discarded by <name>".
+  `docs/UAT-User-Manual.md` "Work a marketing lead" (the **Discard** line)
+  still lists the four options; change it only when this reaches UAT. E2E:
+  `docs/Marketing-Lead-Discard-Reason-Manual-E2E-Test-Plan.md`.
 
 - **Move remaining Opportunity screens to the common filter (Basheer,
   2026-10-01).** The forecast-by-closing-period work builds one shared
