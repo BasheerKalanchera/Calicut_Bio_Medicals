@@ -424,25 +424,25 @@ export default function QuickLeadModal({
     <>
       <FormModal isOpen={isOpen} onClose={onClose} title="New Opportunity" onSubmit={handleSubmit} submitLabel="Create" disableEnforceFocus={showItemsModal || showAddHospital || showFirstActivity}>
         {(marketingLeadContextNote || marketingLeadEventName || marketingLeadSourceName) && (
-          <Box sx={{ p: 1.5, borderRadius: "0.75rem", bgcolor: "#f0fdf4", border: "1px solid #bbf7d0" }}>
-            <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#16a34a", textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.5 }}>
+          <Box sx={{ p: 1.5, borderRadius: "0.75rem", bgcolor: "green.50", border: 1, borderColor: "green.200" }}>
+            <Typography sx={{ typography: "tiny", fontWeight: 900, color: "green.600",textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.5 }}>
               From the marketing lead{marketingLeadId ? ` ${marketingLeadRef(marketingLeadId)}` : ""}
             </Typography>
             {/* Source always shows when known; Conference additionally shows
                 its event name as its own line -- every lead source gets the
                 same "Source: X" line, Conference just gets one more on top. */}
             {marketingLeadSourceName && (
-              <Typography sx={{ fontSize: "0.8125rem", fontWeight: 700, color: "#166534", mb: marketingLeadEventName || marketingLeadContextNote ? 0.25 : 0 }}>
+              <Typography sx={{ typography: "body3", fontWeight: 700, color: "green.800", mb: marketingLeadEventName || marketingLeadContextNote ? 0.25 : 0 }}>
                 Source: {marketingLeadSourceName}
               </Typography>
             )}
             {marketingLeadEventName && (
-              <Typography sx={{ fontSize: "0.8125rem", fontWeight: 700, color: "#166534", mb: marketingLeadContextNote ? 0.25 : 0 }}>
+              <Typography sx={{ typography: "body3", fontWeight: 700, color: "green.800", mb: marketingLeadContextNote ? 0.25 : 0 }}>
                 Conference: {marketingLeadEventName}
               </Typography>
             )}
             {marketingLeadContextNote && (
-              <Typography sx={{ fontSize: "0.875rem", color: "#374151" }}>{marketingLeadContextNote}</Typography>
+              <Typography sx={{ typography: "body2", color: "gray.700" }}>{marketingLeadContextNote}</Typography>
             )}
           </Box>
         )}
@@ -471,7 +471,7 @@ export default function QuickLeadModal({
           </TextField>
         )}
         {lockAccount ? (
-          <Box sx={{ px: 1.5, py: 1, bgcolor: "#eff6ff", borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 700, color: "primary.main" }}>
+          <Box sx={{ px: 1.5, py: 1, bgcolor: "blue.50", borderRadius: "0.75rem", typography: "caption", fontWeight: 700, color: "primary.main" }}>
             {displayedAccount?.name ?? "…"}
             {lockProject && ` — ${projects.find((p) => p.id === projectId)?.name ?? "…"}`}
           </Box>
@@ -498,9 +498,9 @@ export default function QuickLeadModal({
             type="button"
             onClick={() => setShowAddHospital(true)}
             sx={{
-              px: 1.5, py: 0.5, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900,
-              textTransform: "uppercase", letterSpacing: "0.05em", color: "#059669", bgcolor: "#ecfdf5",
-              "&:hover": { bgcolor: "#d1fae5" },
+              px: 1.5, py: 0.5, borderRadius: "0.75rem", typography: "caption", fontWeight: 900,
+              textTransform: "uppercase", letterSpacing: "0.05em", color: "emerald.600", bgcolor: "emerald.50",
+              "&:hover": { bgcolor: "emerald.100" },
             }}
           >
             + Add Hospital
@@ -555,7 +555,7 @@ export default function QuickLeadModal({
           <Box>
             <FormControlLabel
               control={<Checkbox color="primary" checked={isExternalReferrer} onChange={(e) => { setIsExternalReferrer(e.target.checked); setReferredByUserId(""); setReferredByNote(""); }} />}
-              label={<Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#374151" }}>External referrer (not Cabio staff)</Typography>}
+              label={<Typography sx={{ typography: "body2", fontWeight: 700, color: "gray.700" }}>External referrer (not Cabio staff)</Typography>}
             />
             {isExternalReferrer ? (
               <TextField label="Referred By" value={referredByNote} onChange={(e) => setReferredByNote(e.target.value)} placeholder="e.g. Dr. Menon, referring physician" fullWidth size="small" />
@@ -604,7 +604,7 @@ export default function QuickLeadModal({
         )}
         <FormControlLabel
           control={<Checkbox color="primary" checked={gateOverrideChecked} onChange={(e) => setGateOverrideChecked(e.target.checked)} />}
-          label={<Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#374151" }}>Fast-Track this Opportunity</Typography>}
+          label={<Typography sx={{ typography: "body2", fontWeight: 700, color: "gray.700" }}>Fast-Track this Opportunity</Typography>}
         />
         {selectedStageOrder >= STAGE_ORDER_DEMO && leadSourceCode !== "REPEAT_ORDER" && !gateOverrideChecked && (
           <>
@@ -619,7 +619,7 @@ export default function QuickLeadModal({
           <TextField label="Expected Closure Date" type="date" value={closureDate} onChange={(e) => setClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
         )}
         {gateOverrideChecked && (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fef2f2", border: "1px solid #fecaca" }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "red.50", border: 1, borderColor: "red.200" }}>
             <TextField
               select
               label={gateOverrideApproverId ? "Approved By *" : "Approved By"}
@@ -665,18 +665,18 @@ export default function QuickLeadModal({
             />
           </>
         )}
-        <Box sx={{ borderTop: "1px solid #f3f4f6", pt: "0.75rem" }}>
+        <Box sx={{ borderTop: 1, borderColor: "gray.100", pt: "0.75rem" }}>
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
-            <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            <Typography sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.05em" }}>
               Products
             </Typography>
             <Button
               type="button"
               onClick={() => setShowItemsModal(true)}
               sx={{
-                px: 1.5, py: 0.5, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900,
-                textTransform: "uppercase", letterSpacing: "0.05em", color: "#059669", bgcolor: "#ecfdf5",
-                "&:hover": { bgcolor: "#d1fae5" },
+                px: 1.5, py: 0.5, borderRadius: "0.75rem", typography: "caption", fontWeight: 900,
+                textTransform: "uppercase", letterSpacing: "0.05em", color: "emerald.600", bgcolor: "emerald.50",
+                "&:hover": { bgcolor: "emerald.100" },
               }}
             >
               {items.length > 0 ? `Edit (${items.length})` : "+ Add Products"}
@@ -695,7 +695,7 @@ export default function QuickLeadModal({
           onRemove={(i) => setItems(items.filter((_, j) => j !== i))}
           onUpdateField={(i, field, value) => setItems(items.map((it, j) => j === i ? { ...it, [field]: value } : it))}
         />
-        <Box sx={{ borderTop: "1px solid #f3f4f6", pt: "0.75rem" }}>
+        <Box sx={{ borderTop: 1, borderColor: "gray.100", pt: "0.75rem" }}>
           <OpportunityItemAddRow products={products} onAdd={(item) => setItems([...items, item])} />
         </Box>
       </FormModal>

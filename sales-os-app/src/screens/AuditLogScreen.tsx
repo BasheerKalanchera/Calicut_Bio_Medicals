@@ -4,6 +4,7 @@ import { Alert, Box, Button, Chip, MenuItem, TextField, Typography } from "@mui/
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import type { Dayjs } from "dayjs";
 import { useAuth } from "../contexts/AuthContext";
+import { shadows } from "../theme/shadows";
 import { listAuditLog } from "../services/auditLog";
 import type { AuditLogResponse, AuditSaveResponse } from "../types/api-aliases";
 
@@ -90,7 +91,7 @@ function EntryRow({ entry, isOwner }: { entry: AuditLogResponse; isOwner: boolea
   return (
     <Box sx={{ py: 0.75, borderTop: "1px solid", borderColor: "divider" }}>
       <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
-        <Chip label={tag.label} size="small" color={tag.color} sx={{ fontWeight: 700, fontSize: "10px", height: 20 }} />
+        <Chip label={tag.label} size="small" color={tag.color} sx={{ fontWeight: 700, typography: "tiny", height: 20 }} />
         {!isOwner && (
           <Typography variant="body2">
             <Box component="span" sx={{ color: "text.secondary" }}>{tableLabel(entry.table_name)}: </Box>
@@ -107,7 +108,7 @@ function EntryRow({ entry, isOwner }: { entry: AuditLogResponse; isOwner: boolea
           const oldDisplay = entry.old_data_display?.[field] ?? formatValue(entry.old_data?.[field]);
           const newDisplay = entry.new_data_display?.[field] ?? formatValue(entry.new_data?.[field]);
           return (
-            <Box key={field} sx={{ display: "flex", gap: 1, fontSize: "0.75rem" }}>
+            <Box key={field} sx={{ display: "flex", gap: 1, typography: "caption" }}>
               <Box component="span" sx={{ fontWeight: 700, minWidth: 140 }}>{field}</Box>
               {isUpdate ? (
                 <Box component="span">
@@ -126,7 +127,7 @@ function EntryRow({ entry, isOwner }: { entry: AuditLogResponse; isOwner: boolea
       </Box>
 
       {!isUpdate && fields.length > 0 && (
-        <Button size="small" onClick={() => setShowAll((v) => !v)} sx={{ mt: 0.25, fontSize: "0.7rem", textTransform: "none", p: 0 }}>
+        <Button size="small" onClick={() => setShowAll((v) => !v)} sx={{ mt: 0.25, typography: "caption2", textTransform: "none", p: 0 }}>
           {showAll ? "Hide fields" : `Show all ${fields.length} fields`}
         </Button>
       )}
@@ -150,7 +151,7 @@ function RecordCard({
   const context = ownerEntry && ownerEntry.parent_type && ownerEntry.parent_id && ownerEntry.parent_label ? ownerEntry : null;
 
   return (
-    <Box sx={{ bgcolor: "background.paper", borderRadius: "1rem", boxShadow: "0 1px 2px rgba(0,0,0,0.05)", border: "1px solid", borderColor: "divider", p: 2 }}>
+    <Box sx={{ bgcolor: "background.paper", borderRadius: "1rem", boxShadow: shadows.sm, border: "1px solid", borderColor: "divider", p: 2 }}>
       <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1, mb: 0.5 }}>
         <Typography variant="body2" sx={{ fontWeight: 700 }}>{tableLabel(first.owner_type)}</Typography>
         {clickable ? (
@@ -163,7 +164,7 @@ function RecordCard({
               if (first.owner_type === "account") onSelectAccount?.({ id: ownerId!, name: ownerName });
               else onSelectOpportunity?.({ id: ownerId!, name: ownerName });
             }}
-            sx={{ fontSize: "11px", height: 22 }}
+            sx={{ typography: "caption2", height: 22 }}
           />
         ) : (
           <Typography variant="body2">{ownerName}</Typography>
@@ -177,7 +178,7 @@ function RecordCard({
             onClick={() => {
               if (context.parent_type === "account") onSelectAccount?.({ id: context.parent_id!, name: context.parent_label! });
             }}
-            sx={{ fontSize: "10px", height: 20 }}
+            sx={{ typography: "tiny", height: 20 }}
           />
         )}
         <Box sx={{ flex: 1 }} />

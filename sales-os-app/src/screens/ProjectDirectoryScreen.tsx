@@ -16,8 +16,7 @@ import ActivityTimeline from "../components/ActivityTimeline";
 import NextActionsPanel from "../components/NextActionsPanel";
 import { listProjectReminders } from "../services/activities";
 import useDebouncedValue from "../hooks/useDebouncedValue";
-
-const SHADOW_SM = "0 1px 2px rgba(0,0,0,0.05)";
+import { shadows } from "../theme/shadows";
 
 // Same chip row as Customer 360 (hospital next-action plan D10).
 const DETAIL_TABS = [
@@ -81,21 +80,21 @@ function ProjectDetailView({
 
   return (
     <>
-      <Box sx={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", bgcolor: "#f9fafb" }}>
+      <Box sx={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", bgcolor: "gray.50" }}>
         {/* Fixed header */}
         <Box sx={{ px: 2, pt: 2 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
-            <IconButton onClick={onBack} aria-label="Back" sx={{ width: 40, height: 40, color: "#4b5563", flexShrink: 0, "&:hover": { bgcolor: "#e5e7eb" } }}>
-              <ArrowBackIcon sx={{ fontSize: 20 }} />
+            <IconButton onClick={onBack} aria-label="Back" sx={{ width: 40, height: 40, color: "gray.600", flexShrink: 0, "&:hover": { bgcolor: "gray.200" } }}>
+              <ArrowBackIcon fontSize="small" />
             </IconButton>
             <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Typography component="h2" sx={{ fontWeight: 800, fontSize: "1.25rem", color: "#1f2937", letterSpacing: "-0.025em", lineHeight: 1.25, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <Typography component="h2" sx={{ typography: "h6", fontWeight: 800, color: "gray.800", letterSpacing: "-0.025em", lineHeight: 1.25, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {p.name}
               </Typography>
             </Box>
             <Button
               onClick={onEdit}
-              sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "#eff6ff", "&:hover": { bgcolor: "#dbeafe" }, flexShrink: 0 }}
+              sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", typography: "caption", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "blue.50", "&:hover": { bgcolor: "blue.100" }, flexShrink: 0 }}
             >
               Edit
             </Button>
@@ -111,14 +110,14 @@ function ProjectDetailView({
                   onClick={() => setActiveTab(tab.id)}
                   sx={{
                     flexShrink: 0, display: "flex", alignItems: "center", gap: 0.75, px: 2, py: 1,
-                    borderRadius: "9999px", fontSize: "0.875rem", fontWeight: 700, whiteSpace: "nowrap",
+                    borderRadius: "9999px", fontWeight: 700, whiteSpace: "nowrap",
                     transition: "all 0.2s", border: "1px solid", textTransform: "none",
                     ...(isActive
-                      ? { bgcolor: "primary.main", color: "#fff", borderColor: "primary.main", boxShadow: SHADOW_SM }
-                      : { bgcolor: "#fff", color: "#6b7280", borderColor: "#e5e7eb", "&:hover": { borderColor: "#93c5fd", color: "primary.main" } }),
+                      ? { bgcolor: "primary.main", color: "common.white", borderColor: "primary.main", boxShadow: shadows.sm }
+                      : { bgcolor: "common.white", color: "gray.500", borderColor: "gray.200", "&:hover": { borderColor: "blue.300", color: "primary.main" } }),
                   }}
                 >
-                  {isActive && <CheckIcon sx={{ fontSize: 14, flexShrink: 0 }} />}
+                  {isActive && <CheckIcon fontSize="inherit" sx={{ flexShrink: 0 }} />}
                   {tab.label}
                 </Button>
               );
@@ -128,15 +127,15 @@ function ProjectDetailView({
         {/* Scrollable content */}
         <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0, px: 2, pb: 2, display: "flex", flexDirection: "column", gap: 2 }}>
           {activeTab === "overview" && (
-          <Box sx={{ bgcolor: "#fff", borderRadius: "1.5rem", boxShadow: SHADOW_SM, border: "1px solid #f3f4f6", p: 2.5 }}>
-            <Typography component="h4" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em", mb: 2 }}>
+          <Box sx={{ bgcolor: "common.white", borderRadius: "1.5rem", boxShadow: shadows.sm, border: 1, borderColor: "gray.100", p: 2.5 }}>
+            <Typography component="h4" sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.2em", mb: 2 }}>
               Project Details
             </Typography>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
               {fields.map((f) => (
                 <Box key={f.label}>
-                  <Box sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.5 }}>{f.label}</Box>
-                  <Box sx={{ fontWeight: 700, color: "#1f2937" }}>{f.value || "—"}</Box>
+                  <Box sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.5 }}>{f.label}</Box>
+                  <Box sx={{ fontWeight: 700, color: "gray.800" }}>{f.value || "—"}</Box>
                 </Box>
               ))}
             </Box>
@@ -145,22 +144,22 @@ function ProjectDetailView({
 
           {/* Opportunities */}
           {activeTab === "opportunities" && (
-          <Box sx={{ bgcolor: "#fff", borderRadius: "1.5rem", boxShadow: SHADOW_SM, border: "1px solid #f3f4f6", p: 2.5 }}>
+          <Box sx={{ bgcolor: "common.white", borderRadius: "1.5rem", boxShadow: shadows.sm, border: 1, borderColor: "gray.100", p: 2.5 }}>
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
-              <Typography component="h4" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em" }}>
+              <Typography component="h4" sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.2em" }}>
                 Opportunities
               </Typography>
               <Button
                 onClick={() => setShowAddOpp(true)}
-                sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#059669", bgcolor: "#ecfdf5", "&:hover": { bgcolor: "#d1fae5" } }}
+                sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", typography: "caption", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "emerald.600", bgcolor: "emerald.50", "&:hover": { bgcolor: "emerald.100" } }}
               >
                 + Add
               </Button>
             </Box>
             {oppsLoading ? (
-              <Typography sx={{ textAlign: "center", py: 2, color: "#9ca3af", fontWeight: 700, fontSize: "0.875rem" }}>Loading...</Typography>
+              <Typography sx={{ textAlign: "center", py: 2, color: "gray.400", typography: "body2", fontWeight: 700 }}>Loading...</Typography>
             ) : opps.length === 0 ? (
-              <Typography sx={{ textAlign: "center", py: 2, color: "#9ca3af", fontStyle: "italic", fontSize: "0.875rem" }}>No opportunities linked to this project.</Typography>
+              <Typography sx={{ textAlign: "center", py: 2, color: "gray.400", fontStyle: "italic", typography: "body2" }}>No opportunities linked to this project.</Typography>
             ) : (
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
                 {opps.map((opp: any) => (
@@ -169,29 +168,29 @@ function ProjectDetailView({
                     onClick={() => onSelectOpportunity?.({ id: opp.id, name: opp.name })}
                     sx={{
                       display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1.5,
-                      p: 1.5, bgcolor: "#f9fafb", borderRadius: "0.75rem",
+                      p: 1.5, bgcolor: "gray.50", borderRadius: "0.75rem",
                       cursor: onSelectOpportunity ? "pointer" : "default",
-                      "&:hover": onSelectOpportunity ? { bgcolor: "#f3f4f6" } : undefined,
+                      "&:hover": onSelectOpportunity ? { bgcolor: "gray.100" } : undefined,
                     }}
                   >
                     <Box sx={{ minWidth: 0 }}>
-                      <Typography sx={{ fontWeight: 700, color: "#1f2937", fontSize: "0.875rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      <Typography sx={{ typography: "body2", fontWeight: 700, color: "gray.800", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {opp.name}
                       </Typography>
                       <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1, mt: 0.5 }}>
-                        <Box component="span" sx={{ px: 1, py: 0.25, borderRadius: "0.5rem", fontSize: "10px", fontWeight: 900, border: "1px solid #a7f3d0", bgcolor: "#ecfdf5", color: "#047857" }}>
+                        <Box component="span" sx={{ px: 1, py: 0.25, borderRadius: "0.5rem", typography: "tiny", fontWeight: 900, border: 1, borderColor: "emerald.200", bgcolor: "emerald.50", color: "emerald.700" }}>
                           {opp.stage?.stage_name}
                         </Box>
-                        <Box component="span" sx={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af" }}>{opp.win_probability}% win</Box>
+                        <Box component="span" sx={{ typography: "tiny", fontWeight: 700, color: "gray.400" }}>{opp.win_probability}% win</Box>
                         {opp.indicative_value != null && (
-                          <Box component="span" sx={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af" }}>₹{opp.indicative_value}L</Box>
+                          <Box component="span" sx={{ typography: "tiny", fontWeight: 700, color: "gray.400" }}>₹{opp.indicative_value}L</Box>
                         )}
                       </Box>
                     </Box>
                     {onSelectOpportunity && (
                       <Button
                         onClick={(e) => { e.stopPropagation(); onSelectOpportunity({ id: opp.id, name: opp.name }); }}
-                        sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "#eff6ff", "&:hover": { bgcolor: "#dbeafe" }, flexShrink: 0 }}
+                        sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", typography: "caption", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "blue.50", "&:hover": { bgcolor: "blue.100" }, flexShrink: 0 }}
                       >
                         Edit
                       </Button>
@@ -205,7 +204,7 @@ function ProjectDetailView({
 
           {/* Activity */}
           {activeTab === "activity" && (
-          <Box sx={{ bgcolor: "#fff", borderRadius: "1.5rem", boxShadow: SHADOW_SM, border: "1px solid #f3f4f6", p: 2.5 }}>
+          <Box sx={{ bgcolor: "common.white", borderRadius: "1.5rem", boxShadow: shadows.sm, border: 1, borderColor: "gray.100", p: 2.5 }}>
             <ActivityTimeline projectId={p.id} onLogActivity={() => openLogActivityRef?.current?.()} />
           </Box>
           )}
@@ -440,7 +439,7 @@ export default function ProjectDirectoryScreen({
         />
         <FormModal isOpen={editingProject !== null} onClose={() => setEditingProject(null)} title="Edit Project" onSubmit={handleUpdateProject}>
           {editingProject && (
-            <Box sx={{ px: 1.5, py: 1, bgcolor: "#eff6ff", borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 700, color: "primary.main", mb: 0.5 }}>
+            <Box sx={{ px: 1.5, py: 1, bgcolor: "blue.50", borderRadius: "0.75rem", typography: "caption", fontWeight: 700, color: "primary.main", mb: 0.5 }}>
               {editingProject.account?.name}
             </Box>
           )}
@@ -476,10 +475,10 @@ export default function ProjectDirectoryScreen({
   }
 
   return (
-    <Box sx={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", bgcolor: "#f9fafb" }}>
+    <Box sx={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", bgcolor: "gray.50" }}>
       {/* Fixed header */}
       <Box sx={{ px: 2, pt: 2 }}>
-        <Box sx={{ display: "flex", gap: 1.5, mb: 3, bgcolor: "#fff", p: 2, borderRadius: "1rem", boxShadow: SHADOW_SM, border: "1px solid #f3f4f6" }}>
+        <Box sx={{ display: "flex", gap: 1.5, mb: 3, bgcolor: "common.white", p: 2, borderRadius: "1rem", boxShadow: shadows.sm, border: 1, borderColor: "gray.100" }}>
           <TextField
             placeholder="Search by project or hospital..."
             value={search}
@@ -516,7 +515,7 @@ export default function ProjectDirectoryScreen({
         )}
 
         {isLoading && (
-          <Typography sx={{ textAlign: "center", py: 6, color: "#9ca3af", fontWeight: 700, fontSize: "0.875rem" }}>Loading projects...</Typography>
+          <Typography sx={{ textAlign: "center", py: 6, color: "gray.400", typography: "body2", fontWeight: 700 }}>Loading projects...</Typography>
         )}
 
         {!isLoading && !isError && (
@@ -527,11 +526,11 @@ export default function ProjectDirectoryScreen({
                   key={p.id}
                   onClick={() => { setSelectedProject(p); onSelectProject?.(p); onDetailModeChange?.(true); }}
                   sx={{
-                    bgcolor: "#fff", py: 1.5, px: 2, borderRadius: "1.5rem", boxShadow: SHADOW_SM, border: "1px solid #f3f4f6",
+                    bgcolor: "common.white", py: 1.5, px: 2, borderRadius: "1.5rem", boxShadow: shadows.sm, border: 1, borderColor: "gray.100",
                     cursor: "pointer", transition: "all 0.15s",
-                    "&:hover": { borderColor: "#60a5fa", boxShadow: "0 4px 6px rgba(0,0,0,0.07)" },
-                    "&:hover [data-part='project-avatar']": { bgcolor: "#d97706", color: "#fff" },
-                    "&:hover [data-part='project-name']": { color: "#1e3a8a" },
+                    "&:hover": { borderColor: "blue.400", boxShadow: shadows.md },
+                    "&:hover [data-part='project-avatar']": { bgcolor: "amber.600", color: "common.white" },
+                    "&:hover [data-part='project-name']": { color: "blue.900" },
                     "&:hover [data-part='project-chevron']": { color: "primary.main" },
                   }}
                 >
@@ -539,30 +538,30 @@ export default function ProjectDirectoryScreen({
                     <Box
                       data-part="project-avatar"
                       sx={{
-                        width: 36, height: 36, bgcolor: "#fffbeb", color: "#d97706", borderRadius: "0.75rem",
-                        display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: "0.875rem",
-                        boxShadow: SHADOW_SM, flexShrink: 0, alignSelf: "center", transition: "background-color 0.15s, color 0.15s",
+                        width: 36, height: 36, bgcolor: "amber.50", color: "amber.600", borderRadius: "0.75rem",
+                        display: "flex", alignItems: "center", justifyContent: "center", typography: "body2", fontWeight: 900,
+                        boxShadow: shadows.sm, flexShrink: 0, alignSelf: "center", transition: "background-color 0.15s, color 0.15s",
                       }}
                     >
                       {p.name.charAt(0).toUpperCase()}
                     </Box>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography data-part="project-name" sx={{ fontWeight: 700, color: "#1f2937", fontSize: "0.875rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", transition: "color 0.15s" }}>
+                      <Typography data-part="project-name" sx={{ typography: "body2", fontWeight: 700, color: "gray.800", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", transition: "color 0.15s" }}>
                         {p.name}
                       </Typography>
                       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1.5, mt: 0.25 }}>
-                        <Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#9ca3af", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.account.name}</Typography>
-                        <Box sx={{ bgcolor: "#f9fafb", p: 1, borderRadius: "0.75rem", flexShrink: 0, transition: "background-color 0.15s" }}>
-                          <ChevronRightIcon data-part="project-chevron" sx={{ fontSize: 18, color: "#9ca3af", transition: "color 0.15s" }} />
+                        <Typography sx={{ typography: "body2", fontWeight: 700, color: "gray.400", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.account.name}</Typography>
+                        <Box sx={{ bgcolor: "gray.50", p: 1, borderRadius: "0.75rem", flexShrink: 0, transition: "background-color 0.15s" }}>
+                          <ChevronRightIcon data-part="project-chevron" fontSize="inherit" sx={{ typography: "lead", color: "gray.400", transition: "color 0.15s" }} />
                         </Box>
                       </Box>
                       <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", columnGap: 1.5, rowGap: 0.5, mt: 0.75 }}>
-                        <Box component="span" sx={{ px: 1.25, py: 0.5, borderRadius: "0.5rem", fontSize: "10px", fontWeight: 900, border: "1px solid #99f6e4", bgcolor: "#f0fdfa", color: "#0f766e" }}>
+                        <Box component="span" sx={{ px: 1.25, py: 0.5, borderRadius: "0.5rem", typography: "tiny", fontWeight: 900, border: 1, borderColor: "teal.200", bgcolor: "teal.50", color: "teal.700" }}>
                           {p.status.status_name}
                         </Box>
                         <Box>
-                          <Box component="span" sx={{ fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "10px" }}>Owner: </Box>
-                          <Box component="span" sx={{ fontWeight: 700, fontSize: "0.75rem" }}>{p.owner.display_name}</Box>
+                          <Box component="span" sx={{ fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.05em", typography: "tiny" }}>Owner: </Box>
+                          <Box component="span" sx={{ typography: "caption", fontWeight: 700 }}>{p.owner.display_name}</Box>
                         </Box>
                       </Box>
                     </Box>
@@ -572,8 +571,8 @@ export default function ProjectDirectoryScreen({
             </Box>
 
             {projects.length === 0 && (
-              <Box sx={{ textAlign: "center", py: 6, bgcolor: "#fff", borderRadius: "1.5rem", border: "2px dashed #f3f4f6" }}>
-                <Typography sx={{ fontStyle: "italic", color: "#9ca3af" }}>
+              <Box sx={{ textAlign: "center", py: 6, bgcolor: "common.white", borderRadius: "1.5rem", border: 2, borderStyle: "dashed", borderColor: "gray.100" }}>
+                <Typography sx={{ fontStyle: "italic", color: "gray.400" }}>
                   {search ? `No projects or hospitals matching "${search}".` : "No projects found."}
                 </Typography>
               </Box>
