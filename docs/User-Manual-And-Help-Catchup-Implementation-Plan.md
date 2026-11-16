@@ -690,7 +690,7 @@ Sources (2026-10-25): `QuickLeadModal.tsx:115, 323–346, 425, 450–663,
 Manual checked: Part A "Move an Opportunity forward", "Put an
 Opportunity On Hold, or mark it Lost", "Mark an Opportunity Won" — no
 gaps. Manager box: none. The form's "this deal is past Demo stage" line
-is covered by Backlog "Wording: "deal" → "Opportunity""; the help uses
+is covered by `docs/Customer-Wording-Implementation-Plan.md`; the help uses
 "Opportunity".
 
 **Title:** Edit Opportunity — Help
@@ -806,7 +806,7 @@ exact-same-name refusal (line added 2026-10-26, Basheer).
 Manager box: none (Admin, GM and SBU Managers may also pick any zone;
 left out — reps use this screen). First entry written to the
 sales-friendly word rules above. The pop-up's own "hospital" messages
-are in Backlog "Wording: "Hospital" → "Customer" across the app".
+are in `docs/Customer-Wording-Implementation-Plan.md`.
 
 **Title:** New Customer — Help
 

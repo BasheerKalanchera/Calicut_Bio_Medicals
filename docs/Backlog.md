@@ -22,14 +22,23 @@ about any line older than 14 days (Basheer, 2026-10-16).
   set margin, with incentives tied to it? And the lowest price a rep may
   quote, shown on the Opportunity (BR-CAT-04): settle before its plan.
 - **Haroon** (raised 2026-11-10) — the demo qualification checklist items
-  and which are required (Q-H1); what counts as a Win, PO received or fully
-  paid (Q-H2); the Dr. Moopen's repeat order with a demo date (Q-H3); and
+  and which are required (Q-H1); the Dr. Moopen's repeat order with a demo
+  date (Q-H3); and
   6 repeat orders at Lead or Qualified (Q-H4).
   `docs/Discussion-Demo-Qualification-2026-11.md` section 4.
 - **Cabio leadership team** (raised 2026-11-10) — which demos need manager
   approval: expensive machines only, by product category (Q-L1).
   `docs/Discussion-Demo-Qualification-2026-11.md` section 4.
-- *Not yet sent* — Basheer to send the two lines above.
+- **Haroon** (sent 2026-11-12) — Critical Care 2026 brand targets on UAT:
+  Equipwell, Kolkatta, We Make left out on purpose? EDAN, Magnamed,
+  Aeonmed keep their own pattern? Aeonmed Apr–Sep to 0? Progress-Archive
+  12 Nov.
+- **Fahad** (sent 2026-11-14) — Ambalpadi: are the EMIs paid to Cabio or
+  to a lender? Progress-Archive 12 Nov.
+- **Cabio leadership team** (raised 2026-11-13) — review of
+  `docs/Payment-Terms-Implementation-Plan.md` before it is built (Basheer).
+- *Not yet sent* — Basheer to send the two demo qualification lines above
+  (Haroon Q-H1, Q-H3, Q-H4; leadership Q-L1).
 
 ## Parked initiatives
 
@@ -126,51 +135,6 @@ to decide: change the code, or change the rule.
 - BR-ACC-01: Account Health not built.
 - **Close** when each has a decision recorded in Business-Rules (and the
   matrix, same commit) or a build entry of its own.
-
-### Wording: "Hospital" → "Customer" across the app — decided, not started (2026-10-25, widened 2026-10-26)
-
-- **Found (New Opportunity help wording, 2026-10-25):** the button on the
-  New Opportunity form says **+ Add Hospital** (`QuickLeadModal.tsx:506`),
-  but it opens the **New Customer** form, and customers include clinics,
-  dealers and diagnostic centres, not just hospitals (Customer Type,
-  `Physical-Schema.sql:392`).
-- **Decided (Basheer, 2026-10-25):** rename it **+ Add Customer**; the
-  "New Customer" title stays.
-- **Widened to an app-wide sweep (Basheer, 2026-10-26, New Customer help
-  wording):** "small fixes are piling up" — one pass instead of one entry
-  per screen. Say "customer" wherever any customer type fits; keep
-  "hospital" only where only hospitals are meant. Known so far: the
-  button above; the New Customer pop-up's warning "This looks similar to
-  hospitals already in the directory" and its "no territory" message
-  ("…you can't add a new hospital", `AddHospitalModal.tsx:226, 306–307`,
-  also the server's copy in `account/service.py:131–134`). The full list
-  starts with a search of the screens; not counted yet.
-- Wording only — Build & Test, in a batch of small fixes. Same commit:
-  the manual (`UAT-User-Manual.md`, e.g. "Add a new hospital", "Create an
-  Opportunity" step 1) and the agreed help in help plan section 7.
-- **Decided (Basheer, 2026-10-26):** done together with "deal" →
-  "Opportunity" below — one pass, one commit (same screens, manual and
-  help).
-- **Timing decided (Basheer, 2026-10-31):** the sweep waits until the
-  parallel Build session's hospital next-action rule is merged into `main`
-  and tested, so one pass also covers the new wording that branch adds
-  (about 101 lines mention "hospital" or "deal", an estimate, not sorted)
-  and the many shared files merge without clashes. Not started until then;
-  start by re-running the search of the screens on the merged code. The
-  A (change) / B (keep internal names) / C (keep real hospital wording)
-  split and the renames "Rate Customers" and "My customers" are still
-  waiting for Basheer's yes.
-- **Now "Part 2" (Basheer, 1 Nov):** the MUI round 1 restyle is Part 1 and
-  comes first, with no wording changes (steps 1–3 pushed, `6a417cb`,
-  `f8c61b3`; see Progress-Archive-2026-11). This sweep follows it, after
-  `/build`'s Target vs Actuals simpler table and Target & Coverage Planning
-  tabs plans merge (they edit the same screens). One pass, one commit, the
-  manual and help text in the same commit, with its own plan and E2E.
-- **Haroon asked (Basheer, WhatsApp, 2026-11-13):** "Hospital" → "Customer"
-  wherever any customer type is meant, "Hospital" kept only where a
-  hospital is meant (e.g. the Government Hospital and Medical College
-  Hospital types), wording only; also asked where the team should still
-  see "Hospital". Waiting on his reply before planning.
 
 ### Projects: track the requirements that go to dealer partners — not started, future (2026-10-30)
 
@@ -431,46 +395,6 @@ open and not decided: (1) make the Sales Report count Lost Opportunities
 with no product line (Won is unaffected, it needs a line); (2) ask for the
 product line when an Opportunity past Lead is marked Lost. The new report
 should show these six too, so it must not depend on product lines.
-
-### Wording: "deal" → "Opportunity" across the app and docs — decided, part done (2026-10-07, docs added 2026-10-12, names decided 2026-10-25)
-
-- **Done (`65ab36a`, 2026-10-27, Part 2 screens plan step 5):** every
-  report bar's count (`ReportingUI.tsx`), Pipeline Report and Insights
-  Dashboard tiles, Sales Report, and "Stagnant Opportunities" menu item,
-  title and empty text. The docs that name the Stagnant screen are not
-  yet updated. The rest below is still open.
-
-The app still says "deal" in about 25 places users can read (Opportunity
-wording rule, CLAUDE.md). Found in the fix 3 screen check ("· 7 deals" on
-the Pipeline drill-down bar). Basheer 2026-10-07: its own small fix, not
-part of Query Load fix 3.
-- Where: Pipeline (drill-down bar, "No deals" columns); every report
-  bar's count (`ReportingUI.tsx`); Pipeline Report and Insights Dashboard
-  tiles; Sales Report ("Deals Won", "Avg Deal Size", empty text);
-  "Stagnant Deals" menu item, title and empty text; "this deal is past
-  Demo stage" (the Fast-Track tick-box already says "Opportunity",
-  checked 2026-10-25); help
-  panels (today `helpContent.tsx`, ~12 sentences; moving to the help
-  table — help plan D1, 2026-10-22); one server message
-  (`document/service.py`); `docs/UAT-User-Manual.md` (10 places).
-- Docs (doc tidy-up 2026-10-12): `Signed-Requirements-to-PRD-Traceability.md`,
-  24 changes drafted (15 client-visible: Client Note column and Commitment
-  beyond contract items 4, 6, 7, 9, 10, 11, 13, 14, 19; 9 internal Notes);
-  `Audit-Trail-Redesign-Implementation-Plan.md`, 14 places. Keep as
-  written: signed requirement wording, PRD section titles (3.9, 3.10),
-  file names, and screen names until the screens are renamed. Basheer
-  2026-10-12: do the docs and the code in one go.
-- **Decided (Basheer, 2026-10-25):** "Stagnant Deals" becomes "Stagnant
-  Opportunities" too (menu item, title, empty text). Basheer to tell
-  Haroon. At the rename, also update the docs that name the screen
-  (search "Stagnant Deals"; Progress-Archive and dated review files stay
-  as written), including the My Work plan and its test plan section E.
-- **Decided (Basheer, 2026-10-26):** one pass and one commit with
-  "Hospital" → "Customer" above.
-- No database change. Checks: tsc, lint, a visual walk on Dev. Could go
-  to UAT with the next full move.
-- After the Traceability edit: regenerate the scorecard and show Basheer
-  the exact client-visible diff before republishing.
 
 ### Block an SBU change while the user owns open Opportunities in another SBU — not started (2026-10-04)
 
