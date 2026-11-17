@@ -19,8 +19,8 @@ about any line older than 14 days (Basheer, 2026-10-16).
   `docs/Discussion-Overdue-Next-Actions-2026-11.md`; answers go in its
   section 6.
 - **Cabio leadership team** (raised 2026-11-09) — should reps sell to a
-  set margin, with incentives tied to it? And the lowest price a rep may
-  quote, shown on the Opportunity (BR-CAT-04): settle before its plan.
+  set margin, with incentives tied to it? (The lowest-price part is now
+  planned: `docs/Product-Pricing-And-Cost-Implementation-Plan.md`.)
 - **Haroon** (raised 2026-11-10) — the demo qualification checklist items
   and which are required (Q-H1); the Dr. Moopen's repeat order with a demo
   date (Q-H3); and
@@ -35,6 +35,10 @@ about any line older than 14 days (Basheer, 2026-10-16).
   12 Nov.
 - **Fahad** (sent 2026-11-14) — Ambalpadi: are the EMIs paid to Cabio or
   to a lender? Progress-Archive 12 Nov.
+- **Haroon** (sent to the Cabio leadership team 2026-11-16) — send his
+  pricing sheet; leadership team's reply to the plan summary (Latheef
+  Bhai's view on the leak concern).
+  `docs/Product-Pricing-And-Cost-Implementation-Plan.md` D7, D12.
 - **Cabio leadership team** (raised 2026-11-13) — review of
   `docs/Payment-Terms-Implementation-Plan.md` before it is built (Basheer).
 - *Not yet sent* — Basheer to send the two demo qualification lines above
