@@ -107,7 +107,10 @@ under "31 Oct — simpler table" — agreed by Basheer, 2026-10-31.
   D15 by Build & Test in commit `a1f0147`; seen on a phone by Basheer.
   Not yet checked at 768 and 1280 px, nor the Sales Report and
   Opportunities On Hold screens, which are built the same way as the old
-  Pipeline Report (see Backlog).
+  Pipeline Report (see Backlog). (update 2026-11-17: D15 and D16 (a)–(c)
+  all Pass on phone and laptop — Basheer, 17 Nov. Sales Report fixed
+  header built `b4f6a3b`, E2E Pass 13 Nov; Opportunities On Hold has no
+  header, nothing to fix — Basheer, 17 Nov.)
 
 ## Figures and sources
 

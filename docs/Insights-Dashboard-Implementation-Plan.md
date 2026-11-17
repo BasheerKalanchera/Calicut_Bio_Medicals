@@ -32,11 +32,14 @@ extracted** out of `InsightsDashboardScreen.tsx` into `StagnantDealsReportScreen
 opportunities-on-hold` + `OpportunitiesOnHoldReportScreen.tsx`, no schema gaps. (3)
 **Product Performance Summary** — built as `GET /reporting/product-performance` +
 `ProductPerformanceReportScreen.tsx`, **except Gross Margin**, which stays blocked
-on the pending Pricing/Discount-Authority feature. New **REPORTS** nav section;
+on the pending Pricing/Discount-Authority feature (update 2026-11-17: product
+cost is now planned in `docs/Product-Pricing-And-Cost-Implementation-Plan.md`,
+Approved 2026-11-16; its build waits on Haroon's pricing sheet). New **REPORTS** nav section;
 shared tile/card helpers extracted to `components/ReportingUI.tsx`. 11 new backend
 tests (38 in the domain), full suite 778/778, `tsc`/lint/`ruff` clean, manually
 verified live on Dev. **High-Priority Deals stays excluded** — still pending Cabio
-leadership confirmation, not a technical blocker. Full narrative: `docs/Progress-
+leadership confirmation, not a technical blocker (superseded — rule confirmed by
+Haroon 2026-09-14, BR-OP-15; built `b000a09`). Full narrative: `docs/Progress-
 Archive-2026-09.md`'s "2026-09-11 (later still) — Insights Dashboard, Batch 1b" entry.
 
 ### Dashboard vs. Reports — restructuring decided 2026-09-11
@@ -217,7 +220,8 @@ built as specified — flagged rather than silently dropped:
   Same `TEAM_SCOPE_BUILDERS` scoping as every other tile — a rep sees only products tied
   to their own deals, a manager sees their team's.
 - **Gross Margin — renamed from "Margin," blocked on the pending Pricing/Discount-
-  Authority feature, not this build pass.** The PRD lists "Margin" as a metric, but no
+  Authority feature, not this build pass.** (update 2026-11-17: see
+  `docs/Product-Pricing-And-Cost-Implementation-Plan.md`) The PRD lists "Margin" as a metric, but no
   cost field exists on `product` or `opportunity_item` anywhere in `Physical-Schema.sql`
   today — there's no data to compute it from. **Deliberately renamed to Gross Margin**
   (Basheer, 2026-09-11): this can only ever be Revenue minus the machine's acquisition
@@ -248,7 +252,7 @@ built as specified — flagged rather than silently dropped:
   role-by-role scoping test shape used for Target Planning — a rep sees only their own
   numbers, an Area Manager sees their zone, etc.
 
-### High-Priority Deals — analysis done 2026-09-11, rule proposed, pending leadership confirmation
+### High-Priority Deals — analysis done 2026-09-11, rule proposed, pending leadership confirmation (superseded — confirmed and built, `b000a09`)
 
 PRD §3.9 just says "provide a High Priority flag" with no definition of how it's set —
 see `docs/Backlog.md`'s "Auto-computed High Priority flag" entry for the full framing

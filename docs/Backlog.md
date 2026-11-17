@@ -29,10 +29,6 @@ about any line older than 14 days (Basheer, 2026-10-16).
 - **Cabio leadership team** (raised 2026-11-10) — which demos need manager
   approval: expensive machines only, by product category (Q-L1).
   `docs/Discussion-Demo-Qualification-2026-11.md` section 4.
-- **Haroon** (sent 2026-11-12) — Critical Care 2026 brand targets on UAT:
-  Equipwell, Kolkatta, We Make left out on purpose? EDAN, Magnamed,
-  Aeonmed keep their own pattern? Aeonmed Apr–Sep to 0? Progress-Archive
-  12 Nov.
 - **Fahad** (sent 2026-11-14) — Ambalpadi: are the EMIs paid to Cabio or
   to a lender? Progress-Archive 12 Nov.
 - **Haroon** (sent to the Cabio leadership team 2026-11-16) — send his
@@ -618,21 +614,6 @@ to clear. Remove a screen from here when it is committed clean.
   Business Potential chip 0 / 1.
 - Helper files, colours only: `utils/activityTypes.ts` 13,
   `utils/businessPotential.ts` 4, `utils/marketingLeadMilestone.ts` 4.
-
-### Fixed header on other report screens: Sales Report, Opportunities On Hold — handed to Build & Test (Basheer, 2026-11-12)
-
-On a phone the Overdue tab, Target vs Actuals tab, Pipeline tab and Pipeline
-Report now keep their title, pickers and tiles fixed while the list scrolls
-(Simpler Table D15, D16, `a1f0147`). Two more report screens are built the
-same old way, with the whole screen scrolling as one box, so the same
-complaint is likely: Sales Report (`SalesReportScreen.tsx`, outer box at
-line 92) and Opportunities On Hold (`OpportunitiesOnHoldReportScreen.tsx`,
-line 23). Not read beyond that line; check each on a phone first. The fix
-is the same split (fixed strip, scrolling box) with the opt-in "compact"
-look of `StatTile` and `SectionCard` in `ReportingUI.tsx`. Possibly in the
-"Front-end standardisation fixes, by screen" entry above rather than its
-own. Also open: D16 is seen only on a phone; 768 and 1280 px not yet
-looked at.
 
 ### Marketing User sees only the Marketing module — code fix sweep, needs planning (6 Nov 2026)
 
