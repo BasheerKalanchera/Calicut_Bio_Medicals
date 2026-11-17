@@ -1,0 +1,4 @@
+# One line-ending rule for the whole repo (P105, 2026-11-17): git stores
+# every text file with plain (LF) line endings; each computer's checkout
+# endings still follow its own core.autocrlf setting.
+* text=auto
