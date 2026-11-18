@@ -41,6 +41,8 @@ const PRICE_FIELDS = [
   { key: "cost_lakhs", label: "Cost" },
 ] as const;
 
+const LOWEST_KEYS = new Set<string>(["rep_floor_lakhs", "area_manager_floor_lakhs", "ceo_floor_lakhs"]);
+
 // A price box holds a number of lakhs: 0 or more, up to 2 decimals.
 const PRICE_PATTERN = /^\d{1,13}(\.\d{1,2})?$/;
 
@@ -495,6 +497,22 @@ export default function ProductCatalogScreen() {
       const value = form[key].trim();
       if (value && !PRICE_PATTERN.test(value)) {
         throw new Error(`${label} must be an amount in lakhs, 0 or more, with up to 2 decimals`);
+      }
+    }
+    // Price order (plan D15) -- the server checks the same rule; this shows the
+    // message at once. Full >= Rep's >= Area Manager's >= Haroon's >= Cost,
+    // equal allowed, the three lowest all-or-none and needing the Full price.
+    const entered = PRICE_FIELDS.filter(({ key }) => form[key].trim() !== "");
+    const lowestCount = entered.filter(({ key }) => LOWEST_KEYS.has(key)).length;
+    if (lowestCount > 0 && lowestCount < LOWEST_KEYS.size) {
+      throw new Error("Enter all three lowest prices (Rep's, Area Manager's and Haroon's), or leave all three blank");
+    }
+    if (lowestCount > 0 && form.full_price_lakhs.trim() === "") {
+      throw new Error("Enter the Full price too, the lowest prices need it");
+    }
+    for (let i = 1; i < entered.length; i += 1) {
+      if (Number(form[entered[i].key]) > Number(form[entered[i - 1].key])) {
+        throw new Error(`${entered[i].label} can't be more than ${entered[i - 1].label}`);
       }
     }
   };

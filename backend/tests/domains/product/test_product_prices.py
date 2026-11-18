@@ -147,6 +147,120 @@ class TestPriceInput:
         assert ProductUpdate(description="x").model_dump(exclude_unset=True) == {"description": "x"}
 
 
+def _create_with(**prices):
+    from app.domains.product.repository import ProductRepository
+
+    repo = MagicMock(spec=ProductRepository)
+    repo.sbu_exists.return_value = True
+    repo.active_product_exists_for_model.return_value = False
+    data = ProductCreate(sbu_id=uuid.uuid4(), model_id=uuid.uuid4(), **prices)
+    repo.get_model_sbu_id.return_value = data.sbu_id
+    repo.create.side_effect = lambda product: product
+    return ProductService(repository=repo).create_product(data, created_by=uuid.uuid4(), role_name="Admin")
+
+
+def _update_with(saved: dict, **sent):
+    from app.domains.product.repository import ProductRepository
+
+    product = _mock_product(**saved)
+    repo = MagicMock(spec=ProductRepository)
+    repo.get_by_id.return_value = product
+    repo.update.side_effect = lambda p: p
+    ProductService(repository=repo).update_product(
+        product.id, ProductUpdate(**sent), updated_by=uuid.uuid4(), role_name="General Manager"
+    )
+    return product
+
+
+class TestPriceOrder:
+    """Plan D15: Full >= Rep >= Area Manager >= Haroon >= Cost; equal allowed;
+    the three lowest prices all-or-none and need the Full price."""
+
+    def test_in_order_saves(self):
+        assert _create_with(**_PRICES).full_price_lakhs == Decimal("35.00")
+
+    def test_equal_prices_save(self):
+        flat = {key: Decimal("35.00") for key in _PRICES}
+        assert _create_with(**flat).cost_lakhs == Decimal("35.00")
+
+    def test_nothing_entered_saves(self):
+        assert _create_with().full_price_lakhs is None
+
+    def test_full_price_alone_saves(self):
+        assert _create_with(full_price_lakhs=Decimal("35.00")).rep_floor_lakhs is None
+
+    def test_full_price_and_cost_without_lowest_prices_save(self):
+        saved = _create_with(full_price_lakhs=Decimal("35.00"), cost_lakhs=Decimal("24.00"))
+        assert saved.cost_lakhs == Decimal("24.00")
+
+    @pytest.mark.parametrize(
+        ("swap", "message"),
+        [
+            ({"rep_floor_lakhs": Decimal("36.00")}, "Rep's lowest can't be more than Full price"),
+            ({"area_manager_floor_lakhs": Decimal("32.00")}, "Area Manager's lowest can't be more than Rep's lowest"),
+            ({"ceo_floor_lakhs": Decimal("30.00")}, "Haroon's lowest can't be more than Area Manager's lowest"),
+            ({"cost_lakhs": Decimal("28.00")}, "Cost can't be more than Haroon's lowest"),
+        ],
+    )
+    def test_each_link_of_the_ladder_is_checked(self, swap, message):
+        from app.core.exceptions import ValidationError as AppValidationError
+
+        with pytest.raises(AppValidationError, match=message):
+            _create_with(**{**_PRICES, **swap})
+
+    def test_cost_above_full_price_without_lowest_prices_is_refused(self):
+        from app.core.exceptions import ValidationError as AppValidationError
+
+        with pytest.raises(AppValidationError, match="Cost can't be more than Full price"):
+            _create_with(full_price_lakhs=Decimal("20.00"), cost_lakhs=Decimal("24.00"))
+
+    @pytest.mark.parametrize("only", ["rep_floor_lakhs", "area_manager_floor_lakhs", "ceo_floor_lakhs"])
+    def test_a_partial_set_of_lowest_prices_is_refused(self, only):
+        from app.core.exceptions import ValidationError as AppValidationError
+
+        with pytest.raises(AppValidationError, match="all three lowest prices"):
+            _create_with(full_price_lakhs=Decimal("35.00"), **{only: Decimal("30.00")})
+
+    def test_two_of_three_lowest_prices_is_refused(self):
+        from app.core.exceptions import ValidationError as AppValidationError
+
+        with pytest.raises(AppValidationError, match="all three lowest prices"):
+            _create_with(
+                full_price_lakhs=Decimal("35.00"),
+                rep_floor_lakhs=Decimal("33.00"),
+                area_manager_floor_lakhs=Decimal("31.00"),
+            )
+
+    def test_lowest_prices_without_a_full_price_are_refused(self):
+        from app.core.exceptions import ValidationError as AppValidationError
+
+        lowest_only = {k: v for k, v in _PRICES.items() if k != "full_price_lakhs"}
+        with pytest.raises(AppValidationError, match="Full price too"):
+            _create_with(**lowest_only)
+
+    def test_edit_is_checked_against_the_saved_levels(self):
+        from app.core.exceptions import ValidationError as AppValidationError
+
+        # Only Haroon's lowest is sent; the saved Area Manager's lowest is 29.
+        with pytest.raises(AppValidationError, match="Haroon's lowest can't be more than Area Manager's lowest"):
+            _update_with(_PRICES, ceo_floor_lakhs=Decimal("30.00"))
+
+    def test_edit_that_keeps_the_order_saves(self):
+        product = _update_with(_PRICES, ceo_floor_lakhs=Decimal("28.00"))
+        assert product.ceo_floor_lakhs == Decimal("28.00")
+
+    def test_edit_clearing_one_lowest_price_alone_is_refused(self):
+        from app.core.exceptions import ValidationError as AppValidationError
+
+        with pytest.raises(AppValidationError, match="all three lowest prices"):
+            _update_with(_PRICES, rep_floor_lakhs=None)
+
+    def test_edit_that_does_not_touch_prices_saves_unchanged(self):
+        product = _update_with(_PRICES, description="New text")
+        assert product.description == "New text"
+        assert product.rep_floor_lakhs == Decimal("31.50")
+
+
 class TestServiceStoresPrices:
     def test_create_passes_every_price_to_the_product(self):
         from app.domains.product.repository import ProductRepository

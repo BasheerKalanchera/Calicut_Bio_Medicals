@@ -27,6 +27,11 @@ def _make_product(**overrides) -> MagicMock:
         "category_id": uuid.uuid4(),
         "description": "Premium ultrasound",
         "is_active": True,
+        "full_price_lakhs": None,
+        "rep_floor_lakhs": None,
+        "area_manager_floor_lakhs": None,
+        "ceo_floor_lakhs": None,
+        "cost_lakhs": None,
     }
     defaults.update(overrides)
     obj = MagicMock(spec=Product)

@@ -1,4 +1,6 @@
 import uuid
+from decimal import Decimal
+from itertools import pairwise
 
 from app.core.exceptions import AuthorizationError, ConflictError, NotFoundError, ValidationError
 from app.domains.product.models import Product
@@ -6,6 +8,36 @@ from app.domains.product.repository import ProductRepository
 from app.domains.product.schemas import ProductCreate, ProductUpdate
 
 _CATALOG_WRITE_ROLES = {"General Manager", "Admin"}
+
+# The price ladder, highest first (plan D15): Full price >= Rep's lowest >=
+# Area Manager's lowest >= Haroon's lowest >= Cost. Names match the Add/Edit
+# pop-up's boxes.
+_PRICE_LADDER = (
+    ("full_price_lakhs", "Full price"),
+    ("rep_floor_lakhs", "Rep's lowest"),
+    ("area_manager_floor_lakhs", "Area Manager's lowest"),
+    ("ceo_floor_lakhs", "Haroon's lowest"),
+    ("cost_lakhs", "Cost"),
+)
+_LOWEST_FIELDS = ("rep_floor_lakhs", "area_manager_floor_lakhs", "ceo_floor_lakhs")
+
+
+def _check_price_order(prices: dict[str, Decimal | None]) -> None:
+    """Refuse a save that breaks the price ladder (plan D15, BR-CAT-04).
+    Equal is allowed. The three lowest prices are all-or-none and need the
+    Full price; Cost is optional and is compared with the nearest entered
+    price above it. `prices` holds all five values as they would be saved."""
+    lowest_entered = [prices[f] is not None for f in _LOWEST_FIELDS]
+    if any(lowest_entered) and not all(lowest_entered):
+        raise ValidationError(
+            "Enter all three lowest prices (Rep's, Area Manager's and Haroon's), or leave all three blank"
+        )
+    if any(lowest_entered) and prices["full_price_lakhs"] is None:
+        raise ValidationError("Enter the Full price too, the lowest prices need it")
+    entered = [(label, prices[field]) for field, label in _PRICE_LADDER if prices[field] is not None]
+    for (upper_label, upper), (lower_label, lower) in pairwise(entered):
+        if lower > upper:
+            raise ValidationError(f"{lower_label} can't be more than {upper_label}")
 
 
 class ProductService:
@@ -61,6 +93,7 @@ class ProductService:
         if not self.repository.sbu_exists(data.sbu_id):
             raise NotFoundError(f"SBU {data.sbu_id} not found")
         self._validate_model_sbu(data.model_id, data.sbu_id)
+        _check_price_order({field: getattr(data, field) for field, _ in _PRICE_LADDER})
         if self.repository.active_product_exists_for_model(data.model_id):
             raise ConflictError("A product for this Model already exists in the catalog")
         product = Product(
@@ -97,7 +130,13 @@ class ProductService:
         model_changed = data.model_id is not None and data.model_id != product.model_id
         if model_changed and self.repository.active_product_exists_for_model(data.model_id, exclude_id=product.id):
             raise ConflictError("A product for this Model already exists in the catalog")
-        for field, value in data.model_dump(exclude_unset=True).items():
+        changes = data.model_dump(exclude_unset=True)
+        # The saved values with this edit laid over them -- an edit that sends
+        # only one level is still checked against the levels already saved.
+        _check_price_order(
+            {field: changes[field] if field in changes else getattr(product, field) for field, _ in _PRICE_LADDER}
+        )
+        for field, value in changes.items():
             setattr(product, field, value)
         product.updated_by = updated_by
         return self.repository.update(product)
