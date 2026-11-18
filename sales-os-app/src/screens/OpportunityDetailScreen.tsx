@@ -46,7 +46,7 @@ import ActivityTimeline from "../components/ActivityTimeline";
 import LogActivityModal from "../components/LogActivityModal";
 import FormModal from "../components/FormModal";
 import NextActionsPanel from "../components/NextActionsPanel";
-import CloseReminderModal, { type StageChangeNote } from "../components/CloseReminderModal";
+import CloseReminderModal, { type StageChangeDraft, type StageChangeNote } from "../components/CloseReminderModal";
 import { SilentModalError } from "../lib/formErrors";
 import OpportunityItemAddRow from "../components/OpportunityItemAddRow";
 import OpportunityItemsList from "../components/OpportunityItemsList";
@@ -1236,6 +1236,13 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
   // on Save). Its note rides in changeNoteRef while the edit save re-runs.
   const [changeNoteReminders, setChangeNoteReminders] = useState<ReminderResponse[] | null>(null);
   const changeNoteRef = useRef<StageChangeNote | null>(null);
+  // What the pop-up held on its last Save press; given back if that save
+  // failed. Cleared when the Edit form closes or opens afresh.
+  const [changeNoteDraft, setChangeNoteDraft] = useState<StageChangeDraft | null>(null);
+  const closeEdit = () => {
+    setChangeNoteDraft(null);
+    setShowEditOpp(false);
+  };
   const [editName, setEditName]                   = useState("");
   // The only place an Opportunity's project is changed ("" = No project) -- Customer
   // 360 and Project Directory open this page instead of their own edit forms
@@ -1458,6 +1465,7 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
     setEditHighPriorityManual(opp.high_priority_manual);
     setEditConfirmFullPayment(false);
     setEditFullPaymentNote(opp.full_payment_note ?? "");
+    setChangeNoteDraft(null);
     setShowEditOpp(true);
   };
 
@@ -1820,7 +1828,7 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
       </Box>
 
       {/* Edit Opportunity modal */}
-      <FormModal isOpen={showEditOpp} onClose={() => setShowEditOpp(false)} title="Edit Opportunity" onSubmit={handleUpdateOpp} disableEnforceFocus={!!changeNoteReminders}>
+      <FormModal isOpen={showEditOpp} onClose={closeEdit} title="Edit Opportunity" onSubmit={handleUpdateOpp} disableEnforceFocus={!!changeNoteReminders}>
         <TextField label="Name *" value={editName} onChange={(e) => setEditName(e.target.value)} autoFocus fullWidth size="small" sx={{ mt: 1.5 }} />
         <TextField select label="Project" value={editProjectId} onChange={(e) => setEditProjectId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
           <MenuItem value="">No project</MenuItem>
@@ -2049,6 +2057,8 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
           ownReminders: changeNoteReminders,
           newStatus: { code: editStatusCode ?? opp.status.status_code, name: oppStatuses.find((s) => s.id === editStatusId)?.status_name ?? opp.status.status_name },
           reactivationDate: editStatusCode === "ON_HOLD" ? editReactivationDate : undefined,
+          draft: changeNoteDraft,
+          onKeep: setChangeNoteDraft,
           onSave: async (note) => {
             changeNoteRef.current = note;
             try {
@@ -2056,7 +2066,7 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
             } finally {
               changeNoteRef.current = null;
             }
-            setShowEditOpp(false);
+            closeEdit();
             // The closing activity or Note, and any follow-up, land here.
             queryClient.invalidateQueries({ queryKey: ["activities", "opportunity", opp.id] });
             queryClient.invalidateQueries({ queryKey: ["activities", "account", opp.account.id] });

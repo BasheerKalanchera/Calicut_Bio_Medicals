@@ -40,6 +40,10 @@ interface Props {
     newStatus: { code: string; name: string };
     reactivationDate?: string;
     onSave: (note: StageChangeNote) => Promise<void>;
+    // What the changer typed on their last Save press, kept by the screen so a
+    // failed save (Cancel, fix the Edit form, Save again) doesn't lose it.
+    draft?: StageChangeDraft | null;
+    onKeep?: (draft: StageChangeDraft) => void;
   };
   // Plan D19 (BR-OP-21): the "First activity" pop-up after the New
   // Opportunity form's Create. `reminder` is ignored; a next action is
@@ -62,6 +66,20 @@ export interface FirstActivity {
   next_action_text: string;
   next_action_due_date: string;
   next_action_owner_id?: string;
+}
+
+// The pop-up's own fields as typed, kept after a failed Save. The follow-up
+// part comes back only if the status being saved is still the same one:
+// Won/Lost need no follow-up, and a box left filled is saved as a next action.
+export interface StageChangeDraft {
+  newStatusCode: string;
+  pickedReminderId: string;
+  activityType: ActivityType;
+  activityDate: string;
+  notes: string;
+  nextActionText: string;
+  nextActionDueDate: string;
+  nextActionOwnerId: string;
 }
 
 // Mirrors the server's StageChangeNote (opportunity/schemas.py).
@@ -248,6 +266,23 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
     setNotice(null);
     producedOpportunityRef.current = null;
     setProducedOpportunityId(null);
+    // Stage-change mode: what was typed before a failed Save comes back.
+    const draft = stageChange?.draft;
+    if (stageChange && draft) {
+      if (draft.pickedReminderId && stageChange.ownReminders.some((r) => r.id === draft.pickedReminderId)) {
+        setPickedReminderId(draft.pickedReminderId);
+      }
+      if (!noteOnly) setActivityType(draft.activityType);
+      setActivityDate(draft.activityDate);
+      setNotes(draft.notes);
+      // Same status as that Save: the follow-up comes back too. A different
+      // status: it starts as the form normally does for it.
+      if (draft.newStatusCode === stageChange.newStatus.code) {
+        setNextActionText(draft.nextActionText);
+        setNextActionDueDate(draft.nextActionDueDate);
+        setNextActionOwnerId(draft.nextActionOwnerId);
+      }
+    }
   }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Won/Lost needs no follow-up, so the box isn't pre-filled there (a
@@ -331,17 +366,43 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
         throw new Error("For an On Hold Opportunity, the next action must be due on or before the re-activation date.");
       }
     }
-    await stageChange.onSave({
-      ...(reminder && { close_reminder_id: reminder.id }),
-      activity_type: noteOnly ? "NOTE" : activityType,
-      activity_date: new Date(activityDate).toISOString(),
-      notes: notes.trim(),
-      ...(sendsFollowUp && {
-        next_action_text: nextActionText.trim(),
-        next_action_due_date: new Date(nextActionDueDate).toISOString(),
-        next_action_owner_id: nextActionOwnerId || currentUserId || undefined,
-      }),
+    stageChange.onKeep?.({
+      newStatusCode: stageChange.newStatus.code,
+      pickedReminderId,
+      activityType,
+      activityDate,
+      notes,
+      nextActionText,
+      nextActionDueDate,
+      nextActionOwnerId,
     });
+    try {
+      await stageChange.onSave({
+        ...(reminder && { close_reminder_id: reminder.id }),
+        activity_type: noteOnly ? "NOTE" : activityType,
+        activity_date: new Date(activityDate).toISOString(),
+        notes: notes.trim(),
+        ...(sendsFollowUp && {
+          next_action_text: nextActionText.trim(),
+          next_action_due_date: new Date(nextActionDueDate).toISOString(),
+          next_action_owner_id: nextActionOwnerId || currentUserId || undefined,
+        }),
+      });
+    } catch (err) {
+      // Only when the Edit form's content was refused (server 4xx, or the
+      // screen's own check): a dropped connection or a server fault gives
+      // the rep nothing to fix there.
+      const e = err as { isAxiosError?: boolean; response?: { status?: number } };
+      const status = e.response?.status;
+      const refused = status !== undefined ? status < 500 : !e.isAxiosError;
+      if (refused) {
+        setNotice({
+          severity: "info",
+          text: "Press Cancel, fill this in on the Edit form, then Save again — what you typed here is kept.",
+        });
+      }
+      throw err;
+    }
   }
 
   async function handleFirstActivitySubmit() {
