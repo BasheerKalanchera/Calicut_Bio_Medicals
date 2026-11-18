@@ -503,7 +503,7 @@ export default function QuickLeadModal({
               "&:hover": { bgcolor: "emerald.100" },
             }}
           >
-            + Add Hospital
+            + Add Customer
           </Button>
         </Box>
         </>

@@ -377,10 +377,10 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **No activity yet:** days are counted from the date the Opportunity was created.
 * **Effect:** a list only. Nothing on the Opportunity changes — status, forecast and notifications stay as they are.
 * **Exit:** logging a visit, call, meeting or email on it takes it off the list.
-* **Who sees what:** a rep sees their own. On My Work a manager sees their own or picks one person from their team, never the whole team at once (Basheer, 2026-10-28); the Stagnant Deals report shows a manager their whole team (same scoping as the other reports).
-* **Where shown:** Weekly Follow-up ("My Work") and the Stagnant Deals report, which use this same measure (Basheer, 2026-10-14). On the Stagnant Deals report the viewer types the number of days, starting at 30 (Basheer, 2026-10-28, plan D25).
+* **Who sees what:** a rep sees their own. On My Work a manager sees their own or picks one person from their team, never the whole team at once (Basheer, 2026-10-28); the Stagnant Opportunities report shows a manager their whole team (same scoping as the other reports).
+* **Where shown:** Weekly Follow-up ("My Work") and the Stagnant Opportunities report, which use this same measure (Basheer, 2026-10-14). On the Stagnant Opportunities report the viewer types the number of days, starting at 30 (Basheer, 2026-10-28, plan D25).
 * **Not the same as BR-OP-06:** that rule is about time spent in one stage; this one is about nobody visiting.
-* **Enforcement:** built on the Build branch (`42bd5f8` data and Stagnant Deals report, `8d4bdac` My Work screen), reaching Dev at the merge; manual E2E pending — see `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md` (D6, D6a, D6c, D23, D25).
+* **Enforcement:** built on the Build branch (`42bd5f8` data and Stagnant Opportunities report, `8d4bdac` My Work screen), reaching Dev at the merge; manual E2E pending — see `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md` (D6, D6a, D6c, D23, D25).
 
 ### BR-OP-21: A New Opportunity Starts With an Activity (agreed 2026-10-12, built 2026-10-16)
 * **Rule:** An Opportunity cannot be saved without its first activity (the conversation that made it an Opportunity), entered in the same step. A call, visit or similar also sets a next action, as BR-ACT-04 already requires, so the Opportunity starts with both. Applies to every way an Opportunity is created, including converting a marketing lead.

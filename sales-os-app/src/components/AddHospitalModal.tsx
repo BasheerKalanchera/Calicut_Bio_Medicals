@@ -223,7 +223,7 @@ export default function AddHospitalModal({ isOpen, onClose, onCreated, onExistin
               <Typography variant="body2" sx={{ mb: 1 }}>
                 {duplicateCandidates.length === 1
                   ? <>Did you mean <strong>{duplicateCandidates[0].name}</strong>? It's already in the directory.</>
-                  : "This looks similar to hospitals already in the directory:"}
+                  : "This looks similar to customers already in the directory:"}
               </Typography>
               <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
                 {duplicateCandidates.map((candidate) => (
@@ -304,7 +304,7 @@ export default function AddHospitalModal({ isOpen, onClose, onCreated, onExistin
         <DialogContent>
           <Typography variant="body2" color="text.secondary">
             You don't have a territory assigned yet, so you can't add a new
-            hospital. Ask your manager to get one set up for you first.
+            customer. Ask your manager to get one set up for you first.
           </Typography>
         </DialogContent>
         <DialogActions>

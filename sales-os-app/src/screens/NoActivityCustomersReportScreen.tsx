@@ -47,7 +47,7 @@ function captionLine(
     : `only ${data.sbu_name} visits, calls, meetings and emails count`;
   const listed = data.gone_quiet_count + data.never_contacted_count;
   const total = data.hospitals_in_view;
-  return `${sbuPart} · ${zonePart} · ${contactsPart} · ${listed} of ${total} ${total === 1 ? "hospital" : "hospitals"}`;
+  return `${sbuPart} · ${zonePart} · ${contactsPart} · ${listed} of ${total} ${total === 1 ? "customer" : "customers"}`;
 }
 
 function NameLink({ children, onClick }: { children: string; onClick: () => void }) {
@@ -220,7 +220,7 @@ export default function NoActivityCustomersReportScreen({
           <TableOrCards
             stickyHeader
             columns={[
-              { label: "Hospital" },
+              { label: "Customer" },
               { label: "Zone" },
               { label: "Last activity" },
               { label: "Logged by" },

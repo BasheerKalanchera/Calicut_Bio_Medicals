@@ -751,7 +751,7 @@ export default function TargetPlanningScreen({
               </Typography>
             ) : (
             <TableOrCards
-              columns={[{ toggle: true }, { label: "Rep" }, { label: "Period" }, { label: "Hospitals", align: "right" }, { label: "Amount" }, { label: "Actions", align: "right" }]}
+              columns={[{ toggle: true }, { label: "Rep" }, { label: "Period" }, { label: "Customers", align: "right" }, { label: "Amount" }, { label: "Actions", align: "right" }]}
             >
               {pendingApproval.map((t) => {
                 const open = expanded.has(t.id);
@@ -769,7 +769,7 @@ export default function TargetPlanningScreen({
                       {t.change_note && <Chip label="Revised" variant="outlined" size="small" sx={{ ml: 0.5 }} />}
                     </TocCell>
                     <TocCell label="Period">{formatPlanningPeriod(t.planning_period)}</TocCell>
-                    <TocCell label="Hospitals" align="right">{hospitalCount(t)}</TocCell>
+                    <TocCell label="Customers" align="right">{hospitalCount(t)}</TocCell>
                     <TocCell label="Amount">
                       <Box component="span" sx={belowApproved ? { color: "warning.main", fontWeight: 700 } : undefined}>
                         {formatLakhs(Number(t.target_amount_lakhs))}
@@ -844,7 +844,7 @@ export default function TargetPlanningScreen({
                   </Typography>
                 )}
                 {/* On a phone each person's card is pushed in under their manager. */}
-                <TableOrCards columns={[{ toggle: true }, { label: "Rep" }, { label: "Hospitals", align: "right" }, { label: "Amount" }, { label: "Status" }]}>
+                <TableOrCards columns={[{ toggle: true }, { label: "Rep" }, { label: "Customers", align: "right" }, { label: "Amount" }, { label: "Status" }]}>
                   {rosterRows.map(({ person: p, depth, managerName }, i, rows) => {
                     const t = p.plan;
                     const open = t !== null && expanded.has(t.id);
@@ -872,7 +872,7 @@ export default function TargetPlanningScreen({
                               </Typography>
                             )}
                           </TocCell>
-                          <TocCell label="Hospitals" align="right">{t ? hospitalCount(t) : "—"}</TocCell>
+                          <TocCell label="Customers" align="right">{t ? hospitalCount(t) : "—"}</TocCell>
                           <TocCell label="Amount">
                             {t ? <PlanAmount amount={t.target_amount_lakhs} note={note} /> : "—"}
                           </TocCell>

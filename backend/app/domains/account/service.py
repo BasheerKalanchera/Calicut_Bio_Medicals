@@ -130,7 +130,7 @@ class AccountService:
         if role_name not in _ZONE_ASSIGNMENT_EXEMPT_ROLES and default_zone_id is None:
             raise BusinessRuleViolation(
                 "You don't have a territory assigned yet, so you can't add a new "
-                "hospital. Ask your manager to get one set up for you first."
+                "customer. Ask your manager to get one set up for you first."
             )
 
         if self.repository.exists_by_name(data.name):
@@ -163,7 +163,7 @@ class AccountService:
                     candidates=[{"id": str(acc.id), "name": acc.name} for acc in similar],
                 )
                 raise PossibleDuplicateError(
-                    f"A similarly named hospital already exists in this zone: "
+                    f"A similarly named customer already exists in this zone: "
                     f"'{similar[0].name}'",
                     candidates=[{"id": str(acc.id), "name": acc.name} for acc in similar],
                 )
@@ -232,7 +232,7 @@ class AccountService:
                     candidates=[{"id": str(acc.id), "name": acc.name} for acc in similar],
                 )
                 raise PossibleDuplicateError(
-                    f"A similarly named hospital already exists in this zone: "
+                    f"A similarly named customer already exists in this zone: "
                     f"'{similar[0].name}'",
                     candidates=[{"id": str(acc.id), "name": acc.name} for acc in similar],
                 )
@@ -254,7 +254,7 @@ class AccountService:
     ) -> Account:
         """Admin/GM only; stamps who set the rating and when."""
         if role_name not in _BUSINESS_POTENTIAL_RATER_ROLES:
-            raise AuthorizationError("Only Admin/GM may rate a hospital's Business Potential.")
+            raise AuthorizationError("Only Admin/GM may rate a customer's Business Potential.")
         account = self.get_account(account_id)
         account.business_potential = data.business_potential.value
         account.business_potential_notes = (data.business_potential_notes or "").strip() or None

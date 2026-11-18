@@ -142,7 +142,7 @@ export default function MarketingLeadCreateModal({ isOpen, onClose, onCreated }:
             label="Account"
             size="small"
             sx={{ mt: 1.5 }}
-            helperText="Not in the list? Leave blank and describe the hospital in the note below -- the rep will sort it out."
+            helperText="Not in the list? Leave blank and describe the customer in the note below -- the rep will sort it out."
           />
         )}
         fullWidth

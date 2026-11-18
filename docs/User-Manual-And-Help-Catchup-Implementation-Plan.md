@@ -220,7 +220,7 @@ screens). Main changes are read from commit titles.
 | Target & Coverage Planning | write | — | 20 | hospital-wise plans, brand split, approval, Annual view, SBU target box, roster, "plan" wording |
 | Product Catalog | refresh | §8 | 6 | Brand/Category/Model lists, collateral links Admin/GM only |
 | Daily Activity Report | write | — | 5 | development and relationship activities, manager notes |
-| Stagnant Deals | write | — | 1 | — |
+| Stagnant Opportunities | write | — | 1 | — |
 | Opportunities On Hold | write | — | 1 | — |
 | Product Performance | write | — | 6 | brand drill-down |
 | Pipeline Report | write | — | 5 | brand and zone breakdowns, counts, drill-down, Active only |
@@ -246,7 +246,7 @@ in the manual. Next-action rules is left out while it is being built
 
 Filled screen by screen as Basheer agrees each one; loaded into the help
 table at step 3b. Order (2026-10-22): Sales Rep daily screens first
-(Account Management, Customer 360, Pipeline, Opportunity page, Project
+(Account Management, Customer 360, Opportunity Pipeline, Opportunity page, Project
 page, Next Actions), then the reports, then the Admin screens; Target &
 Coverage Planning last (still changing while Annual Target Part 1 is
 tested). The eight pop-up forms of D14 and D16 join the Sales Rep daily
@@ -264,47 +264,48 @@ entries agreed before 26 Oct get one pass for both rules once the pop-ups
 are done. Each entry gives its help
 key, the date Basheer agreed it, and the manual section checked beside
 it.
+Wording brought in line with the Customer Wording plan on 2026-11-18: "hospital" → "customer", "Pipeline" → "Opportunity Pipeline", "+ Add Hospital" → "+ Add Customer". File names and customer type names are unchanged.
 
 ### Account Management (`customers`) — agreed 2026-10-22 (Basheer)
 
-Manual checked: A2 "Add a new hospital" (fixed the same day) and Part B
+Manual checked: A2 "Add a new customer" (fixed the same day) and Part B
 "Account Management". Manager box: none.
 
 **Title:** Account Management — Help
 
 **What this page is for**
-Your list of the hospitals and projects you work with. Start here to
-find a hospital and open its page, to add a hospital Cabio hasn't dealt
+Your list of the customers and projects you work with. Start here to
+find a customer and open its page, to add a customer Cabio hasn't dealt
 with before, or to see the tenders and building projects under way.
 (Added 2026-10-22 under the opening-paragraph rule; shown to Basheer the
 same day.)
 
 **Customers tab**
-- Lists every hospital you can see. Click a hospital to open its page.
-- Type in **Search customers...** to find a hospital by name. The list
+- Lists every customer you can see. Click a customer to open its page.
+- Type in **Search customers...** to find a customer by name. The list
   updates as you type.
-- Pick a zone from **All Zones** to see only that zone's hospitals.
-- The tags under each name show its zone, parent hospital, payer
+- Pick a zone from **All Zones** to see only that zone's customers.
+- The tags under each name show its zone, parent customer, payer
   behaviour and customer type.
 
-**Add a hospital**
+**Add a customer**
 - Click **+ Add**. Fill in **Name** and **Zone**; your own zone is filled
   in for you. Parent Customer, Payer Behavior and Customer Type are
   optional. Click **Create**.
-- When it's saved, the new hospital's page opens straight away, so you
+- When it's saved, the new customer's page opens straight away, so you
   can add an Opportunity or log a visit.
-- If a hospital with a similar name already exists, the form asks "Did
+- If a customer with a similar name already exists, the form asks "Did
   you mean …?". Click **Use this one instead** to open the existing
-  hospital. Use **Create Anyway** only if it really is a different
-  hospital.
+  customer. Use **Create Anyway** only if it really is a different
+  customer.
 - If you have no territory yet, the form won't open. Ask your manager to
   set one up for you.
 
 **Projects tab**
-- Tenders and building projects at hospitals. Each one shows its
-  hospital, status and owner.
-- Search by project name or hospital name in **Search by project or
-  hospital...**.
+- Tenders and building projects at customers. Each one shows its
+  customer, status and owner.
+- Search by project name or customer name in **Search by project or
+  customer...**.
 - **+ Add** creates a project: Account, Name, Status and Owner, plus an
   optional Bid Submission Date. Click a project to see its Opportunities
   and add one.
@@ -315,7 +316,7 @@ Sources (2026-10-22): `DemoApp.tsx:641–700`,
 
 ### Customer 360 (`customer360`) — agreed 2026-10-22 (Basheer)
 
-Manual checked: Part B "A hospital's page (Customer 360)" (fixed the
+Manual checked: Part B "A customer's page (Customer 360)" (fixed the
 same day: Change Anyway, ↻ Refresh, Different WhatsApp number?,
 Reactivation Overdue). Manager box: none (Admin/GM-only Business
 Potential notes covered under Overview).
@@ -323,39 +324,39 @@ Potential notes covered under Overview).
 **Title:** Customer 360 — Help
 
 **What this page is for**
-This is everything Cabio knows about one hospital, in one place. It
+This is everything Cabio knows about one customer, in one place. It
 shows who you deal with there and what they think of us, what you've
-done at the hospital, the tenders and projects it has, every
+done at the customer, the tenders and projects it has, every
 Opportunity with it, and the equipment already installed, both ours and
 competitors'. Check it before a visit or call to catch up quickly, and
 update it afterwards so the next person sees the full picture.
 
 **Top of the page**
-- The hospital's name, zone, payment behaviour and Business Potential,
+- The customer's name, zone, payment behaviour and Business Potential,
   then counts of Stakeholders, Projects and Opportunities. Use the back
   arrow to return to where you came from.
 
 **Overview**
-- The hospital's details: zone, Payer Behavior, Business Potential,
+- The customer's details: zone, Payer Behavior, Business Potential,
   Customer Type and Parent Customer. If it has branches, they're listed
   under **Child Accounts**. Click a parent or branch name to open its
   page.
 - **Edit** changes the name, zone, parent, payer behaviour and customer
-  type. If the new name looks like a hospital already in the directory,
+  type. If the new name looks like a customer already in the directory,
   you'll see "Did you mean …?". Click **Use this one instead** to open
-  that hospital. Use **Change Anyway** only if it really is a different
-  hospital.
-- Admin and GM set Business Potential on Rate Hospitals. You can't
+  that customer. Use **Change Anyway** only if it really is a different
+  customer.
+- Admin and GM set Business Potential on Rate Customers. You can't
   change it here.
 
 **Activity**
-- Everything logged at this hospital, newest first. **+ Log** adds an
+- Everything logged at this customer, newest first. **+ Log** adds an
   entry, and **↻ Refresh** reloads the list.
 - Under each entry, open **Comments** to read the discussion, or **Add
   comment** to reply.
 
 **Stakeholders**
-- The hospital's contacts, each with designation, phone, email,
+- The customer's contacts, each with designation, phone, email,
   sentiment (Promoter, Neutral, Detractor) and NPS score (-100 to 100).
 - **+ Add** adds a contact. Tick **Different WhatsApp number?** only if
   their WhatsApp number isn't their phone number. **Edit** changes a
@@ -364,7 +365,7 @@ update it afterwards so the next person sees the full picture.
   linked to. Click one to open it.
 
 **Projects**
-- The hospital's tenders and building projects, each with status, owner
+- The customer's tenders and building projects, each with status, owner
   and bid date. **+ Add** creates one, **Edit** changes one, and clicking
   a project opens it.
 
@@ -374,12 +375,12 @@ update it afterwards so the next person sees the full picture.
 - Each one shows stage, status, owner, chance of winning (Win %) and
   value. A red **Reactivation Overdue** tag means an On Hold Opportunity
   has passed its date to restart.
-- **+ Add** opens the New Opportunity form with this hospital already
+- **+ Add** opens the New Opportunity form with this customer already
   filled in. Click an Opportunity, or its **Edit**, to open its page;
   changes are made there.
 
 **Installed Base**
-- Equipment already at the hospital. **+ Add** records one: pick our
+- Equipment already at the customer. **+ Add** records one: pick our
   product, or tick **Competitor Equipment** and type its name.
   Department and Installation Date are optional. Competitor equipment is
   marked **COMPETITOR**. Useful for spotting upgrade and service leads.
@@ -388,15 +389,15 @@ Sources (2026-10-22): `Customer360Screen.tsx:83–88, 162–262, 264–417,
 475–556, 559–612, 924–978, 996–1000, 1106–1143, 1347–1354`;
 `ActivityTimeline.tsx:240–262`; `ActivityCommentThread.tsx:123–176`.
 
-### Pipeline (`opportunities`) — agreed 2026-10-23 (Basheer)
+### Opportunity Pipeline (`opportunities`) — agreed 2026-10-23 (Basheer)
 
-Manual checked: Part B "Pipeline" (fixed the same day: Kanban/List
+Manual checked: Part B "Opportunity Pipeline" (fixed the same day: Kanban/List
 switch, Won/Lost/On Hold shown too, listing order, back arrow). Replaces
 the old help, which wrongly said cards can be dragged between columns,
 listed 7 stages (Payment Pending missing) and named stage and closing-date
 filters that don't exist.
 
-**Title:** Pipeline — Help
+**Title:** Opportunity Pipeline — Help
 
 **What this page is for**
 This page lists all your Opportunities and shows which stage each one
@@ -423,7 +424,7 @@ To change an Opportunity, click it to open its page.
   the highest chance of winning.
 
 **What each card shows**
-- The Opportunity name, hospital, status (Active, On Hold, Won or Lost),
+- The Opportunity name, customer, status (Active, On Hold, Won or Lost),
   value in Lakhs and owner.
 - **High Priority**: every Opportunity past the Demo stage, or one
   marked High Priority by hand.
@@ -432,7 +433,7 @@ To change an Opportunity, click it to open its page.
 - Click a card to open the Opportunity's page.
 
 **Search and filters**
-- Type in **Search by opportunity or hospital...** to narrow the list as
+- Type in **Search by opportunity or customer...** to narrow the list as
   you type. **×** clears it.
 - **All Owners**: pick a person to see only their Opportunities. People
   who have left are under **Inactive Owners**, so their Opportunities
@@ -441,7 +442,7 @@ To change an Opportunity, click it to open its page.
   within it.
 
 **Arriving from a report**
-- Clicking a bar or figure on a report opens Pipeline showing only those
+- Clicking a bar or figure on a report opens Opportunity Pipeline showing only those
   Opportunities. A **Showing: …** line says what is shown and how many.
 - **Clear filter** shows everything again; the back arrow returns to the
   report.
@@ -469,21 +470,21 @@ the code); this help assumes the fix.
 Use it to record each contact with a customer: a visit, call, email or
 meeting. Write down what happened and what you'll do next. Your manager
 and colleagues read these records, and the next person to deal with the
-hospital starts from them. You can also record training and events you
+customer starts from them. You can also record training and events you
 attended, help you gave a colleague on their Opportunity, or a note to
 someone in your team.
 
 **Details tab**
-- **Select account**: the hospital. It's filled in for you when you open
-  the form from a hospital's page or an Opportunity's page.
+- **Select account**: the customer. It's filled in for you when you open
+  the form from a customer's page or an Opportunity's page.
 - **Type**: Visit, Call, Email, Meeting or Note for work with a customer.
   The other types are explained below.
 - **Date & Time**: when it happened. It starts at the current time;
   change it if you're logging something from earlier.
 - The box below Date & Time is who the activity is for. Leave it on
   **Me** unless you're logging for a colleague.
-- **Opportunity (optional)**: link the activity to one of the hospital's
-  Opportunities, or leave it on **None — hospital-level**. When you open
+- **Opportunity (optional)**: link the activity to one of the customer's
+  Opportunities, or leave it on **None — customer-level**. When you open
   the form from an Opportunity's page, it says **Linked to this
   opportunity** instead.
 - **Notes**: what was discussed and what was agreed.
@@ -507,7 +508,7 @@ someone in your team.
 **Training and events**
 - Conference/Expo, OEM/Product Training, Certification, Sales Training,
   Seminar/Trade Show and Other Development.
-- The hospital is optional and there's no next action. Fill in
+- The customer is optional and there's no next action. Fill in
   **Outcome/Learning** with what you got out of it. Other Development
   also needs a **Description**.
 
@@ -515,7 +516,7 @@ someone in your team.
 - For when you helped a colleague's Opportunity, for example by
   introducing them to a contact you know. It doesn't matter which SBU or
   zone the Opportunity is in.
-- Pick the hospital, then the **Related Opportunity**, and write a
+- Pick the customer, then the **Related Opportunity**, and write a
   **Description** of what you did. There's no next action. It doesn't
   change who owns the Opportunity or who gets credit for the sale.
 
@@ -563,7 +564,7 @@ what was done.
   colleague will do it.
 - **Won or Lost:** the follow-up is optional; leave it empty to close
   with no follow-up.
-- **A next action at a hospital with no Opportunity:** you can tick
+- **A next action at a customer with no Opportunity:** you can tick
   **This visit produced a new Opportunity** instead of setting a
   follow-up. Press **Complete** and fill in the New Opportunity form; the
   next action closes once the Opportunity is saved.
@@ -625,26 +626,26 @@ Sources (2026-10-25): `QuickLeadModal.tsx:387–389, 717–728`;
 ### New Opportunity pop-up (`popup_newOpportunity`, key name settled at build) — agreed 2026-10-25 (Basheer)
 
 Manual checked: Part A "Create an Opportunity" (two lines added the same
-day: **+ Add Hospital**, and a Repeat Order lead source skips the demo
+day: **+ Add Customer**, and a Repeat Order lead source skips the demo
 dates, and the closing date from Negotiation on — `opportunityStatus.ts:22–28`) and Part D "Create an Opportunity for either SBU".
 Manager box: the SBU choice for Admin and General Manager.
 
 **Title:** New Opportunity — Help
 
 **What this form is for**
-Use it when a hospital shows real interest in buying something, so the
+Use it when a customer shows real interest in buying something, so the
 Opportunity is tracked from the first conversation to the order. The
 same form opens from **+ Lead** in the top bar, **+ Add** on a
-hospital's Opportunities tab, **+ Add** on a project, and **Convert** on
+customer's Opportunities tab, **+ Add** on a project, and **Convert** on
 a marketing lead.
 
 **The basics**
 - **Name**: a short name you'll recognise, for example "SonoScape P60
   for radiology".
-- **Account**: the hospital. It's already filled and locked if you
-  started from a hospital or a project. If the hospital isn't in the app
-  yet, use **+ Add Hospital**.
-- **Project** (optional): link it to one of the hospital's projects.
+- **Account**: the customer. It's already filled and locked if you
+  started from a customer or a project. If the customer isn't in the app
+  yet, use **+ Add Customer**.
+- **Project** (optional): link it to one of the customer's projects.
 - **Stage**: how far along it is. Choosing a stage fills **Win
   Probability %** with that stage's usual chance; you can change it.
 - **Owner**: who is responsible for it.
@@ -689,7 +690,7 @@ Sources (2026-10-25): `QuickLeadModal.tsx:115, 323–346, 425, 450–663,
 
 Manual checked: Part A "Move an Opportunity forward", "Put an
 Opportunity On Hold, or mark it Lost", "Mark an Opportunity Won" — no
-gaps. Manager box: none. The form's "this deal is past Demo stage" line
+gaps. Manager box: none. The form's "this Opportunity is past Demo stage" line
 is covered by `docs/Customer-Wording-Implementation-Plan.md`; the help uses
 "Opportunity".
 
@@ -754,16 +755,16 @@ Sources (2026-10-25): `OpportunityDetailScreen.tsx:217, 1515–1567,
 
 ### New Stakeholder pop-up (`popup_newStakeholder`, key name settled at build) — agreed 2026-10-26 (Basheer)
 
-Manual checked: Part B "A hospital's page (Customer 360)" Stakeholders
-tab — covered; Part A had no step, so "Add a contact at a hospital" was
+Manual checked: Part B "A customer's page (Customer 360)" Stakeholders
+tab — covered; Part A had no step, so "Add a contact at a customer" was
 added to A2 (Basheer, 2026-10-26). Manager box: none. The app doesn't
 stop duplicate contacts; the help says so (Basheer, 2026-10-26).
 
 **Title:** New Stakeholder — Help
 
 **What this form is for**
-Adds a contact at this hospital — a doctor, a purchase officer, a
-biomedical engineer — so you can link them to the hospital's
+Adds a contact at this customer — a doctor, a purchase officer, a
+biomedical engineer — so you can link them to the customer's
 Opportunities and keep a note of how they feel about Cabio.
 
 **Who they are**
@@ -801,7 +802,7 @@ check); `OpportunityDetailScreen.tsx:861, 970`.
 
 ### New Customer pop-up (`popup_newCustomer`, key name settled at build) — agreed 2026-10-26 (Basheer)
 
-Manual checked: A2 "Add a new hospital" — covered, except the
+Manual checked: A2 "Add a new customer" — covered, except the
 exact-same-name refusal (line added 2026-10-26, Basheer).
 Manager box: none (Admin, GM and SBU Managers may also pick any zone;
 left out — reps use this screen). First entry written to the
@@ -825,7 +826,7 @@ creating Opportunities for them.
 - **Name** and **Zone** — you must fill in both. Your own zone is
   already filled in. To pick a different one, type the first two
   letters; you'll only see zones in your own territory.
-- **Parent Customer** — the main hospital or group, if this customer is
+- **Parent Customer** — the main customer or group, if this customer is
   a branch of it.
 - **Payer Behavior** — how reliably they pay: Good, Average, Problematic
   or Unknown.

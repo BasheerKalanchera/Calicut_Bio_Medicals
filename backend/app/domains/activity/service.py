@@ -238,7 +238,7 @@ class ActivityService:
             return "Project" if has_open else None
         if data.account_id:
             has_open = self.reminder_repository.has_open_for_user_on_account_level(data.account_id, user_id)
-            return "hospital" if has_open else None
+            return "customer" if has_open else None
         return None
 
     def log_stage_change_note(
@@ -429,7 +429,7 @@ class ReminderService:
         if hospital_level_only and project_id is not None:
             # "No Project" and "on this Project" contradict -- say so rather
             # than return an empty list that reads as "nothing blocks you".
-            raise BusinessRuleViolation("Choose either hospital-level only or one Project, not both.")
+            raise BusinessRuleViolation("Choose either customer-level only or one Project, not both.")
         if not self.repository.account_exists(account_id):
             raise NotFoundError(f"Account {account_id} not found")
         offset = (page - 1) * page_size
@@ -623,7 +623,7 @@ class ReminderService:
             ):
                 raise BusinessRuleViolation(
                     "Next actions closed together must be open ones of the same person "
-                    "on the same Opportunity, Project or hospital."
+                    "on the same Opportunity, Project or customer."
                 )
             others.append(other)
         return others
@@ -653,7 +653,7 @@ class ReminderService:
         if original.opportunity_id:
             if produced_opportunity_id:
                 raise BusinessRuleViolation(
-                    "A new Opportunity can only stand in for the follow-up on a hospital-level "
+                    "A new Opportunity can only stand in for the follow-up on a customer-level "
                     "or Project-level next action."
                 )
             if self.repository.get_opportunity_status_code(original.opportunity_id) in {"WON", "LOST"}:
@@ -667,5 +667,5 @@ class ReminderService:
             return
         raise BusinessRuleViolation(
             "Closing a next action needs a follow-up next action, "
-            "unless this visit produced a new Opportunity on this hospital."
+            "unless this visit produced a new Opportunity on this customer."
         )

@@ -42,6 +42,12 @@ the app and docs" (moved here 2026-11-16; their history is in git).
   section and its messages say "Customers": the plan dialog lets a rep
   add any customer type, not only hospitals (no customer-type filter in
   the planning or account search code, read 2026-11-16) — Basheer, 2026-11-16.
+- The side-menu item, the screen's own heading and the "?" help title
+  "Pipeline" become "Opportunity Pipeline" ("Opportunity Pipeline — Help"),
+  so they no longer look like the separate "Pipeline Report" item; done in
+  the wording commit (menu and heading `DemoApp.tsx`, help title
+  `helpContent.tsx`); the user manual's "Pipeline" wording follows in
+  step 5 — Basheer, 2026-11-18.
 - The old prototype screen (`App.jsx`, address `/prototype`, 93 of the
   178 lines found) is left alone: it isn't in the menu, and its removal is
   its own Backlog entry — Basheer, 2026-11-16.

@@ -45,7 +45,7 @@ export default function TargetPlanDetails({ target }: { target: TargetPlan }) {
 
       {accounts.length === 0 ? (
         <Typography variant="body2" color="text.secondary">
-          No hospitals on this plan — it was set before hospital-wise planning.
+          No customers on this plan — it was set before customer-wise planning.
         </Typography>
       ) : (
         /* On a phone the opened plan is inside the person's card, so each
@@ -53,7 +53,7 @@ export default function TargetPlanDetails({ target }: { target: TargetPlan }) {
         <Box sx={{ overflowX: "auto" }}>
         <TableOrCards
           columns={[
-            { label: "Hospital" },
+            { label: "Customer" },
             { label: "Zone" },
             { label: "Potential" },
             { label: "Visits" },
@@ -73,7 +73,7 @@ export default function TargetPlanDetails({ target }: { target: TargetPlan }) {
             </TocRow>
           ))}
           <TocRow total>
-            <TocCell title colSpan={4}>{accounts.length} hospital{accounts.length === 1 ? "" : "s"}</TocCell>
+            <TocCell title colSpan={4}>{accounts.length} customer{accounts.length === 1 ? "" : "s"}</TocCell>
             <TocCell action align="right">{lakhs2(target.target_amount_lakhs)}</TocCell>
             <TocCell phone={false} />
           </TocRow>

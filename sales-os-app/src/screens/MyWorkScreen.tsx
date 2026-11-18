@@ -40,7 +40,7 @@ const MANAGER_TIER_ROLES = new Set(["SBU Manager", "Area Manager", "Admin", "Gen
 type TabId = "summary" | "opportunities" | "next-actions" | "hospitals";
 const TABS: { id: TabId; label: string }[] = [
   { id: "summary", label: "Summary" },
-  { id: "hospitals", label: "My hospitals" },
+  { id: "hospitals", label: "My customers" },
   { id: "opportunities", label: "Opportunities" },
   { id: "next-actions", label: "Next actions" },
 ];
@@ -289,13 +289,13 @@ export default function MyWorkScreen({ isActive, onSelectAccount, onSelectOpport
           // D32: one box per list; no grand total across boxes (D3).
           // D41: coloured edge per kind of list; a 0 goes grey and quiet.
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
-            <SummaryGroup title="My hospitals" icon="🏥">
+            <SummaryGroup title="My customers" icon="🏥">
               <SummaryTile
-                label={`My hospitals this quarter (${formatPlanningPeriod(data.planning_period)})`}
+                label={`My customers this quarter (${formatPlanningPeriod(data.planning_period)})`}
                 value={data.planned_hospitals.count}
                 tone="info"
                 detail={data.planned_hospitals.count === 0
-                  ? "No approved hospital plan for this quarter."
+                  ? "No approved customer plan for this quarter."
                   : `${neverVisited} never visited · ${overdueHospitals} overdue next action`}
                 onClick={() => openTab("hospitals")}
               />
@@ -559,7 +559,7 @@ function OpportunitySection({
         <TableOrCards
           columns={[
             { label: "Opportunity" },
-            { label: "Hospital" },
+            { label: "Customer" },
             { label: "Stage" },
             { label: "Chance", align: "right" },
             { label: "Value", align: "right" },
@@ -572,7 +572,7 @@ function OpportunitySection({
               <TocCell title>
                 <NameLink onClick={() => onSelectOpportunity({ id: r.opportunity_id, name: r.opportunity_name })}>{r.opportunity_name}</NameLink>
               </TocCell>
-              <TocCell label="Hospital">
+              <TocCell label="Customer">
                 <NameLink onClick={() => onSelectAccount({ id: r.account_id, name: r.account_name })}>{r.account_name}</NameLink>
               </TocCell>
               <TocCell label="Stage">{r.stage_name}</TocCell>
@@ -613,15 +613,15 @@ function HospitalSection({
   // visited first. Last visit is this person's own (D27, D28); next action is
   // their earliest open one at the hospital (D29).
   return (
-    <SectionCard title={sectionTitle(`My hospitals this quarter (${formatPlanningPeriod(planningPeriod)})`, list.count)}>
+    <SectionCard title={sectionTitle(`My customers this quarter (${formatPlanningPeriod(planningPeriod)})`, list.count)}>
       {list.rows.length === 0 ? (
         <Box sx={{ color: "text.secondary", typography: "body2", fontStyle: "italic" }}>
-          No approved hospital plan for this quarter.
+          No approved customer plan for this quarter.
         </Box>
       ) : (
         <TableOrCards
           columns={[
-            { label: "Hospital" },
+            { label: "Customer" },
             { label: "Last visit", align: "right" },
             { label: "Next action due", align: "right" },
             ...(canAct ? [{ label: "", align: "right" as const }] : []),
@@ -683,7 +683,7 @@ function NextActionSection({
         <TableOrCards
           columns={[
             { label: "Next action" },
-            { label: "Hospital" },
+            { label: "Customer" },
             { label: "Opportunity" },
             { label: dueLabel, align: "right" },
             ...(canAct ? [{ label: "", align: "right" as const }] : []),
@@ -696,7 +696,7 @@ function NextActionSection({
             return (
               <TocRow key={r.id}>
                 <TocCell title><Box sx={{ whiteSpace: "pre-line" }}>{r.reminder_text}</Box></TocCell>
-                <TocCell label="Hospital">
+                <TocCell label="Customer">
                   {account ? <NameLink onClick={() => onSelectAccount(account)}>{account.name}</NameLink> : "—"}
                 </TocCell>
                 <TocCell label="Opportunity">

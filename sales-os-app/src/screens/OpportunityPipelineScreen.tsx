@@ -438,7 +438,7 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMod
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1, bgcolor: "background.paper", p: 1.5, borderRadius: "1rem", boxShadow: shadows.sm, border: "1px solid", borderColor: "gray.100" }}>
           {/* Search */}
           <TextField
-            placeholder="Search by opportunity or hospital..."
+            placeholder="Search by opportunity or customer..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             fullWidth

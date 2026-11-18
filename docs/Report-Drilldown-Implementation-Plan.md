@@ -13,8 +13,8 @@ extends it across every report screen that actually needs it.
 PRD 5.9 asks for click-through drill-down: Zone → Team → Individual.
 Checked every report screen against that ask before scoping this plan:
 
-- **Daily Activity Report, Stagnant Deals, Opportunities On Hold** are
-  already flat lists — each row *is* one deal, and clicking a row already
+- **Daily Activity Report, Stagnant Opportunities, Opportunities On Hold** are
+  already flat lists — each row *is* one Opportunity, and clicking a row already
   opens it. There's nothing to drill down *into* here; they're already at
   the bottom of the hierarchy. **No changes needed.**
 - **Pipeline Report, Sales Report, Product Performance Report** each show
@@ -142,7 +142,7 @@ by the shelved plan for `product_id`; `sbu_id` is new but simpler.
 - **Brand-level drill-down** — would need a new `oem_name`/brand filter
   dimension on `list_pipeline`, not built anywhere today. Flag as a
   follow-on if wanted later.
-- **Stagnant Deals / Opportunities On Hold / Daily Activity Report** —
+- **Stagnant Opportunities / Opportunities On Hold / Daily Activity Report** —
   already flat, already click-through to the individual opportunity.
 - **Any permanent new filter dropdown on the Kanban/List board's own
   filter bar** — stays a one-shot pre-filter + dismissible banner,

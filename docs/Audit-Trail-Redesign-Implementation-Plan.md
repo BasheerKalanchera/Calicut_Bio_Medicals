@@ -4,7 +4,7 @@
 **Traceability rows:** beyond-signed item 13 (Audit Log screen) — wording
 update only; supports BR-AUD-01.
 **Design / discussion:** this plan. Trigger for it: a product switch on 3
-deals in UAT on 2026-09-29 (old wall-mount stand → Equipwell Wall Mount
+Opportunities in UAT on 2026-09-29 (old wall-mount stand → Equipwell Wall Mount
 Stand) left only the three removals in the Audit Log; the three new lines
 left no trace. Four product renames the same day were direct Supabase
 edits by Basheer — correctly logged with no user, but each product's own
@@ -15,10 +15,10 @@ edits by Basheer — correctly logged with no user, but each product's own
 
 - Lighter build (A): complete the log and fix it; no per-record History
   tab — Basheer, 2026-09-30
-- Creating a new main record (deal, customer, product, …) is not logged;
+- Creating a new main record (Opportunity, customer, product, …) is not logged;
   every later edit and removal is — Basheer, 2026-09-30
-- Lines inside a record (deal product lines, splits, deal contacts,
-  target-plan hospitals and brand splits, user zones): adding one to a
+- Lines inside a record (Opportunity product lines, splits, Opportunity contacts,
+  target-plan customers and brand splits, user zones): adding one to a
   record that already exists **is** logged, as a change to that record;
   lines saved together with a brand-new record are not — Basheer,
   2026-09-30
@@ -35,7 +35,7 @@ edits by Basheer — correctly logged with no user, but each product's own
   matching the Audit Log. Folded into step 1's database change, no
   separate step — Basheer, 2026-09-30
 - Documents are attached things, like lines: uploading one onto a
-  deal, customer, project or product that already exists is logged as
+  Opportunity, customer, project or product that already exists is logged as
   "added"; edits and deletions are logged. Replacing a brochure (delete
   old, upload new) shows as two entries side by side — separate actions,
   not one grouped entry. The log keeps the old file's name, type, size
@@ -59,7 +59,7 @@ edits by Basheer — correctly logged with no user, but each product's own
   edit or delete exists), the zone ancestry table (rebuilt automatically),
   system tables — Basheer, 2026-09-30
 - Reference lists (loss/hold/gate-override reasons, lead sources, project
-  statuses, deal stages/statuses), SBU, role, vendor targets: no edit
+  statuses, Opportunity stages/statuses), SBU, role, vendor targets: no edit
   path exists in the app today; their tracking ships with the Reference
   Data Management Screen, which already plans it — Basheer, 2026-09-30
 - Audit Log screen shows the line changes made to one record in one save
@@ -74,19 +74,19 @@ edits by Basheer — correctly logged with no user, but each product's own
 
 Today the Audit Log is like a CCTV camera that records things being
 changed or taken away, but not things being put in — so replacing one
-product on a deal with another showed only the old product vanishing.
+product on an Opportunity with another showed only the old product vanishing.
 After a direct database edit, the record itself can wrongly name the
 last app user as the person who changed it. And the log doesn't watch
 large parts of the system at all (target plans, marketing leads,
 projects, documents, the catalogue's brands and models).
 
 After this change:
-- **Creating** something new (a deal, a customer, a product) still isn't
+- **Creating** something new (an Opportunity, a customer, a product) still isn't
   logged — the record itself already says who created it and when.
 - **Every change afterwards is logged**, including adding or removing a
   line or document inside a record that already exists. Swapping a
-  product on a deal shows as "old stand removed, Equipwell stand added"
-  on that deal, with your name — one grouped entry if done in one save.
+  product on an Opportunity shows as "old stand removed, Equipwell stand added"
+  on that Opportunity, with your name — one grouped entry if done in one save.
 - Many more kinds of record are watched (list in the Decisions above).
 - The log stays small: only fields that actually changed are stored,
   housekeeping noise is ignored, a deleted record's lines don't each get
@@ -111,7 +111,7 @@ Rough size of the work: 3–4 days.
    record `alembic current`, regenerate `Physical-Schema.sql`, tests.
    **Checkpoint commit.**
 2. **Save only what changed.** Rewrite the three wipe-and-rewrite save
-   paths (user zones, target-plan hospitals, target-plan brand splits)
+   paths (user zones, target-plan customers, target-plan brand splits)
    to update, add and remove individually, like Opportunity product
    lines already do. Tests per path. **Checkpoint commit.** (Opportunity
    contacts had a fourth, but it had no caller and was removed, not
@@ -131,10 +131,10 @@ Rough size of the work: 3–4 days.
 
 ## 3. Not in this plan (with reasons)
 
-- **History tab on each deal/customer/product page (option B)** — deferred
+- **History tab on each Opportunity/customer/product page (option B)** — deferred
   by choice; builds on this without rework. Goes to Backlog. **Dropped
   2026-11-13 (Basheer):** not needed; removed from the Backlog.
-- **Changing a deal line's product in place on the deal screen** — the
+- **Changing an Opportunity line's product in place on the Opportunity screen** — the
   backend already supports it; whether the screen should offer it is a
   separate UI question. With this plan a remove-and-add is fully visible
   anyway.

@@ -156,12 +156,12 @@ export default function TargetPlanDialog({ sbuId, period, existing, onClose, onS
   // as ₹0, the total may be ₹0 and the brand split needn't balance yet. All
   // of that is enforced on Submit, here and server-side (Basheer, 2026-09-28).
   const save = async (submit: boolean) => {
-    if (rows.length === 0) throw new Error("Add at least one hospital to the plan.");
+    if (rows.length === 0) throw new Error("Add at least one customer to the plan.");
     const invalidRow = rows.find((r) => r.amount.trim() !== "" && !isValidAmount(r.amount));
     if (invalidRow) throw new Error(`The amount for ${invalidRow.account.name} isn't a valid number.`);
     const blankRow = rows.find((r) => r.amount.trim() === "");
     if (submit && blankRow) throw new Error(`Enter an amount for ${blankRow.account.name} (₹0 is allowed).`);
-    if (submit && total <= 0) throw new Error("The plan's total must be more than ₹0 — enter an amount for at least one hospital.");
+    if (submit && total <= 0) throw new Error("The plan's total must be more than ₹0 — enter an amount for at least one customer.");
     const badSplit = editSplits.find((s) => !isValidAmount(s.amount));
     if (badSplit) throw new Error("Each brand split amount must be a number of ₹0 or more.");
 
@@ -231,7 +231,7 @@ export default function TargetPlanDialog({ sbuId, period, existing, onClose, onS
 
       {/* Hospitals */}
       <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Hospitals *</Typography>
+        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Customers *</Typography>
         <Autocomplete
           options={pickerOptions}
           getOptionLabel={(a) => a.name}
@@ -254,16 +254,16 @@ export default function TargetPlanDialog({ sbuId, period, existing, onClose, onS
               </Box>
             );
           }}
-          noOptionsText={search ? "No hospitals in your area match" : "No more hospitals in your area"}
+          noOptionsText={search ? "No customers in your area match" : "No more customers in your area"}
           renderInput={(params) => (
-            <TextField {...params} size="small" placeholder="Search to add a hospital from your area" />
+            <TextField {...params} size="small" placeholder="Search to add a customer from your area" />
           )}
           size="small"
           fullWidth
         />
 
         {rows.length === 0 && (
-          <Typography color="text.secondary" variant="body2">No hospitals added yet.</Typography>
+          <Typography color="text.secondary" variant="body2">No customers added yet.</Typography>
         )}
 
         {rows.map((r, i) => (
@@ -316,7 +316,7 @@ export default function TargetPlanDialog({ sbuId, period, existing, onClose, onS
 
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", borderTop: "2px solid", borderColor: "divider", pt: 1 }}>
           <Typography variant="body2" color="text.secondary">
-            {rows.length} hospital{rows.length === 1 ? "" : "s"}
+            {rows.length} customer{rows.length === 1 ? "" : "s"}
           </Typography>
           <Typography sx={{ fontWeight: 800 }}>Plan total: {formatLakhs2(total)}</Typography>
         </Box>
@@ -325,7 +325,7 @@ export default function TargetPlanDialog({ sbuId, period, existing, onClose, onS
       {approvedBenchmark !== null && total < approvedBenchmark && (
         <Alert severity="warning">
           {formatLakhs2(total)} is {formatLakhs2(approvedBenchmark - total)} below your approved plan of{" "}
-          {formatLakhs2(approvedBenchmark)} — add hospitals or raise amounts to close the gap. You can still submit;
+          {formatLakhs2(approvedBenchmark)} — add customers or raise amounts to close the gap. You can still submit;
           your manager will see both figures.
         </Alert>
       )}

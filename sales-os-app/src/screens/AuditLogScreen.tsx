@@ -28,7 +28,7 @@ const TABLE_OPTIONS = [
   { value: "split", label: "Split" },
   { value: "opportunity_stakeholder", label: "Opportunity Contact" },
   { value: "target_plan", label: "Plan" },
-  { value: "target_plan_account", label: "Plan Hospital" },
+  { value: "target_plan_account", label: "Plan Customer" },
   { value: "target_plan_brand_split", label: "Plan Brand Split" },
   { value: "marketing_lead", label: "Marketing Lead" },
   { value: "project", label: "Project" },

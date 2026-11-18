@@ -480,7 +480,7 @@ export default function ProjectDirectoryScreen({
       <Box sx={{ px: 2, pt: 2 }}>
         <Box sx={{ display: "flex", gap: 1.5, mb: 3, bgcolor: "common.white", p: 2, borderRadius: "1rem", boxShadow: shadows.sm, border: 1, borderColor: "gray.100" }}>
           <TextField
-            placeholder="Search by project or hospital..."
+            placeholder="Search by project or customer..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             size="small"
@@ -573,7 +573,7 @@ export default function ProjectDirectoryScreen({
             {projects.length === 0 && (
               <Box sx={{ textAlign: "center", py: 6, bgcolor: "common.white", borderRadius: "1.5rem", border: 2, borderStyle: "dashed", borderColor: "gray.100" }}>
                 <Typography sx={{ fontStyle: "italic", color: "gray.400" }}>
-                  {search ? `No projects or hospitals matching "${search}".` : "No projects found."}
+                  {search ? `No projects or customers matching "${search}".` : "No projects found."}
                 </Typography>
               </Box>
             )}

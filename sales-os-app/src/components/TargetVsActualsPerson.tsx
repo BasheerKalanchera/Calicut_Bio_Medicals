@@ -95,9 +95,9 @@ export default function TargetVsActualsPerson({
 
       {person.hospitals.length > 0 &&
         section(
-          "By hospital",
+          "By customer",
           <PlannedWonTable
-            heading="Hospital"
+            heading="Customer"
             rows={person.hospitals.map((h) => ({
               key: h.account_id ?? h.account_name,
               name: h.account_name,
@@ -120,7 +120,7 @@ export default function TargetVsActualsPerson({
           />,
         )}
       {person.hospitals.length === 0 && person.brands.length === 0 && (
-        <Box sx={noteSx}>No planned hospitals or brands to show for this quarter.</Box>
+        <Box sx={noteSx}>No planned customers or brands to show for this quarter.</Box>
       )}
 
       {person.no_po_date_count > 0 && (

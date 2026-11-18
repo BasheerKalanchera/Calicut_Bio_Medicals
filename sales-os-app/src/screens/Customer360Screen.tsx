@@ -1185,7 +1185,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
           <NextActionsPanel
             queryKeyPrefix={["account-reminders", accountId, "customer-360"]}
             fetchReminders={(includeCompleted) => listAccountReminders(accountId, { includeCompleted })}
-            emptyPendingMessage="No pending next actions at this hospital."
+            emptyPendingMessage="No pending next actions at this customer."
             currentUserId={(userProfile as any)?.id}
             onSelectOpportunity={(o) => onSelectOpportunity?.(o, undefined, "next-actions")}
           />
@@ -1206,7 +1206,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
               <Typography variant="body2" sx={{ mb: 1 }}>
                 {editDuplicateCandidates.length === 1
                   ? <>Did you mean <strong>{editDuplicateCandidates[0].name}</strong>? It's already in the directory.</>
-                  : "This looks similar to hospitals already in the directory:"}
+                  : "This looks similar to customers already in the directory:"}
               </Typography>
               <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
                 {editDuplicateCandidates.map((candidate) => (

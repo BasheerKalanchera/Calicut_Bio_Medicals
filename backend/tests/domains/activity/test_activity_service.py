@@ -475,7 +475,7 @@ class TestLogActivity:
         reminder_repo.has_open_for_user_on_account_level.return_value = True
         svc = self._svc(activity_repo=activity_repo, reminder_repo=reminder_repo)
 
-        with pytest.raises(BusinessRuleViolation, match="open next action on this hospital"):
+        with pytest.raises(BusinessRuleViolation, match="open next action on this customer"):
             svc.log_activity(self._data(), created_by=ACTOR_ID, role_name="Sales Executive")
 
         reminder_repo.has_open_for_user_on_account_level.assert_called_once_with(ACCOUNT_ID, ACTOR_ID)
@@ -1799,7 +1799,7 @@ class TestPatchReminder:
         other = _make_reminder(id=uuid.uuid4(), activity=_make_activity(**other_activity))
         svc, repo, activity_repo, _ = self._close_several_at(_make_activity(**main_activity), other)
 
-        with pytest.raises(BusinessRuleViolation, match="Opportunity, Project or hospital"):
+        with pytest.raises(BusinessRuleViolation, match="Opportunity, Project or customer"):
             svc.patch_reminder(
                 REMINDER_ID, ReminderUpdate(**_closing_data(also_close_ids=[other.id])), updated_by=ACTOR_ID
             )
@@ -1938,7 +1938,7 @@ class TestPatchReminder:
     def test_produced_opportunity_on_opportunity_reminder_raises(self):
         svc, _, _ = self._patch_svc(_make_reminder(activity=_make_activity(opportunity_id=OPP_ID)))
 
-        with pytest.raises(BusinessRuleViolation, match="hospital-level"):
+        with pytest.raises(BusinessRuleViolation, match="customer-level"):
             svc.patch_reminder(
                 REMINDER_ID, self._no_follow_up(produced_opportunity_id=uuid.uuid4()), updated_by=ACTOR_ID
             )

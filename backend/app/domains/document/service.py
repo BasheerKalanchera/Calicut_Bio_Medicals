@@ -119,7 +119,9 @@ class DocumentService:
         elif document.opportunity_id is not None:
             is_owner = document.opportunity.owner_id == current_user.id
             if not (is_owner or role_name in _CATALOG_COLLATERAL_WRITE_ROLES):
-                raise AuthorizationError("Only the deal's owner or Admin/General Manager can remove this document")
+                raise AuthorizationError(
+                    "Only the Opportunity's owner or Admin/General Manager can remove this document"
+                )
         # Delete the Storage object before the DB row: if Storage delete fails,
         # the DB row survives and the orphan is visible/retryable. The reverse
         # order could leave an orphaned file with no DB record pointing at it.

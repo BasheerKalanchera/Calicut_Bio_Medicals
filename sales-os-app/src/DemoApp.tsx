@@ -58,7 +58,7 @@ const SALES_EXECUTION_ITEMS = [
   // their own menu (MARKETING_NAV_SECTIONS) and don't get it.
   { id: "myWork",        label: "My Work",            icon: "🗓️" },
   { id: "customers",     label: "Account Management", icon: "🏥" },
-  { id: "opportunities", label: "Pipeline",           icon: "📈" },
+  { id: "opportunities", label: "Opportunity Pipeline", icon: "📈" },
   { id: "marketingLeadQueue", label: "Marketing Lead Queue", icon: "📥" },
   { id: "nextActions",   label: "Next Actions",       icon: "✅" },
   { id: "insights", label: "Insights Dashboard", icon: "📊" },
@@ -102,7 +102,7 @@ function getNavSections(isAdmin: boolean) {
           { id: "users",       label: "User Directory",  icon: "👥" },
           { id: "territories", label: "Territory Map",   icon: "🗺️" },
           { id: "auditLog",    label: "Audit Log",       icon: "📜" },
-          { id: "rateHospitals", label: "Rate Hospitals", icon: "⭐" },
+          { id: "rateHospitals", label: "Rate Customers", icon: "⭐" },
           { id: "brandTargetTracking", label: "Brand Target Tracking", icon: "🏷️" },
         ],
       },
@@ -213,7 +213,7 @@ export default function DemoApp() {
   const [showLogActivity, setShowLogActivity]   = useState(false);
   const [showHelp, setShowHelp]                 = useState(false);
   // Lifted out of OpportunityPipelineScreen so the Kanban/List toggle can sit
-  // in this header row next to the "Pipeline" title, freeing the filter row
+  // in this header row next to the "Opportunity Pipeline" title, freeing the filter row
   // below for the Owner/Zone selects (narrow-viewport layout fix).
   const [pipelineViewMode, setPipelineViewMode] = useState<"kanban" | "list">("kanban");
   // Set when the post-login reminders banner is clicked -- consumed by
@@ -763,7 +763,7 @@ export default function DemoApp() {
           <Box sx={{ flex: 1, overflow: "hidden", display: view === "opportunities" ? "flex" : "none", flexDirection: "column" }}>
             <Box sx={{ px: 2, py: 1.5, bgcolor: "background.paper", borderBottom: 1, borderColor: "gray.100", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
               <Typography component="h2" sx={{ typography: "h5", fontWeight: 800, color: "gray.800", letterSpacing: "-0.025em" }}>
-                Pipeline
+                Opportunity Pipeline
               </Typography>
               <ToggleButtonGroup
                 value={pipelineViewMode}
@@ -835,7 +835,7 @@ export default function DemoApp() {
           <Box sx={{ flex: 1, overflow: "hidden", display: view === "rateHospitals" ? "flex" : "none", flexDirection: "column" }}>
             <Box sx={{ px: 2, py: 1.5, bgcolor: "background.paper", borderBottom: 1, borderColor: "gray.100", flexShrink: 0 }}>
               <Typography component="h2" sx={{ typography: "h5", fontWeight: 800, color: "gray.800", letterSpacing: "-0.025em" }}>
-                Rate Hospitals
+                Rate Customers
               </Typography>
             </Box>
             <RateHospitalsScreen active={view === "rateHospitals"} />

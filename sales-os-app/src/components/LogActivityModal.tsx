@@ -458,7 +458,7 @@ export default function LogActivityModal({
                 size="small"
                 slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
               >
-                <MenuItem value="">None — hospital-level</MenuItem>
+                <MenuItem value="">None — customer-level</MenuItem>
                 {ownOpportunityOptions.map((o) => (
                   <MenuItem key={o.id} value={o.id}>{o.name}</MenuItem>
                 ))}

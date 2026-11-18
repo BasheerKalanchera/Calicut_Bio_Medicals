@@ -121,6 +121,15 @@ date (Basheer, 2026-10-14).
 - **Needs:** Haroon's decision, since it changes BR-ACC-03; then a short
   plan. Not before the October UAT move.
 
+### "Account" → "Customer" in screen text — parked until Basheer checks with Haroon, not started (Basheer, 2026-11-17; parked 2026-11-18)
+
+- **Found (17 Nov, during the Customer Wording E2E):** the live app still says "Account" in about 27 lines of screen text across 12 files (hand count from a search of `sales-os-app/src`, excluding the generated `types/api.ts` and the old prototype `App.jsx`). The Customer Wording plan only covered "hospital" and "deal", so these were left out on purpose, to keep that build small.
+- **Where a user sees it:** side menu and page heading "Account Management" (`DemoApp.tsx:60`, `:683`); Customer 360 ("Account Name", "Account Details", "Child Accounts"); the "Account *" field in the New Opportunity (Quick Lead) pop-up and the Projects form; the Marketing Lead create form; "Select account" in Log Activity; "Account is required" errors (3); "Unknown account" on Marketing Lead cards; the Audit Log record-type filter; the Projects detail label; the notification pop-ups' fallback name; the `?` help text (title "Account Management — Help" and about 6 more lines).
+- **Parked until Basheer has checked with Haroon (Basheer, 18 Nov):** the whole entry waits, including the menu name. Basheer likes "Customers & Projects" ("Customer Management" doesn't fit, because the screen has two tabs, Customers and Projects); the alternative is keeping "Account Management" (nothing breaks; the screen keeps two words for one thing). If it goes ahead, the menu name, heading and help title are three lines (`DemoApp.tsx:60`, `:683`, `helpContent.tsx:43`); the living docs naming "Account Management" (UAT manual, help catch-up plan, Weekly Follow-up plan and test plan, In-App Help Editor test plan) follow. Do the other "Account" lines as a separate step right after the wording commit, once the Customer Wording E2E is closed and the server-message search is done (Claude's recommendation; folding them in would mean re-running E2E steps already passed). Still open: whether "Child Accounts" becomes "Child Customers". No splitting of Customers and Projects into two menu items was discussed or recorded; if wanted, it is its own navigation change.
+- **Not searched yet:** server messages and role names ("Account Manager" appears only in the prototype so far).
+- **Leave alone:** query keys, web addresses (`/accounts`), prop names and comments are code names; they wait for the code-names step of the wording plan.
+- **Then:** a short plan or a plan step, with the exact lines shown first; E2E re-checks the changed labels.
+
 ### Business rules vs code — 6 gaps awaiting decision (2026-10-08)
 
 Found while checking all 59 rules for the matrix rewrite (Progress-Archive
@@ -1137,7 +1146,7 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   Opportunity filter (server function + screen filter bar) and connects
   only Insights, the Pipeline Report with its drill-down list, and Product
   Performance (lighter option). Still on their own filters: Sales Report,
-  Stagnant Deals, Opportunities On Hold, Pipeline Kanban/List and the
+  Stagnant Opportunities, Opportunities On Hold, Pipeline Kanban/List and the
   other drill-downs. Move each when it is next
   touched, or in one refactoring pass. Rule: Frontend standards §6.9,
   Backend standards "Filtering Standards".
@@ -1620,7 +1629,7 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
      Zero dependency on Target or Coverage Planning — split out from the PRD's much
      larger Reporting & Review Module (§5) to the target-independent subset: Pipeline
      Value, Weighted/Unweighted Forecast, Overdue Actions, Activity Levels, a read-only
-     Stagnant Deals report. Explicitly **not** `BR-OP-06`'s real Stalled-status
+     Stagnant Opportunities report. Explicitly **not** `BR-OP-06`'s real Stalled-status
      automation — no job scheduler exists in this codebase yet, so that stays a
      separate future item. **All 3 open decisions resolved 2026-08-25:** Pipeline
      Aging dropped from Batch 1 entirely (no stage-history table exists, and the only

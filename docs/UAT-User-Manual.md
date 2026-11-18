@@ -58,27 +58,27 @@ If you have next actions due today or overdue, a reminder box appears.
 
 ## A2. Sales Representative
 
-Your menu: Account Management, Pipeline, Marketing Lead Queue, Next
+Your menu: Account Management, Opportunity Pipeline, Marketing Lead Queue, Next
 Actions, Insights Dashboard, Target & Coverage Planning, Product Catalog,
 and the six reports.
 
-### Add a new hospital
-1. Account Management → **Customers** → **+ Add** (or **+ Add Hospital**
+### Add a new customer
+1. Account Management → **Customers** → **+ Add** (or **+ Add Customer**
    inside the New Opportunity form).
 2. Fill **Name** and **Zone** (your own zone is filled in for you).
    Parent Customer, Payer Behavior and Customer Type are optional.
-3. **Create**. Added from Account Management, the new hospital's page
+3. **Create**. Added from Account Management, the new customer's page
    opens straight away, ready for an Opportunity or a visit.
-- If a hospital with a similar name already exists, the form shows "Did
+- If a customer with a similar name already exists, the form shows "Did
   you mean … ? It's already in the directory." Click **Use this one
   instead** rather than creating a second copy. Use **Create Anyway**
-  only if it really is a different hospital.
+  only if it really is a different customer.
 - A customer with exactly the same name can't be added twice.
 - If you have no territory yet, the form doesn't open; ask your manager
   to set one up.
 
-### Add a contact at a hospital
-1. Open the hospital → **Stakeholders** → **+ Add**.
+### Add a contact at a customer
+1. Open the customer → **Stakeholders** → **+ Add**.
 2. Fill **Name** (the only required field); add Designation, Email,
    Phone, and NPS Score and Sentiment if you know them. Tick **Different
    WhatsApp number?** only if it isn't their phone number.
@@ -89,12 +89,12 @@ and the six reports.
 
 ### Create an Opportunity
 Every way of creating an Opportunity opens the same **New Opportunity**
-form: **+ Lead** in the top bar, **+ Add** on a hospital's Opportunities
+form: **+ Lead** in the top bar, **+ Add** on a customer's Opportunities
 tab, **+ Add** on a project, or **Convert** on a marketing lead.
 
 1. Fill **Name**, **Account** (already filled and locked if you started
-   from a hospital or project), **Stage** and **Owner**. If the hospital
-   isn't in the app yet, **+ Add Hospital** adds it without leaving the
+   from a customer or project), **Stage** and **Owner**. If the customer
+   isn't in the app yet, **+ Add Customer** adds it without leaving the
    form.
 2. Choosing a stage fills **Win Probability %** with that stage's usual
    chance (Lead 5 %, Qualified 20 %, Demo 35 %, Clinical Evaluation 55 %,
@@ -133,7 +133,7 @@ Tick **Fast-Track this Opportunity** (in the create or edit form).
 - The manager you name gets a notification.
 
 ### Move an Opportunity forward
-1. Open it (Pipeline, or the hospital's Opportunities tab).
+1. Open it (Opportunity Pipeline, or the customer's Opportunities tab).
 2. **Overview** tab → **Edit** → change **Stage** → **Save**.
 - If your Win Probability is still the old stage's usual figure, it moves
   to the new stage's figure. If you typed your own figure, it is kept.
@@ -175,14 +175,14 @@ back to the Edit form with nothing saved.
 ### Log what you did
 Record every visit, call, email or meeting, saying what happened and what
 you'll do next. Your manager and colleagues read these records, and the
-next person to deal with the hospital starts from them.
+next person to deal with the customer starts from them.
 
-1. **+ Log** (top bar), or **+ Log** on an Opportunity's or hospital's
+1. **+ Log** (top bar), or **+ Log** on an Opportunity's or customer's
    Activity tab.
-2. **Details**: **Type**, **Date & Time** and **Notes**. Pick the hospital
+2. **Details**: **Type**, **Date & Time** and **Notes**. Pick the customer
    if it isn't already filled in. If the visit was about one Opportunity,
    pick it under **Opportunity**; otherwise leave it on **None —
-   hospital-level**.
+   customer-level**.
 3. **Next Action**: **Next Action**, **Next Action Due Date**, and
    optionally **Assign Next Action To** someone else. Required for Visit,
    Call, Email, Meeting and Note.
@@ -199,19 +199,19 @@ next action**. Close it and write what happened. If anything is still to
 be done, add a follow-up when you close it. This keeps every Opportunity
 to one open next action at a time, so nothing gets left behind. The same
 applies when you're logging for a colleague who has an open next action on
-that Opportunity. Activities at a hospital with no Opportunity picked are
+that Opportunity. Activities at a customer with no Opportunity picked are
 not affected.
 
 **Training and events.** Conference/Expo, OEM/Product Training,
 Certification, Sales Training, Seminar/Trade Show and Other Development.
-The hospital is optional and there's no next action. Fill in
+The customer is optional and there's no next action. Fill in
 **Outcome/Learning** with what you got out of it. Other Development also
 needs a **Description**, because the type name alone doesn't say what it
 was.
 
 **Relationship Support.** For when you helped a colleague's Opportunity,
 for example by introducing them to a contact you know, whichever SBU or
-zone it's in. Pick the hospital, then the **Related Opportunity**, and
+zone it's in. Pick the customer, then the **Related Opportunity**, and
 write a **Description** of what you did. There's no next action. It
 doesn't change who owns the Opportunity or who gets credit for the sale.
 
@@ -231,7 +231,7 @@ same Opportunity, they're listed under **Also close**. Tick any you
 finished in the same visit or call.
 
 **When no follow-up is needed.** On a Won or Lost Opportunity, leave the
-follow-up empty. For a next action at a hospital with no Opportunity, you
+follow-up empty. For a next action at a customer with no Opportunity, you
 can tick **This visit produced a new Opportunity**: **Complete** opens the
 New Opportunity form, and the next action closes once that's saved.
 
@@ -241,13 +241,13 @@ by your manager — or **Not set yet**. Your plan is how you mean to reach it.
 1. **Target & Coverage Planning** → **Quarterly** → **My Plan**.
 2. **Plan** next to your SBU (or **Continue** for a draft, **Revise** for a
    submitted one).
-3. Add hospitals from your area (**Hospitals**), with Visits, Amount (₹
+3. Add customers from your area (**Customers**), with Visits, Amount (₹
    Lakhs) and an optional Objective for each.
 4. **Split by Brand**: how the amount divides across brands.
 5. **Save draft** (only you can see it) or **Submit for approval**.
 - Revising an approved or rejected plan asks **Why did the plan change?**
   and sends it back to your manager.
-- If a colleague in your SBU has also planned one of your hospitals for the
+- If a colleague in your SBU has also planned one of your customers for the
   quarter, you are told who. You may both keep it.
 
 ### See how you are doing
@@ -354,8 +354,8 @@ access.
 zone**, **Deactivate**. **Refresh Territory Visibility** updates who can
 see what after zone changes.
 
-### Rate hospitals
-**Rate Hospitals** → set each hospital's **Business Potential** (High,
+### Rate customers
+**Rate Customers** → set each customer's **Business Potential** (High,
 Medium, Low, or Not rated) and **Why this rating?**. The notes are visible
 only to Admin and GM.
 
@@ -376,7 +376,7 @@ Only Admin and GM can change the catalogue; everyone can view it.
 Your only screen is **Marketing Leads**.
 1. **+ New Marketing Lead**.
 2. **SBU**, **Lead Source**, **Assign To** (a rep). Optional: Account (if
-   the hospital isn't listed, leave it blank and describe it in the note),
+   the customer isn't listed, leave it blank and describe it in the note),
    **Event Name**, **Product (if known)**, **Note**.
 3. **Create**. The rep sees it in their Marketing Lead Queue.
 - Each lead has a **Comments** thread for back-and-forth with the rep.
@@ -390,45 +390,45 @@ Part A has the step-by-step instructions.
 
 ## Account Management
 
-Your list of hospitals and projects. Two tabs:
-- **Customers**: every hospital you can see. Search by name, or pick a
-  zone from **All Zones**. Click a hospital to open its page. **+ Add**
-  adds a new hospital.
-- **Projects**: tenders and building projects at hospitals. Search by
-  project or hospital. **+ Add** creates one (Name, Account, Status, Owner,
+Your list of customers and projects. Two tabs:
+- **Customers**: every customer you can see. Search by name, or pick a
+  zone from **All Zones**. Click a customer to open its page. **+ Add**
+  adds a new customer.
+- **Projects**: tenders and building projects at customers. Search by
+  project or customer. **+ Add** creates one (Name, Account, Status, Owner,
   optional Bid Submission Date). Open a project to see its Opportunities
   and add one.
 
-## A hospital's page (Customer 360)
+## A customer's page (Customer 360)
 
-Everything about one hospital. At the top: name, zone, payment behaviour,
+Everything about one customer. At the top: name, zone, payment behaviour,
 Business Potential, and counts of stakeholders, projects and
 Opportunities.
 
 **Tabs:**
-- **Overview**: the hospital's details, its parent group and branches.
+- **Overview**: the customer's details, its parent group and branches.
   **Edit** changes name, zone, parent, payment behaviour and customer
-  type. If the new name looks like a hospital already in the directory,
+  type. If the new name looks like a customer already in the directory,
   click **Use this one instead**, or **Change Anyway** if it really is a
-  different hospital. (Business Potential is set by Admin or GM on Rate
-  Hospitals.)
-- **Activity**: everything logged at this hospital. **+ Log** adds an
+  different customer. (Business Potential is set by Admin or GM on Rate
+  Customers.)
+- **Activity**: everything logged at this customer. **+ Log** adds an
   entry, **↻ Refresh** reloads the list; you can comment on any entry.
-- **Stakeholders**: the hospital's contacts, with designation, phone,
+- **Stakeholders**: the customer's contacts, with designation, phone,
   email, NPS score (-100 to 100) and sentiment (Promoter, Neutral,
   Detractor). **+ Add** adds a contact (tick **Different WhatsApp
   number?** only if it isn't their phone number); **N Opportunities**
   shows which Opportunities the contact is linked to.
-- **Projects**: the hospital's projects. **+ Add** creates one.
+- **Projects**: the customer's projects. **+ Add** creates one.
 - **Opportunities**: Active Opportunities by default; **Show All** also
   shows On Hold, Won and Lost. A red **Reactivation Overdue** tag means an
   On Hold Opportunity has passed its date to restart. **+ Add** creates
-  one for this hospital.
-- **Installed Base**: equipment already at the hospital, ours or a
+  one for this customer.
+- **Installed Base**: equipment already at the customer, ours or a
   competitor's (tick **Competitor Equipment** and type its name). Useful
   for upgrade and service leads.
 
-## Pipeline
+## Opportunity Pipeline
 
 All Opportunities you can see, one column per stage. Won, Lost and On
 Hold Opportunities show here too, not only Active ones. The stage names
@@ -437,9 +437,9 @@ along the top jump to that column (useful on a phone).
   the top right.
 - High Priority Opportunities come first, then the ones with the highest
   chance of winning.
-- Search by Opportunity or hospital; filter by owner (former staff are
+- Search by Opportunity or customer; filter by owner (former staff are
   under **Inactive Owners**) and zone.
-- Each card shows the hospital, status, value, owner, and the **High
+- Each card shows the customer, status, value, owner, and the **High
   Priority** and **Reactivation Overdue** badges.
 - When you arrive from a report, a **Showing: …** line says what is
   filtered. **Clear filter** shows everything; the back arrow returns to
@@ -447,7 +447,7 @@ along the top jump to that column (useful on a phone).
 
 ## Opportunity page
 
-Everything about one Opportunity. Open it from Pipeline, a hospital's
+Everything about one Opportunity. Open it from Opportunity Pipeline, a customer's
 Opportunities tab or a report.
 
 **At the top:** Stage and Status, **Win Prob** (the chance of winning),
@@ -466,8 +466,8 @@ Overdue** badges when they apply. A yellow notice means the chance is
   automatically. Buyback (trade-in) lines reduce the total.
 - **Splits**: colleagues who share the credit; the percentages must add up
   to 100 %. Once Won, only the GM can change it.
-- **Stakeholders**: the hospital contacts involved in this Opportunity.
-  Add new contacts on the hospital's page first.
+- **Stakeholders**: the customer contacts involved in this Opportunity.
+  Add new contacts on the customer's page first.
 - **Documents**: PO copies, quotes and photos (PNG, JPEG or PDF, up to
   4 MB). Deleting a file does not ask for confirmation.
 
@@ -483,7 +483,7 @@ Marketing Leads**.
 Your to-do list. **Pending** shows open tasks, **Completed** the finished
 ones; **Due from** / **Due to** narrow the dates.
 - Each task shows **Overdue** (due on an earlier day), or **Due** with
-  its date, plus the hospital, Opportunity, owner and who logged it.
+  its date, plus the customer, Opportunity, owner and who logged it.
 - **Mark to complete** asks what was done (see Part A).
 
 ## Insights Dashboard
@@ -505,7 +505,7 @@ How you, or your team, are doing.
 
 ## Target & Coverage Planning
 
-Quarterly plans: which hospitals each person will cover and how much they
+Quarterly plans: which customers each person will cover and how much they
 expect to bring in.
 - **Quarterly** shows one quarter; **Annual** adds up the four quarters
   of the year.
@@ -533,7 +533,7 @@ In every report, click a figure to see the Opportunities behind it. In
 zone views, a zone's figures include the zones under it.
 - **Daily Activity Report**: what was logged on a chosen day, for **All
   Team Members** or one person.
-- **Stagnant Deals**: open Opportunities with no activity logged for
+- **Stagnant Opportunities**: open Opportunities with no activity logged for
   **90+ days** or **180+ days**.
 - **Opportunities On Hold**: everything On Hold, with reason, reactivation
   date and days on hold.
@@ -542,8 +542,8 @@ zone views, a zone's figures include the zones under it.
   Won and Lost Opportunities.
 - **Pipeline Report**: the same figures as Insights → Pipeline (Active
   Opportunities only).
-- **Sales Report**: **Revenue Won**, **Deals Won**, **Win Rate** and **Avg
-  Deal Size** for **This Month**, **This Quarter** or **All Time**, by
+- **Sales Report**: **Revenue Won**, **Opportunities Won**, **Win Rate** and **Avg
+  Opportunity Size** for **This Month**, **This Quarter** or **All Time**, by
   rep, zone, SBU, product or brand.
 
 ## Administration (Admin and GM)
@@ -553,7 +553,7 @@ zone views, a zone's figures include the zones under it.
 - **Territory Map**: zones and their parents; add, edit or deactivate a
   zone. **Refresh Territory Visibility** after changes.
 - **Audit Log**: who added, changed or removed what, and when.
-- **Rate Hospitals**: set each hospital's Business Potential (High,
+- **Rate Customers**: set each customer's Business Potential (High,
   Medium, Low) with a reason.
 - **Brand Target Tracking**: by calendar year — the SBU's seasonal
   pattern, and each brand's own yearly figure, stretch and stretched

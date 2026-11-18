@@ -63,12 +63,12 @@ export default function RateHospitalsScreen({ active }: { active: boolean }) {
       <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", alignItems: "center", flexShrink: 0, px: { xs: 1.5, sm: 3 }, pt: 3, pb: 2 }}>
         <TextField
           size="small"
-          placeholder="Search hospitals"
+          placeholder="Search customers"
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(0); }}
           sx={{ flex: { xs: "1 1 100%", sm: 1 }, minWidth: "12rem" }}
           slotProps={{
-            htmlInput: { "aria-label": "Search hospitals" },
+            htmlInput: { "aria-label": "Search customers" },
             input: {
               startAdornment: (
                 <InputAdornment position="start">
@@ -109,7 +109,7 @@ export default function RateHospitalsScreen({ active }: { active: boolean }) {
       <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0, px: { xs: 1.5, sm: 3 }, pb: 3, display: "flex", flexDirection: "column", gap: 2 }}>
         {isError && (
           <Alert severity="error" action={<Button size="small" onClick={() => refetch()}>Retry</Button>}>
-            Failed to load hospitals
+            Failed to load customers
           </Alert>
         )}
 
@@ -118,7 +118,7 @@ export default function RateHospitalsScreen({ active }: { active: boolean }) {
           <TableOrCards
             stickyHeader
             columns={[
-              { label: "Hospital" },
+              { label: "Customer" },
               { label: "Zone" },
               { label: "Business Potential", width: "10rem" },
               { label: "Notes (Admin/GM only)" },
@@ -131,7 +131,7 @@ export default function RateHospitalsScreen({ active }: { active: boolean }) {
             {!isLoading && accounts.length === 0 && (
               <TocMessage>
                 <Typography color="text.secondary">
-                  {potentialFilter === "NOT_CLASSIFIED" ? "Every hospital matching these filters is rated." : "No hospitals match these filters."}
+                  {potentialFilter === "NOT_CLASSIFIED" ? "Every customer matching these filters is rated." : "No customers match these filters."}
                 </Typography>
               </TocMessage>
             )}

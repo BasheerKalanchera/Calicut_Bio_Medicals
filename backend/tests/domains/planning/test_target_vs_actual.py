@@ -167,7 +167,7 @@ def test_legacy_plan_without_hospitals_counts_in_full(monkeypatch):
     assert rudra.planned_lakhs == resp.planned_lakhs == Decimal("10")
     assert resp.brands[0].planned_lakhs == Decimal("10")  # tile, person and brand table agree
     lines = [(h.account_name, h.planned_lakhs) for h in rudra.hospitals]
-    assert lines == [("Not assigned to a hospital", Decimal("10"))]
+    assert lines == [("Not assigned to a customer", Decimal("10"))]
     assert [(z.zone_name, z.planned_lakhs) for z in resp.zones] == [(None, Decimal("10"))]
 
 

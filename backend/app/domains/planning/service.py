@@ -185,12 +185,12 @@ class TargetPlanService:
         visits only."""
         account_ids = [e.account_id for e in entries]
         if len(account_ids) != len(set(account_ids)):
-            raise ValidationError("Each hospital can only appear once in the plan.")
+            raise ValidationError("Each customer can only appear once in the plan.")
 
         accounts_by_id = {a.id: a for a in self.repository.get_accounts_by_ids(account_ids)}
         missing = set(account_ids) - set(accounts_by_id)
         if missing:
-            raise ValidationError(f"{len(missing)} hospital(s) in the plan don't exist.")
+            raise ValidationError(f"{len(missing)} customer(s) in the plan don't exist.")
 
         zone_ids = _territory_zone_ids(current_user)
         if zone_ids is not None:
@@ -199,11 +199,11 @@ class TargetPlanService:
             )
             if outside:
                 names = ", ".join(sorted(accounts_by_id[i].name for i in outside))
-                raise ValidationError(f"These hospitals are outside your territory: {names}.")
+                raise ValidationError(f"These customers are outside your territory: {names}.")
 
         total = sum((e.planned_amount_lakhs for e in entries), start=Decimal("0"))
         if submit and total <= 0:
-            raise ValidationError("The plan's total must be above zero -- enter an amount for at least one hospital.")
+            raise ValidationError("The plan's total must be above zero -- enter an amount for at least one customer.")
         return total, accounts_by_id
 
     def _overlap_warnings(
@@ -1339,7 +1339,7 @@ class TargetVsActualService:
             hospitals.append(
                 TargetVsActualHospital(
                     account_id=None,
-                    account_name="Last approved plan" if p.approved_fallback else "Not assigned to a hospital",
+                    account_name="Last approved plan" if p.approved_fallback else "Not assigned to a customer",
                     planned_lakhs=p.unassigned,
                     won_lakhs=_ZERO,
                 )

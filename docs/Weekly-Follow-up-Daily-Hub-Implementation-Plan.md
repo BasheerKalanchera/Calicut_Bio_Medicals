@@ -36,7 +36,7 @@ in `— proposed`; once Basheer answers, change the ending to
 - D1. One screen design for everyone, opening on the viewer's own work. A rep sees only their own, with no picker. A manager also opens on their own work and gets a "Showing: Me ▾" switch with "My team" (everyone under them together) and each rep by name; picking a rep shows that rep's My Work exactly as the rep sees it. "Team" follows the existing reports: Area Manager — reps in their zones; SBU Manager — their SBU; Admin and General Manager — everyone — Basheer, 2026-10-14. Changed 2026-10-28 (Basheer): no "My team" combined view — the desk is for the person's own work first, and a combined view is clutter. The switch offers "Me" and each rep by name, one at a time, view-only (D15); a manager uses it to review one person's My Work. This also settles whether "My team" would include the manager's own items (no team total exists)
 - D2. Formal screen name "Weekly Follow-up", matching signed requirement 11.1, so the scorecard row maps to it directly. Menu label "My Work" (chosen from the shortlist My Work / My Dashboard / My Hub / My Follow-up); "Insights Dashboard" keeps its name — Basheer, 2026-10-11
 - D3. Four sections: (1) "High priority or 70 %+": Opportunities that are high priority (BR-OP-15) or at 70 % chance or more, with a "70 %+ only" tick box that covers PRD §5.8's separate "probability ≥70%" list; (2) closing date passed (BR-OP-16); (3) "Not visited in N+ days" (BR-OP-20, D6); (4) overdue next actions. The PRD's two lists are merged because they almost fully overlap: every stage past Demo is high priority, and the starting chance is 70 % from Negotiation on (Seed-Data.sql); only early-stage Opportunities raised to 70 %+ by hand, and Clinical Evaluation at 55 %, fall outside the overlap. An Opportunity appears in every section it qualifies for; each card shows its own count and ₹ total (next-action cards count only, D21), never a grand total across cards (it would count the same rupees twice). Each row shows Opportunity, hospital, owner, stage, chance, value, and days overdue or idle — Basheer, 2026-10-14
-- D3a. Plain names on screen: never "Stagnant" or "Stalled" in what reps see; each list says what it is ("High priority or 70 %+", "Closing date passed", "Not visited in 30+ days" with the number following what the user types, "Overdue next actions"). The existing Stagnant Deals report keeps its name for now; renaming it is a separate later decision — Basheer, 2026-10-14
+- D3a. Plain names on screen: never "Stagnant" or "Stalled" in what reps see; each list says what it is ("High priority or 70 %+", "Closing date passed", "Not visited in 30+ days" with the number following what the user types, "Overdue next actions"). The existing Stagnant Deals report keeps its name for now; renaming it is a separate later decision — Basheer, 2026-10-14 (renamed "Stagnant Opportunities" on 2026-10-29)
 - D4. Desk additions beyond the contract: "Next actions due this week" (not only overdue), and "My hospitals this quarter" (each hospital in the rep's approved quarterly plan) with last visit and next action due for each, built as the last step (step 5) — Basheer, 2026-10-14; timing reworded in D14 — Basheer, 2026-10-21
 - D5. "Automated generation" in 11.1 is met by the screen always being up to date when opened; no weekly email or WhatsApp in Phase 1 — Basheer, 2026-10-21
 - D6. "Not visited" counts days since the last visit, call, meeting or email on the Opportunity (D6d), or since it was created if none, and lists Active Opportunities only — not On Hold (Basheer, 2026-10-14). The user types any number of days (e.g. 30 or 60 — Basheer, 2026-10-11); the screen opens at a default of 30 days and returns to it each time it is opened. — Basheer, 2026-10-11, 2026-10-14
@@ -168,7 +168,7 @@ First pass from a code search, 2026-10-11; completed 2026-10-21 (below).
   - (c) Lists refreshed after a save: Next Actions, the Opportunity's Next
     Actions tab, activity lists on the hospital and Opportunity pages, the
     Daily Activity Report, the Insights overdue-actions and activity-level
-    tiles, the Stagnant Deals report (a new activity resets an
+    tiles, the Stagnant Opportunities report (a new activity resets an
     Opportunity's idle count).
 - **Steps 2 and 4:** a new read-only request and a new screen; no existing
   screen reads them. None beyond the menu.
@@ -189,8 +189,8 @@ Completed from the code, 2026-10-21:
   can see a next action close it, and the close request does not check
   who it belongs to, so a manager *could* close a rep's from My Work
   (D15).
-- **Stagnant Deals change (D6c):** the server query feeds only the
-  Stagnant Deals screen; no Insights tile uses it. The old prototype
+- **Stagnant Opportunities change (D6c):** the server query feeds only the
+  Stagnant Opportunities screen; no Insights tile uses it. The old prototype
   screen (`/prototype`, mock data) has its own "stagnant" count and is
   unaffected.
 - **Team:** the reports' existing team scoping already matches D1; My

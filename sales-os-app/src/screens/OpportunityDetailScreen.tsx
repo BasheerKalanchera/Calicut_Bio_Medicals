@@ -1944,7 +1944,7 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
           />
         ) : (
           <Typography sx={{ typography: "caption", fontWeight: 600, color: "orange.700" }}>
-            Automatically High Priority — this deal is past Demo stage
+            Automatically High Priority — this Opportunity is past Demo stage
           </Typography>
         )}
         <FormControlLabel

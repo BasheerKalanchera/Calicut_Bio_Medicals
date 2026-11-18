@@ -49,9 +49,9 @@ _GATE_OVERRIDE_ESCALATION_ROLE = "General Manager"
 # BR-FIN-08: who may change a split. Mirrors opportunity_tier_visibility minus
 # its two "visitor" arms (split participant, Next Action assignee) -- they can
 # see a deal's split but not change it.
-_SPLIT_EDIT_DENIED_MSG = "Only the deal's owner, their managers, or GM/Admin can change this split."
-_SPLIT_EDIT_WON_MSG = "This deal is Won — only the General Manager can change its split."
-_SPLIT_EDIT_LOST_MSG = "This deal is Lost — its split can no longer be changed."
+_SPLIT_EDIT_DENIED_MSG = "Only the Opportunity's owner, their managers, or GM/Admin can change this split."
+_SPLIT_EDIT_WON_MSG = "This Opportunity is Won — only the General Manager can change its split."
+_SPLIT_EDIT_LOST_MSG = "This Opportunity is Lost — its split can no longer be changed."
 
 
 class OpportunityService:

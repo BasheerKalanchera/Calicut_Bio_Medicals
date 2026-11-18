@@ -19,8 +19,8 @@ build reasoning is in `docs/Report-Drilldown-Implementation-Plan.md`.
   real product. *(Both now clickable — Brand 2026-09-22, Trade-Ins
   2026-09-26 via `docs/Brand-Breakdown-In-Pipeline-And-Sales-Reports-Implementation-Plan.md`.)*
 
-**Not in scope for this pass:** Stagnant Deals, Opportunities On Hold,
-and Daily Activity Report — these were already flat deal lists with
+**Not in scope for this pass:** Stagnant Opportunities, Opportunities On Hold,
+and Daily Activity Report — these were already flat Opportunity lists with
 click-through to the individual opportunity before this feature, and
 weren't touched by it.
 
@@ -187,7 +187,7 @@ set.
 23. Confirm the plain Pipeline board (opened directly from the sidebar,
     not via a drill-down) still works normally — Owner/Zone filters,
     search, Kanban/List toggle, no stray banner.
-24. Confirm Stagnant Deals, Opportunities On Hold, and Daily Activity
+24. Confirm Stagnant Opportunities, Opportunities On Hold, and Daily Activity
     Report are unchanged — still click straight through to the
     opportunity, no new banner or filter behavior appears there.
 25. Confirm the Insights Dashboard's own "Pipeline by X" tile (unrelated
@@ -273,7 +273,7 @@ Haroon (GM):**
 
 - Section F regression (23–25): plain Pipeline board (Kanban toggle,
   Owner/Zone dropdowns, search all work, no stray banner) — PASS.
-  Stagnant Deals and Daily Activity Report load cleanly (no rows in
+  Stagnant Opportunities and Daily Activity Report load cleanly (no rows in
   current data, not a regression). Opportunities On Hold → clicked
   "New ICU Monitor deal," click-through straight to the opportunity, no
   new banner — PASS. Insights Dashboard's "Pipeline by Rep" tile

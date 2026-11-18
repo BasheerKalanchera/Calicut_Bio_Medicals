@@ -379,4 +379,4 @@ class TestSplitEditAuthority:
         opp = _mock_opportunity(owner_id=TEST_USER_ID, sbu_id=uuid.uuid4(), account_id=uuid.uuid4())
         response = self._call("PUT", self._user("Sales Staff"), opp, status_code="LOST")
         assert response.status_code == 403
-        assert response.json()["message"] == "This deal is Lost — its split can no longer be changed."
+        assert response.json()["message"] == "This Opportunity is Lost — its split can no longer be changed."
