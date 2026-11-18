@@ -60,6 +60,11 @@ def _mock_product(**overrides) -> MagicMock:
         "created_at": now,
         "updated_at": now,
         "sbu": _mock_sbu(),
+        "full_price_lakhs": None,
+        "rep_floor_lakhs": None,
+        "area_manager_floor_lakhs": None,
+        "ceo_floor_lakhs": None,
+        "cost_lakhs": None,
     }
     defaults.update(overrides)
     obj = MagicMock(spec=Product)

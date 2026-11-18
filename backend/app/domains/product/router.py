@@ -42,7 +42,7 @@ def list_products(
 
     return APIResponse(
         data=PaginatedResponse(
-            items=[ProductListResponse.model_validate(p) for p in products],
+            items=[ProductListResponse.for_role(p, current_user.role.role_name) for p in products],
             total=total,
             page=page,
             page_size=page_size,
@@ -68,7 +68,7 @@ def create_product(
     service: ProductService = Depends(_get_service),
 ) -> APIResponse[ProductResponse]:
     product = service.create_product(body, created_by=current_user.id, role_name=current_user.role.role_name)
-    return APIResponse(data=ProductResponse.model_validate(product))
+    return APIResponse(data=ProductResponse.for_role(product, current_user.role.role_name))
 
 
 @router.get("/{product_id}")
@@ -78,7 +78,7 @@ def get_product(
     service: ProductService = Depends(_get_service),
 ) -> APIResponse[ProductResponse]:
     product = service.get_product(product_id)
-    return APIResponse(data=ProductResponse.model_validate(product))
+    return APIResponse(data=ProductResponse.for_role(product, current_user.role.role_name))
 
 
 @router.put("/{product_id}")
@@ -91,4 +91,4 @@ def update_product(
     product = service.update_product(
         product_id, body, updated_by=current_user.id, role_name=current_user.role.role_name
     )
-    return APIResponse(data=ProductResponse.model_validate(product))
+    return APIResponse(data=ProductResponse.for_role(product, current_user.role.role_name))

@@ -68,6 +68,11 @@ class ProductService:
             model_id=data.model_id,
             description=data.description,
             product_type=data.product_type,
+            full_price_lakhs=data.full_price_lakhs,
+            rep_floor_lakhs=data.rep_floor_lakhs,
+            area_manager_floor_lakhs=data.area_manager_floor_lakhs,
+            ceo_floor_lakhs=data.ceo_floor_lakhs,
+            cost_lakhs=data.cost_lakhs,
             created_by=created_by,
             updated_by=created_by,
         )
