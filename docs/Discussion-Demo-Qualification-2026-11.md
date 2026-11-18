@@ -1,8 +1,8 @@
 # Discussion: Demo qualification checklist — 2026-11-10
 
 **Status:** Discussion. Basheer's decisions recorded (section 3). Waiting
-on Haroon (checklist items, Q-H1; what counts as a Win, Q-H2; two repeat-order
-questions, Q-H3 and Q-H4) and the Cabio
+on Haroon (checklist items, Q-H1; two repeat-order questions, Q-H3 and
+Q-H4; Q-H2 dropped, see D11) and the Cabio
 leadership team (which machines need manager approval, Q-L1). Nothing built.
 **Participants:** Basheer (decisions), Haroon / Cabio leadership (business
 sign-off), Claude (options and analysis).
@@ -64,6 +64,9 @@ Actuals. After the demo, the rep must record how it went.
   go-live count.
 - D9. The draft checklist (section 5) goes to Haroon to confirm (Q-H1).
 - D10. Each part is labelled signed or beyond contract (section 2).
+- D11. The Performance tab shows both Won (paid) and PO received, as
+  Target vs Actuals already does, so there is nothing to ask Haroon about
+  what counts as a Win. Q-H2 dropped (Basheer, 14 Nov).
 
 Proposed, not decided:
 - P1. No "Repeat orders" filter on the Opportunities list for now; a
@@ -75,9 +78,7 @@ Proposed, not decided:
 - **Q-H1 (Haroon): the checklist items.** Are the items in section 5 right,
   and which must be filled in before the demo? Recommendation: the five
   marked required.
-- **Q-H2 (Haroon): what counts as a Win** on Target vs Actuals — PO
-  received, or fully paid? Recommendation: PO received, as that is when
-  the rep's work ends; payment is tracked as Payment Pending.
+- ~~Q-H2 (Haroon): what counts as a Win~~ — dropped 14 Nov (D11).
 - **Q-H3 (Haroon): the repeat order with a demo date.** Your Edan M3A
   pulse oximeter at Dr. Moopen's Medical College (created 1 Sep, Won) is
   marked Repeat Order but has a demo date of 3 Sep. Was a demo held, and
