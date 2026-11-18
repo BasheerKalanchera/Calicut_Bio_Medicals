@@ -61,7 +61,7 @@ export default function OpportunityItemsList({
         <Box key={i} sx={{ bgcolor: item.line_type === "BUYBACK" ? "red.50" : "background.paper", p: 1.5, borderRadius: "1rem", border: "1px solid", borderColor: "gray.100", display: "flex", flexDirection: "column", gap: 1 }}>
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, overflow: "hidden" }}>
-              <Typography sx={{ fontWeight: 700, typography: "caption", color: "gray.800", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <Typography sx={{ typography: "caption", fontWeight: 700, color: "gray.800", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {item.description || item.product_name}
               </Typography>
               {item.product_type === "REFURBISHED" && <Chip label="Refurbished" size="small" color="warning" />}
