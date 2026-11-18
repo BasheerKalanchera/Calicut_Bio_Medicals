@@ -27,7 +27,7 @@
 
 import { execFileSync } from "node:child_process";
 import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
-import { join, relative } from "node:path";
+import { join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const APP_DIR = join(fileURLToPath(new URL(".", import.meta.url)), "..");
@@ -52,9 +52,17 @@ const RULES = [
   { name: "old phone-table styling", pattern: /\bSTACK_ON_PHONE\b|\bdata-label\b|\bphone-hidden\b|\bphone-chevron\b/ },
 ];
 
+// Inside a commit in a linked worktree (/build session) git sets GIT_DIR but not
+// GIT_WORK_TREE, so from this folder it takes sales-os-app/ as the top of the
+// project: every file looks new and the staged copy can't be found. Telling it
+// the real top (the folder above) fixes both. Unchanged when GIT_DIR is unset.
+const GIT_ENV = process.env.GIT_DIR
+  ? { ...process.env, GIT_WORK_TREE: resolve(APP_DIR, "..") }
+  : process.env;
+
 function gitLines(args) {
   try {
-    return execFileSync("git", args, { cwd: APP_DIR, encoding: "utf8" })
+    return execFileSync("git", args, { cwd: APP_DIR, env: GIT_ENV, encoding: "utf8" })
       .split("\n").map((f) => f.trim()).filter((f) => f.startsWith("src/"));
   } catch {
     return [];
@@ -89,7 +97,7 @@ function allFiles(dir = SRC_DIR, files = []) {
 // staged one and the developer's screen runs the working one.
 function readStaged(relPath) {
   try {
-    return execFileSync("git", ["show", `:./${relPath}`], { cwd: APP_DIR, encoding: "utf8" });
+    return execFileSync("git", ["show", `:./${relPath}`], { cwd: APP_DIR, env: GIT_ENV, encoding: "utf8" });
   } catch {
     return existsSync(join(APP_DIR, relPath)) ? readFileSync(join(APP_DIR, relPath), "utf8") : "";
   }
