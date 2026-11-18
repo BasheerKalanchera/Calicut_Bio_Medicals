@@ -32,7 +32,8 @@ about any line older than 14 days (Basheer, 2026-10-16).
 - **Fahad** (sent 2026-11-14) — Ambalpadi: are the EMIs paid to Cabio or
   to a lender? Progress-Archive 12 Nov.
 - **Haroon** (sent to the Cabio leadership team 2026-11-16) — send his
-  pricing sheet; leadership team's reply to the plan summary (Latheef
+  pricing sheet (needed for the pricing plan's step 4 only; steps 1–3 start
+  without it, D14, 18 Nov); leadership team's reply to the plan summary (Latheef
   Bhai's view on the leak concern).
   `docs/Product-Pricing-And-Cost-Implementation-Plan.md` D7, D12.
 - **Cabio leadership team** (raised 2026-11-13) — review of

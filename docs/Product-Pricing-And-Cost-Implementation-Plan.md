@@ -1,8 +1,8 @@
 # Product Pricing Sheet and Product Cost — Implementation Plan
 
 **Status:** Approved 2026-11-16 (Basheer). Haroon asked for it on priority
-(phone call to Basheer, 16 Nov). Build waits on Haroon's pricing sheet; the
-plan is updated once it arrives (its columns may change step 1).
+(phone call to Basheer, 16 Nov). Steps 1–3 are built without waiting for
+Haroon's pricing sheet (D14, 18 Nov); only step 4 (loading it) waits.
 **Traceability rows:** 4.3 Revenue per product/brand analytics (Margin
 part), 11.1 Core reports (Margin Report); beyond-contract row 1 (pricing
 ladder, parked for Phase 2 on 16 Oct — this plan takes only a first slice
@@ -46,6 +46,12 @@ of it).
   Basheer, 2026-11-16
 - D12. Latheef Bhai sees the plan before it is approved (his leak concern,
   pricing paper section 2) — Basheer, 2026-11-16
+- D14. Steps 1–3 start now, in the Build session, without waiting for the
+  sheet: the four levels were confirmed twice by Latheef Bhai (pricing
+  paper sections 1 and 5), and UAT's catalog has one entry per model with
+  no probes, so one price set per product fits; probes priced separately
+  would only add accessory products. Only step 4 waits on the sheet —
+  Basheer, 2026-11-18
 
 ## Figures and sources
 
@@ -68,6 +74,9 @@ of it).
 - Number of products to price — not counted (needs a Dev query; will ask
   first)
 - Haroon's sheet columns — not known; sheet not yet received
+- UAT catalog: 73 products (71 active), one entry per model, machine
+  versions as separate entries, no probes or transducers, no Imaging
+  accessories — UAT read-only query, 18 Nov 2026 (Progress-Archive-2026-11)
 
 ## 1. In plain terms
 
@@ -146,8 +155,8 @@ Basheer's yes.
 4. **Load Haroon's sheet** (D7): a one-off script, run on Dev first, shown
    to Basheer; UAT only after his yes (UAT rule). Waits on the sheet.
 
-Before step 1: Haroon's sheet is in hand (its columns may change step 1's
-fields). D12 is met: the summary went to the Cabio leadership team's
+Before step 1: nothing further — steps 1–3 no longer wait for the sheet
+(D14, 18 Nov). Before step 4: Haroon's sheet is in hand. D12 is met: the summary went to the Cabio leadership team's
 WhatsApp group, Latheef Bhai included, on 16 Nov (Basheer).
 
 ## 3. What could be affected

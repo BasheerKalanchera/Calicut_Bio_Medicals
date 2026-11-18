@@ -34,7 +34,8 @@ opportunities-on-hold` + `OpportunitiesOnHoldReportScreen.tsx`, no schema gaps. 
 `ProductPerformanceReportScreen.tsx`, **except Gross Margin**, which stays blocked
 on the pending Pricing/Discount-Authority feature (update 2026-11-17: product
 cost is now planned in `docs/Product-Pricing-And-Cost-Implementation-Plan.md`,
-Approved 2026-11-16; its build waits on Haroon's pricing sheet). New **REPORTS** nav section;
+Approved 2026-11-16; steps 1–3 start without waiting for Haroon's pricing
+sheet, only its load waits — D14, 2026-11-18). New **REPORTS** nav section;
 shared tile/card helpers extracted to `components/ReportingUI.tsx`. 11 new backend
 tests (38 in the domain), full suite 778/778, `tsc`/lint/`ruff` clean, manually
 verified live on Dev. **High-Priority Deals stays excluded** — still pending Cabio
