@@ -1,6 +1,7 @@
 import { Box, Chip, IconButton, TextField, Typography } from "@mui/material";
 import type { DraftOpportunityItem } from "../types/opportunityItems";
 import { itemsTotal } from "../utils/opportunityItems";
+import ProductPriceNote from "./ProductPriceNote";
 
 type EditableField = "quantity" | "unit_price_lakhs" | "discount_lakhs";
 
@@ -26,7 +27,7 @@ export default function OpportunityItemsList({
 }) {
   if (items.length === 0) {
     return (
-      <Typography sx={{ fontSize: "0.75rem", color: "#9ca3af", fontStyle: "italic", textAlign: variant === "editable" ? "center" : "left", py: variant === "editable" ? 2 : 0 }}>
+      <Typography sx={{ typography: "caption", color: "gray.400", fontStyle: "italic", textAlign: variant === "editable" ? "center" : "left", py: variant === "editable" ? 2 : 0 }}>
         {emptyMessage}
       </Typography>
     );
@@ -38,16 +39,16 @@ export default function OpportunityItemsList({
     return (
       <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
         {items.map((item, i) => (
-          <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1, px: 1.5, py: 0.75, bgcolor: "#f9fafb", borderRadius: "0.75rem", fontSize: "0.75rem" }}>
+          <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1, px: 1.5, py: 0.75, bgcolor: "gray.50", borderRadius: "0.75rem", typography: "caption" }}>
             <Typography sx={{ flex: 1, fontWeight: 700, fontSize: "inherit", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {item.description || item.product_name}
             </Typography>
-            <Typography sx={{ color: "#9ca3af", fontSize: "inherit", flexShrink: 0 }}>
+            <Typography sx={{ color: "gray.400", fontSize: "inherit", flexShrink: 0 }}>
               {item.quantity}×₹{item.unit_price_lakhs}L{item.discount_lakhs > 0 ? ` −₹${item.discount_lakhs}L` : ""}
             </Typography>
           </Box>
         ))}
-        <Typography sx={{ textAlign: "right", fontSize: "10px", fontWeight: 900, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", pr: 0.5 }}>
+        <Typography sx={{ textAlign: "right", typography: "tiny", fontWeight: 900, color: "gray.500", textTransform: "uppercase", letterSpacing: "0.05em", pr: 0.5 }}>
           Total: ₹{total.toFixed(2)}L
         </Typography>
       </Box>
@@ -57,10 +58,10 @@ export default function OpportunityItemsList({
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
       {items.map((item, i) => (
-        <Box key={i} sx={{ bgcolor: item.line_type === "BUYBACK" ? "#fef2f2" : "#fff", p: 1.5, borderRadius: "1rem", border: "1px solid #f3f4f6", display: "flex", flexDirection: "column", gap: 1 }}>
+        <Box key={i} sx={{ bgcolor: item.line_type === "BUYBACK" ? "red.50" : "background.paper", p: 1.5, borderRadius: "1rem", border: "1px solid", borderColor: "gray.100", display: "flex", flexDirection: "column", gap: 1 }}>
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, overflow: "hidden" }}>
-              <Typography sx={{ fontWeight: 700, fontSize: "0.75rem", color: "#1f2937", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <Typography sx={{ fontWeight: 700, typography: "caption", color: "gray.800", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {item.description || item.product_name}
               </Typography>
               {item.product_type === "REFURBISHED" && <Chip label="Refurbished" size="small" color="warning" />}
@@ -70,9 +71,9 @@ export default function OpportunityItemsList({
               <IconButton
                 size="small"
                 onClick={() => onRemove(i)}
-                sx={{ color: "#f87171", "&:hover": { color: "#dc2626" }, ml: 1 }}
+                sx={{ color: "red.400", "&:hover": { color: "red.600" }, ml: 1 }}
               >
-                <Box component="span" sx={{ fontWeight: 900, fontSize: "1.125rem", lineHeight: 1 }}>×</Box>
+                <Box component="span" sx={{ fontWeight: 900, typography: "lead", lineHeight: 1 }}>×</Box>
               </IconButton>
             )}
           </Box>
@@ -90,9 +91,12 @@ export default function OpportunityItemsList({
               />
             ))}
           </Box>
+          {item.line_type !== "BUYBACK" && item.product_id && (
+            <ProductPriceNote productId={item.product_id} quantity={item.quantity} unitPrice={item.unit_price_lakhs} discount={item.discount_lakhs} />
+          )}
         </Box>
       ))}
-      <Typography sx={{ textAlign: "right", fontSize: "10px", fontWeight: 900, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+      <Typography sx={{ textAlign: "right", typography: "tiny", fontWeight: 900, color: "gray.500", textTransform: "uppercase", letterSpacing: "0.05em" }}>
         Total: ₹{total.toFixed(2)}L
       </Typography>
     </Box>

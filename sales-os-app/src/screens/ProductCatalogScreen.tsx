@@ -26,6 +26,7 @@ import FormModal from "../components/FormModal";
 import ConfirmDialog from "../components/ConfirmDialog";
 import { shadows } from "../theme/shadows";
 import { formatPriceLakhs } from "../utils/formatter";
+import { lowestPriceFor, lowestWording } from "../utils/productPrices";
 import type { ProductListResponse, ProductResponse, ProductPricesShape, DocumentResponse, BrandResponse, CategoryResponse, ModelResponse } from "../types/api-aliases";
 
 const CATALOG_WRITE_ROLES = new Set(["General Manager", "Admin"]);
@@ -106,6 +107,40 @@ function ListPriceLine({ prices }: { prices: ProductPricesShape | null | undefin
     <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5, fontWeight: 700 }}>
       {parts.join(" · ")}
     </Typography>
+  );
+}
+
+// One product's page (plan D4): the prices this person may see. General Manager
+// and Admin get every level and the cost under their own names; everyone else
+// gets the full price and their own lowest. The server sends only what the
+// caller may see (BR-CAT-04), so a role that sees none gets no card, and a
+// figure not entered yet is left out.
+function ProductPricesCard({ prices, roleName }: { prices: ProductPricesShape | null | undefined; roleName: string | undefined }) {
+  if (!prices) return null;
+  const rows: { label: string; value: string | number | null | undefined }[] = CATALOG_WRITE_ROLES.has(roleName ?? "")
+    ? PRICE_FIELDS.map((f) => ({ label: f.label, value: prices[f.key] }))
+    : [
+        { label: "Full price", value: prices.full_price_lakhs },
+        { label: lowestWording(roleName).line.replace(/^./, (c) => c.toUpperCase()), value: lowestPriceFor(prices) },
+      ];
+  const shown = rows.filter((r) => r.value != null);
+  if (shown.length === 0) return null;
+  return (
+    <Box sx={{ bgcolor: "background.paper", borderRadius: "1rem", boxShadow: shadows.sm, border: "1px solid", borderColor: "gray.100", p: 2.5, mt: 2 }}>
+      <Typography variant="overline" sx={{ color: "text.secondary", fontWeight: 800, letterSpacing: "0.15em", display: "block", mb: 2 }}>
+        Prices
+      </Typography>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        {shown.map((r) => (
+          <Box key={r.label}>
+            <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 800, textTransform: "uppercase", display: "block", mb: 0.5 }}>
+              {r.label}
+            </Typography>
+            <Typography sx={{ fontWeight: 700 }}>{formatPriceLakhs(r.value as string | number)}</Typography>
+          </Box>
+        ))}
+      </Box>
+    </Box>
   );
 }
 
@@ -286,6 +321,7 @@ function ProductDetail({
   onEdit: (product: ProductResponse) => void;
   canEdit: boolean;
 }) {
+  const { userProfile } = useAuth();
   const { data: product, isLoading, isError, refetch } = useQuery({
     queryKey: ["product", productId],
     queryFn: () => getProduct(productId) as Promise<ProductResponse>,
@@ -365,6 +401,8 @@ function ProductDetail({
             ))}
           </Box>
         </Box>
+
+        <ProductPricesCard prices={product.prices as ProductPricesShape | null | undefined} roleName={userProfile?.role_name} />
 
         <CollateralLinksCard productId={productId} canEdit={canEdit} />
       </Box>
