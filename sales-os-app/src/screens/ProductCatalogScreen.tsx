@@ -25,9 +25,23 @@ import useDebouncedValue from "../hooks/useDebouncedValue";
 import FormModal from "../components/FormModal";
 import ConfirmDialog from "../components/ConfirmDialog";
 import { shadows } from "../theme/shadows";
-import type { ProductListResponse, ProductResponse, DocumentResponse, BrandResponse, CategoryResponse, ModelResponse } from "../types/api-aliases";
+import { formatPriceLakhs } from "../utils/formatter";
+import type { ProductListResponse, ProductResponse, ProductPricesShape, DocumentResponse, BrandResponse, CategoryResponse, ModelResponse } from "../types/api-aliases";
 
 const CATALOG_WRITE_ROLES = new Set(["General Manager", "Admin"]);
+
+// Price and cost boxes on the Add / Edit pop-ups (GM and Admin only, plan D6, D8).
+// The keys are the server's field names; amounts are INR Lakhs.
+const PRICE_FIELDS = [
+  { key: "full_price_lakhs", label: "Full price" },
+  { key: "rep_floor_lakhs", label: "Rep's lowest" },
+  { key: "area_manager_floor_lakhs", label: "Area Manager's lowest" },
+  { key: "ceo_floor_lakhs", label: "Haroon's lowest" },
+  { key: "cost_lakhs", label: "Cost" },
+] as const;
+
+// A price box holds a number of lakhs: 0 or more, up to 2 decimals.
+const PRICE_PATTERN = /^\d{1,13}(\.\d{1,2})?$/;
 
 // Shared by the inline "+ Add new brand/model/category" mutations below,
 // same shape as CollateralLinksCard.handleAddLink's inline catch -- surfaces
@@ -48,6 +62,11 @@ const EMPTY_FORM = {
   model_id: "",
   description: "",
   product_type: "NEW_EQUIPMENT",
+  full_price_lakhs: "",
+  rep_floor_lakhs: "",
+  area_manager_floor_lakhs: "",
+  ceo_floor_lakhs: "",
+  cost_lakhs: "",
 };
 
 // BR-CAT-02 — Product Lifecycle: Trade-Ins, Refurbished Inventory, Accessories.
@@ -72,6 +91,22 @@ function sbuChipSx(sbuName: string) {
   return sbuName === "Imaging"
     ? { bgcolor: "indigo.50", color: "indigo.700", borderColor: "indigo.200" }
     : { bgcolor: "rose.50", color: "rose.700", borderColor: "rose.200" };
+}
+
+// "Full ₹35L · Cost ₹24L" under a product on the catalog list. The server sends
+// prices on the list to General Manager and Admin only, so for everyone else
+// `prices` is absent and nothing is drawn. Only entered figures are shown.
+function ListPriceLine({ prices }: { prices: ProductPricesShape | null | undefined }) {
+  const parts = [
+    prices?.full_price_lakhs != null && `Full ${formatPriceLakhs(prices.full_price_lakhs)}`,
+    prices?.cost_lakhs != null && `Cost ${formatPriceLakhs(prices.cost_lakhs)}`,
+  ].filter(Boolean);
+  if (parts.length === 0) return null;
+  return (
+    <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5, fontWeight: 700 }}>
+      {parts.join(" · ")}
+    </Typography>
+  );
 }
 
 function CollateralLinksCard({ productId, canEdit }: { productId: string; canEdit: boolean }) {
@@ -389,24 +424,42 @@ export default function ProductCatalogScreen() {
 
   const openEdit = (product: ProductResponse) => {
     setEditingProduct(product);
+    const prices = (product.prices ?? {}) as ProductPricesShape;
     setForm({
       sbu_id: product.sbu_id,
       brand_id: product.brand_id,
       model_id: product.model_id,
       description: product.description ?? "",
       product_type: product.product_type,
+      full_price_lakhs: prices.full_price_lakhs ?? "",
+      rep_floor_lakhs: prices.rep_floor_lakhs ?? "",
+      area_manager_floor_lakhs: prices.area_manager_floor_lakhs ?? "",
+      ceo_floor_lakhs: prices.ceo_floor_lakhs ?? "",
+      cost_lakhs: prices.cost_lakhs ?? "",
     });
     setDialogMode("edit");
   };
 
   const closeDialog = () => setDialogMode(null);
 
+  // An empty price box is sent as null: on Add that means "not entered", on
+  // Edit it clears the saved figure (the server treats an explicit null so).
   const buildPayload = () => ({
     sbu_id: form.sbu_id,
     model_id: form.model_id,
     description: form.description.trim() || null,
     product_type: form.product_type,
+    ...Object.fromEntries(PRICE_FIELDS.map(({ key }) => [key, form[key].trim() || null])),
   });
+
+  const checkPrices = () => {
+    for (const { key, label } of PRICE_FIELDS) {
+      const value = form[key].trim();
+      if (value && !PRICE_PATTERN.test(value)) {
+        throw new Error(`${label} must be an amount in lakhs, 0 or more, with up to 2 decimals`);
+      }
+    }
+  };
 
   const handleSaved = () => {
     invalidateProducts();
@@ -418,6 +471,7 @@ export default function ProductCatalogScreen() {
   const handleCreate = async () => {
     if (!form.sbu_id) throw new Error("SBU is required");
     if (!form.model_id) throw new Error("Model is required");
+    checkPrices();
     await createProduct(buildPayload());
     handleSaved();
   };
@@ -426,6 +480,7 @@ export default function ProductCatalogScreen() {
     if (!editingProduct) return;
     if (!form.sbu_id) throw new Error("SBU is required");
     if (!form.model_id) throw new Error("Model is required");
+    checkPrices();
     await updateProduct(editingProduct.id, buildPayload());
     handleSaved();
   };
@@ -596,6 +651,7 @@ export default function ProductCatalogScreen() {
                           <Chip label={product.category.name} size="small" variant="outlined" sx={{ height: 20, typography: "caption2" }} />
                         )}
                       </Box>
+                      <ListPriceLine prices={product.prices as ProductPricesShape | null | undefined} />
                     </Box>
                   </Box>
                   <Box data-part="product-chevron-box" sx={{ bgcolor: "background.default", p: 1, borderRadius: "0.75rem", flexShrink: 0, ml: 1, transition: "background-color 0.15s" }}>
@@ -913,6 +969,33 @@ function ProductFormFields({
         fullWidth
         size="small"
       />
+
+      {canManageCatalog && (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, p: 1.5, bgcolor: "gray.50", borderRadius: "0.75rem" }}>
+          <Box>
+            <Typography variant="overline" sx={{ color: "text.secondary", fontWeight: 800, letterSpacing: "0.15em", display: "block" }}>
+              Prices
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              In ₹ Lakhs, up to 2 decimals. Leave a box empty if not set.
+            </Typography>
+          </Box>
+          {PRICE_FIELDS.map(({ key, label }) => (
+            <TextField
+              key={key}
+              label={label}
+              value={form[key]}
+              onChange={(e) => set(key, e.target.value)}
+              fullWidth
+              size="small"
+              slotProps={{
+                htmlInput: { inputMode: "decimal" },
+                input: { startAdornment: <InputAdornment position="start">₹</InputAdornment>, endAdornment: <InputAdornment position="end">L</InputAdornment> },
+              }}
+            />
+          ))}
+        </Box>
+      )}
     </>
   );
 }

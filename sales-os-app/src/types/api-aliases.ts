@@ -28,6 +28,17 @@ export type UserUpdate = components["schemas"]["UserUpdate"];
 export type UserBlastRadius = components["schemas"]["UserBlastRadius"];
 export type ProductListResponse = components["schemas"]["ProductListResponse"];
 export type ProductResponse = components["schemas"]["ProductResponse"];
+// Hand-written: the generated `ProductPrices` is `unknown`, because the server
+// leaves out any figure the caller may not see (backend/app/domains/product/
+// schemas.py `ProductPrices`) and the generator can't describe that. Keep these
+// five names in step with that class. Amounts arrive as strings, in INR Lakhs.
+export type ProductPricesShape = {
+  full_price_lakhs?: string;
+  rep_floor_lakhs?: string;
+  area_manager_floor_lakhs?: string;
+  ceo_floor_lakhs?: string;
+  cost_lakhs?: string;
+};
 export type BrandResponse = components["schemas"]["BrandResponse"];
 export type CategoryResponse = components["schemas"]["CategoryResponse"];
 export type ModelResponse = components["schemas"]["ModelResponse"];

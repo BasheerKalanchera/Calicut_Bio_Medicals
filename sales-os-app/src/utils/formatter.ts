@@ -4,6 +4,12 @@ export function formatLakhs(v: number) {
   return `₹${v.toFixed(1)}L`;
 }
 
+// A price in Lakhs, keeping its second decimal ("₹35L", "₹33.75L"); formatLakhs
+// rounds to one decimal, which would show 33.75 as 33.8.
+export function formatPriceLakhs(v: number | string) {
+  return `₹${Number(v).toFixed(2).replace(/\.?0+$/, "")}L`;
+}
+
 // Cabio's fiscal year is April-March (Indian FY, see CLAUDE.md), not a
 // calendar quarter -- Sales Report's "This Quarter" period needs the real
 // FY quarter (Q1 Apr-Jun ... Q4 Jan-Mar), computed here client-side rather
