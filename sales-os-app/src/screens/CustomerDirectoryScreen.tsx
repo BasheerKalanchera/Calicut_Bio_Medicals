@@ -14,7 +14,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { listAccounts, getAccountCounts } from "../services/accounts";
-import AddHospitalModal from "../components/AddHospitalModal";
+import AddCustomerModal from "../components/AddCustomerModal";
 import ZonePicker from "../components/ZonePicker";
 import useDebouncedValue from "../hooks/useDebouncedValue";
 import { shadows } from "../theme/shadows";
@@ -88,7 +88,7 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
   // A new hospital opens its own page, ready for an Opportunity or a visit,
   // instead of dropping the rep back on the list to search for it (Weekly
   // Follow-up plan D10, Basheer 2026-10-19). The list is scrolled to the top
-  // so Back lands on a known position. AddHospitalModal.tsx already
+  // so Back lands on a known position. AddCustomerModal.tsx already
   // invalidates the ["accounts"] query prefix on a successful create.
   const handleAccountCreated = (account: { id: string; name: string }) => {
     closeCreateModal();
@@ -296,7 +296,7 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
         )}
       </Box>
 
-      <AddHospitalModal
+      <AddCustomerModal
         isOpen={showCreateModal}
         onClose={closeCreateModal}
         onCreated={handleAccountCreated}

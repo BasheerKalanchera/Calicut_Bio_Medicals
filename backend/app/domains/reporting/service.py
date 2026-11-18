@@ -28,10 +28,10 @@ from app.domains.reporting.schemas import (
     SalesHeadline,
     SalesSummaryResponse,
     SalesSummaryRow,
-    StagnantDealRow,
-    StagnantDealsResponse,
-    WeeklyFollowupHospitalList,
-    WeeklyFollowupHospitalRow,
+    StagnantOpportunitiesResponse,
+    StagnantOpportunityRow,
+    WeeklyFollowupCustomerList,
+    WeeklyFollowupCustomerRow,
     WeeklyFollowupNextActionList,
     WeeklyFollowupOpportunityList,
     WeeklyFollowupOpportunityRow,
@@ -179,13 +179,13 @@ class ReportingService:
         )
         total_closed = row.won_count + row.lost_count
         win_rate = Decimal(row.won_count) / total_closed if total_closed else Decimal(0)
-        avg_deal_size = row.revenue_lakhs / row.won_count if row.won_count else Decimal(0)
+        avg_opportunity_size = row.revenue_lakhs / row.won_count if row.won_count else Decimal(0)
         return SalesHeadline(
             revenue_lakhs=row.revenue_lakhs,
             won_count=row.won_count,
             lost_count=row.lost_count,
             win_rate=win_rate,
-            avg_deal_size_lakhs=avg_deal_size,
+            avg_opportunity_size_lakhs=avg_opportunity_size,
         )
 
     def sales_summary(
@@ -215,7 +215,7 @@ class ReportingService:
             rows=[SalesSummaryRow.model_validate(r) for r in rows],
         )
 
-    def stagnant_deals(
+    def stagnant_opportunities(
         self,
         current_user: UserProfile,
         *,
@@ -223,13 +223,13 @@ class ReportingService:
         sbu_id: uuid.UUID | None = None,
         zone_id: uuid.UUID | None = None,
         user_id: uuid.UUID | None = None,
-    ) -> StagnantDealsResponse:
-        rows = self.repository.stagnant_deals(
+    ) -> StagnantOpportunitiesResponse:
+        rows = self.repository.stagnant_opportunities(
             current_user, threshold_days=threshold_days, sbu_id=sbu_id, zone_id=zone_id, user_id=user_id
         )
-        return StagnantDealsResponse(
+        return StagnantOpportunitiesResponse(
             threshold_days=threshold_days,
-            rows=[StagnantDealRow.model_validate(r) for r in rows],
+            rows=[StagnantOpportunityRow.model_validate(r) for r in rows],
         )
 
     def activity_levels(
@@ -350,10 +350,10 @@ class ReportingService:
         # then longest since the last visit -- who to go and see.
         planning_period = quarter_of(today)
         hospitals = {
-            r.account_id: WeeklyFollowupHospitalRow.model_validate(r)
-            for r in self.repository.weekly_followup_planned_hospitals(current_user, target_id, planning_period)
+            r.account_id: WeeklyFollowupCustomerRow.model_validate(r)
+            for r in self.repository.weekly_followup_planned_customers(current_user, target_id, planning_period)
         }.values()
-        hospital_rows = sorted(
+        customer_rows = sorted(
             hospitals,
             key=lambda h: (h.last_visit_date is not None, h.last_visit_date or datetime.min, h.account_name),
         )
@@ -369,7 +369,7 @@ class ReportingService:
             overdue_next_actions=WeeklyFollowupNextActionList(count=len(overdue), rows=overdue),
             next_actions_this_week=WeeklyFollowupNextActionList(count=len(this_week), rows=this_week),
             planning_period=planning_period,
-            planned_hospitals=WeeklyFollowupHospitalList(count=len(hospital_rows), rows=hospital_rows),
+            planned_customers=WeeklyFollowupCustomerList(count=len(customer_rows), rows=customer_rows),
         )
 
     def product_performance(
@@ -468,7 +468,7 @@ class ReportingService:
             gone_quiet_count=len(gone_quiet),
             never_contacted_count=len(never_contacted),
             show_zone_picker=self.repository.show_no_activity_zone_picker(current_user),
-            hospitals_in_view=len(hospitals),
+            customers_in_view=len(hospitals),
             zone_scope=self._no_activity_zone_scope(current_user),
             **self.repository.no_activity_caption(current_user, user_id),
             rows=gone_quiet + never_contacted,

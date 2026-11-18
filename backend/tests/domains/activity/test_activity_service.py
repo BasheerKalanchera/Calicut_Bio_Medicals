@@ -1326,28 +1326,28 @@ class TestListForAccount:
         svc.list_for_account(ACCOUNT_ID, page=1, page_size=50)
 
         repo.list_by_account.assert_called_once_with(
-            ACCOUNT_ID, include_completed=False, hospital_level_only=False,
+            ACCOUNT_ID, include_completed=False, customer_level_only=False,
             assigned_to_user_id=None, project_id=None, offset=0, limit=50,
         )
         repo.count_by_account.assert_called_once_with(
-            ACCOUNT_ID, include_completed=False, hospital_level_only=False,
+            ACCOUNT_ID, include_completed=False, customer_level_only=False,
             assigned_to_user_id=None, project_id=None,
         )
 
-    def test_hospital_level_only_and_completed_forwarded(self):
+    def test_customer_level_only_and_completed_forwarded(self):
         repo = _make_reminder_repo()
         svc = ReminderService(repository=repo, activity_repository=_make_activity_repo())
 
         svc.list_for_account(
-            ACCOUNT_ID, include_completed=True, hospital_level_only=True, page=3, page_size=25
+            ACCOUNT_ID, include_completed=True, customer_level_only=True, page=3, page_size=25
         )
 
         repo.list_by_account.assert_called_once_with(
-            ACCOUNT_ID, include_completed=True, hospital_level_only=True,
+            ACCOUNT_ID, include_completed=True, customer_level_only=True,
             assigned_to_user_id=None, project_id=None, offset=50, limit=25,
         )
         repo.count_by_account.assert_called_once_with(
-            ACCOUNT_ID, include_completed=True, hospital_level_only=True,
+            ACCOUNT_ID, include_completed=True, customer_level_only=True,
             assigned_to_user_id=None, project_id=None,
         )
 
@@ -1356,7 +1356,7 @@ class TestListForAccount:
         svc = ReminderService(repository=repo, activity_repository=_make_activity_repo())
 
         with pytest.raises(BusinessRuleViolation):
-            svc.list_for_account(ACCOUNT_ID, hospital_level_only=True, project_id=uuid.uuid4())
+            svc.list_for_account(ACCOUNT_ID, customer_level_only=True, project_id=uuid.uuid4())
 
         repo.list_by_account.assert_not_called()
 
@@ -1368,11 +1368,11 @@ class TestListForAccount:
         svc.list_for_account(ACCOUNT_ID, assigned_to_user_id=person, project_id=project)
 
         repo.list_by_account.assert_called_once_with(
-            ACCOUNT_ID, include_completed=False, hospital_level_only=False,
+            ACCOUNT_ID, include_completed=False, customer_level_only=False,
             assigned_to_user_id=person, project_id=project, offset=0, limit=50,
         )
         repo.count_by_account.assert_called_once_with(
-            ACCOUNT_ID, include_completed=False, hospital_level_only=False,
+            ACCOUNT_ID, include_completed=False, customer_level_only=False,
             assigned_to_user_id=person, project_id=project,
         )
 

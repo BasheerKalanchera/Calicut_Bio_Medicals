@@ -179,7 +179,7 @@ function ExpandToggle({ open, onClick }: { open: boolean; onClick: () => void })
 }
 
 // Hospital count is counted live from the plan's rows, not stored.
-function hospitalCount(t: TargetPlan): string {
+function customerCount(t: TargetPlan): string {
   return t.accounts.length === 0 ? "—" : String(t.accounts.length);
 }
 
@@ -769,7 +769,7 @@ export default function TargetPlanningScreen({
                       {t.change_note && <Chip label="Revised" variant="outlined" size="small" sx={{ ml: 0.5 }} />}
                     </TocCell>
                     <TocCell label="Period">{formatPlanningPeriod(t.planning_period)}</TocCell>
-                    <TocCell label="Customers" align="right">{hospitalCount(t)}</TocCell>
+                    <TocCell label="Customers" align="right">{customerCount(t)}</TocCell>
                     <TocCell label="Amount">
                       <Box component="span" sx={belowApproved ? { color: "warning.main", fontWeight: 700 } : undefined}>
                         {formatLakhs(Number(t.target_amount_lakhs))}
@@ -872,7 +872,7 @@ export default function TargetPlanningScreen({
                               </Typography>
                             )}
                           </TocCell>
-                          <TocCell label="Customers" align="right">{t ? hospitalCount(t) : "—"}</TocCell>
+                          <TocCell label="Customers" align="right">{t ? customerCount(t) : "—"}</TocCell>
                           <TocCell label="Amount">
                             {t ? <PlanAmount amount={t.target_amount_lakhs} note={note} /> : "—"}
                           </TocCell>

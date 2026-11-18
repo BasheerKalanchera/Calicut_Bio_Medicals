@@ -448,7 +448,7 @@ class TestNextActionRuleQueries:
         assert "activity.project_id is null" not in sql
 
     def test_list_by_account_hospital_only_drops_opportunity_and_project_rows(self):
-        sql = self._list_sql(lambda repo: repo.list_by_account(uuid.uuid4(), hospital_level_only=True))
+        sql = self._list_sql(lambda repo: repo.list_by_account(uuid.uuid4(), customer_level_only=True))
 
         assert "activity.opportunity_id is null" in sql
         assert "activity.project_id is null" in sql
@@ -511,7 +511,7 @@ class TestNextActionRuleQueries:
         mock_db.scalar.return_value = 7
         repo = ReminderRepository(mock_db)
 
-        assert repo.count_by_account(account_id, hospital_level_only=True) == 7
+        assert repo.count_by_account(account_id, customer_level_only=True) == 7
         sql = str(
             mock_db.scalar.call_args.args[0].compile(
                 dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True}

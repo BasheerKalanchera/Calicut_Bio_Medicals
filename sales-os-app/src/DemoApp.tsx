@@ -23,7 +23,7 @@ import NotificationBell from "./components/NotificationBell";
 import UrgentNotificationDialog from "./components/UrgentNotificationDialog";
 import DailyActivityReportScreen from "./screens/DailyActivityReportScreen";
 import InsightsDashboardScreen from "./screens/InsightsDashboardScreen";
-import StagnantDealsReportScreen from "./screens/StagnantDealsReportScreen";
+import StagnantOpportunitiesReportScreen from "./screens/StagnantOpportunitiesReportScreen";
 import NoActivityCustomersReportScreen from "./screens/NoActivityCustomersReportScreen";
 import OpportunitiesOnHoldReportScreen from "./screens/OpportunitiesOnHoldReportScreen";
 import ProductPerformanceReportScreen from "./screens/ProductPerformanceReportScreen";
@@ -35,7 +35,7 @@ import AuditLogScreen from "./screens/AuditLogScreen";
 import MarketingLeadEntryScreen from "./screens/MarketingLeadEntryScreen";
 import MarketingLeadReviewQueueScreen from "./screens/MarketingLeadReviewQueueScreen";
 import TargetPlanningScreen from "./screens/TargetPlanningScreen";
-import RateHospitalsScreen from "./screens/RateHospitalsScreen";
+import RateCustomersScreen from "./screens/RateCustomersScreen";
 import BrandTargetTrackingScreen from "./screens/BrandTargetTrackingScreen";
 import type { PipelineOpportunity } from "./types/api-aliases";
 import type { MyWorkRequest } from "./types/reporting";
@@ -77,7 +77,7 @@ const REPORTS_SECTION = {
   title: "REPORTS",
   items: [
     { id: "dailyActivity", label: "Daily Activity Report", icon: "📋" },
-    { id: "stagnantDeals", label: "Stagnant Opportunities", icon: "🥶" },
+    { id: "stagnantOpportunities", label: "Stagnant Opportunities", icon: "🥶" },
     { id: "noActivityCustomers", label: "Customer with No Activity", icon: "💤" },
     { id: "opportunitiesOnHold", label: "Opportunities On Hold", icon: "⏸️" },
     { id: "productPerformance", label: "Product Performance", icon: "🏆" },
@@ -102,7 +102,7 @@ function getNavSections(isAdmin: boolean) {
           { id: "users",       label: "User Directory",  icon: "👥" },
           { id: "territories", label: "Territory Map",   icon: "🗺️" },
           { id: "auditLog",    label: "Audit Log",       icon: "📜" },
-          { id: "rateHospitals", label: "Rate Customers", icon: "⭐" },
+          { id: "rateCustomers", label: "Rate Customers", icon: "⭐" },
           { id: "brandTargetTracking", label: "Brand Target Tracking", icon: "🏷️" },
         ],
       },
@@ -832,13 +832,13 @@ export default function DemoApp() {
 
           {/* Rate Hospitals — always mounted, hidden when not active; nav entry is Admin/GM-gated.
               active gates its query so it doesn't fetch in the background. */}
-          <Box sx={{ flex: 1, overflow: "hidden", display: view === "rateHospitals" ? "flex" : "none", flexDirection: "column" }}>
+          <Box sx={{ flex: 1, overflow: "hidden", display: view === "rateCustomers" ? "flex" : "none", flexDirection: "column" }}>
             <Box sx={{ px: 2, py: 1.5, bgcolor: "background.paper", borderBottom: 1, borderColor: "gray.100", flexShrink: 0 }}>
               <Typography component="h2" sx={{ typography: "h5", fontWeight: 800, color: "gray.800", letterSpacing: "-0.025em" }}>
                 Rate Customers
               </Typography>
             </Box>
-            <RateHospitalsScreen active={view === "rateHospitals"} />
+            <RateCustomersScreen active={view === "rateCustomers"} />
           </Box>
 
           {/* Marketing Leads — Marketing User's entry screen, always mounted (for every
@@ -936,13 +936,13 @@ export default function DemoApp() {
 
           {/* Reports — always mounted, hidden when not active; no admin
               gate on visibility, same reasoning as Insights above */}
-          <Box sx={{ flex: 1, overflow: "hidden", display: view === "stagnantDeals" ? "flex" : "none", flexDirection: "column" }}>
+          <Box sx={{ flex: 1, overflow: "hidden", display: view === "stagnantOpportunities" ? "flex" : "none", flexDirection: "column" }}>
             <Box sx={{ px: 2, py: 1.5, bgcolor: "background.paper", borderBottom: 1, borderColor: "gray.100", flexShrink: 0 }}>
               <Typography component="h2" sx={{ typography: "h5", fontWeight: 800, color: "gray.800", letterSpacing: "-0.025em" }}>
                 Stagnant Opportunities
               </Typography>
             </Box>
-            <StagnantDealsReportScreen onSelectOpportunity={handleSelectOpportunity} />
+            <StagnantOpportunitiesReportScreen onSelectOpportunity={handleSelectOpportunity} />
           </Box>
 
           <Box sx={{ flex: 1, overflow: "hidden", display: view === "noActivityCustomers" ? "flex" : "none", flexDirection: "column" }}>

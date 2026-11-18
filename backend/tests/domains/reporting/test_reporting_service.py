@@ -192,11 +192,11 @@ class TestOverduePastClosingDate:
 
 
 class TestSalesHeadlineDerivedFields:
-    """win_rate and avg_deal_size_lakhs are computed here, not in SQL --
+    """win_rate and avg_opportunity_size_lakhs are computed here, not in SQL --
     the repository only ever hands back the raw won_count/lost_count/
     revenue_lakhs it can aggregate safely."""
 
-    def test_win_rate_and_avg_deal_size(self):
+    def test_win_rate_and_avg_opportunity_size(self):
         mock_repo = MagicMock(spec=ReportingRepository)
         mock_repo.sales_headline.return_value = MagicMock(
             revenue_lakhs=Decimal("100.00"), won_count=4, lost_count=1
@@ -206,7 +206,7 @@ class TestSalesHeadlineDerivedFields:
         result = service.sales_headline(_make_current_user("Admin"))
 
         assert result.win_rate == Decimal("0.8")  # 4 won / (4 won + 1 lost)
-        assert result.avg_deal_size_lakhs == Decimal("25.00")  # 100.00 / 4
+        assert result.avg_opportunity_size_lakhs == Decimal("25.00")  # 100.00 / 4
 
     def test_no_closed_deals_does_not_divide_by_zero(self):
         mock_repo = MagicMock(spec=ReportingRepository)
@@ -218,7 +218,7 @@ class TestSalesHeadlineDerivedFields:
         result = service.sales_headline(_make_current_user("Admin"))
 
         assert result.win_rate == Decimal(0)
-        assert result.avg_deal_size_lakhs == Decimal(0)
+        assert result.avg_opportunity_size_lakhs == Decimal(0)
 
     def test_all_lost_no_wins(self):
         mock_repo = MagicMock(spec=ReportingRepository)
@@ -230,7 +230,7 @@ class TestSalesHeadlineDerivedFields:
         result = service.sales_headline(_make_current_user("Admin"))
 
         assert result.win_rate == Decimal(0)
-        assert result.avg_deal_size_lakhs == Decimal(0)
+        assert result.avg_opportunity_size_lakhs == Decimal(0)
 
 
 # --- Zone tree (docs/Zone-Tree-In-Reports-Implementation-Plan.md) ---------
@@ -375,7 +375,7 @@ def _followup(opps=(), actions=(), user=None, today=_WED, hospitals=(), **kwargs
     mock_repo = MagicMock(spec=ReportingRepository)
     mock_repo.weekly_followup_opportunities.return_value = list(opps)
     mock_repo.weekly_followup_next_actions.return_value = list(actions)
-    mock_repo.weekly_followup_planned_hospitals.return_value = list(hospitals)
+    mock_repo.weekly_followup_planned_customers.return_value = list(hospitals)
     service = ReportingService(repository=mock_repo)
     result = service.weekly_followup(user or _make_current_user("Sales Staff"), today=today, **kwargs)
     return result, mock_repo
@@ -486,22 +486,22 @@ class TestWeeklyFollowupPlannedHospitals:
         user = _make_current_user("Sales Staff")
         result, repo = _followup(user=user)  # Wed 28 Oct 2026 = FY 2026-27 Q3
         assert result.planning_period == "2026-Q3"
-        repo.weekly_followup_planned_hospitals.assert_called_once_with(user, user.id, "2026-Q3")
+        repo.weekly_followup_planned_customers.assert_called_once_with(user, user.id, "2026-Q3")
 
     def test_manager_picks_one_rep(self):
         manager, rep_id = _make_current_user("Area Manager"), uuid.uuid4()
         _, repo = _followup(user=manager, user_id=rep_id)
-        repo.weekly_followup_planned_hospitals.assert_called_once_with(manager, rep_id, "2026-Q3")
+        repo.weekly_followup_planned_customers.assert_called_once_with(manager, rep_id, "2026-Q3")
 
     def test_never_visited_first_then_longest_since_visit(self):
         recent = _hospital("Aster Medcity", last_visit=datetime(2026, 10, 25, 10, tzinfo=UTC))
         older = _hospital("Baby Memorial Hospital", last_visit=datetime(2026, 9, 2, 10, tzinfo=UTC))
         never = _hospital("Meitra Hospital")
         result, _ = _followup(hospitals=[recent, older, never])
-        assert [r.account_name for r in result.planned_hospitals.rows] == [
+        assert [r.account_name for r in result.planned_customers.rows] == [
             "Meitra Hospital", "Baby Memorial Hospital", "Aster Medcity",
         ]
-        assert result.planned_hospitals.count == 3
+        assert result.planned_customers.count == 3
 
     def test_same_hospital_on_two_plans_listed_once(self):
         # A rep on an Imaging and a Critical Care plan can plan the same hospital in both.
@@ -509,15 +509,15 @@ class TestWeeklyFollowupPlannedHospitals:
         first = _hospital(account_id=shared_id, last_visit=datetime(2026, 10, 20, 10, tzinfo=UTC))
         second = _hospital(account_id=shared_id, last_visit=datetime(2026, 10, 20, 10, tzinfo=UTC))
         result, _ = _followup(hospitals=[first, second])
-        assert result.planned_hospitals.count == 1
+        assert result.planned_customers.count == 1
 
     def test_next_action_due_passes_through(self):
         due = datetime(2026, 10, 30, 9, tzinfo=IST)
         result, _ = _followup(hospitals=[_hospital(next_action=due)])
-        assert result.planned_hospitals.rows[0].next_action_due == due
-        assert result.planned_hospitals.rows[0].last_visit_date is None
+        assert result.planned_customers.rows[0].next_action_due == due
+        assert result.planned_customers.rows[0].last_visit_date is None
 
     def test_no_plan_gives_an_empty_list(self):
         result, _ = _followup()
-        assert result.planned_hospitals.count == 0
-        assert result.planned_hospitals.rows == []
+        assert result.planned_customers.count == 0
+        assert result.planned_customers.rows == []

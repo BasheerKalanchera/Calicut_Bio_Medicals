@@ -16,7 +16,7 @@ import {
 import FormModal from "./FormModal";
 import ZonePicker from "./ZonePicker";
 import { createAccount, listAccounts } from "../services/accounts";
-import { searchZonesForHospital } from "../services/masterData";
+import { searchZonesForCustomer } from "../services/masterData";
 import type { ZoneSearchResult } from "../services/masterData";
 import { ApiError } from "../lib/api";
 import { SilentModalError } from "../lib/formErrors";
@@ -44,7 +44,7 @@ const CUSTOMER_TYPES = [
 
 interface AccountOption { id: string; name: string }
 
-interface AddHospitalModalProps {
+interface AddCustomerModalProps {
   isOpen: boolean;
   onClose: () => void;
   // Fires when a genuinely new account row was created (plain path or
@@ -62,7 +62,7 @@ interface AddHospitalModalProps {
   onExistingSelected?: (account: AccountOption) => void;
 }
 
-export default function AddHospitalModal({ isOpen, onClose, onCreated, onExistingSelected }: AddHospitalModalProps) {
+export default function AddCustomerModal({ isOpen, onClose, onCreated, onExistingSelected }: AddCustomerModalProps) {
   const { userProfile } = useAuth();
   const queryClient = useQueryClient();
 
@@ -256,7 +256,7 @@ export default function AddHospitalModal({ isOpen, onClose, onCreated, onExistin
           size="small"
           placeholder="Enter customer name"
         />
-        <ZonePicker label="Zone *" value={formZone} onChange={(z) => { setFormZone(z); clearDuplicateWarning(); }} searchFn={searchZonesForHospital} />
+        <ZonePicker label="Zone *" value={formZone} onChange={(z) => { setFormZone(z); clearDuplicateWarning(); }} searchFn={searchZonesForCustomer} />
         <Autocomplete
           options={parentOptions}
           getOptionLabel={(o) => o.name}

@@ -120,7 +120,7 @@ export default function SalesReportScreen({
           <StatTile
             compact
             label="Avg Opportunity Size"
-            value={headline ? formatLakhs(parseFloat(headline.avg_deal_size_lakhs)) : "—"}
+            value={headline ? formatLakhs(parseFloat(headline.avg_opportunity_size_lakhs)) : "—"}
           />
         </Box>
 

@@ -303,13 +303,13 @@ class TestCaption:
         viewer = subject if not picked else _make_user("General Manager")
         return ReportingRepository(mock_db).no_activity_caption(viewer, subject.id if picked else None)
 
-    def test_hospitals_in_view_counts_every_hospital_not_just_the_quiet_ones(self):
+    def test_customers_in_view_counts_every_hospital_not_just_the_quiet_ones(self):
         rows = [TestServiceRules._row(f"H{i}", datetime(2026, 11, 1, tzinfo=UTC)) for i in range(3)]
         rows.append(TestServiceRules._row("Quiet", datetime(2026, 1, 1, tzinfo=UTC)))
         rows.append(TestServiceRules._row("Never", None))
         with patch("app.domains.reporting.service.today_ist", return_value=date(2026, 11, 4)):
             result = TestServiceRules()._service(rows).no_activity_customers(_make_user("Sales Staff"))
-        assert result.hospitals_in_view == 5
+        assert result.customers_in_view == 5
         assert (result.gone_quiet_count, result.never_contacted_count) == (1, 1)
 
     def test_zone_scope_follows_the_viewers_role(self):
@@ -486,7 +486,7 @@ class TestEndpoint:
             gone_quiet_count=0,
             never_contacted_count=0,
             show_zone_picker=True,
-            hospitals_in_view=0,
+            customers_in_view=0,
             sbu_name="Imaging",
             counts_all_sbus=False,
             zone_scope="all",
@@ -507,7 +507,7 @@ class TestEndpoint:
         assert response.status_code == 200
         assert response.json()["data"] == {
             "threshold_days": 90, "gone_quiet_count": 0, "never_contacted_count": 0,
-            "show_zone_picker": True, "hospitals_in_view": 0, "sbu_name": "Imaging",
+            "show_zone_picker": True, "customers_in_view": 0, "sbu_name": "Imaging",
             "counts_all_sbus": False, "zone_scope": "all", "rows": [],
         }
         assert mock_service.no_activity_customers.call_args.kwargs == {"zone_id": zone_id, "user_id": user_id}

@@ -183,7 +183,7 @@ export interface TargetRosterResponse {
 }
 
 // account_id null = the shared "Unplanned" line (wins at hospitals not on the plan).
-export interface TargetVsActualHospital {
+export interface TargetVsActualCustomer {
   account_id: string | null;
   account_name: string;
   planned_lakhs: string;
@@ -222,7 +222,7 @@ export interface TargetVsActualPerson {
   percent_of_target: string | null;
   undated_opportunity_count: number;
   no_po_date_count: number;
-  hospitals: TargetVsActualHospital[];
+  customers: TargetVsActualCustomer[];
   brands: TargetVsActualBrand[];
 }
 

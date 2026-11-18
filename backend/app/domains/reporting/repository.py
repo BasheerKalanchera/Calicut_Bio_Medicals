@@ -298,7 +298,7 @@ class ReportingRepository:
         stmt = stmt.order_by(group_name_col)
         return list(self.db.execute(stmt).all())
 
-    def stagnant_deals(
+    def stagnant_opportunities(
         self,
         current_user: UserProfile,
         *,
@@ -504,7 +504,7 @@ class ReportingRepository:
         stmt = stmt.order_by(*_REMINDER_ORDER)
         return list(self.db.scalars(stmt).unique().all())
 
-    def weekly_followup_planned_hospitals(
+    def weekly_followup_planned_customers(
         self, current_user: UserProfile, user_id: uuid.UUID, planning_period: str
     ) -> list[Row]:
         """My Work "My hospitals this quarter" (step 5): each hospital on

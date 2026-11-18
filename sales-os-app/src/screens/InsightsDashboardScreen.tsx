@@ -18,7 +18,7 @@ import { statusColors } from "../theme/statusColors";
 // (2026-09-11): this screen stays tiles-only -- single numbers and per-rep
 // comparisons. Stagnant Opportunities, Product Performance Summary, and
 // Opportunities On Hold are each their own full report screen now (see
-// StagnantDealsReportScreen.tsx, ProductPerformanceReportScreen.tsx,
+// StagnantOpportunitiesReportScreen.tsx, ProductPerformanceReportScreen.tsx,
 // OpportunitiesOnHoldReportScreen.tsx), not dashboard tiles.
 //
 // Tabs (Basheer, 2026-10-09): one section per tab instead of one long

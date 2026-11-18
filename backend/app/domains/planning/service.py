@@ -46,7 +46,7 @@ from app.domains.planning.schemas import (
     TargetRosterPerson,
     TargetRosterResponse,
     TargetVsActualBrand,
-    TargetVsActualHospital,
+    TargetVsActualCustomer,
     TargetVsActualPerson,
     TargetVsActualResponse,
     TargetVsActualSummaryRow,
@@ -603,28 +603,28 @@ class _PersonAcc:
         # carry a total (and brand splits) with no hospital lines, so this
         # can exceed the sum of the hospitals; the difference is `unassigned`.
         self.plan_total = _ZERO
-        self.hospitals: dict[uuid.UUID, list] = {}  # account_id -> [name, planned, won]
+        self.customers: dict[uuid.UUID, list] = {}  # account_id -> [name, planned, won]
         self.unplanned_won = _ZERO
         self.brands: dict[uuid.UUID, list] = {}  # brand_id -> [name, planned, won]
         self.expected: Decimal | None = None
         self.undated = 0
 
     @property
-    def hospital_planned(self) -> Decimal:
-        return sum((h[1] for h in self.hospitals.values()), _ZERO)
+    def customer_planned(self) -> Decimal:
+        return sum((h[1] for h in self.customers.values()), _ZERO)
 
     @property
     def unassigned(self) -> Decimal:
         """Planned amount not tied to any hospital (legacy plans)."""
-        return max(self.plan_total - self.hospital_planned, _ZERO)
+        return max(self.plan_total - self.customer_planned, _ZERO)
 
     @property
     def planned(self) -> Decimal:
-        return self.hospital_planned + self.unassigned
+        return self.customer_planned + self.unassigned
 
     @property
     def won(self) -> Decimal:
-        return sum((h[2] for h in self.hospitals.values()), _ZERO) + self.unplanned_won
+        return sum((h[2] for h in self.customers.values()), _ZERO) + self.unplanned_won
 
 
 class SbuTargetService:
@@ -1023,17 +1023,17 @@ class TargetVsActualService:
                 # never shown: a manager sees only "Draft" on someone's draft.
                 continue
             for pa in plan.accounts:
-                acc.hospitals[pa.account_id] = [pa.account.name, pa.planned_amount_lakhs, _ZERO]
+                acc.customers[pa.account_id] = [pa.account.name, pa.planned_amount_lakhs, _ZERO]
             for split in plan.brand_splits:
                 brand_names[split.brand_id] = split.brand.name
                 acc.brands[split.brand_id] = [split.brand.name, split.split_amount_lakhs, _ZERO]
 
         # Zone planned figures: by the hospital's zone, not the planner's.
-        planned_account_ids = {a for p in people.values() for a in p.hospitals}
+        planned_account_ids = {a for p in people.values() for a in p.customers}
         zone_of = repo.zone_of_accounts(list(planned_account_ids)) if detail else {}
         zones: dict[tuple[uuid.UUID | None, str | None], list[Decimal]] = {}  # key -> [planned, won]
         for p in people.values():
-            for account_id, h in p.hospitals.items():
+            for account_id, h in p.customers.items():
                 zones.setdefault(zone_of.get(account_id, (None, None)), [_ZERO, _ZERO])[0] += h[1]
             if p.unassigned:  # no hospital, so no zone
                 zones.setdefault((None, None), [_ZERO, _ZERO])[0] += p.unassigned
@@ -1045,8 +1045,8 @@ class TargetVsActualService:
             current_user, sbu_id, start_dt, end_dt
         ):
             acc = person(user_id, name)
-            if account_id in acc.hospitals:
-                acc.hospitals[account_id][2] += amount
+            if account_id in acc.customers:
+                acc.customers[account_id][2] += amount
             else:
                 acc.unplanned_won += amount
             zones.setdefault((zone_id, zone_name), [_ZERO, _ZERO])[1] += amount
@@ -1329,15 +1329,15 @@ class TargetVsActualService:
     ) -> TargetVsActualPerson:
         planned, won = p.planned, p.won.quantize(_CENT)
         expected = None if state is QuarterState.PAST else (p.expected or _ZERO).quantize(_CENT)
-        hospitals = [
-            TargetVsActualHospital(
+        customers = [
+            TargetVsActualCustomer(
                 account_id=aid, account_name=h[0], planned_lakhs=h[1], won_lakhs=h[2].quantize(_CENT)
             )
-            for aid, h in sorted(p.hospitals.items(), key=lambda kv: kv[1][0].lower())
+            for aid, h in sorted(p.customers.items(), key=lambda kv: kv[1][0].lower())
         ]
         if p.unassigned:
-            hospitals.append(
-                TargetVsActualHospital(
+            customers.append(
+                TargetVsActualCustomer(
                     account_id=None,
                     account_name="Last approved plan" if p.approved_fallback else "Not assigned to a customer",
                     planned_lakhs=p.unassigned,
@@ -1345,8 +1345,8 @@ class TargetVsActualService:
                 )
             )
         if p.unplanned_won:
-            hospitals.append(
-                TargetVsActualHospital(
+            customers.append(
+                TargetVsActualCustomer(
                     account_id=None,
                     account_name="Unplanned",
                     planned_lakhs=_ZERO,
@@ -1369,7 +1369,7 @@ class TargetVsActualService:
             percent_of_target=_percent_of_target(won, planned),
             undated_opportunity_count=p.undated,
             no_po_date_count=p.no_po_date,
-            hospitals=hospitals,
+            customers=customers,
             brands=[
                 TargetVsActualBrand(brand_id=bid, brand_name=b[0], planned_lakhs=b[1], won_lakhs=b[2].quantize(_CENT))
                 for bid, b in sorted(p.brands.items(), key=lambda kv: kv[1][0].lower())

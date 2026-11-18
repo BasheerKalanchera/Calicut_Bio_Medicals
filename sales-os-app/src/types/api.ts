@@ -89,15 +89,15 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/master-data/zones/search-for-hospital": {
+    "/api/v1/master-data/zones/search-for-customer": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Search Zones For Hospital */
-        get: operations["search_zones_for_hospital_api_v1_master_data_zones_search_for_hospital_get"];
+        /** Search Zones For Customer */
+        get: operations["search_zones_for_customer_api_v1_master_data_zones_search_for_customer_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1203,15 +1203,15 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/reporting/stagnant-deals": {
+    "/api/v1/reporting/stagnant-opportunities": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get Stagnant Deals */
-        get: operations["get_stagnant_deals_api_v1_reporting_stagnant_deals_get"];
+        /** Get Stagnant Opportunities */
+        get: operations["get_stagnant_opportunities_api_v1_reporting_stagnant_opportunities_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2408,8 +2408,8 @@ export interface components {
             message: string;
             data: components["schemas"]["SplitEditPermission"];
         };
-        /** APIResponse[StagnantDealsResponse] */
-        APIResponse_StagnantDealsResponse_: {
+        /** APIResponse[StagnantOpportunitiesResponse] */
+        APIResponse_StagnantOpportunitiesResponse_: {
             /**
              * Success
              * @default true
@@ -2420,7 +2420,7 @@ export interface components {
              * @default
              */
             message: string;
-            data: components["schemas"]["StagnantDealsResponse"];
+            data: components["schemas"]["StagnantOpportunitiesResponse"];
         };
         /** APIResponse[StakeholderLinkResponse] */
         APIResponse_StakeholderLinkResponse_: {
@@ -4245,8 +4245,8 @@ export interface components {
             never_contacted_count: number;
             /** Show Zone Picker */
             show_zone_picker: boolean;
-            /** Hospitals In View */
-            hospitals_in_view: number;
+            /** Customers In View */
+            customers_in_view: number;
             /** Sbu Name */
             sbu_name: string | null;
             /** Counts All Sbus */
@@ -5402,8 +5402,8 @@ export interface components {
             lost_count: number;
             /** Win Rate */
             win_rate: string;
-            /** Avg Deal Size Lakhs */
-            avg_deal_size_lakhs: string;
+            /** Avg Opportunity Size Lakhs */
+            avg_opportunity_size_lakhs: string;
         };
         /** SalesSummaryResponse */
         SalesSummaryResponse: {
@@ -5599,8 +5599,15 @@ export interface components {
             /** Default Win Probability */
             default_win_probability: string;
         };
-        /** StagnantDealRow */
-        StagnantDealRow: {
+        /** StagnantOpportunitiesResponse */
+        StagnantOpportunitiesResponse: {
+            /** Threshold Days */
+            threshold_days: number;
+            /** Rows */
+            rows: components["schemas"]["StagnantOpportunityRow"][];
+        };
+        /** StagnantOpportunityRow */
+        StagnantOpportunityRow: {
             /**
              * Opportunity Id
              * Format: uuid
@@ -5618,13 +5625,6 @@ export interface components {
             last_activity_date: string | null;
             /** Days Stagnant */
             days_stagnant: number;
-        };
-        /** StagnantDealsResponse */
-        StagnantDealsResponse: {
-            /** Threshold Days */
-            threshold_days: number;
-            /** Rows */
-            rows: components["schemas"]["StagnantDealRow"][];
         };
         /** StakeholderCreate */
         StakeholderCreate: {
@@ -5940,12 +5940,12 @@ export interface components {
             won_lakhs: string;
         };
         /**
-         * TargetVsActualHospital
+         * TargetVsActualCustomer
          * @description One line per hospital on the person's plan; wins at hospitals that
          *     aren't on the plan share a single line with account_id=None
          *     ("Unplanned").
          */
-        TargetVsActualHospital: {
+        TargetVsActualCustomer: {
             /** Account Id */
             account_id: string | null;
             /** Account Name */
@@ -5992,8 +5992,8 @@ export interface components {
             undated_opportunity_count: number;
             /** No Po Date Count */
             no_po_date_count: number;
-            /** Hospitals */
-            hospitals: components["schemas"]["TargetVsActualHospital"][];
+            /** Customers */
+            customers: components["schemas"]["TargetVsActualCustomer"][];
             /** Brands */
             brands: components["schemas"]["TargetVsActualBrand"][];
         };
@@ -6325,15 +6325,15 @@ export interface components {
          * @enum {string}
          */
         VisitFrequency: "WEEKLY" | "BI_WEEKLY" | "MONTHLY" | "QUARTERLY" | "AS_NEEDED";
-        /** WeeklyFollowupHospitalList */
-        WeeklyFollowupHospitalList: {
+        /** WeeklyFollowupCustomerList */
+        WeeklyFollowupCustomerList: {
             /** Count */
             count: number;
             /** Rows */
-            rows: components["schemas"]["WeeklyFollowupHospitalRow"][];
+            rows: components["schemas"]["WeeklyFollowupCustomerRow"][];
         };
-        /** WeeklyFollowupHospitalRow */
-        WeeklyFollowupHospitalRow: {
+        /** WeeklyFollowupCustomerRow */
+        WeeklyFollowupCustomerRow: {
             /**
              * Account Id
              * Format: uuid
@@ -6435,7 +6435,7 @@ export interface components {
             next_actions_this_week: components["schemas"]["WeeklyFollowupNextActionList"];
             /** Planning Period */
             planning_period: string;
-            planned_hospitals: components["schemas"]["WeeklyFollowupHospitalList"];
+            planned_customers: components["schemas"]["WeeklyFollowupCustomerList"];
         };
         /** WorkspaceAccount */
         WorkspaceAccount: {
@@ -6863,7 +6863,7 @@ export interface operations {
             };
         };
     };
-    search_zones_for_hospital_api_v1_master_data_zones_search_for_hospital_get: {
+    search_zones_for_customer_api_v1_master_data_zones_search_for_customer_get: {
         parameters: {
             query: {
                 q: string;
@@ -8737,7 +8737,7 @@ export interface operations {
         parameters: {
             query?: {
                 include_completed?: boolean;
-                hospital_level?: boolean;
+                customer_level?: boolean;
                 assigned_to_user_id?: string | null;
                 project_id?: string | null;
                 page?: number;
@@ -9903,7 +9903,7 @@ export interface operations {
             };
         };
     };
-    get_stagnant_deals_api_v1_reporting_stagnant_deals_get: {
+    get_stagnant_opportunities_api_v1_reporting_stagnant_opportunities_get: {
         parameters: {
             query?: {
                 threshold_days?: number;
@@ -9925,7 +9925,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["APIResponse_StagnantDealsResponse_"];
+                    "application/json": components["schemas"]["APIResponse_StagnantOpportunitiesResponse_"];
                 };
             };
             /** @description Validation Error */

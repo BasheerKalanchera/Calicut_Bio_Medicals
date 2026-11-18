@@ -138,7 +138,7 @@ export default function TargetPlanDialog({ sbuId, period, existing, onClose, onS
   const updateRow = (i: number, patch: Partial<PlanRow>) =>
     setRows(rows.map((r, j) => (j === i ? { ...r, ...patch } : r)));
 
-  const addHospital = (account: EligibleAccount | null) => {
+  const addCustomer = (account: EligibleAccount | null) => {
     if (!account || addedIds.has(account.id)) return;
     setRows([...rows, { account, amount: "", visit_frequency: DEFAULT_VISIT_FREQUENCY, objective: "" }]);
     setSearch("");
@@ -240,7 +240,7 @@ export default function TargetPlanDialog({ sbuId, period, existing, onClose, onS
           value={null}
           inputValue={search}
           loading={eligibleLoading}
-          onChange={(_e, account) => addHospital(account)}
+          onChange={(_e, account) => addCustomer(account)}
           onInputChange={(_e, value, reason) => { if (reason !== "reset") setSearch(value); }}
           renderOption={(props, a) => {
             const { key, ...optionProps } = props;

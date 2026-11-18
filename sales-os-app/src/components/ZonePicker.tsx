@@ -15,7 +15,7 @@ interface ZonePickerProps {
   size?: "small" | "medium";
   fullWidth?: boolean;
   disabled?: boolean;
-  // Add/Edit Hospital passes searchZonesForHospital here to scope results to
+  // Add/Edit Hospital passes searchZonesForCustomer here to scope results to
   // the rep's own territory server-side -- every other caller keeps the
   // default unrestricted searchZones.
   searchFn?: (q: string) => Promise<ZoneSearchResult[]>;
@@ -45,7 +45,7 @@ export default function ZonePicker({
   const debouncedSearch = useDebouncedValue(searchInput);
 
   const { data: options = [], isFetching } = useQuery({
-    queryKey: ["zones", "search", searchFn === searchZones ? "all" : "hospital", searchKey, debouncedSearch],
+    queryKey: ["zones", "search", searchFn === searchZones ? "all" : "customer", searchKey, debouncedSearch],
     enabled: debouncedSearch.trim().length >= 2,
     queryFn: () => searchFn(debouncedSearch.trim()),
   });

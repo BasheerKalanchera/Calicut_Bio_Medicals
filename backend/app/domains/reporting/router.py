@@ -23,7 +23,7 @@ from app.domains.reporting.schemas import (
     SalesGroupBy,
     SalesHeadline,
     SalesSummaryResponse,
-    StagnantDealsResponse,
+    StagnantOpportunitiesResponse,
     WeeklyFollowupResponse,
 )
 from app.domains.reporting.service import ReportingService
@@ -49,17 +49,17 @@ def get_pipeline_summary(
     )
 
 
-@router.get("/stagnant-deals")
-def get_stagnant_deals(
+@router.get("/stagnant-opportunities")
+def get_stagnant_opportunities(
     threshold_days: int = Query(180, ge=1, le=3650),
     sbu_id: uuid.UUID | None = Query(None),
     zone_id: uuid.UUID | None = Query(None),
     user_id: uuid.UUID | None = Query(None),
     current_user: UserProfile = Depends(get_current_user),
     service: ReportingService = Depends(_get_service),
-) -> APIResponse[StagnantDealsResponse]:
+) -> APIResponse[StagnantOpportunitiesResponse]:
     return APIResponse(
-        data=service.stagnant_deals(
+        data=service.stagnant_opportunities(
             current_user, threshold_days=threshold_days, sbu_id=sbu_id, zone_id=zone_id, user_id=user_id
         )
     )
@@ -141,7 +141,7 @@ def get_no_activity_customers(
 
 
 # The report's Zone picker once a Rep is picked: zones in that person's scope.
-# Separate from /master-data/zones/search-for-hospital, which is about the
+# Separate from /master-data/zones/search-for-customer, which is about the
 # viewer's own territory (Add/Edit Hospital) and stays so.
 @router.get("/no-activity-customers/zones")
 def search_no_activity_zones(

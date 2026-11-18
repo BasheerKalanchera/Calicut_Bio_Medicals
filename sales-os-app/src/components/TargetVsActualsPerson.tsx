@@ -93,20 +93,20 @@ export default function TargetVsActualsPerson({
         </TileCell>
       </TileGrid>
 
-      {person.hospitals.length > 0 &&
+      {person.customers.length > 0 &&
         section(
           "By customer",
           <PlannedWonTable
             heading="Customer"
-            rows={person.hospitals.map((h) => ({
+            rows={person.customers.map((h) => ({
               key: h.account_id ?? h.account_name,
               name: h.account_name,
               planned: h.planned_lakhs,
               won: h.won_lakhs,
               italic: h.account_id === null,
             }))}
-            totalPlanned={sum(person.hospitals.map((h) => h.planned_lakhs))}
-            totalWon={sum(person.hospitals.map((h) => h.won_lakhs))}
+            totalPlanned={sum(person.customers.map((h) => h.planned_lakhs))}
+            totalWon={sum(person.customers.map((h) => h.won_lakhs))}
           />,
         )}
       {person.brands.length > 0 &&
@@ -119,7 +119,7 @@ export default function TargetVsActualsPerson({
             totalWon={sum(person.brands.map((b) => b.won_lakhs))}
           />,
         )}
-      {person.hospitals.length === 0 && person.brands.length === 0 && (
+      {person.customers.length === 0 && person.brands.length === 0 && (
         <Box sx={noteSx}>No planned customers or brands to show for this quarter.</Box>
       )}
 

@@ -174,30 +174,30 @@ class TestPipelineSummary:
 
 class TestStagnantDeals:
     def test_threshold_days_applied(self):
-        sql = _run("stagnant_deals", _make_current_user("Admin"), threshold_days=90)
+        sql = _run("stagnant_opportunities", _make_current_user("Admin"), threshold_days=90)
         assert "90" in sql
 
     def test_default_threshold_is_180(self):
-        sql = _run("stagnant_deals", _make_current_user("Admin"))
+        sql = _run("stagnant_opportunities", _make_current_user("Admin"))
         assert "180" in sql
 
     def test_active_only(self):
         # BR-OP-20 / D6c: On Hold and Stalled are no longer listed.
-        sql = _run("stagnant_deals", _make_current_user("Admin"))
+        sql = _run("stagnant_opportunities", _make_current_user("Admin"))
         assert "opportunity_status.status_code = 'ACTIVE'" in sql
 
     def test_only_visits_calls_meetings_emails_count(self):
         # D6d: a Note (e.g. for a stage change) must not reset the clock.
-        sql = _run("stagnant_deals", _make_current_user("Admin"))
+        sql = _run("stagnant_opportunities", _make_current_user("Admin"))
         assert "activity.activity_type IN ('VISIT', 'CALL', 'MEETING', 'EMAIL')" in sql
 
     def test_falls_back_to_created_at_when_no_activity(self):
-        sql = _run("stagnant_deals", _make_current_user("Admin"))
+        sql = _run("stagnant_opportunities", _make_current_user("Admin"))
         assert "opportunity.created_at" in sql
 
     def test_area_manager_scoped(self):
         current_user = _make_current_user("Area Manager")
-        sql = _run("stagnant_deals", current_user)
+        sql = _run("stagnant_opportunities", current_user)
         assert "user_zone" in sql or str(current_user.id) in sql
 
 
@@ -325,7 +325,7 @@ class TestWeeklyFollowupOpportunities:
     def test_stagnant_report_keeps_its_plain_subquery(self):
         # The Stagnant report calls the same helper with no owner and is not
         # part of the speed fix -- it must stay exactly as it was.
-        sql = _run("stagnant_deals", _make_current_user("Admin"))
+        sql = _run("stagnant_opportunities", _make_current_user("Admin"))
         assert "MATERIALIZED" not in sql
 
     def test_days_since_contact_never_negative(self):
@@ -378,13 +378,13 @@ class TestWeeklyFollowupNextActions:
 
 class TestWeeklyFollowupPlannedHospitals:
     def test_approved_plan_for_the_quarter_only(self):
-        sql = _run("weekly_followup_planned_hospitals", _make_current_user("Admin"), uuid.uuid4(), "2026-Q3")
+        sql = _run("weekly_followup_planned_customers", _make_current_user("Admin"), uuid.uuid4(), "2026-Q3")
         assert "target_plan.status = 'APPROVED'" in sql
         assert "target_plan.planning_period = '2026-Q3'" in sql
 
     def test_scoped_on_the_plan_owner(self):
         target = uuid.uuid4()
-        sql = _run("weekly_followup_planned_hospitals", _make_current_user("Admin"), target, "2026-Q3")
+        sql = _run("weekly_followup_planned_customers", _make_current_user("Admin"), target, "2026-Q3")
         assert "JOIN user_profile ON target_plan.user_id = user_profile.id" in sql
         assert f"user_profile.id = '{_uuid_literal(target)}'" in sql
 
@@ -393,7 +393,7 @@ class TestWeeklyFollowupPlannedHospitals:
         # the viewed person, whether logged on the hospital or on one of its
         # Opportunities (both carry the hospital's account_id).
         target = uuid.uuid4()
-        sql = _run("weekly_followup_planned_hospitals", _make_current_user("Admin"), target, "2026-Q3")
+        sql = _run("weekly_followup_planned_customers", _make_current_user("Admin"), target, "2026-Q3")
         assert "activity.activity_type IN ('VISIT', 'CALL', 'MEETING', 'EMAIL')" in sql
         assert f"activity.user_id = '{_uuid_literal(target)}'" in sql
         assert "max(activity.activity_date)" in sql
@@ -401,18 +401,18 @@ class TestWeeklyFollowupPlannedHospitals:
     def test_next_action_is_their_earliest_open_one_on_the_hospital(self):
         # D29
         target = uuid.uuid4()
-        sql = _run("weekly_followup_planned_hospitals", _make_current_user("Admin"), target, "2026-Q3")
+        sql = _run("weekly_followup_planned_customers", _make_current_user("Admin"), target, "2026-Q3")
         assert "min(reminder.due_date)" in sql
         assert "reminder.is_completed = false" in sql
         assert f"reminder.assigned_to_user_id = '{_uuid_literal(target)}'" in sql
 
     def test_hospital_with_no_activity_still_listed(self):
-        sql = _run("weekly_followup_planned_hospitals", _make_current_user("Admin"), uuid.uuid4(), "2026-Q3")
+        sql = _run("weekly_followup_planned_customers", _make_current_user("Admin"), uuid.uuid4(), "2026-Q3")
         assert sql.count("LEFT OUTER JOIN") >= 2
 
     def test_sales_staff_cannot_see_someone_else(self):
         current_user = _make_current_user("Sales Staff")
-        sql = _run("weekly_followup_planned_hospitals", current_user, uuid.uuid4(), "2026-Q3")
+        sql = _run("weekly_followup_planned_customers", current_user, uuid.uuid4(), "2026-Q3")
         assert f"user_profile.id = '{_uuid_literal(current_user.id)}'" in sql
 
 

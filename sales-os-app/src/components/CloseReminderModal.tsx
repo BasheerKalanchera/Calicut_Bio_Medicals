@@ -159,12 +159,12 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
   // Plan D14: the server returns only that person's, at that level.
   const levelPersonId = reminderProp?.assigned_to_user_id;
   const { data: openAtLevel = [] } = useQuery({
-    queryKey: ["account-reminders", levelAccountId, "level", levelProjectId ?? "hospital", levelPersonId],
+    queryKey: ["account-reminders", levelAccountId, "level", levelProjectId ?? "customer", levelPersonId],
     enabled: isOpen && plainClose && !closeChoices && !!reminderProp && !opportunityId
       && !!levelAccountId && !!levelPersonId,
     queryFn: () => listAccountReminders(levelAccountId!, {
       assignedToUserId: levelPersonId,
-      ...(levelProjectId ? { projectId: levelProjectId } : { hospitalLevelOnly: true }),
+      ...(levelProjectId ? { projectId: levelProjectId } : { customerLevelOnly: true }),
     }),
   });
   const sameLevelChoices = (reminderProp && !opportunityId
@@ -194,8 +194,8 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
   // "Hospital level" here means no Opportunity: it covers Project-level next
   // actions too (hospital-next-action plan D12), whose new Opportunity is
   // created under that Project.
-  const isHospitalLevel = plainClose && !!reminder && !opportunityId;
-  const projectId = isHospitalLevel ? reminder?.activity.project?.id : undefined;
+  const isCustomerLevel = plainClose && !!reminder && !opportunityId;
+  const projectId = isCustomerLevel ? reminder?.activity.project?.id : undefined;
 
   const { data: users = [] } = useQuery({
     queryKey: ["users", "assignable"],
@@ -576,7 +576,7 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
 
           {activeTab === "followUp" && (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {isHospitalLevel && (
+              {isCustomerLevel && (
                 <FormControlLabel
                   control={
                     <Checkbox
@@ -650,7 +650,7 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
         </Box>
       </FormModal>
 
-      {isHospitalLevel && accountId && (
+      {isCustomerLevel && accountId && (
         <QuickLeadModal
           isOpen={showNewOpportunity}
           onClose={handleNewOpportunityClosed}
