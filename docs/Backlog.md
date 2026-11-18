@@ -395,6 +395,27 @@ first whether to do this app-wide. Code: `TargetPlanningScreen.tsx`
 - **Code pointers:** pop-up resets on open at `CloseReminderModal.tsx:220-242` (next action text and due date don't read `initial` yet); save re-run at `OpportunityDetailScreen.tsx:2052-2058`.
 - **Then:** Build & Test, a `fix:` commit, once the Customer Wording E2E is complete (same screen file; Basheer will ask that session, 17 Nov). Small E2E: miss the Demo Start Date, see the line, Cancel, fill it, Save — history and follow-up still there.
 
+### Product prices: four small follow-ups from the pre-E2E review — not started (Basheer, 2026-11-18)
+
+Found in the pre-E2E review of `docs/Product-Pricing-And-Cost-Implementation-Plan.md`
+steps 1–3. Pick up when prices are in real use.
+- **Two Admins editing one product at once can overwrite each other's
+  prices** — the second save wins without warning. Accepted for now: it will be
+  rare (Basheer, 2026-11-18). Fix later if it happens: refuse a save made on
+  an out-of-date copy of the product.
+- **One extra product lookup per Opportunity line** — each line asks the
+  server for its product's prices separately. Fine at today's sizes; make one
+  call for all lines if a long Opportunity feels slow.
+- **"No prices" arrives in two shapes** — the server sends nothing (null)
+  for a role that may see none (Marketing User, or anyone but General Manager
+  and Admin on the list), but an empty block (`{}`) for a role that may see
+  prices when none are entered yet. The screens treat both as "draw nothing".
+  Settle one meaning next time the product shape changes.
+- **The role lists are written out in more than one place** (who edits prices;
+  which role sees which levels, on the server and in the screens' wording).
+  Fold into one list per side when a fourth role (an own SBU Manager level,
+  plan D3) is added.
+
 ### Sales Loss Report — why Cabio loses business — decided name and first filter, plan not started (Basheer, 2026-11-13)
 
 **Decided (Basheer, 2026-11-13):** the signed "Competitive Loss Report"

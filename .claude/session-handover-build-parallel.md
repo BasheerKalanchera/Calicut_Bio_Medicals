@@ -7,42 +7,39 @@ and Build & Test keep their own notes (`.claude/session-handover-plan.md`,
 note. While a `/build` worktree exists, the live copy is the one in it, on
 the build branch, and reaches `main` at the merge (Basheer, 2026-10-17)._
 
-## In progress (5 Nov): Customer with No Activity — merged, applied, awaiting E2E
-- Plan `docs/Exception-Report-Implementation-Plan.md` (Approved, D1–D15).
-  Built: `0741c02`, `31747a1`, review fix `a0c5a05`. Merged into `main` as
-  `28112eb`, pushed 5 Nov (tests on the merged copy: pytest 1547 passed,
-  tsc clean, lint 0 errors).
-- **Migration 0065 applied to Dev 5 Nov** by Basheer (his `alembic upgrade
-  head`); `alembic current` = `0065 (head)`. `docs/Physical-Schema.sql`
-  regenerated (new function `cabio_app_account_last_contact` only). Backlog
-  entry "Exception report: zero lead activity over 3 months" removed.
-- **Docs batch for the merge** (this note, plan Status, Backlog,
-  Physical-Schema, Progress-Archive) committed and pushed as `b5fe33a`.
-- **E2E started 5 Nov by Build & Test** (`14ccf77`): 4 of 37 Pass so far
-  (P1, P2, A1, A2), D16 caption decided, a My Work fix `ec8b9e2`. **Next:**
-  the rest of the 37 steps (section C writes permanent test data on Dev,
-  shown to Basheer first). Fixes it finds come back here, each its own
-  shown-first commit.
-- The `worktree-build` branch/folder still exists (kept). Before the next
-  build: `git merge main` into it (its uncommitted copy of this note is
-  stale; discard it).
+## In progress (18 Nov): Product pricing and cost — built, reviewed, docs batch waiting for his yes
+- Plan `docs/Product-Pricing-And-Cost-Implementation-Plan.md` (Approved,
+  D1–D15; only step 4, loading Haroon's pricing sheet, waits on him).
+  E2E plan: `docs/Product-Pricing-And-Cost-Manual-E2E-Test-Plan.md`
+  (P3 done; P4 data check still to do just before the E2E).
+- Branch `worktree-build`, pushed to `b52c881`: steps 1–3 (`ed987f4`,
+  `060eb3d`, `8ff9e20`), price-order check (`82cafba`, D15), bold fix
+  (`b52c881`), MUI hook fix (`2dd873d`). Backend pytest 1621 pass; ruff,
+  tsc, lint clean. Migration `0066` written, not applied (0065 is the head
+  on `main`); apply to Dev only after the merge.
+- **Docs batch written, not committed (18 Nov):** E2E plan, plan, Business-Rules
+  (BR-CAT-01/04/05/06), matrix, Backlog (four follow-ups), Process-Improvements
+  P106, Progress-Archive entry, this note. Still to do: show the retro in chat,
+  write it to the archive, then show the commit (file list + message) and wait
+  for his yes. Traceability rows 4.3, 11.1 and beyond-contract row 1 are
+  client-visible: diff shown first, `cabio-post-commit` loaded first.
+- **Open to ask Basheer:** the competitor placeholder "GE LOGIQ P9" in
+  `OpportunityItemAddRow.tsx` (~line 131) breaks the SonoScape example rule.
+- **Next, only on Basheer's go:** merge. Bring `main` in (expect clashes in
+  `api-aliases.ts` and the archive; `176ec74` touches
+  `OpportunityDetailScreen.tsx`, `QuickLeadModal.tsx`), rebuild `api.ts`,
+  re-run tests, push, `ExitWorktree` with `keep`, merge to `main`, apply
+  `0066` to Dev, regenerate `docs/Physical-Schema.sql`, `cabio-post-commit`.
+  Then `/test` runs the E2E.
+- Tests: main's interpreter from the worktree `backend/`; frontend
+  `npx --prefix sales-os-app tsc --noEmit -p sales-os-app` and
+  `npm --prefix sales-os-app run lint`.
 
 ## Carried over
-- **MUI round 1 Part 1:** steps 1–7 done (last `5c26ed3`); step 8 (21
-  "after" screenshots, before-and-after page, combined E2E) is Build &
-  Test's. Plan: `docs/MUI-Good-Practice-Implementation-Plan.md`.
+- **MUI round 1 Part 1:** steps 1–7 done; step 8 is Build & Test's. Plan:
+  `docs/MUI-Good-Practice-Implementation-Plan.md`.
 - Still open from 1 Nov: check the "Me (default)" wording in Frontend
   standards and Process-Improvements (Backlog block "Found in MUI round 1
   steps 5–7").
 - **To tell Plan & Chore (via Basheer):** add ◀ and "← Back" to
-  `check-mui-standard.js`; the commit check prints "no staged .ts/.tsx
-  files" even when some are staged (seen again 4 Nov on `a0c5a05`).
-- **Merging with another session's uncommitted docs:** the 5 Nov merge was
-  blocked by Build & Test's uncommitted Progress-Archive edits; Basheer had
-  it commit first. That file's mixed line endings make git clash on the
-  whole file when both sides append; fix by normalising endings, 3-way
-  merge, keep both sides.
-- **After the E2Es (Build & Test's):** `cabio-post-commit` paperwork
-  (Traceability row 11.1, scorecard, plan Status). User manual and in-app
-  help wait for the UAT move (Simpler Table D8).
-- Migration number last chosen: 0065 (applied to Dev 5 Nov).
+  `check-mui-standard.js`.
