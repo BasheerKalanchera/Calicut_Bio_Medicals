@@ -12,14 +12,14 @@ session edits this note._
   ahead of a full promotion go by the hotfix-branch route
   (`docs/Deployment-Topology.md` "Fix to UAT ahead of a full promotion").
 
-## NOW (18 Nov) — nothing in progress; Customer Wording is finished
-Customer Wording: all three commits pushed (`2d2939d`, `46c4214`, `176ec74`),
-E2E 38 of 38 Pass, post-commit checklist and retro written
-(Progress-Archive-2026-11, 18 Nov "Build & Test (restarted)").
+## NOW (18 Nov) — nothing in progress; "Why this change?" fix pushed
+Haroon's "Why this change?" fix: `2ee250c` pushed, E2E 11 of 11 Pass
+(Progress-Archive-2026-11, 18 Nov). Its docs batch (this note, archive entry,
+Backlog entry trimmed to the held-back idea, retro) is written but may still
+be uncommitted — check `git status`.
 **Next (fresh session, `/build-and-test restarted`):** Basheer decides.
-Candidates: (1) Haroon's "Why this change?" fix (Backlog entry; he asks this
-session now the wording E2E is done); (2) if the parallel Build session has
-merged pricing steps 1–3, its E2E (`docs/Product-Pricing-And-Cost-Manual-E2E-Test-Plan.md`).
+Candidate: if the parallel Build session has merged pricing steps 1–3, its
+E2E (`docs/Product-Pricing-And-Cost-Manual-E2E-Test-Plan.md`).
 If Build merges before the next pull, `api.ts` may need regenerating
 (`sh .githooks/check-api-types.sh --write`). Pending for Basheer: send Plan &
 Chore the ask to group E2E steps by login (wording drafted 18 Nov).
