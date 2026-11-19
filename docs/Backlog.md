@@ -43,6 +43,29 @@ about any line older than 14 days (Basheer, 2026-10-16).
 
 ## Parked initiatives
 
+### Opportunity data habits: re-run the case-study scan on UAT — parked to the week of 26 Nov (Basheer, 2026-11-19)
+
+Two anonymised case studies and best practices went to the Area Managers'
+WhatsApp group on 19 Nov; managers now review their teams' Opportunities
+against them. Findings from the 19 Nov scan are parked (detail: archive
+19 Nov, Plan & Chore).
+- **Next (week of 26 Nov):** re-run the scan read-only on UAT (ask
+  Basheer first), compare with the 19 Nov counts — of 244 non-Lost
+  Opportunities: closing date passed 36, stage skipped or Won in the
+  same save 30, possible duplicates 14, Won without payment
+  confirmation 39 (mostly before the 25 Oct gate).
+- **Second round of case studies: good examples** (positive
+  reinforcement). The 19 Nov good-example test found none — loosen it
+  (e.g. ignore a passed closing date) before the re-run. An Opportunity
+  that follows nearly all the best practices (about 95 %) is good enough;
+  name the one small gap kindly, as a tip, so the example still shows
+  what a good Opportunity looks like (Basheer, 2026-11-19).
+- The scan script is in the 19 Nov session's scratchpad
+  (`uat_case_study_candidates.py`), which can be cleared; copy it into
+  `scripts/` before the re-run (Basheer's yes).
+- The manager weekly-check message (drafted 19 Nov) was not sent; offer
+  it again with the re-run results.
+
 ### Query load fixes — fixes 1–3 on UAT; fix 4 low priority, no date (2026-10-06)
 
 Eight screens fetch far more than they show (the cause of the Next Actions
