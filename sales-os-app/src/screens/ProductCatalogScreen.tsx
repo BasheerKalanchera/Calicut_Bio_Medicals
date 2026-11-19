@@ -25,9 +25,26 @@ import useDebouncedValue from "../hooks/useDebouncedValue";
 import FormModal from "../components/FormModal";
 import ConfirmDialog from "../components/ConfirmDialog";
 import { shadows } from "../theme/shadows";
-import type { ProductListResponse, ProductResponse, DocumentResponse, BrandResponse, CategoryResponse, ModelResponse } from "../types/api-aliases";
+import { formatPriceLakhs } from "../utils/formatter";
+import { lowestPriceFor, lowestWording } from "../utils/productPrices";
+import type { ProductListResponse, ProductResponse, ProductPricesShape, DocumentResponse, BrandResponse, CategoryResponse, ModelResponse } from "../types/api-aliases";
 
 const CATALOG_WRITE_ROLES = new Set(["General Manager", "Admin"]);
+
+// Price and cost boxes on the Add / Edit pop-ups (GM and Admin only, plan D6, D8).
+// The keys are the server's field names; amounts are INR Lakhs.
+const PRICE_FIELDS = [
+  { key: "full_price_lakhs", label: "Full price" },
+  { key: "rep_floor_lakhs", label: "Rep's lowest" },
+  { key: "area_manager_floor_lakhs", label: "Area Manager's lowest" },
+  { key: "ceo_floor_lakhs", label: "Haroon's lowest" },
+  { key: "cost_lakhs", label: "Cost" },
+] as const;
+
+const LOWEST_KEYS = new Set<string>(["rep_floor_lakhs", "area_manager_floor_lakhs", "ceo_floor_lakhs"]);
+
+// A price box holds a number of lakhs: 0 or more, up to 2 decimals.
+const PRICE_PATTERN = /^\d{1,13}(\.\d{1,2})?$/;
 
 // Shared by the inline "+ Add new brand/model/category" mutations below,
 // same shape as CollateralLinksCard.handleAddLink's inline catch -- surfaces
@@ -48,6 +65,11 @@ const EMPTY_FORM = {
   model_id: "",
   description: "",
   product_type: "NEW_EQUIPMENT",
+  full_price_lakhs: "",
+  rep_floor_lakhs: "",
+  area_manager_floor_lakhs: "",
+  ceo_floor_lakhs: "",
+  cost_lakhs: "",
 };
 
 // BR-CAT-02 — Product Lifecycle: Trade-Ins, Refurbished Inventory, Accessories.
@@ -72,6 +94,56 @@ function sbuChipSx(sbuName: string) {
   return sbuName === "Imaging"
     ? { bgcolor: "indigo.50", color: "indigo.700", borderColor: "indigo.200" }
     : { bgcolor: "rose.50", color: "rose.700", borderColor: "rose.200" };
+}
+
+// "Full ₹35L · Cost ₹24L" under a product on the catalog list. The server sends
+// prices on the list to General Manager and Admin only, so for everyone else
+// `prices` is absent and nothing is drawn. Only entered figures are shown.
+function ListPriceLine({ prices }: { prices: ProductPricesShape | null | undefined }) {
+  const parts = [
+    prices?.full_price_lakhs != null && `Full ${formatPriceLakhs(prices.full_price_lakhs)}`,
+    prices?.cost_lakhs != null && `Cost ${formatPriceLakhs(prices.cost_lakhs)}`,
+  ].filter(Boolean);
+  if (parts.length === 0) return null;
+  return (
+    <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5, fontWeight: 700 }}>
+      {parts.join(" · ")}
+    </Typography>
+  );
+}
+
+// One product's page (plan D4): the prices this person may see. General Manager
+// and Admin get every level and the cost under their own names; everyone else
+// gets the full price and their own lowest. The server sends only what the
+// caller may see (BR-CAT-04), so a role that sees none gets no card, and a
+// figure not entered yet is left out.
+function ProductPricesCard({ prices, roleName }: { prices: ProductPricesShape | null | undefined; roleName: string | undefined }) {
+  if (!prices) return null;
+  const rows: { label: string; value: string | number | null | undefined }[] = CATALOG_WRITE_ROLES.has(roleName ?? "")
+    ? PRICE_FIELDS.map((f) => ({ label: f.label, value: prices[f.key] }))
+    : [
+        { label: "Full price", value: prices.full_price_lakhs },
+        { label: lowestWording(roleName).line.replace(/^./, (c) => c.toUpperCase()), value: lowestPriceFor(prices) },
+      ];
+  const shown = rows.filter((r) => r.value != null);
+  if (shown.length === 0) return null;
+  return (
+    <Box sx={{ bgcolor: "background.paper", borderRadius: "1rem", boxShadow: shadows.sm, border: "1px solid", borderColor: "gray.100", p: 2.5, mt: 2 }}>
+      <Typography variant="overline" sx={{ color: "text.secondary", fontWeight: 800, letterSpacing: "0.15em", display: "block", mb: 2 }}>
+        Prices
+      </Typography>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        {shown.map((r) => (
+          <Box key={r.label}>
+            <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 800, textTransform: "uppercase", display: "block", mb: 0.5 }}>
+              {r.label}
+            </Typography>
+            <Typography sx={{ fontWeight: 700 }}>{formatPriceLakhs(r.value as string | number)}</Typography>
+          </Box>
+        ))}
+      </Box>
+    </Box>
+  );
 }
 
 function CollateralLinksCard({ productId, canEdit }: { productId: string; canEdit: boolean }) {
@@ -251,6 +323,7 @@ function ProductDetail({
   onEdit: (product: ProductResponse) => void;
   canEdit: boolean;
 }) {
+  const { userProfile } = useAuth();
   const { data: product, isLoading, isError, refetch } = useQuery({
     queryKey: ["product", productId],
     queryFn: () => getProduct(productId) as Promise<ProductResponse>,
@@ -331,6 +404,8 @@ function ProductDetail({
           </Box>
         </Box>
 
+        <ProductPricesCard prices={product.prices as ProductPricesShape | null | undefined} roleName={userProfile?.role_name} />
+
         <CollateralLinksCard productId={productId} canEdit={canEdit} />
       </Box>
     </Box>
@@ -389,24 +464,58 @@ export default function ProductCatalogScreen() {
 
   const openEdit = (product: ProductResponse) => {
     setEditingProduct(product);
+    const prices = (product.prices ?? {}) as ProductPricesShape;
     setForm({
       sbu_id: product.sbu_id,
       brand_id: product.brand_id,
       model_id: product.model_id,
       description: product.description ?? "",
       product_type: product.product_type,
+      full_price_lakhs: prices.full_price_lakhs ?? "",
+      rep_floor_lakhs: prices.rep_floor_lakhs ?? "",
+      area_manager_floor_lakhs: prices.area_manager_floor_lakhs ?? "",
+      ceo_floor_lakhs: prices.ceo_floor_lakhs ?? "",
+      cost_lakhs: prices.cost_lakhs ?? "",
     });
     setDialogMode("edit");
   };
 
   const closeDialog = () => setDialogMode(null);
 
+  // An empty price box is sent as null: on Add that means "not entered", on
+  // Edit it clears the saved figure (the server treats an explicit null so).
   const buildPayload = () => ({
     sbu_id: form.sbu_id,
     model_id: form.model_id,
     description: form.description.trim() || null,
     product_type: form.product_type,
+    ...Object.fromEntries(PRICE_FIELDS.map(({ key }) => [key, form[key].trim() || null])),
   });
+
+  const checkPrices = () => {
+    for (const { key, label } of PRICE_FIELDS) {
+      const value = form[key].trim();
+      if (value && !PRICE_PATTERN.test(value)) {
+        throw new Error(`${label} must be an amount in lakhs, 0 or more, with up to 2 decimals`);
+      }
+    }
+    // Price order (plan D15) -- the server checks the same rule; this shows the
+    // message at once. Full >= Rep's >= Area Manager's >= Haroon's >= Cost,
+    // equal allowed, the three lowest all-or-none and needing the Full price.
+    const entered = PRICE_FIELDS.filter(({ key }) => form[key].trim() !== "");
+    const lowestCount = entered.filter(({ key }) => LOWEST_KEYS.has(key)).length;
+    if (lowestCount > 0 && lowestCount < LOWEST_KEYS.size) {
+      throw new Error("Enter all three lowest prices (Rep's, Area Manager's and Haroon's), or leave all three blank");
+    }
+    if (lowestCount > 0 && form.full_price_lakhs.trim() === "") {
+      throw new Error("Enter the Full price too, the lowest prices need it");
+    }
+    for (let i = 1; i < entered.length; i += 1) {
+      if (Number(form[entered[i].key]) > Number(form[entered[i - 1].key])) {
+        throw new Error(`${entered[i].label} can't be more than ${entered[i - 1].label}`);
+      }
+    }
+  };
 
   const handleSaved = () => {
     invalidateProducts();
@@ -418,6 +527,7 @@ export default function ProductCatalogScreen() {
   const handleCreate = async () => {
     if (!form.sbu_id) throw new Error("SBU is required");
     if (!form.model_id) throw new Error("Model is required");
+    checkPrices();
     await createProduct(buildPayload());
     handleSaved();
   };
@@ -426,6 +536,7 @@ export default function ProductCatalogScreen() {
     if (!editingProduct) return;
     if (!form.sbu_id) throw new Error("SBU is required");
     if (!form.model_id) throw new Error("Model is required");
+    checkPrices();
     await updateProduct(editingProduct.id, buildPayload());
     handleSaved();
   };
@@ -596,6 +707,7 @@ export default function ProductCatalogScreen() {
                           <Chip label={product.category.name} size="small" variant="outlined" sx={{ height: 20, typography: "caption2" }} />
                         )}
                       </Box>
+                      <ListPriceLine prices={product.prices as ProductPricesShape | null | undefined} />
                     </Box>
                   </Box>
                   <Box data-part="product-chevron-box" sx={{ bgcolor: "background.default", p: 1, borderRadius: "0.75rem", flexShrink: 0, ml: 1, transition: "background-color 0.15s" }}>
@@ -913,6 +1025,33 @@ function ProductFormFields({
         fullWidth
         size="small"
       />
+
+      {canManageCatalog && (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, p: 1.5, bgcolor: "gray.50", borderRadius: "0.75rem" }}>
+          <Box>
+            <Typography variant="overline" sx={{ color: "text.secondary", fontWeight: 800, letterSpacing: "0.15em", display: "block" }}>
+              Prices
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              In ₹ Lakhs, up to 2 decimals. Leave a box empty if not set.
+            </Typography>
+          </Box>
+          {PRICE_FIELDS.map(({ key, label }) => (
+            <TextField
+              key={key}
+              label={label}
+              value={form[key]}
+              onChange={(e) => set(key, e.target.value)}
+              fullWidth
+              size="small"
+              slotProps={{
+                htmlInput: { inputMode: "decimal" },
+                input: { startAdornment: <InputAdornment position="start">₹</InputAdornment>, endAdornment: <InputAdornment position="end">L</InputAdornment> },
+              }}
+            />
+          ))}
+        </Box>
+      )}
     </>
   );
 }

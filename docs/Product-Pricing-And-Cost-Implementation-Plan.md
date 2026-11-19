@@ -3,6 +3,10 @@
 **Status:** Approved 2026-11-16 (Basheer). Haroon asked for it on priority
 (phone call to Basheer, 16 Nov). Steps 1–3 are built without waiting for
 Haroon's pricing sheet (D14, 18 Nov); only step 4 (loading it) waits.
+**Progress (18 Nov 2026):** steps 1–3 built and pushed on branch
+`worktree-build`, pre-E2E review done and its fixes in; not merged to `main`
+and migration 0066 not applied to Dev yet (after the merge). E2E:
+`docs/Product-Pricing-And-Cost-Manual-E2E-Test-Plan.md`.
 **Traceability rows:** 4.3 Revenue per product/brand analytics (Margin
 part), 11.1 Core reports (Margin Report); beyond-contract row 1 (pricing
 ladder, parked for Phase 2 on 16 Oct — this plan takes only a first slice
@@ -19,7 +23,10 @@ of it).
   Area Manager's lowest, Haroon's lowest — Basheer, 2026-11-16
 - D3. Who sees which price: each person sees the full price and only their
   own lowest; SBU Manager sees the Area Manager's lowest; Haroon, GM and
-  Admin see all four — Basheer, 2026-11-16
+  Admin see all four — Basheer, 2026-11-16. Confirmed 2026-11-18: the SBU
+  Manager sees the Area Manager's lowest for now (Cabio has no SBU Manager
+  at present); an own SBU Manager level can be added later as one more
+  price column
 - D4. Where prices are shown: on the Opportunity, when a product is added
   or edited on a line, and on the Product Catalog's product page when one
   product is opened — one product at a time, never in the catalog list
@@ -31,15 +38,19 @@ of it).
 - D5. Show only, no block: a price below the person's lowest is still
   saved; the line shows a warning — Basheer, 2026-11-16
 - D6. Who edits prices: GM and Admin only, on the Product Catalog's
-  product pop-up — Basheer, 2026-11-16
+  product pop-up — Basheer, 2026-11-16. The same price boxes are on the
+  Add Product pop-up too, so a new product can be priced when it is added
+  — Basheer, 2026-11-18
 - D7. First load: Claude loads Haroon's sheet once, from the file he
   sends, Dev first, then UAT after Basheer's yes — Basheer, 2026-11-16
 - D8. Product cost: one cost field per product, seen and edited by GM and
   Admin only (BR-CAT-04, Haroon 14 Sep), built in the same feature —
   Basheer, 2026-11-16
-- D9. Cost screen: GM and Admin see cost and margin (full price minus cost)
-  on the Product Catalog; the Margin Report is a separate later plan —
-  Basheer, 2026-11-16
+- D9. Cost screen: GM and Admin see cost, not margin, on the Product Catalog.
+  A margin on the full price is only a best case; the real margin is the
+  price quoted on the Opportunity line minus cost, which belongs to the
+  separate later Margin Report plan — Basheer, 2026-11-18 (changed from
+  "cost and margin (full price minus cost)", 2026-11-16)
 - D10. Margin targets and incentives stay with the Cabio leadership team;
   this plan doesn't wait for them — Basheer, 2026-11-16
 - D11. Time-bound special prices (Latheef Bhai, 14 Sep) not in this plan —
@@ -52,6 +63,18 @@ of it).
   no probes, so one price set per product fits; probes priced separately
   would only add accessory products. Only step 4 waits on the sheet —
   Basheer, 2026-11-18
+- D15. Price order, checked on save (Add and Edit): Full price ≥ Rep's
+  lowest ≥ Area Manager's lowest ≥ Haroon's lowest ≥ Cost. Equal is allowed.
+  The three lowest prices are all-or-none (all entered or all blank), and
+  the Full price is required whenever they are entered; Full price may
+  stand alone. Cost is optional; when entered it is compared with the
+  nearest entered price above it. A save that breaks the order is refused
+  with a plain message.
+  Lines on an Opportunity stay warning-only (D5), so a rep can still type
+  a price below the lowest or below cost; the catalog levels themselves can
+  never sit below cost — Basheer, 2026-11-18 (found in the pre-E2E review;
+  two Admins saving the same product at the same moment can overwrite each
+  other's prices — accepted for now, Backlog)
 
 ## Figures and sources
 
@@ -103,8 +126,9 @@ screen, leaks all at once.
 
 **Product cost.** Each product also gets what it costs Cabio. Only the
 General Manager and Admin ever see it — the app never sends it to anyone
-else. On the Product Catalog they see cost and margin (full price minus
-cost) next to each product.
+else. On the Product Catalog they see the cost next to each product. Margin
+is not shown here: a margin on the full price is only a best case, and the
+real margin (quoted price minus cost) comes with the Margin Report (D9).
 
 **Who keeps prices up to date:** GM and Admin, on the Product Catalog's
 product pop-up. The first load comes from Haroon's sheet: Claude loads it
@@ -114,7 +138,7 @@ once, on Dev first, then on UAT after Basheer says yes.
 adding it sees "Full ₹35L · your lowest ₹33L". If they type ₹32L, the line
 shows "Below your lowest (₹33L) — get your Area Manager's approval". The
 Area Manager sees "your lowest ₹31L". The GM, on the Product Catalog, sees
-all four prices, cost ₹24L and margin ₹11L.
+all four prices and the cost, ₹24L.
 
 **A lighter option:** just upload Haroon's sheet as a file on the Product
 Catalog that everyone can open. Far less work, but it puts the whole price
@@ -131,12 +155,12 @@ recommended (D1).
   name, one line: "Full ₹35L · your lowest ₹33L" (each person's own
   lowest; Haroon, GM and Admin see all four). The catalog list shows no
   prices except the GM/Admin line below.
-- **Product Catalog, product pop-up (GM and Admin only):** a "Prices"
+- **Product Catalog, Add Product and Edit Product pop-ups (GM and Admin
+  only):** a "Prices"
   section, one box per row: Full price, Rep's lowest, Area Manager's
-  lowest, Haroon's lowest, Cost. Margin shows under Cost, read only.
+  lowest, Haroon's lowest, Cost. No margin shown (D9).
 - **Product Catalog list (GM and Admin only):** each product block gains
-  one line: "Full ₹35L · Cost ₹24L · Margin ₹11L". Other roles see no
-  change.
+  one line: "Full ₹35L · Cost ₹24L". Other roles see no change.
 
 ## 2. Build order
 
@@ -146,12 +170,18 @@ Basheer's yes.
 1. **Price and cost fields on products** (one migration, Dev). The server
    sends each role only the prices it may see (D3, D8). Tests for every
    role. Checkpoint commit. Nothing visible changes on Dev yet.
-2. **GM/Admin editing and the cost/margin line on the Product Catalog**
+   *Built: `ed987f4` (migration 0066 written, not applied).*
+2. **GM/Admin editing and the cost line on the Product Catalog**
    (D6, D9). Checkpoint commit. Prices can be typed in, but nobody sees
    them on Opportunities yet.
+   *Built: `060eb3d` (Add and Edit Product pop-ups, list line).*
 3. **Price line on one product's catalog page, and price line plus
    below-lowest warning on the Opportunity** (D4, D5). Checkpoint commit.
    Feature complete except the data.
+   *Built: `8ff9e20` (Prices card on one product's page; line and warning on
+   Opportunity lines and in the New Opportunity pop-up, which opens from five
+   places). Pre-E2E review fixes: `82cafba` (price order checked on save, D15),
+   `b52c881` (product names bold again on the edit-products list).*
 4. **Load Haroon's sheet** (D7): a one-off script, run on Dev first, shown
    to Basheer; UAT only after his yes (UAT rule). Waits on the sheet.
 
@@ -178,8 +208,9 @@ checked as a rep, an Area Manager and the GM, before and after.
 
 ## 4. Not in this plan (with reasons)
 
-- **Margin Report** — a report of its own; separate plan once cost
-  exists (D9).
+- **Margin Report, and any margin figure** — a report of its own; separate
+  plan once cost exists. It will work margin on the quoted price on the
+  Opportunity line, not on the full price (D9).
 - **Selling to a set margin, incentives** — Cabio leadership team to
   decide first (D10).
 - **Time-bound special prices** — Latheef Bhai's second problem; needs its
@@ -192,9 +223,10 @@ checked as a rep, an Area Manager and the GM, before and after.
 
 ## 5. Business rules and records to update
 
-- BR-CAT-04: add the price levels and who sees which.
-- BR-CAT-01: the "no pricing" premise now carries price fields too.
-- New BR for the below-lowest warning.
+- BR-CAT-04: add the price levels and who sees which. *(done 18 Nov)*
+- BR-CAT-01: the "no pricing" premise now carries price fields too. *(done 18 Nov)*
+- New BR for the below-lowest warning (BR-CAT-05) and for the price order
+  (BR-CAT-06, D15). *(done 18 Nov)*
 - Traceability rows 4.3, 11.1 and beyond-contract row 1.
 - Backlog "Waiting on people": the leadership margin line stays; remove
   "lowest price shown on the Opportunity" once this plan is approved.
@@ -215,7 +247,8 @@ checked as a rep, an Area Manager and the GM, before and after.
   list call (`OpportunityDetailScreen.tsx:329`), so it gains a
   single-product call when a product is picked.
 - Warning compares `unit_price_lakhs - discount_lakhs / quantity` with the
-  caller's lowest (to confirm: does the lowest apply before or after the
-  line's discount?).
+  caller's lowest. Decided 2026-11-18 (Basheer, my recommendation
+  accepted): the lowest is compared after the line's discount, because that
+  is what the customer pays.
 - One-off load script from Haroon's sheet; Dev, then UAT after Basheer's
   yes (UAT rule).

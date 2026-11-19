@@ -5040,6 +5040,16 @@ export interface components {
             description?: string | null;
             /** @default NEW_EQUIPMENT */
             product_type: components["schemas"]["ProductType"];
+            /** Full Price Lakhs */
+            full_price_lakhs?: number | string | null;
+            /** Rep Floor Lakhs */
+            rep_floor_lakhs?: number | string | null;
+            /** Area Manager Floor Lakhs */
+            area_manager_floor_lakhs?: number | string | null;
+            /** Ceo Floor Lakhs */
+            ceo_floor_lakhs?: number | string | null;
+            /** Cost Lakhs */
+            cost_lakhs?: number | string | null;
         };
         /** ProductListResponse */
         ProductListResponse: {
@@ -5078,6 +5088,7 @@ export interface components {
             brand: components["schemas"]["BrandNested"];
             model: components["schemas"]["ModelNested"];
             category: components["schemas"]["CategoryNested"];
+            prices?: components["schemas"]["ProductPrices"] | null;
         };
         /** ProductPerformanceResponse */
         ProductPerformanceResponse: {
@@ -5108,6 +5119,7 @@ export interface components {
             /** Lost Count */
             lost_count: number;
         };
+        ProductPrices: unknown;
         /** ProductResponse */
         ProductResponse: {
             /**
@@ -5157,6 +5169,7 @@ export interface components {
             brand: components["schemas"]["BrandNested"];
             model: components["schemas"]["ModelNested"];
             category: components["schemas"]["CategoryNested"];
+            prices?: components["schemas"]["ProductPrices"] | null;
         };
         /**
          * ProductType
@@ -5172,6 +5185,16 @@ export interface components {
             /** Description */
             description?: string | null;
             product_type?: components["schemas"]["ProductType"] | null;
+            /** Full Price Lakhs */
+            full_price_lakhs?: number | string | null;
+            /** Rep Floor Lakhs */
+            rep_floor_lakhs?: number | string | null;
+            /** Area Manager Floor Lakhs */
+            area_manager_floor_lakhs?: number | string | null;
+            /** Ceo Floor Lakhs */
+            ceo_floor_lakhs?: number | string | null;
+            /** Cost Lakhs */
+            cost_lakhs?: number | string | null;
         };
         /** ProjectCreate */
         ProjectCreate: {

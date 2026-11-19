@@ -1,6 +1,7 @@
 import uuid
+from decimal import Decimal
 
-from sqlalchemy import UUID, Boolean, CheckConstraint, ForeignKey, Index, String, Text
+from sqlalchemy import UUID, Boolean, CheckConstraint, ForeignKey, Index, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import AuditMixin, Base
@@ -12,6 +13,14 @@ class Product(AuditMixin, Base):
         CheckConstraint(
             "product_type IN ('NEW_EQUIPMENT', 'REFURBISHED', 'ACCESSORY')",
             name="ck_product_product_type",
+        ),
+        CheckConstraint(
+            "(full_price_lakhs IS NULL OR full_price_lakhs >= 0)"
+            " AND (rep_floor_lakhs IS NULL OR rep_floor_lakhs >= 0)"
+            " AND (area_manager_floor_lakhs IS NULL OR area_manager_floor_lakhs >= 0)"
+            " AND (ceo_floor_lakhs IS NULL OR ceo_floor_lakhs >= 0)"
+            " AND (cost_lakhs IS NULL OR cost_lakhs >= 0)",
+            name="ck_product_prices_non_negative",
         ),
         Index("idx_product_name_trgm", "name", postgresql_using="gin", postgresql_ops={"name": "gin_trgm_ops"}),
     )
@@ -32,6 +41,14 @@ class Product(AuditMixin, Base):
     # on an Opportunity (docs/Product-Lifecycle-TradeIns-Accessories-Technical-Design.md).
     product_type: Mapped[str] = mapped_column(String(20), nullable=False, server_default="NEW_EQUIPMENT")
     is_active: Mapped[bool | None] = mapped_column(Boolean, server_default="true")
+    # Migration 0066 (docs/Product-Pricing-And-Cost-Implementation-Plan.md),
+    # INR Lakhs, all optional. Who may see each one is decided only in
+    # product/schemas.py (BR-CAT-04) -- never serialise these by hand.
+    full_price_lakhs: Mapped[Decimal | None] = mapped_column(Numeric(15, 2), nullable=True)
+    rep_floor_lakhs: Mapped[Decimal | None] = mapped_column(Numeric(15, 2), nullable=True)
+    area_manager_floor_lakhs: Mapped[Decimal | None] = mapped_column(Numeric(15, 2), nullable=True)
+    ceo_floor_lakhs: Mapped[Decimal | None] = mapped_column(Numeric(15, 2), nullable=True)
+    cost_lakhs: Mapped[Decimal | None] = mapped_column(Numeric(15, 2), nullable=True)
 
     sbu: Mapped["SBU"] = relationship(back_populates="products", lazy="joined")
     brand: Mapped["Brand"] = relationship(lazy="joined")

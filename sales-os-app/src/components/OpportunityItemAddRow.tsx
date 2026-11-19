@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Alert, Autocomplete, Box, Button, Chip, MenuItem, TextField, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import type { DraftOpportunityItem, OpportunityItemMode, ProductOption } from "../types/opportunityItems";
+import ProductPriceNote from "./ProductPriceNote";
 
 // 3-way add-row: Add Product (New Equipment + Refurbished, sold outright),
 // Add Accessory, Buyback (free-text description, subtracted — BR-CAT-03/BR-FIN-03).
@@ -64,14 +65,14 @@ export default function OpportunityItemAddRow({
   };
 
   return (
-    <Box sx={{ bgcolor: "#fff", p: 1.5, borderRadius: "1rem", border: "1px solid #f3f4f6", display: "flex", flexDirection: "column", gap: 1 }}>
+    <Box sx={{ bgcolor: "background.paper", p: 1.5, borderRadius: "1rem", border: "1px solid", borderColor: "gray.100", display: "flex", flexDirection: "column", gap: 1 }}>
       <ToggleButtonGroup
         value={addMode}
         exclusive
         onChange={(_e, newMode) => { if (newMode) switchAddMode(newMode); }}
         size="small"
         fullWidth
-        sx={{ border: "1px solid #e5e7eb", borderRadius: "0.75rem", overflow: "hidden" }}
+        sx={{ border: "1px solid", borderColor: "gray.200", borderRadius: "0.75rem", overflow: "hidden" }}
       >
         {(["product", "accessory", "buyback"] as const).map((mode) => (
           <ToggleButton
@@ -79,14 +80,14 @@ export default function OpportunityItemAddRow({
             value={mode}
             disableRipple
             sx={{
-              fontSize: "0.7rem", fontWeight: 800, textTransform: "none",
-              border: "none", color: "#9ca3af", bgcolor: "#fff",
+              typography: "caption2", fontWeight: 800, textTransform: "none",
+              border: "none", color: "gray.400", bgcolor: "background.paper",
               "&:hover": { bgcolor: "background.default" },
               "&.Mui-selected": {
-                bgcolor: mode === "buyback" ? "#dc2626" : "primary.main",
-                color: "#fff",
+                bgcolor: mode === "buyback" ? "red.600" : "primary.main",
+                color: "common.white",
               },
-              "&.Mui-selected:hover": { bgcolor: mode === "buyback" ? "#dc2626" : "primary.main" },
+              "&.Mui-selected:hover": { bgcolor: mode === "buyback" ? "red.600" : "primary.main" },
             }}
           >
             {mode === "product" ? "Add Product" : mode === "accessory" ? "Add Accessory" : "Buyback"}
@@ -140,16 +141,19 @@ export default function OpportunityItemAddRow({
         <TextField label={addMode === "buyback" ? "Credit ₹L" : "Price ₹L"} type="number" size="small" value={addPrice} onChange={(e) => { setAddPrice(e.target.value); setAddItemError(null); }} slotProps={{ htmlInput: { min: 0, step: "any" } }} sx={{ width: "7.5rem" }} />
         <TextField label="Disc ₹L" type="number" size="small" value={addDisc} onChange={(e) => { setAddDisc(e.target.value); setAddItemError(null); }} slotProps={{ htmlInput: { min: 0, step: "any" } }} sx={{ width: "7.5rem" }} />
       </Box>
-      {addItemError && <Alert severity="error" sx={{ fontSize: "0.75rem" }}>{addItemError}</Alert>}
+      {addMode !== "buyback" && addProdId && (
+        <ProductPriceNote productId={addProdId} quantity={Number(addQty)} unitPrice={Number(addPrice)} discount={Number(addDisc || 0)} />
+      )}
+      {addItemError && <Alert severity="error" sx={{ typography: "caption" }}>{addItemError}</Alert>}
       <Button
         onClick={addItem}
         fullWidth
         disableRipple
         sx={{
-          py: 1, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
-          color: addMode === "buyback" ? "#dc2626" : "primary.main",
-          bgcolor: addMode === "buyback" ? "#fef2f2" : "#eff6ff",
-          "&:hover": { bgcolor: addMode === "buyback" ? "#fee2e2" : "#dbeafe" },
+          py: 1, borderRadius: "0.75rem", typography: "caption", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
+          color: addMode === "buyback" ? "red.600" : "primary.main",
+          bgcolor: addMode === "buyback" ? "red.50" : "blue.50",
+          "&:hover": { bgcolor: addMode === "buyback" ? "red.100" : "blue.100" },
         }}
       >
         {addMode === "product" ? "+ Add Product" : addMode === "accessory" ? "+ Add Accessory" : "− Add Buyback"}
