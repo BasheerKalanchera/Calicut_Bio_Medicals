@@ -20,7 +20,7 @@ of it).
 - D1. Shape: price fields on each product (Basheer's 7 Nov idea), not an
   uploaded copy of Haroon's sheet — Basheer, 2026-11-16
 - D2. Price levels stored per product: full (quoting) price, rep's lowest,
-  Area Manager's lowest, Haroon's lowest — Basheer, 2026-11-16
+  Area Manager's lowest, CEO's lowest — Basheer, 2026-11-16 (label changed from "Haroon's lowest" to "CEO's lowest", Basheer, 2026-11-19)
 - D3. Who sees which price: each person sees the full price and only their
   own lowest; SBU Manager sees the Area Manager's lowest; Haroon, GM and
   Admin see all four — Basheer, 2026-11-16. Confirmed 2026-11-18: the SBU
@@ -64,7 +64,7 @@ of it).
   would only add accessory products. Only step 4 waits on the sheet —
   Basheer, 2026-11-18
 - D15. Price order, checked on save (Add and Edit): Full price ≥ Rep's
-  lowest ≥ Area Manager's lowest ≥ Haroon's lowest ≥ Cost. Equal is allowed.
+  lowest ≥ Area Manager's lowest ≥ CEO's lowest ≥ Cost. Equal is allowed.
   The three lowest prices are all-or-none (all entered or all blank), and
   the Full price is required whenever they are entered; Full price may
   stand alone. Cost is optional; when entered it is compared with the
@@ -81,10 +81,10 @@ of it).
 - Four price levels (quoting, Staff, Manager, CEO), plus discretionary
   pricing below the CEO level — Latheef Bhai, pricing paper section 1
   (Sep 2026)
-- Full price, rep's lowest, Area Manager's lowest, Haroon's lowest, edited
+- Full price, rep's lowest, Area Manager's lowest, CEO's lowest, edited
   by GM and Admin only — Basheer, 7 Nov (Progress-Archive-2026-11)
 - "Only Haroon's pricing sheet goes into the Product Catalog; reps,
-  managers and Haroon see the lowest price they may quote on the
+  managers and the CEO see the lowest price they may quote on the
   Opportunity" — Haroon via Basheer, 9 Nov (BR-CAT-04)
 - Product cost Admin/GM only, margin too — Haroon and Basheer, 14 Sep
   (BR-CAT-04)
@@ -93,7 +93,7 @@ of it).
 - Opportunity line already holds Qty, Price ₹L, Disc ₹L —
   `OpportunityItemAddRow.tsx:139-141`, read 16 Nov
 - SonoScape S70 at ₹35L full price, ₹33L rep's lowest, ₹31L Area
-  Manager's lowest, ₹29L Haroon's lowest, ₹24L cost — made-up example
+  Manager's lowest, ₹29L CEO's lowest, ₹24L cost — made-up example
 - Number of products to price — not counted (needs a Dev query; will ask
   first)
 - Haroon's sheet columns — not known; sheet not yet received
@@ -112,7 +112,7 @@ product to an Opportunity, the app shows them, for that one product, the
 full price and their own lowest. It does not show anyone else's lowest. If
 they type a price below their lowest, the app still saves it but shows a
 warning, so they know to get their manager's say-so. Area Managers see
-their own lowest the same way, and Haroon sees his.
+their own lowest the same way, and the CEO sees theirs.
 
 **Before there is an Opportunity.** A doctor or biomedical engineer may
 ask the price on a first visit. So the same two figures (full price and
@@ -143,7 +143,7 @@ all four prices and the cost, ₹24L.
 **A lighter option:** just upload Haroon's sheet as a file on the Product
 Catalog that everyone can open. Far less work, but it puts the whole price
 list in every rep's hands, which is the leak Latheef Bhai wants to stop,
-and it can't hide the Area Manager's or Haroon's lowest from reps. Not
+and it can't hide the Area Manager's or CEO's lowest from reps. Not
 recommended (D1).
 
 ### On a phone
@@ -158,7 +158,7 @@ recommended (D1).
 - **Product Catalog, Add Product and Edit Product pop-ups (GM and Admin
   only):** a "Prices"
   section, one box per row: Full price, Rep's lowest, Area Manager's
-  lowest, Haroon's lowest, Cost. No margin shown (D9).
+  lowest, CEO's lowest, Cost. No margin shown (D9).
 - **Product Catalog list (GM and Admin only):** each product block gains
   one line: "Full ₹35L · Cost ₹24L". Other roles see no change.
 
@@ -184,6 +184,11 @@ Basheer's yes.
    `b52c881` (product names bold again on the edit-products list).*
 4. **Load Haroon's sheet** (D7): a one-off script, run on Dev first, shown
    to Basheer; UAT only after his yes (UAT rule). Waits on the sheet.
+   The script must apply the same price-order rule as D15 to every row and
+   report the rows that break it, instead of loading them: a product saved
+   with prices out of order can't be edited in the catalog until they are
+   fixed, because every edit re-checks the order (Basheer, 2026-11-19, from
+   the pre-E2E review).
 
 Before step 1: nothing further — steps 1–3 no longer wait for the sheet
 (D14, 18 Nov). Before step 4: Haroon's sheet is in hand. D12 is met: the summary went to the Cabio leadership team's

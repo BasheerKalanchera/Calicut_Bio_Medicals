@@ -173,7 +173,7 @@ def _update_with(saved: dict, **sent):
 
 
 class TestPriceOrder:
-    """Plan D15: Full >= Rep >= Area Manager >= Haroon >= Cost; equal allowed;
+    """Plan D15: Full >= Rep >= Area Manager >= CEO >= Cost; equal allowed;
     the three lowest prices all-or-none and need the Full price."""
 
     def test_in_order_saves(self):
@@ -198,8 +198,8 @@ class TestPriceOrder:
         [
             ({"rep_floor_lakhs": Decimal("36.00")}, "Rep's lowest can't be more than Full price"),
             ({"area_manager_floor_lakhs": Decimal("32.00")}, "Area Manager's lowest can't be more than Rep's lowest"),
-            ({"ceo_floor_lakhs": Decimal("30.00")}, "Haroon's lowest can't be more than Area Manager's lowest"),
-            ({"cost_lakhs": Decimal("28.00")}, "Cost can't be more than Haroon's lowest"),
+            ({"ceo_floor_lakhs": Decimal("30.00")}, "CEO's lowest can't be more than Area Manager's lowest"),
+            ({"cost_lakhs": Decimal("28.00")}, "Cost can't be more than CEO's lowest"),
         ],
     )
     def test_each_link_of_the_ladder_is_checked(self, swap, message):
@@ -241,8 +241,8 @@ class TestPriceOrder:
     def test_edit_is_checked_against_the_saved_levels(self):
         from app.core.exceptions import ValidationError as AppValidationError
 
-        # Only Haroon's lowest is sent; the saved Area Manager's lowest is 29.
-        with pytest.raises(AppValidationError, match="Haroon's lowest can't be more than Area Manager's lowest"):
+        # Only the CEO's lowest is sent; the saved Area Manager's lowest is 29.
+        with pytest.raises(AppValidationError, match="CEO's lowest can't be more than Area Manager's lowest"):
             _update_with(_PRICES, ceo_floor_lakhs=Decimal("30.00"))
 
     def test_edit_that_keeps_the_order_saves(self):

@@ -10,13 +10,13 @@ from app.domains.product.schemas import ProductCreate, ProductUpdate
 _CATALOG_WRITE_ROLES = {"General Manager", "Admin"}
 
 # The price ladder, highest first (plan D15): Full price >= Rep's lowest >=
-# Area Manager's lowest >= Haroon's lowest >= Cost. Names match the Add/Edit
+# Area Manager's lowest >= CEO's lowest >= Cost. Names match the Add/Edit
 # pop-up's boxes.
 _PRICE_LADDER = (
     ("full_price_lakhs", "Full price"),
     ("rep_floor_lakhs", "Rep's lowest"),
     ("area_manager_floor_lakhs", "Area Manager's lowest"),
-    ("ceo_floor_lakhs", "Haroon's lowest"),
+    ("ceo_floor_lakhs", "CEO's lowest"),
     ("cost_lakhs", "Cost"),
 )
 _LOWEST_FIELDS = ("rep_floor_lakhs", "area_manager_floor_lakhs", "ceo_floor_lakhs")
@@ -30,7 +30,7 @@ def _check_price_order(prices: dict[str, Decimal | None]) -> None:
     lowest_entered = [prices[f] is not None for f in _LOWEST_FIELDS]
     if any(lowest_entered) and not all(lowest_entered):
         raise ValidationError(
-            "Enter all three lowest prices (Rep's, Area Manager's and Haroon's), or leave all three blank"
+            "Enter all three lowest prices (Rep's, Area Manager's and CEO's), or leave all three blank"
         )
     if any(lowest_entered) and prices["full_price_lakhs"] is None:
         raise ValidationError("Enter the Full price too, the lowest prices need it")

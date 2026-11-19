@@ -4,7 +4,7 @@ import type { ProductPricesShape } from "../types/api-aliases";
 // prices they may see (backend/app/domains/product/schemas.py), so "the lowest"
 // here is simply the smallest lowest-price that arrived. A rep gets one, an Area
 // Manager one, the General Manager and Admin all three (warned against the
-// smallest, Haroon's -- Basheer, 2026-11-18).
+// smallest, the CEO's -- Basheer, 2026-11-18).
 export function lowestPriceFor(prices: ProductPricesShape | null | undefined): number | null {
   if (!prices) return null;
   const floors = [prices.rep_floor_lakhs, prices.area_manager_floor_lakhs, prices.ceo_floor_lakhs]

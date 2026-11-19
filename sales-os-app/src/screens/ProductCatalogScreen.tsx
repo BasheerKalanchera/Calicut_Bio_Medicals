@@ -37,7 +37,7 @@ const PRICE_FIELDS = [
   { key: "full_price_lakhs", label: "Full price" },
   { key: "rep_floor_lakhs", label: "Rep's lowest" },
   { key: "area_manager_floor_lakhs", label: "Area Manager's lowest" },
-  { key: "ceo_floor_lakhs", label: "Haroon's lowest" },
+  { key: "ceo_floor_lakhs", label: "CEO's lowest" },
   { key: "cost_lakhs", label: "Cost" },
 ] as const;
 
@@ -500,12 +500,12 @@ export default function ProductCatalogScreen() {
       }
     }
     // Price order (plan D15) -- the server checks the same rule; this shows the
-    // message at once. Full >= Rep's >= Area Manager's >= Haroon's >= Cost,
+    // message at once. Full >= Rep's >= Area Manager's >= CEO's >= Cost,
     // equal allowed, the three lowest all-or-none and needing the Full price.
     const entered = PRICE_FIELDS.filter(({ key }) => form[key].trim() !== "");
     const lowestCount = entered.filter(({ key }) => LOWEST_KEYS.has(key)).length;
     if (lowestCount > 0 && lowestCount < LOWEST_KEYS.size) {
-      throw new Error("Enter all three lowest prices (Rep's, Area Manager's and Haroon's), or leave all three blank");
+      throw new Error("Enter all three lowest prices (Rep's, Area Manager's and CEO's), or leave all three blank");
     }
     if (lowestCount > 0 && form.full_price_lakhs.trim() === "") {
       throw new Error("Enter the Full price too, the lowest prices need it");
