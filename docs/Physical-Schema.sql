@@ -11,8 +11,8 @@
 -- it is not consumed by Alembic or the application at runtime, and cannot be
 -- used as an `alembic stamp <rev>` checkpoint.
 --
--- Regenerated 2026-11-05 from the Dev database, catching up migration
--- 0065: cabio_app_account_last_contact(): last contact, logger and Active count per hospital
+-- Regenerated 2026-11-19 from the Dev database, catching up migration
+-- 0066: product: full price, three lowest prices and cost (INR Lakhs)
 -- See docs/Backend-Implementation-Standards.md's migration workflow.
 --
 -- Regenerate with: .\scripts\regen_physical_schema.ps1
@@ -22,7 +22,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict ky9OiwPSp8pkAdbKaOaosg6Juw8QFxN6DeMfRZfgxQa9zo5HwBiBhg0gbegbR43
+\restrict oOuI4Z8AfPd80lubOBZGpRHT8NElkQgsD4vtAZa10aT7PHe6KMqvzivyGOQMU2f
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.11 (Debian 17.11-1.pgdg13+2)
@@ -890,6 +890,12 @@ CREATE TABLE public.product (
     brand_id uuid NOT NULL,
     model_id uuid NOT NULL,
     category_id uuid NOT NULL,
+    full_price_lakhs numeric(15,2),
+    rep_floor_lakhs numeric(15,2),
+    area_manager_floor_lakhs numeric(15,2),
+    ceo_floor_lakhs numeric(15,2),
+    cost_lakhs numeric(15,2),
+    CONSTRAINT ck_product_prices_non_negative CHECK ((((full_price_lakhs IS NULL) OR (full_price_lakhs >= (0)::numeric)) AND ((rep_floor_lakhs IS NULL) OR (rep_floor_lakhs >= (0)::numeric)) AND ((area_manager_floor_lakhs IS NULL) OR (area_manager_floor_lakhs >= (0)::numeric)) AND ((ceo_floor_lakhs IS NULL) OR (ceo_floor_lakhs >= (0)::numeric)) AND ((cost_lakhs IS NULL) OR (cost_lakhs >= (0)::numeric)))),
     CONSTRAINT ck_product_product_type CHECK (((product_type)::text = ANY ((ARRAY['NEW_EQUIPMENT'::character varying, 'REFURBISHED'::character varying, 'ACCESSORY'::character varying])::text[])))
 );
 
@@ -4014,5 +4020,5 @@ CREATE POLICY target_plan_write ON public.target_plan FOR INSERT WITH CHECK ((us
 -- PostgreSQL database dump complete
 --
 
-\unrestrict ky9OiwPSp8pkAdbKaOaosg6Juw8QFxN6DeMfRZfgxQa9zo5HwBiBhg0gbegbR43
+\unrestrict oOuI4Z8AfPd80lubOBZGpRHT8NElkQgsD4vtAZa10aT7PHe6KMqvzivyGOQMU2f
 
