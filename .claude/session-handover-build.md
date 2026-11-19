@@ -12,14 +12,15 @@ session edits this note._
   ahead of a full promotion go by the hotfix-branch route
   (`docs/Deployment-Topology.md` "Fix to UAT ahead of a full promotion").
 
-## NOW (18 Nov) — nothing in progress; "Why this change?" fix pushed
+## NOW (18 Nov, end of day) — nothing in progress; "Why this change?" fix pushed
 Haroon's "Why this change?" fix: `2ee250c` pushed, E2E 11 of 11 Pass
-(Progress-Archive-2026-11, 18 Nov). Its docs batch (this note, archive entry,
-Backlog entry trimmed to the held-back idea, retro) is written but may still
-be uncommitted — check `git status`.
-**Next (fresh session, `/build-and-test restarted`):** Basheer decides.
-Candidate: if the parallel Build session has merged pricing steps 1–3, its
-E2E (`docs/Product-Pricing-And-Cost-Manual-E2E-Test-Plan.md`).
+(Progress-Archive-2026-11, 18 Nov); its docs batch is committed (`37b5b1b`).
+**Next (fresh session, `/build-and-test restarted`):** Basheer is asking the
+B session to merge Product pricing steps 1–3 into `main`. Once he says it
+has landed: check `git log` that it is on `main`, pull, then its E2E
+(`docs/Product-Pricing-And-Cost-Manual-E2E-Test-Plan.md`) — load
+`cabio-e2e-testing` first. Not merged as of the evening of 18 Nov
+(`worktree-build` at `060eb3d`).
 If Build merges before the next pull, `api.ts` may need regenerating
 (`sh .githooks/check-api-types.sh --write`). Pending for Basheer: send Plan &
 Chore the ask to group E2E steps by login (wording drafted 18 Nov).

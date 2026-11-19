@@ -2030,6 +2030,11 @@ edited in code and nothing was written to UAT.
   - **Pattern:** three slips came from writing a step from memory instead of the screen or rule; code was read for steps 8, 10 and 11 but not step 9 or the step 11 wording. Repeats the existing rule (2026-09-30, labels and checks from the code); no tracker row, no guard could have stopped it.
   - **Live data:** Dev read once, read-only, RLS settings verified; written only by Basheer's E2E clicks on "zz" test records ("zz NA E2E – project" is now permanently Lost).
 
+## 18 Nov 2026 — Build & Test (evening restart): nothing built, waiting on the pricing merge
+
+- Session opened with `/build-and-test`; git checked against the handover note (`main` = `origin/main` at `37b5b1b`, the "Why this change?" docs batch already committed). Product pricing steps 1–3 are not on `main` yet (still in the parallel Build copy, branch `worktree-build` at `060eb3d`). Basheer will ask the B session to merge them; this session starts the pricing E2E only after he says the merge has landed.
+- **Retro — corrections from Basheer this session: 0** (counted from his messages: the session start, "I will ask B session to merge…", "let's wind up"). No guard-stoppable slip, no live data touched.
+
 ## 18 Nov 2026 — Plan & Chore (afternoon): /build's commit-check fault reviewed, group-by-login E2E rule, August archive flag cleared
 
 - **Nothing due:** the start-up hook's output didn't reach Claude, so it was run once by hand; it printed nothing (backup and Harness review 18 Nov, tidy-up 17 Nov, DQ check paused).
