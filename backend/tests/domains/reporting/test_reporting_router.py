@@ -13,7 +13,7 @@ from app.api.dependencies import get_current_user
 from app.domains.organization.models import UserProfile
 from app.domains.reporting.router import _get_service
 from app.domains.reporting.schemas import (
-    WeeklyFollowupHospitalList,
+    WeeklyFollowupCustomerList,
     WeeklyFollowupNextActionList,
     WeeklyFollowupOpportunityList,
     WeeklyFollowupResponse,
@@ -39,7 +39,7 @@ def _empty_response(user_id: uuid.UUID, idle_days: int) -> WeeklyFollowupRespons
         user_id=user_id, idle_days=idle_days, today=date(2026, 10, 28), week_end=date(2026, 11, 1),
         high_priority=no_opps, closing_date_passed=no_opps, not_visited=no_opps,
         overdue_next_actions=no_actions, next_actions_this_week=no_actions,
-        planning_period="2026-Q3", planned_hospitals=WeeklyFollowupHospitalList(count=0, rows=[]),
+        planning_period="2026-Q3", planned_customers=WeeklyFollowupCustomerList(count=0, rows=[]),
     )
 
 
@@ -64,7 +64,7 @@ class TestWeeklyFollowupEndpoint:
         assert body["week_end"] == "2026-11-01"
         assert body["not_visited"] == {"count": 0, "value_lakhs": "0", "rows": []}
         assert body["planning_period"] == "2026-Q3"
-        assert body["planned_hospitals"] == {"count": 0, "rows": []}
+        assert body["planned_customers"] == {"count": 0, "rows": []}
         kwargs = mock_service.weekly_followup.call_args.kwargs
         assert kwargs == {"user_id": None, "idle_days": 30}
 

@@ -24,10 +24,10 @@ export async function searchZones(q: string): Promise<ZoneSearchResult[]> {
 
 // Add/Edit Hospital only -- scoped server-side to the rep's own territory
 // (Admin/GM still get the unrestricted search). See master_data.py's
-// search_zones_for_hospital for why this is a separate endpoint rather than
+// search_zones_for_customer for why this is a separate endpoint rather than
 // a flag on searchZones above.
-export async function searchZonesForHospital(q: string): Promise<ZoneSearchResult[]> {
-  const response = await api.get("/master-data/zones/search-for-hospital", { params: { q } });
+export async function searchZonesForCustomer(q: string): Promise<ZoneSearchResult[]> {
+  const response = await api.get("/master-data/zones/search-for-customer", { params: { q } });
   return response.data.data;
 }
 

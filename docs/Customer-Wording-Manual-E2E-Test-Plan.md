@@ -3,8 +3,9 @@
 
 **Covers:** `docs/Customer-Wording-Implementation-Plan.md` (all three
 commits: MUI restyle, wording, code names).
-**Built:** not yet — Build & Test started 2026-11-16. Commit hashes go
-here after the fact.
+**Built:** MUI restyle `2d2939d`, wording `46c4214`, code names `176ec74`
+(Build & Test, 16–18 Nov 2026, all pushed). **Result:** 38 of 38 Pass on Dev,
+18 Nov.
 **Where:** Dev.
 
 **Almost nothing is saved.** Every step opens a screen, a filter or a
@@ -122,11 +123,13 @@ backend tests that check the new text (P3), not by a browser step.
 The code-names commit renames what the server and the screens pass to
 each other. Users see no difference; these steps check nothing broke.
 
-22. [Simple] As Vivek, Target & Coverage Planning, Oct – Dec 2026. **Expected:** the plan loads with ₹66.00L and 3 customers. Click **Revise**, type "test" in the customer search. **Expected:** customers in his area are offered (the search works), with no error message. **Cancel.** —
-23. [Simple] As Vivek, My Work: the My customers tab and the Weekly Follow-up list load, with no error message. —
-24. [Simple] As Arun, Insights Dashboard, Target vs Actuals, Oct – Dec 2026, expand Vivek. **Expected:** his customer rows load. —
-25. [Simple] As Haroon, Rate Customers loads its list; **Stagnant Opportunities** report loads (rows or its empty text, no error). —
-26. [Simple] As Abdul Latheef P (Admin), Customer Directory, **+ Add**, type "North" in the zone field. **Expected:** North Kerala is offered. **Cancel** — nothing saved. —
+22. [Simple] As Vivek, Target & Coverage Planning, Oct – Dec 2026, **My Plans** tab (no Customers column there; the count is only in the pop-up). **Expected:** the row shows ₹66.00L. Click **Revise**. **Expected:** the pop-up lists his customers and the line under them reads "3 customers". Clear the customer search box and click inside it. **Expected:** other customers in his area are offered, with no error message. Type part of one of those names. **Expected:** it is offered. (Typing "test" shows "No customers in your area match" because his plan already holds "Test hospital 2" and "Test hospital 3" and the search leaves out customers already on the plan — checked in the code 18 Nov.) **Cancel.** — **Pass** (Basheer, 18 Nov). The step wording was wrong on the first run (My Plans has no count; "test" matched only the two customers already on the plan) and was corrected. Vivek has only 3 customers in his area on Dev, all already on his plan, so the empty search shows "No more customers in your area" (Basheer; not queried). The "other customers are offered" check could not be done.
+23. [Simple] As Vivek, **My Work** (its formal name is Weekly Follow-up; there is no separate list): the tabs **Summary**, **My customers**, **Opportunities** and **Next actions** each load, with no error message. **My customers** shows "My customers this quarter (Oct – Dec 2026)" with a Customer column. — **Pass** (Basheer, 18 Nov; Vivek's Summary tab shows 3 in its My customers section).
+24. [Simple] As Arun, **Insights Dashboard** (opens on **Target vs Actuals**, Quarter view, Oct – Dec 2026). Click Vivek's name in the table. **Expected:** his own screen opens (with a Back arrow), with the **By customer** table loading, and no error message. Click the Back arrow. — **Pass** (Basheer, 18 Nov).
+25. [Simple] As Haroon, **Rate Customers** (menu): the list of customers loads (or "No customers match these filters."). Then **Stagnant Opportunities** (menu): rows load, or "No Opportunities past the threshold. Nice.". No error message on either. — **Pass** (Basheer, 18 Nov).
+26. [Simple] As Abdul Latheef P (Admin), **Account Management**, **Customers** tab, click **+ Add**. **Expected:** the **New Customer** pop-up opens. In the **Zone \*** field type "North". **Expected:** North Kerala is offered (nothing is searched until 2 letters are typed, and Admin has no zone pre-filled). **Cancel** — nothing saved. — **Pass** (Basheer, 18 Nov).
+26b. [Simple] As Haroon (GM), **Sales Report**, pick a period that has Won Opportunities. **Expected:** the four tiles at the top — Revenue Won, Opportunities Won, Win Rate and **Avg Opportunity Size** — all show a figure, with no error message. A dash "—" in Avg Opportunity Size means the screen could not read the renamed field (Sales Report was not in the plan's first screen list; added 18 Nov). — **Pass** (Basheer, as Haroon, 18 Nov).
+26c. [Simple] As Nishad, open **Log Activity** (menu or My Work), pick a customer (e.g. Elite Diagnostics, North Kerala), leave the Opportunity field on "None — customer-level" and choose a customer-facing activity type. **Expected:** no error message. If Nishad has an open next action on that customer, the pop-up instead says "You have an open next action on this customer. Close it, saying what happened, instead of logging a new activity." (the last word is now "customer"; it read "hospital" before step 7). Close without saving. Customer and open-next-action data not checked against Dev yet; if none shows, the no-error result is the pass (Log Activity and Close Reminder both use the renamed "customer-level" filter; added 18 Nov). — **Pass** (Basheer, as Haroon, 18 Nov; he did not say whether the open-next-action message appeared, so only the no-error result is recorded).
 
 ## G — Phone, tablet and laptop look
 

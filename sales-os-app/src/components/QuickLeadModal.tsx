@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Autocomplete, Box, Button, Checkbox, FormControlLabel, MenuItem, TextField, Typography } from "@mui/material";
 import FormModal from "./FormModal";
-import AddHospitalModal from "./AddHospitalModal";
+import AddCustomerModal from "./AddCustomerModal";
 import CloseReminderModal, { type FirstActivity } from "./CloseReminderModal";
 import { SilentModalError } from "../lib/formErrors";
 import type { ActivityType } from "../types/api-aliases";
@@ -152,7 +152,7 @@ export default function QuickLeadModal({
 
   const [items, setItems]                   = useState<DraftOpportunityItem[]>([]);
   const [showItemsModal, setShowItemsModal] = useState(false);
-  const [showAddHospital, setShowAddHospital] = useState(false);
+  const [showAddCustomer, setShowAddCustomer] = useState(false);
   // BR-OP-21 (plan D19): Create opens the First activity pop-up; its Save
   // re-runs handleSubmit with the activity held here, so the Opportunity,
   // its first activity and next action are one request.
@@ -422,7 +422,7 @@ export default function QuickLeadModal({
 
   return (
     <>
-      <FormModal isOpen={isOpen} onClose={onClose} title="New Opportunity" onSubmit={handleSubmit} submitLabel="Create" disableEnforceFocus={showItemsModal || showAddHospital || showFirstActivity}>
+      <FormModal isOpen={isOpen} onClose={onClose} title="New Opportunity" onSubmit={handleSubmit} submitLabel="Create" disableEnforceFocus={showItemsModal || showAddCustomer || showFirstActivity}>
         {(marketingLeadContextNote || marketingLeadEventName || marketingLeadSourceName) && (
           <Box sx={{ p: 1.5, borderRadius: "0.75rem", bgcolor: "green.50", border: 1, borderColor: "green.200" }}>
             <Typography sx={{ typography: "tiny", fontWeight: 900, color: "green.600",textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.5 }}>
@@ -496,7 +496,7 @@ export default function QuickLeadModal({
         <Box sx={{ display: "flex", justifyContent: "flex-end", mt: -0.5 }}>
           <Button
             type="button"
-            onClick={() => setShowAddHospital(true)}
+            onClick={() => setShowAddCustomer(true)}
             sx={{
               px: 1.5, py: 0.5, borderRadius: "0.75rem", typography: "caption", fontWeight: 900,
               textTransform: "uppercase", letterSpacing: "0.05em", color: "emerald.600", bgcolor: "emerald.50",
@@ -703,15 +703,15 @@ export default function QuickLeadModal({
       {/* Add Hospital secondary modal -- lets the rep create the account
           inline instead of backing out to Customer Directory and coming
           back. Same duplicate-checked flow (BR-ACC-03) either way, since
-          both use AddHospitalModal.tsx. Both outcomes (fresh create or
+          both use AddCustomerModal.tsx. Both outcomes (fresh create or
           picking an existing near-duplicate match) select the account here
           -- unlike CustomerDirectoryScreen.tsx, there's no reason to treat
           them differently in this context. */}
-      <AddHospitalModal
-        isOpen={showAddHospital}
-        onClose={() => setShowAddHospital(false)}
-        onCreated={(account) => { setAccountId(account.id); setSelectedAccount(account); setProjectId(""); setShowAddHospital(false); }}
-        onExistingSelected={(account) => { setAccountId(account.id); setSelectedAccount(account); setProjectId(""); setShowAddHospital(false); }}
+      <AddCustomerModal
+        isOpen={showAddCustomer}
+        onClose={() => setShowAddCustomer(false)}
+        onCreated={(account) => { setAccountId(account.id); setSelectedAccount(account); setProjectId(""); setShowAddCustomer(false); }}
+        onExistingSelected={(account) => { setAccountId(account.id); setSelectedAccount(account); setProjectId(""); setShowAddCustomer(false); }}
       />
 
       {/* BR-OP-21 (plan D19): Cancel returns to this form with nothing saved. */}

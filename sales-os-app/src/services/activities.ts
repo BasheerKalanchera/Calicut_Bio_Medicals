@@ -160,26 +160,26 @@ export async function listProjectReminders(
 }
 
 // Hospital-next-action plan: every open next action at a hospital -- or, with
-// hospitalLevelOnly, just those with no Opportunity and no Project. Plan D14:
+// customerLevelOnly, just those with no Opportunity and no Project. Plan D14:
 // assignedToUserId keeps one person's, projectId keeps those logged on that
 // Project with no Opportunity -- the pop-ups ask for exactly what they need.
 export async function listAccountReminders(
   accountId: string,
   {
     includeCompleted = false,
-    hospitalLevelOnly = false,
+    customerLevelOnly = false,
     assignedToUserId,
     projectId,
   }: {
     includeCompleted?: boolean;
-    hospitalLevelOnly?: boolean;
+    customerLevelOnly?: boolean;
     assignedToUserId?: string;
     projectId?: string;
   } = {},
 ): Promise<ReminderResponse[]> {
   const params: Record<string, string | number | boolean> = {
     include_completed: includeCompleted,
-    hospital_level: hospitalLevelOnly,
+    customer_level: customerLevelOnly,
   };
   if (assignedToUserId) params.assigned_to_user_id = assignedToUserId;
   if (projectId) params.project_id = projectId;

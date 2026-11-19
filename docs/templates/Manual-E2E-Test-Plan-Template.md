@@ -35,7 +35,10 @@ cross-screen/cross-role, or a genuine visual check). Basheer runs Complex
 steps too, from exact instructions; a step Claude drives in the browser
 says so — `[Complex: Claude — <reason>]` — and only when it can't be judged
 by eye (e.g. measuring whether something runs past its card), to save
-usage credits (Basheer, 2026-10-29). Saves to
+usage credits (Basheer, 2026-10-29). Steps are grouped by login: switch
+only when the next step needs a different person; a step whose result is
+the same for any role runs as whoever is logged in (Basheer, 2026-11-18).
+Saves to
 Dev are "Basheer clicks, Claude watches"; Claude reads the record back in
 the app.
 

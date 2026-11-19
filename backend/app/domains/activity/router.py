@@ -269,7 +269,7 @@ def list_opportunity_reminders(
 def list_account_reminders(
     account_id: uuid.UUID,
     include_completed: bool = Query(False),
-    hospital_level: bool = Query(False),
+    customer_level: bool = Query(False),
     assigned_to_user_id: uuid.UUID | None = Query(None),
     project_id: uuid.UUID | None = Query(None),
     page: int = Query(1, ge=1),
@@ -282,7 +282,7 @@ def list_account_reminders(
     items, total = service.list_for_account(
         account_id,
         include_completed=include_completed,
-        hospital_level_only=hospital_level,
+        customer_level_only=customer_level,
         assigned_to_user_id=assigned_to_user_id,
         project_id=project_id,
         page=page,

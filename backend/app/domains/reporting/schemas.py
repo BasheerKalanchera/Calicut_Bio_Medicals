@@ -37,7 +37,7 @@ class PipelineSummaryResponse(BaseModel):
     rows: list[PipelineSummaryRow]
 
 
-class StagnantDealRow(BaseModel):
+class StagnantOpportunityRow(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     opportunity_id: uuid.UUID
@@ -58,9 +58,9 @@ class StagnantDealRow(BaseModel):
         return value
 
 
-class StagnantDealsResponse(BaseModel):
+class StagnantOpportunitiesResponse(BaseModel):
     threshold_days: int
-    rows: list[StagnantDealRow]
+    rows: list[StagnantOpportunityRow]
 
 
 class RepActivityLevelRow(BaseModel):
@@ -132,7 +132,7 @@ class WeeklyFollowupNextActionList(BaseModel):
     rows: list[ReminderResponse]
 
 
-class WeeklyFollowupHospitalRow(BaseModel):
+class WeeklyFollowupCustomerRow(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     account_id: uuid.UUID
@@ -144,9 +144,9 @@ class WeeklyFollowupHospitalRow(BaseModel):
     next_action_due: datetime | None
 
 
-class WeeklyFollowupHospitalList(BaseModel):
+class WeeklyFollowupCustomerList(BaseModel):
     count: int
-    rows: list[WeeklyFollowupHospitalRow]
+    rows: list[WeeklyFollowupCustomerRow]
 
 
 class WeeklyFollowupResponse(BaseModel):
@@ -164,7 +164,7 @@ class WeeklyFollowupResponse(BaseModel):
     next_actions_this_week: WeeklyFollowupNextActionList
     # Step 5: the hospitals on their approved plan for the quarter `today` falls in.
     planning_period: str
-    planned_hospitals: WeeklyFollowupHospitalList
+    planned_customers: WeeklyFollowupCustomerList
 
 
 ProductPerformanceGroupBy = Literal["product", "brand", "sbu"]
@@ -215,7 +215,7 @@ class SalesHeadline(BaseModel):
     won_count: int
     lost_count: int
     win_rate: Decimal
-    avg_deal_size_lakhs: Decimal
+    avg_opportunity_size_lakhs: Decimal
 
 
 class SalesSummaryRow(BaseModel):
@@ -268,7 +268,7 @@ class NoActivityCustomersResponse(BaseModel):
     show_zone_picker: bool
     # D16: the caption line above the tiles. Every hospital in view before the
     # quiet ones are picked out ("28 of 38 hospitals").
-    hospitals_in_view: int
+    customers_in_view: int
     # Whose contacts count: the picked person's SBU, else the viewer's. With no
     # SBU and counts_all_sbus false (a refused pick, or a user without an SBU)
     # the list is empty and the screen leaves the caption out.

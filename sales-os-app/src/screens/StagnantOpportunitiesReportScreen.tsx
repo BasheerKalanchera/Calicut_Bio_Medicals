@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Box, MenuItem, TextField } from "@mui/material";
 import { LoadingOrEmpty } from "../components/ReportingUI";
 import { listRepUsers } from "../services/masterData";
-import { getStagnantDeals } from "../services/reporting";
+import { getStagnantOpportunities } from "../services/reporting";
 import { statusColors } from "../theme/statusColors";
 import { shadows } from "../theme/shadows";
 
@@ -14,7 +14,7 @@ const DEFAULT_THRESHOLD_DAYS = 30;
 // The server refuses more than ten years (threshold_days le=3650).
 const MAX_THRESHOLD_DAYS = 3650;
 
-export default function StagnantDealsReportScreen({
+export default function StagnantOpportunitiesReportScreen({
   onSelectOpportunity,
 }: {
   onSelectOpportunity?: (opportunity: { id: string; name: string }) => void;
@@ -34,8 +34,8 @@ export default function StagnantDealsReportScreen({
   });
 
   const query = useQuery({
-    queryKey: ["reporting", "stagnant-deals", thresholdDays, userId],
-    queryFn: () => getStagnantDeals(thresholdDays, userId ? { user_id: userId } : {}),
+    queryKey: ["reporting", "stagnant-opportunities", thresholdDays, userId],
+    queryFn: () => getStagnantOpportunities(thresholdDays, userId ? { user_id: userId } : {}),
   });
 
   const rows = query.data?.rows ?? [];

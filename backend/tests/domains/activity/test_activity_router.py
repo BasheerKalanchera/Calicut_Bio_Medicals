@@ -120,7 +120,7 @@ class TestListAccountReminders:
         mock_db = MagicMock()
         mock_db.scalar.return_value = 1
 
-        response = self._get(client, mock_db, hospital_level="true", project_id=str(uuid.uuid4()))
+        response = self._get(client, mock_db, customer_level="true", project_id=str(uuid.uuid4()))
 
         assert response.status_code >= 400
         mock_db.scalars.assert_not_called()

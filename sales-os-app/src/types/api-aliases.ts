@@ -62,4 +62,4 @@ export type NoActivityCustomerRow = components["schemas"]["NoActivityCustomerRow
 export type NoActivityCustomersResponse = components["schemas"]["NoActivityCustomersResponse"];
 export type WeeklyFollowupOpportunityRow = components["schemas"]["WeeklyFollowupOpportunityRow"];
 export type WeeklyFollowupOpportunityList = components["schemas"]["WeeklyFollowupOpportunityList"];
-export type WeeklyFollowupHospitalList = components["schemas"]["WeeklyFollowupHospitalList"];
+export type WeeklyFollowupCustomerList = components["schemas"]["WeeklyFollowupCustomerList"];

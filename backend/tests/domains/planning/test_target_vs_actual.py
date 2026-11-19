@@ -150,7 +150,7 @@ def test_owner_credit_unplanned_line_and_percent(monkeypatch):
     asha = resp.people[0]
     assert (asha.planned_lakhs, asha.won_lakhs) == (Decimal("50"), Decimal("15.00"))
     assert asha.percent_of_target == Decimal("30.00")
-    unplanned = [h for h in asha.hospitals if h.account_id is None]
+    unplanned = [h for h in asha.customers if h.account_id is None]
     assert len(unplanned) == 1
     assert (unplanned[0].planned_lakhs, unplanned[0].won_lakhs) == (0, Decimal("5.00"))
 
@@ -166,7 +166,7 @@ def test_legacy_plan_without_hospitals_counts_in_full(monkeypatch):
     rudra = resp.people[0]
     assert rudra.planned_lakhs == resp.planned_lakhs == Decimal("10")
     assert resp.brands[0].planned_lakhs == Decimal("10")  # tile, person and brand table agree
-    lines = [(h.account_name, h.planned_lakhs) for h in rudra.hospitals]
+    lines = [(h.account_name, h.planned_lakhs) for h in rudra.customers]
     assert lines == [("Not assigned to a customer", Decimal("10"))]
     assert [(z.zone_name, z.planned_lakhs) for z in resp.zones] == [(None, Decimal("10"))]
 
@@ -176,7 +176,7 @@ def test_partly_assigned_plan_shows_only_the_remainder(monkeypatch):
     repo = _repo(roster=[(rep, "Asha")], list_plans=[_plan(rep, "Asha", [(h1, "Hospital A", "40")], total="50")])
     asha = _run(repo, IN_QUARTER, monkeypatch).people[0]
     assert asha.planned_lakhs == Decimal("50")
-    assert [h.planned_lakhs for h in asha.hospitals] == [Decimal("40"), Decimal("10")]
+    assert [h.planned_lakhs for h in asha.customers] == [Decimal("40"), Decimal("10")]
 
 
 # --- roster -----------------------------------------------------------------
@@ -229,7 +229,7 @@ def test_draft_and_rejected_plans_show_status_only(monkeypatch, status):
     assert asha.plan_status == RosterStatus(status)
     # The manager can read the draft through RLS; the screen must not show its figures.
     assert asha.planned_lakhs == Decimal(0)
-    assert asha.hospitals == [] and asha.brands == []
+    assert asha.customers == [] and asha.brands == []
     assert resp.planned_lakhs == Decimal(0)
     assert resp.brands == [] and resp.zones == []
     assert resp.not_submitted_count == 1
@@ -251,7 +251,7 @@ def test_rejected_revision_counts_at_its_last_approved_total(monkeypatch):
     assert vivek.plan_status == RosterStatus.REJECTED
     assert (vivek.planned_lakhs, vivek.previous_approved_total_lakhs) == (Decimal("30"), Decimal("30"))
     # The rejected revision's hospitals and brands never show; only the approved total.
-    assert [(h.account_name, h.planned_lakhs) for h in vivek.hospitals] == [("Last approved plan", Decimal("30"))]
+    assert [(h.account_name, h.planned_lakhs) for h in vivek.customers] == [("Last approved plan", Decimal("30"))]
     assert vivek.brands == [] and resp.brands == []
     assert resp.planned_lakhs == Decimal("30")
     assert resp.not_submitted_count == 0
@@ -555,8 +555,8 @@ def test_shared_win_lands_on_each_sharers_own_plan_or_unplanned(monkeypatch):
     )
     resp = _run(repo, IN_QUARTER, monkeypatch)
     a, v = resp.people
-    assert [(h.account_name, h.won_lakhs) for h in a.hospitals] == [("A", Decimal("6.00"))]
-    assert ("Unplanned", Decimal("4.00")) in [(h.account_name, h.won_lakhs) for h in v.hospitals]
+    assert [(h.account_name, h.won_lakhs) for h in a.customers] == [("A", Decimal("6.00"))]
+    assert ("Unplanned", Decimal("4.00")) in [(h.account_name, h.won_lakhs) for h in v.customers]
     assert (a.po_received_lakhs, v.po_received_lakhs) == (Decimal("6.00"), Decimal("4.00"))
     # Group figures count the Opportunity once, at full value.
     assert (resp.won_lakhs, resp.po_received_lakhs) == (Decimal("10.00"), Decimal("10.00"))

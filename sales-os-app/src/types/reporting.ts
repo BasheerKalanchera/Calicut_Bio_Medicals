@@ -18,7 +18,7 @@ export interface PipelineSummaryResponse {
   rows: PipelineSummaryRow[];
 }
 
-export interface StagnantDealRow {
+export interface StagnantOpportunityRow {
   opportunity_id: string;
   opportunity_name: string;
   account_name: string;
@@ -28,9 +28,9 @@ export interface StagnantDealRow {
   days_stagnant: number;
 }
 
-export interface StagnantDealsResponse {
+export interface StagnantOpportunitiesResponse {
   threshold_days: number;
-  rows: StagnantDealRow[];
+  rows: StagnantOpportunityRow[];
 }
 
 export interface RepActivityLevelRow {
@@ -119,7 +119,7 @@ export interface SalesHeadline {
   won_count: number;
   lost_count: number;
   win_rate: string;
-  avg_deal_size_lakhs: string;
+  avg_opportunity_size_lakhs: string;
 }
 
 export interface SalesSummaryRow {

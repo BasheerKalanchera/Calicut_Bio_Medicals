@@ -108,6 +108,9 @@ file for that date to find the story. Not loaded at session start.
 - **Rule:** Fresh-install check before every UAT/Prod promotion (lives in `docs/Deployment-Topology.md`, "Promotion flow").
   **Why:** 2026-09-27 UAT move, step 8: the backend's fresh Render build pulled SQLAlchemy 2.1.1 (`pyproject.toml` has no upper bound), which defaults a plain `postgresql://` URL to psycopg 3 — not installed — so the app crashed at startup with `ModuleNotFoundError: No module named 'psycopg'` while UAT was suspended. The laptop's venv (2.0.51) never re-fetches, so nothing before the day could show it. Worked around with a Render Build Command pin; the permanent cap is in Backlog.
 
+- **Rule:** E2E testing — group test plan steps by login; a step whose result is the same for any role runs as whoever is logged in; regrouping a started plan keeps step numbers (suffixes or a separate run order); during a run, offer the next step for the open login first (`cabio-e2e-testing` skill, E2E test plan template).
+  **Why:** 2026-11-18, Customer Wording E2E: Section F (steps 22–26, 26b, 26c) was written in screen order, so Basheer switched between five logins (Vivek, Vivek, Arun, Haroon, Abdul, Haroon, Nishad) for seven simple steps. He asked for steps grouped by login.
+
 ## Troubleshooting & scripting
 
 - **Rule:** When something fails repeatedly for an unclear reason, isolate the variable with a small/fast diagnostic before retrying the same large/slow operation again — d…

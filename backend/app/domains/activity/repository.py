@@ -529,13 +529,13 @@ class ReminderRepository(BaseRepository[Reminder]):
     def _narrow_account_list(
         stmt,
         *,
-        hospital_level_only: bool,
+        customer_level_only: bool,
         assigned_to_user_id: uuid.UUID | None,
         project_id: uuid.UUID | None,
     ):
         # Optional narrowing of the hospital's list; every one only adds a
         # WHERE condition, so the query's join count is unchanged.
-        if hospital_level_only:
+        if customer_level_only:
             stmt = stmt.where(Activity.opportunity_id.is_(None), Activity.project_id.is_(None))
         if project_id is not None:
             # Project level (hospital next-action plan D14): logged on this
@@ -550,14 +550,14 @@ class ReminderRepository(BaseRepository[Reminder]):
         account_id: uuid.UUID,
         *,
         include_completed: bool = False,
-        hospital_level_only: bool = False,
+        customer_level_only: bool = False,
         assigned_to_user_id: uuid.UUID | None = None,
         project_id: uuid.UUID | None = None,
         offset: int = 0,
         limit: int = 50,
     ) -> list[Reminder]:
         # Hospital next-action plan D7/D8: everyone's next actions at the
-        # hospital, at every level; hospital_level_only keeps just those
+        # hospital, at every level; customer_level_only keeps just those
         # with neither an Opportunity nor a Project (the ones that block
         # hospital-level logging, D1). D14: assigned_to_user_id and
         # project_id let the pop-ups ask for just one person's, at one level.
@@ -570,7 +570,7 @@ class ReminderRepository(BaseRepository[Reminder]):
         )
         stmt = self._narrow_account_list(
             stmt,
-            hospital_level_only=hospital_level_only,
+            customer_level_only=customer_level_only,
             assigned_to_user_id=assigned_to_user_id,
             project_id=project_id,
         )
@@ -582,7 +582,7 @@ class ReminderRepository(BaseRepository[Reminder]):
         account_id: uuid.UUID,
         *,
         include_completed: bool = False,
-        hospital_level_only: bool = False,
+        customer_level_only: bool = False,
         assigned_to_user_id: uuid.UUID | None = None,
         project_id: uuid.UUID | None = None,
     ) -> int:
@@ -594,7 +594,7 @@ class ReminderRepository(BaseRepository[Reminder]):
         )
         stmt = self._narrow_account_list(
             stmt,
-            hospital_level_only=hospital_level_only,
+            customer_level_only=customer_level_only,
             assigned_to_user_id=assigned_to_user_id,
             project_id=project_id,
         )

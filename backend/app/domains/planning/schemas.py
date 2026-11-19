@@ -235,7 +235,7 @@ class RosterStatus(StrEnum):
     REJECTED = "REJECTED"
 
 
-class TargetVsActualHospital(BaseModel):
+class TargetVsActualCustomer(BaseModel):
     """One line per hospital on the person's plan; wins at hospitals that
     aren't on the plan share a single line with account_id=None
     ("Unplanned")."""
@@ -284,7 +284,7 @@ class TargetVsActualPerson(BaseModel):
     percent_of_target: Decimal | None
     undated_opportunity_count: int
     no_po_date_count: int
-    hospitals: list[TargetVsActualHospital]
+    customers: list[TargetVsActualCustomer]
     brands: list[TargetVsActualBrand]
 
 

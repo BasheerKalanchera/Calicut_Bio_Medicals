@@ -33,7 +33,7 @@ const PAGE_SIZE = 50;
 // Implementation-Plan.md, choice 3 "fuller"). The nav entry is Admin/GM-
 // gated in DemoApp.tsx; the PATCH itself is Admin/GM-only server-side, and
 // the notes come back only for those two roles.
-export default function RateHospitalsScreen({ active }: { active: boolean }) {
+export default function RateCustomersScreen({ active }: { active: boolean }) {
   const [search, setSearch] = useState("");
   const [zoneFilter, setZoneFilter] = useState<ZoneSearchResult | null>(null);
   const [potentialFilter, setPotentialFilter] = useState<BusinessPotential | "">("NOT_CLASSIFIED");
@@ -41,7 +41,7 @@ export default function RateHospitalsScreen({ active }: { active: boolean }) {
   const debouncedSearch = useDebouncedValue(search);
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ["accounts", "rate-hospitals", { search: debouncedSearch, zoneId: zoneFilter?.id, potentialFilter, page }],
+    queryKey: ["accounts", "rate-customers", { search: debouncedSearch, zoneId: zoneFilter?.id, potentialFilter, page }],
     queryFn: () =>
       listAccounts({
         search: debouncedSearch || undefined,

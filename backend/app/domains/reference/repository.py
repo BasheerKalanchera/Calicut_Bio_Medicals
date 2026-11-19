@@ -124,7 +124,7 @@ class ZoneRepository(BaseRepository[Zone]):
         `within_zone_ids`, when given, restricts results to those zones plus
         everything under each of them (via zone_closure) -- backs the
         Add/Edit Hospital picker's rep-scoped search (master_data.py's
-        search_zones_for_hospital), same descendant-sweep pattern as
+        search_zones_for_customer), same descendant-sweep pattern as
         AccountRepository.find_similar_by_name and list_accounts. Takes every
         zone a caller is assigned to (not just their primary zone_id) --
         found 2026-09-09, a rep with additional zones beyond their primary

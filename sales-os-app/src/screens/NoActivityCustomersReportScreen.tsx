@@ -6,7 +6,7 @@ import ClearIcon from "@mui/icons-material/Clear";
 import TableOrCards, { TocCell, TocRow } from "../components/TableOrCards";
 import ZonePicker from "../components/ZonePicker";
 import { LoadingOrEmpty, StatTile } from "../components/ReportingUI";
-import { listRepUsers, searchZonesForHospital, type ZoneSearchResult } from "../services/masterData";
+import { listRepUsers, searchZonesForCustomer, type ZoneSearchResult } from "../services/masterData";
 import { getNoActivityCustomers, searchNoActivityZones } from "../services/reporting";
 import { statusColors } from "../theme/statusColors";
 import { useAuth } from "../contexts/AuthContext";
@@ -46,7 +46,7 @@ function captionLine(
     ? "anyone's contact counts"
     : `only ${data.sbu_name} visits, calls, meetings and emails count`;
   const listed = data.gone_quiet_count + data.never_contacted_count;
-  const total = data.hospitals_in_view;
+  const total = data.customers_in_view;
   return `${sbuPart} · ${zonePart} · ${contactsPart} · ${listed} of ${total} ${total === 1 ? "customer" : "customers"}`;
 }
 
@@ -114,7 +114,7 @@ export default function NoActivityCustomersReportScreen({
   // The Zone picker follows the Rep pick: another person's zones once they are
   // picked, your own zones otherwise.
   const searchZonesForPick = useCallback(
-    (q: string) => (pickedOther ? searchNoActivityZones(q, userId) : searchZonesForHospital(q)),
+    (q: string) => (pickedOther ? searchNoActivityZones(q, userId) : searchZonesForCustomer(q)),
     [pickedOther, userId],
   );
   // No line while a new pick loads (the data on screen is still the old

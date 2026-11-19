@@ -387,13 +387,10 @@ first whether to do this app-wide. Code: `TargetPlanningScreen.tsx`
 `SBU_TARGET_VIEW_ROLES` vs `service.py` `_SBU_TARGET_READ_ROLES` and the
 `sbu_target_read` policy (migration 0061).
 
-### Opportunity stage change: keep the "Why this change?" typing after a save error — decided, not started (Haroon's request; Basheer, 2026-11-17)
+### Opportunity stage change: check the required fields before the "Why this change?" pop-up opens — held back (Basheer, 2026-11-17)
 
-- **Problem (Haroon, 17 Nov):** on the Opportunity's Edit form, a rep moves the stage forward and presses Save; the "Why this change?" pop-up opens and they type the history. Only when they press Save there does the server check the stage's required fields (e.g. Demo Start Date to reach Demo). The rep presses Cancel to go back and fill it in, and on the next Save the pop-up opens empty — the typed history is gone. Happened to him two or three times.
-- **Decided (Basheer, 17 Nov):** keep what was typed in the pop-up (activity type, date, history, follow-up next action and due date) when it is cancelled after a server error, and show it again when it reopens for the same edit. Cleared on a successful save or when the Edit form closes. Under the error, add one line: "Press Cancel, fill this in on the Edit form, then Save again — what you typed here is kept."
-- **Not doing for now:** checking the required fields before the pop-up opens (a "check only" call to the server, so the rules stay in one place). Build it only if the above proves a hassle for the reps (Basheer, 17 Nov).
-- **Code pointers:** pop-up resets on open at `CloseReminderModal.tsx:220-242` (next action text and due date don't read `initial` yet); save re-run at `OpportunityDetailScreen.tsx:2052-2058`.
-- **Then:** Build & Test, a `fix:` commit, once the Customer Wording E2E is complete (same screen file; Basheer will ask that session, 17 Nov). Small E2E: miss the Demo Start Date, see the line, Cancel, fill it, Save — history and follow-up still there.
+- **What:** a "check only" call to the server before the pop-up opens, so the rep hears about a missing field (e.g. Demo Start Date) first and the rules stay in one place.
+- **Why held back:** the typing-is-kept fix (`2ee250c`, 18 Nov) removed the lost-typing pain. Build this only if reps still find the Cancel-and-fill-in round trip a hassle (Basheer, 17 Nov).
 
 ### Product prices: four small follow-ups from the pre-E2E review — not started (Basheer, 2026-11-18)
 

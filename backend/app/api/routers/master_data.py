@@ -133,8 +133,8 @@ def search_zones(
 # case. Found 2026-09-09: this used to scope by zone_id alone, so a rep
 # with additional zones beyond their primary (e.g. Vivek: Alappuzha primary
 # + 5 more districts) couldn't find any of the others here.
-@router.get("/master-data/zones/search-for-hospital")
-def search_zones_for_hospital(
+@router.get("/master-data/zones/search-for-customer")
+def search_zones_for_customer(
     q: str = Query(min_length=2),
     current_user: UserProfile = Depends(get_current_user),
     db: Session = Depends(get_db),

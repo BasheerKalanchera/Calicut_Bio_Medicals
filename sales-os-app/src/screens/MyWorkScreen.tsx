@@ -18,7 +18,7 @@ import { shadows } from "../theme/shadows";
 import type { MyWorkRequest } from "../types/reporting";
 import type {
   ReminderResponse,
-  WeeklyFollowupHospitalList,
+  WeeklyFollowupCustomerList,
   WeeklyFollowupOpportunityList,
   WeeklyFollowupOpportunityRow,
 } from "../types/api-aliases";
@@ -37,10 +37,10 @@ const MANAGER_TIER_ROLES = new Set(["SBU Manager", "Area Manager", "Admin", "Gen
 
 // D30: one tab at a time, pill style copied from InsightsDashboardScreen.
 // D33: always opens on Summary; a Summary box opens its tab at its list.
-type TabId = "summary" | "opportunities" | "next-actions" | "hospitals";
+type TabId = "summary" | "opportunities" | "next-actions" | "customers";
 const TABS: { id: TabId; label: string }[] = [
   { id: "summary", label: "Summary" },
-  { id: "hospitals", label: "My customers" },
+  { id: "customers", label: "My customers" },
   { id: "opportunities", label: "Opportunities" },
   { id: "next-actions", label: "Next actions" },
 ];
@@ -195,10 +195,10 @@ export default function MyWorkScreen({ isActive, onSelectAccount, onSelectOpport
   const notVisitedTitle = `Not visited in ${data?.idle_days ?? idleDays}+ days`;
 
   // D32: the hospital box's two follow-up figures, from the rows already loaded.
-  const hospitalRows = data?.planned_hospitals.rows ?? [];
-  const neverVisited = hospitalRows.filter((r) => !r.last_visit_date).length;
-  const overdueHospitals = data
-    ? hospitalRows.filter((r) => r.next_action_due && dayjs(data.today).diff(dayjs(r.next_action_due).format("YYYY-MM-DD"), "day") > 0).length
+  const customerRows = data?.planned_customers.rows ?? [];
+  const neverVisited = customerRows.filter((r) => !r.last_visit_date).length;
+  const overdueCustomers = data
+    ? customerRows.filter((r) => r.next_action_due && dayjs(data.today).diff(dayjs(r.next_action_due).format("YYYY-MM-DD"), "day") > 0).length
     : 0;
 
   return (
@@ -292,12 +292,12 @@ export default function MyWorkScreen({ isActive, onSelectAccount, onSelectOpport
             <SummaryGroup title="My customers" icon="🏥">
               <SummaryTile
                 label={`My customers this quarter (${formatPlanningPeriod(data.planning_period)})`}
-                value={data.planned_hospitals.count}
+                value={data.planned_customers.count}
                 tone="info"
-                detail={data.planned_hospitals.count === 0
+                detail={data.planned_customers.count === 0
                   ? "No approved customer plan for this quarter."
-                  : `${neverVisited} never visited · ${overdueHospitals} overdue next action`}
-                onClick={() => openTab("hospitals")}
+                  : `${neverVisited} never visited · ${overdueCustomers} overdue next action`}
+                onClick={() => openTab("customers")}
               />
             </SummaryGroup>
             <SummaryGroup title="Opportunities" icon="📈" columns={3}>
@@ -377,9 +377,9 @@ export default function MyWorkScreen({ isActive, onSelectAccount, onSelectOpport
             />
           )
         )}
-        {data && activeTab === "hospitals" && (
-          <HospitalSection
-            list={data.planned_hospitals}
+        {data && activeTab === "customers" && (
+          <CustomerSection
+            list={data.planned_customers}
             planningPeriod={data.planning_period}
             today={data.today}
             canAct={canAct}
@@ -594,7 +594,7 @@ function OpportunitySection({
   );
 }
 
-function HospitalSection({
+function CustomerSection({
   list,
   planningPeriod,
   today,
@@ -602,7 +602,7 @@ function HospitalSection({
   onSelectAccount,
   onLog,
 }: {
-  list: WeeklyFollowupHospitalList;
+  list: WeeklyFollowupCustomerList;
   planningPeriod: string;
   today: string;
   canAct: boolean;

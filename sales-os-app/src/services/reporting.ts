@@ -11,7 +11,7 @@ import type {
   SalesGroupBy,
   SalesHeadline,
   SalesSummaryResponse,
-  StagnantDealsResponse,
+  StagnantOpportunitiesResponse,
 } from "../types/reporting";
 import type { NoActivityCustomersResponse, WeeklyFollowupResponse } from "../types/api-aliases";
 import type { ZoneSearchResult } from "./masterData";
@@ -27,7 +27,7 @@ export async function getNoActivityCustomers(
 
 // The report's Zone picker once another Rep is picked: zones in that
 // person's scope. With nobody (or yourself) picked the screen keeps using
-// searchZonesForHospital, your own zones.
+// searchZonesForCustomer, your own zones.
 export async function searchNoActivityZones(q: string, userId: string): Promise<ZoneSearchResult[]> {
   const r = await api.get("/reporting/no-activity-customers/zones", { params: { q, user_id: userId } });
   return r.data.data;
@@ -52,11 +52,11 @@ export async function getPipelineSummary(
   return r.data.data;
 }
 
-export async function getStagnantDeals(
+export async function getStagnantOpportunities(
   thresholdDays: number,
   filters: ReportingFilters = {},
-): Promise<StagnantDealsResponse> {
-  const r = await api.get("/reporting/stagnant-deals", {
+): Promise<StagnantOpportunitiesResponse> {
+  const r = await api.get("/reporting/stagnant-opportunities", {
     params: { threshold_days: thresholdDays, ...filters },
   });
   return r.data.data;

@@ -12,33 +12,27 @@ session edits this note._
   ahead of a full promotion go by the hotfix-branch route
   (`docs/Deployment-Topology.md` "Fix to UAT ahead of a full promotion").
 
-## NOW (18 Nov) — Customer Wording plan: steps 0–4 done, step 5 docs under way
-Plan `docs/Customer-Wording-Implementation-Plan.md` (Approved 16 Nov). Step 0
-(MUI restyle) committed `2d2939d`. Steps 2–3 (wording in 18 screen files, 5
-server service files, 4 test files) edited, NOT committed; tsc, lint, MUI
-check, ruff, pytest (1572) passed 18 Nov; pre-E2E `/code-review medium`
-found nothing to fix. **E2E (step 4):** test plan
-`docs/Customer-Wording-Manual-E2E-Test-Plan.md`, 36 steps; Pass 31 of 36
-(18 Nov). Left: F (22–26, after the code-names commit). Basheer runs steps
-as Haroon.
+## NOW (18 Nov) — nothing in progress; "Why this change?" fix pushed
+Haroon's "Why this change?" fix: `2ee250c` pushed, E2E 11 of 11 Pass
+(Progress-Archive-2026-11, 18 Nov). Its docs batch (this note, archive entry,
+Backlog entry trimmed to the held-back idea, retro) is written but may still
+be uncommitted — check `git status`.
+**Next (fresh session, `/build-and-test restarted`):** Basheer decides.
+Candidate: if the parallel Build session has merged pricing steps 1–3, its
+E2E (`docs/Product-Pricing-And-Cost-Manual-E2E-Test-Plan.md`).
+If Build merges before the next pull, `api.ts` may need regenerating
+(`sh .githooks/check-api-types.sh --write`). Pending for Basheer: send Plan &
+Chore the ask to group E2E steps by login (wording drafted 18 Nov).
 **Added 18 Nov (Basheer):** "Pipeline" → "Opportunity Pipeline" on menu,
 screen heading and help title (`DemoApp.tsx:61,766`, `helpContent.tsx:94`);
 plan decision + test step 17b (Pass).
 **Parked (Basheer, 18 Nov, until he checks with Haroon):** the whole
 "Account" → "Customer" entry, incl. menu name "Customers & Projects" (liked)
-vs keeping "Account Management"; Backlog entry updated, uncommitted.
-**Step 5 docs, edited 18 Nov, NOT committed:** UAT manual (56 edits), Audit
-Trail Redesign plan (13 lines), "Stagnant Deals" → "Stagnant Opportunities"
-in Business-Rules, help catch-up plan table, Report-Drilldown plan and test
-plan, 2 Backlog lines, Weekly Follow-up D3a note; help plan section 7 (59
-lines, plus a dated note). Traceability and scorecard: another session
-already has 18 uncommitted lines each — left to Plan & Chore (Basheer yes).
-My Work plan (3 lines) and test plan (1 line) also renamed.
-**Next:** (1) show file list + full message for the wording commit (steps
-1–6), wait for his yes; (2) step 7 code-names commit (3 screen files, shared
-names, 2 server web addresses, regenerate `api.ts`, P3/P5 checks), restart
-Dev backend; (3) E2E 22–26; (4) Progress-Archive entry and retro. Put
-`typography` before `fontWeight` in `sx`.
+vs keeping "Account Management"; Backlog entry in `46c4214`.
+Traceability and scorecard (18 uncommitted lines each, another session's)
+left to Plan & Chore. Plan & Chore's 18 Nov UAT-backup line in
+Progress-Archive-2026-11 stays uncommitted (not mine).
+Put `typography` before `fontWeight` in `sx`.
 
 Earlier: Marketing Lead discard work pushed (`b4f6b42`, `8a59b20`), E2E 12 of 12
 (Progress-Archive 14 Nov). Small batch 12 Nov (`b4f6a3b`, `4a5e767`, `4efbac6`)

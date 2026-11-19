@@ -90,6 +90,15 @@ Moved here word for word from CLAUDE.md on 2026-10-08
   split, assignee) — not just role relationships. *(2026-09-24)*
 - When writing a test plan, take button labels, messages and the order of
   checks from the code, not the design doc. *(2026-09-30)*
+- **Group steps by login.** When writing a test plan, put every step done as
+  the same person together; switch login only when the next step needs
+  someone else. A step whose result is the same for any login (e.g. wording
+  every role sees) runs "as whoever is logged in" and says so; name a person
+  only when the result depends on who it is. To regroup a plan already under
+  way, keep the numbers of steps already run and add the new order as a
+  separate list or letter suffixes (17b), so recorded results stay matched.
+  During a run, offer the next step for the login already open before one
+  that needs a switch. *(2026-11-18)*
 - Wherever a test plan step names an Opportunity, put its hospital beside it
   in brackets, every time — e.g. "usg m/c" (aster medicity). For an
   Opportunity the test creates, fix the hospital in the plan, never "any

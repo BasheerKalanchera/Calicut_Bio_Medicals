@@ -420,13 +420,13 @@ class ReminderService:
         account_id: uuid.UUID,
         *,
         include_completed: bool = False,
-        hospital_level_only: bool = False,
+        customer_level_only: bool = False,
         assigned_to_user_id: uuid.UUID | None = None,
         project_id: uuid.UUID | None = None,
         page: int = 1,
         page_size: int = 50,
     ) -> tuple[list[Reminder], int]:
-        if hospital_level_only and project_id is not None:
+        if customer_level_only and project_id is not None:
             # "No Project" and "on this Project" contradict -- say so rather
             # than return an empty list that reads as "nothing blocks you".
             raise BusinessRuleViolation("Choose either customer-level only or one Project, not both.")
@@ -436,7 +436,7 @@ class ReminderService:
         items = self.repository.list_by_account(
             account_id,
             include_completed=include_completed,
-            hospital_level_only=hospital_level_only,
+            customer_level_only=customer_level_only,
             assigned_to_user_id=assigned_to_user_id,
             project_id=project_id,
             offset=offset,
@@ -445,7 +445,7 @@ class ReminderService:
         total = self.repository.count_by_account(
             account_id,
             include_completed=include_completed,
-            hospital_level_only=hospital_level_only,
+            customer_level_only=customer_level_only,
             assigned_to_user_id=assigned_to_user_id,
             project_id=project_id,
         )

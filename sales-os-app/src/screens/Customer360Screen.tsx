@@ -42,7 +42,7 @@ import {
 import {
   listProjectStatuses,
   listUsers,
-  searchZonesForHospital,
+  searchZonesForCustomer,
 } from "../services/masterData";
 import type { ZoneSearchResult } from "../services/masterData";
 import ZonePicker from "../components/ZonePicker";
@@ -708,7 +708,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   // near-duplicate check (POSSIBLE_DUPLICATE) rejects the in-flight rename.
   const [editDuplicateCandidates, setEditDuplicateCandidates] = useState<{ id: string; name: string }[] | null>(null);
   const [pendingUpdatePayload, setPendingUpdatePayload] = useState<Record<string, unknown> | null>(null);
-  // "Change Anyway" saving state and error -- same guard as AddHospitalModal's
+  // "Change Anyway" saving state and error -- same guard as AddCustomerModal's
   // "Create Anyway" (docs/Duplicate-Hospital-Prevention-Implementation-Plan.md, Part A).
   const [renameForceSaving, setRenameForceSaving] = useState(false);
   const [renameForceError, setRenameForceError] = useState<string | null>(null);
@@ -953,14 +953,14 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     } catch (err) {
       setRenameForceError(err instanceof Error ? err.message : "Something went wrong");
     }
-    // Not a `finally`, and the close outside the try -- see AddHospitalModal's
+    // Not a `finally`, and the close outside the try -- see AddCustomerModal's
     // handleCreateAnyway.
     renameForceSavingRef.current = false;
     setRenameForceSaving(false);
     if (saved) closeEditAccount();
   };
 
-  // Same as AddHospitalModal's clearDuplicateWarning: an edit after the
+  // Same as AddCustomerModal's clearDuplicateWarning: an edit after the
   // warning drops it, so "Change Anyway" can't save stale values.
   const clearRenameWarning = () => {
     setEditDuplicateCandidates(null);
@@ -1231,7 +1231,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
           </>
         )}
         <TextField label="Name *" value={editAccountName} onChange={(e) => { setEditAccountName(e.target.value); clearRenameWarning(); }} autoFocus fullWidth size="small" sx={{ mt: 1.5 }} />
-        <ZonePicker label="Zone *" value={editAccountZone} onChange={(z) => { setEditAccountZone(z); clearRenameWarning(); }}searchFn={searchZonesForHospital} />
+        <ZonePicker label="Zone *" value={editAccountZone} onChange={(z) => { setEditAccountZone(z); clearRenameWarning(); }}searchFn={searchZonesForCustomer} />
         <Autocomplete
           options={parentAccountChoices}
           getOptionLabel={(o: any) => o.name}

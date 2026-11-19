@@ -251,7 +251,7 @@ class TestUpdateUser:
 
 
 class TestSearchZonesForHospital:
-    """AddHospitalModal's ZonePicker -- found live 2026-09-08 blocking an
+    """AddCustomerModal's ZonePicker -- found live 2026-09-08 blocking an
     SBU Manager (correctly zone-less, per _ZONE_ASSIGNMENT_EXEMPT_ROLES in
     account/service.py) from seeing any zone at all, since this endpoint's
     own _ZONE_SEARCH_UNRESTRICTED_ROLES hadn't been updated to match."""
@@ -272,7 +272,7 @@ class TestSearchZonesForHospital:
                 repo = MockRepo.return_value
                 repo.search_by_name.return_value = [zone]
                 repo.build_breadcrumb.return_value = "Kerala"
-                response = client.get("/api/v1/master-data/zones/search-for-hospital", params={"q": "North"})
+                response = client.get("/api/v1/master-data/zones/search-for-customer", params={"q": "North"})
         finally:
             _teardown_overrides()
 
@@ -294,7 +294,7 @@ class TestSearchZonesForHospital:
         try:
             with patch("app.api.routers.master_data.ZoneRepository") as MockRepo:
                 repo = MockRepo.return_value
-                response = client.get("/api/v1/master-data/zones/search-for-hospital", params={"q": "North"})
+                response = client.get("/api/v1/master-data/zones/search-for-customer", params={"q": "North"})
         finally:
             _teardown_overrides()
 
@@ -327,7 +327,7 @@ class TestSearchZonesForHospital:
                 repo = MockRepo.return_value
                 repo.search_by_name.return_value = [zone]
                 repo.build_breadcrumb.return_value = "Kerala"
-                response = client.get("/api/v1/master-data/zones/search-for-hospital", params={"q": "Kollam"})
+                response = client.get("/api/v1/master-data/zones/search-for-customer", params={"q": "Kollam"})
         finally:
             _teardown_overrides()
 

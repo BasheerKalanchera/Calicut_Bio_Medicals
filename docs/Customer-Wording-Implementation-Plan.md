@@ -1,7 +1,9 @@
 # "Hospital" → "Customer" and "deal" → "Opportunity" wording — Implementation Plan
 
-**Status:** Approved 2026-11-16 (Basheer). Build started by Build & Test
-2026-11-16. E2E: `docs/Customer-Wording-Manual-E2E-Test-Plan.md`.
+**Status:** Approved 2026-11-16 (Basheer). Built 16–18 Nov 2026 by Build &
+Test: MUI restyle `2d2939d`, wording `46c4214`, code names `176ec74` (all
+pushed). E2E 38 of 38 Pass on Dev, 18 Nov:
+`docs/Customer-Wording-Manual-E2E-Test-Plan.md`.
 **Traceability rows:** none (wording and code names only; no signed
 feature changes).
 **Design / discussion:** replaces the Backlog entries "Wording: "Hospital"
