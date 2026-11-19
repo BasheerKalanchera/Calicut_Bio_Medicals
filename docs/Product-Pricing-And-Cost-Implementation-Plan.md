@@ -3,9 +3,9 @@
 **Status:** Approved 2026-11-16 (Basheer). Haroon asked for it on priority
 (phone call to Basheer, 16 Nov). Steps 1–3 are built without waiting for
 Haroon's pricing sheet (D14, 18 Nov); only step 4 (loading it) waits.
-**Progress (18 Nov 2026):** steps 1–3 built and pushed on branch
-`worktree-build`, pre-E2E review done and its fixes in; not merged to `main`
-and migration 0066 not applied to Dev yet (after the merge). E2E:
+**Progress (19 Nov 2026):** steps 1–3 built, pre-E2E review done and its
+fixes in; merged to `main` (`ebd3bdd`, 19 Nov); migration 0066 applied to Dev
+19 Nov (`alembic current` = 0066; schema file `290386a`). E2E pending:
 `docs/Product-Pricing-And-Cost-Manual-E2E-Test-Plan.md`.
 **Traceability rows:** 4.3 Revenue per product/brand analytics (Margin
 part), 11.1 Core reports (Margin Report); beyond-contract row 1 (pricing
@@ -170,7 +170,7 @@ Basheer's yes.
 1. **Price and cost fields on products** (one migration, Dev). The server
    sends each role only the prices it may see (D3, D8). Tests for every
    role. Checkpoint commit. Nothing visible changes on Dev yet.
-   *Built: `ed987f4` (migration 0066 written, not applied).*
+   *Built: `ed987f4` (migration 0066, applied to Dev 19 Nov).*
 2. **GM/Admin editing and the cost line on the Product Catalog**
    (D6, D9). Checkpoint commit. Prices can be typed in, but nobody sees
    them on Opportunities yet.

@@ -7,30 +7,23 @@ and Build & Test keep their own notes (`.claude/session-handover-plan.md`,
 note. While a `/build` worktree exists, the live copy is the one in it, on
 the build branch, and reaches `main` at the merge (Basheer, 2026-10-17)._
 
-## In progress (18 Nov): Product pricing and cost — built, reviewed, docs batch waiting for his yes
+## In progress (19 Nov): Product pricing and cost — merged to `main` and on Dev; E2E is Build & Test's
 - Plan `docs/Product-Pricing-And-Cost-Implementation-Plan.md` (Approved,
   D1–D15; only step 4, loading Haroon's pricing sheet, waits on him).
   E2E plan: `docs/Product-Pricing-And-Cost-Manual-E2E-Test-Plan.md`
-  (P3 done; P4 data check still to do just before the E2E).
-- Branch `worktree-build`, pushed to `b52c881`: steps 1–3 (`ed987f4`,
-  `060eb3d`, `8ff9e20`), price-order check (`82cafba`, D15), bold fix
-  (`b52c881`), MUI hook fix (`2dd873d`). Backend pytest 1621 pass; ruff,
-  tsc, lint clean. Migration `0066` written, not applied (0065 is the head
-  on `main`); apply to Dev only after the merge.
-- **Docs batch written, not committed (18 Nov):** E2E plan, plan, Business-Rules
-  (BR-CAT-01/04/05/06), matrix, Backlog (four follow-ups), Process-Improvements
-  P106, Progress-Archive entry, this note. Still to do: show the retro in chat,
-  write it to the archive, then show the commit (file list + message) and wait
-  for his yes. Traceability rows 4.3, 11.1 and beyond-contract row 1 are
-  client-visible: diff shown first, `cabio-post-commit` loaded first.
-- **Open to ask Basheer:** the competitor placeholder "GE LOGIQ P9" in
-  `OpportunityItemAddRow.tsx` (~line 131) breaks the SonoScape example rule.
-- **Next, only on Basheer's go:** merge. Bring `main` in (expect clashes in
-  `api-aliases.ts` and the archive; `176ec74` touches
-  `OpportunityDetailScreen.tsx`, `QuickLeadModal.tsx`), rebuild `api.ts`,
-  re-run tests, push, `ExitWorktree` with `keep`, merge to `main`, apply
-  `0066` to Dev, regenerate `docs/Physical-Schema.sql`, `cabio-post-commit`.
-  Then `/test` runs the E2E.
+  (P4 data check still to do just before the E2E).
+- Merged to `main` as `ebd3bdd` (19 Nov, pushed; branch `worktree-build` was
+  at `5eea106`). Migration `0066` applied to Dev by Basheer, `alembic current`
+  = `0066 (head)`; schema file `290386a`. Backend pytest 1621 pass; tsc, lint
+  (0 errors), MUI check clean. The worktree `.claude/worktrees/build` is kept,
+  finished; its own copy of this note is stale — this one is live.
+- Paperwork committed on `main` in the docs batch after `290386a` (plan,
+  E2E plan, Traceability wording, scorecard files, archive entry, this note).
+- **Next:** (1) show Basheer the scorecard Artifacts' diff and republish the
+  two client pages only on his go; (2) tell Build & Test it landed (done in
+  chat 19 Nov; Basheer passes it on). Then this session waits for the next
+  approved plan; Haroon's sheet (step 4) waits on him.
+- "GE LOGIQ P9" hint in `OpportunityItemAddRow.tsx` stays (Basheer, 18 Nov).
 - Tests: main's interpreter from the worktree `backend/`; frontend
   `npx --prefix sales-os-app tsc --noEmit -p sales-os-app` and
   `npm --prefix sales-os-app run lint`.

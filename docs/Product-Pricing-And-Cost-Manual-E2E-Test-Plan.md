@@ -2,15 +2,15 @@
 # Product Pricing and Cost — Manual E2E Test Plan
 
 **Covers:** `docs/Product-Pricing-And-Cost-Implementation-Plan.md`.
-**Built:** steps 1–3 on branch `worktree-build` (Build session, 18 Nov 2026):
+**Built:** steps 1–3 (Build session, 18 Nov 2026; merged to `main` as `ebd3bdd`, 19 Nov):
 `ed987f4` (server side), `060eb3d` (Add/Edit Product pop-ups and the list
 line), `8ff9e20` (price line and warning on Opportunity lines and in the New
 Opportunity pop-up; Prices card on one product's page). Pre-E2E review fixes:
 `82cafba` (price order checked on save, plan D15) and `b52c881` (product names
 bold again on the Opportunity edit-products list). Step 4 (loading Haroon's
-sheet, section F) is not built; it waits for the sheet. **Not on Dev yet:** the
-branch merges to `main` after Build & Test's E2E and Basheer's go; migration
-0066 is applied to Dev after that, so until then no price shows on Dev.
+sheet, section F) is not built; it waits for the sheet. **On Dev since 19 Nov:**
+merged to `main` and migration 0066 applied (`alembic current` = 0066), so
+prices can be typed in; none are set yet.
 **Where:** Dev. Section F (loading Haroon's sheet) runs on Dev only; the UAT
 load is a separate step with its own yes (UAT rule).
 
