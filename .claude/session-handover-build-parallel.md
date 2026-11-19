@@ -17,11 +17,12 @@ the build branch, and reaches `main` at the merge (Basheer, 2026-10-17)._
   = `0066 (head)`; schema file `290386a`. Backend pytest 1621 pass; tsc, lint
   (0 errors), MUI check clean. The worktree `.claude/worktrees/build` is kept,
   finished; its own copy of this note is stale — this one is live.
-- Paperwork committed on `main` in the docs batch after `290386a` (plan,
-  E2E plan, Traceability wording, scorecard files, archive entry, this note).
-- **Next:** (1) show Basheer the scorecard Artifacts' diff and republish the
-  two client pages only on his go; (2) tell Build & Test it landed (done in
-  chat 19 Nov; Basheer passes it on). Then this session waits for the next
+- Paperwork committed and pushed on `main` as `43a2feb` (plan, E2E plan,
+  Traceability wording, scorecard files, archive entry, this note).
+- Build & Test told it landed (19 Nov, via Basheer).
+- **Next:** nothing to build. The two client scorecard Artifacts are
+  republished **after the pricing E2E is done** (Basheer, 19 Nov): show him
+  the exact diff first, then publish. Then this session waits for the next
   approved plan; Haroon's sheet (step 4) waits on him.
 - "GE LOGIQ P9" hint in `OpportunityItemAddRow.tsx` stays (Basheer, 18 Nov).
 - Tests: main's interpreter from the worktree `backend/`; frontend
