@@ -180,15 +180,6 @@ to decide: change the code, or change the rule.
   progress. Not decided; needs its own plan. Until then they live in the
   Project's own next actions and activity notes.
 
-### Commit check: keep `.githooks/commit-msg` in Unix line endings — not started (2026-10-08)
-
-Git on Windows warned it will give the hook Windows line endings the next
-time it checks the file out; the hook would then stop running (it cannot
-harm anything, but the Business-Rules/matrix check would silently
-lapse). Fix: a `.gitattributes` line `.githooks/* text eol=lf`, then
-confirm the hook still refuses a rules-only commit. Small; next docs
-batch.
-
 ### Reporting line when Haroon moves to CEO — waits on the org change (2026-10-22)
 
 Today Haroon is rep, GM – Sales and CEO at once, and has no manager in
