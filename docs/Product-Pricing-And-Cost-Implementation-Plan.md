@@ -96,7 +96,10 @@ of it).
   Manager's lowest, ₹29L CEO's lowest, ₹24L cost — made-up example
 - Number of products to price — not counted (needs a Dev query; will ask
   first)
-- Haroon's sheet columns — not known; sheet not yet received
+- Haroon's sheet — received 21 Nov (filled by the Cabio leadership team):
+  71 products, columns Full price, Rep's lowest, Area Manager's lowest,
+  CEO's lowest, Cost (rupees, without GST); 4 rows sent back for
+  correction, 13 blank (Progress-Archive-2026-11, 21 Nov)
 - UAT catalog: 73 products (71 active), one entry per model, machine
   versions as separate entries, no probes or transducers, no Imaging
   accessories — UAT read-only query, 18 Nov 2026 (Progress-Archive-2026-11)
