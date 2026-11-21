@@ -1839,6 +1839,11 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   manager-coaching and personal remarks were), not yet scoped or built.
   **Decided 2026-10-16 (Basheer):** for a Manager Note, visibility follows
   the rep the note is about (`user_id`), not the writer. Ready to scope.
+  **Manager Note part built on Dev, 2026-11-21** (migration `0067`, applied to Dev; plan:
+  `docs/Manager-Note-Privacy-Implementation-Plan.md`) — Manager Notes are now private to the rep,
+  the writer and their managers; UAT gets it with the next full move. **Still open:** every other
+  activity type with no Opportunity (visits, calls, ordinary notes, Sales Development Activities)
+  stays visible to everyone — option A, recorded as decided, not built.
 
 - **9 date-only `type="date"` fields left unconverted, on purpose.**
   Basheer's explicit scope call during the MUI migration (see the

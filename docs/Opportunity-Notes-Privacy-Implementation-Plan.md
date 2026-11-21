@@ -31,6 +31,9 @@ hospital) and recommended hiding only the Activity-tab notes instead. **Haroon a
    hide, not just the deal-visibility check. Reuses the two carve-out functions already used for
    `opportunity_tier_visibility` (`cabio_app_has_split`, `cabio_app_assigned_reminder`), applied
    here to `activity.opportunity_id`.
+   *Narrowed 2026-11-20 for Manager Notes only:* split and reminder holders no longer see Manager
+   Notes on the Opportunity (`docs/Manager-Note-Privacy-Implementation-Plan.md`, D5); the carve-out
+   stays for every other note.
 4. **Own notes always visible**, regardless of rank — unchanged from today
    (`user_id = cabio_app_uid()`).
 5. **No UI indicator for a hidden note.** It simply doesn't appear in the timeline, same as every

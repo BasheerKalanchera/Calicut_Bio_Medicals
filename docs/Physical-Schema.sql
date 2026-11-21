@@ -11,8 +11,8 @@
 -- it is not consumed by Alembic or the application at runtime, and cannot be
 -- used as an `alembic stamp <rev>` checkpoint.
 --
--- Regenerated 2026-11-19 from the Dev database, catching up migration
--- 0066: product: full price, three lowest prices and cost (INR Lakhs)
+-- Regenerated 2026-11-21 from the Dev database, catching up migration
+-- 0067: Manager Notes visible only to the rep, the writer and the rep's managers
 -- See docs/Backend-Implementation-Standards.md's migration workflow.
 --
 -- Regenerate with: .\scripts\regen_physical_schema.ps1
@@ -22,7 +22,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict oOuI4Z8AfPd80lubOBZGpRHT8NElkQgsD4vtAZa10aT7PHe6KMqvzivyGOQMU2f
+\restrict Eny63UiZKqSBs5ddG9rfoovZZwl2B8BcsmzcV2Iz9lc1yQQ6LO6QZBUgs0zE8RO
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.11 (Debian 17.11-1.pgdg13+2)
@@ -3395,8 +3395,18 @@ CREATE POLICY activity_insert ON public.activity FOR INSERT WITH CHECK (((opport
 -- Name: activity activity_select; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY activity_select ON public.activity FOR SELECT USING (((opportunity_id IS NULL) OR (user_id = public.cabio_app_uid()) OR public.cabio_app_has_split(opportunity_id) OR public.cabio_app_assigned_reminder(opportunity_id) OR ((opportunity_id IN ( SELECT opportunity.id
-   FROM public.opportunity)) AND (NOT (((public.cabio_app_role_name() = 'Area Manager'::text) AND (public.cabio_app_user_role_name(user_id) = ANY (ARRAY['SBU Manager'::text, 'General Manager'::text, 'Admin'::text]))) OR ((public.cabio_app_role_name() = 'SBU Manager'::text) AND (public.cabio_app_user_role_name(user_id) = ANY (ARRAY['General Manager'::text, 'Admin'::text]))))))));
+CREATE POLICY activity_select ON public.activity FOR SELECT USING (((((activity_type)::text <> 'MANAGER_NOTE'::text) AND ((opportunity_id IS NULL) OR (user_id = public.cabio_app_uid()) OR public.cabio_app_has_split(opportunity_id) OR public.cabio_app_assigned_reminder(opportunity_id) OR ((opportunity_id IN ( SELECT opportunity.id
+   FROM public.opportunity)) AND (NOT (((public.cabio_app_role_name() = 'Area Manager'::text) AND (public.cabio_app_user_role_name(user_id) = ANY (ARRAY['SBU Manager'::text, 'General Manager'::text, 'Admin'::text]))) OR ((public.cabio_app_role_name() = 'SBU Manager'::text) AND (public.cabio_app_user_role_name(user_id) = ANY (ARRAY['General Manager'::text, 'Admin'::text])))))))) OR (((activity_type)::text = 'MANAGER_NOTE'::text) AND ((user_id = public.cabio_app_uid()) OR (created_by = public.cabio_app_uid()) OR (public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])) OR ((NOT (((public.cabio_app_role_name() = 'Area Manager'::text) AND (public.cabio_app_user_role_name(user_id) = ANY (ARRAY['SBU Manager'::text, 'General Manager'::text, 'Admin'::text]))) OR ((public.cabio_app_role_name() = 'SBU Manager'::text) AND (public.cabio_app_user_role_name(user_id) = ANY (ARRAY['General Manager'::text, 'Admin'::text]))))) AND (((public.cabio_app_role_name() = 'SBU Manager'::text) AND (public.cabio_app_sbu_id() = ( SELECT up.sbu_id
+   FROM public.user_profile up
+  WHERE (up.id = activity.user_id)))) OR ((public.cabio_app_role_name() = 'Area Manager'::text) AND (public.cabio_app_is_above(user_id) OR ((public.cabio_app_sbu_id() = ( SELECT up.sbu_id
+   FROM public.user_profile up
+  WHERE (up.id = activity.user_id))) AND (account_id IN ( SELECT a.id
+   FROM public.account a
+  WHERE (a.zone_id IN ( SELECT zc.descendant_zone_id
+           FROM public.zone_closure zc
+          WHERE (zc.ancestor_zone_id IN ( SELECT uz.zone_id
+                   FROM public.user_zone uz
+                  WHERE (uz.user_id = public.cabio_app_uid()))))))))))))))));
 
 
 --
@@ -4020,5 +4030,5 @@ CREATE POLICY target_plan_write ON public.target_plan FOR INSERT WITH CHECK ((us
 -- PostgreSQL database dump complete
 --
 
-\unrestrict oOuI4Z8AfPd80lubOBZGpRHT8NElkQgsD4vtAZa10aT7PHe6KMqvzivyGOQMU2f
+\unrestrict Eny63UiZKqSBs5ddG9rfoovZZwl2B8BcsmzcV2Iz9lc1yQQ6LO6QZBUgs0zE8RO
 

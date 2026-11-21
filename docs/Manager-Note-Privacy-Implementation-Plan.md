@@ -37,6 +37,16 @@
   separate hotfix (Basheer to settle with Haroon, since one of the three open
   notes on UAT is his) — Basheer, 2026-11-20 (next full move unless Haroon
   wants it sooner)
+- D10. An Area Manager who sees a Manager Note only because their area covers
+  the customer's zone must also be in the rep's business unit, as Opportunities
+  already require. An Area Manager above the rep in the reporting line sees it
+  whatever their business unit — Basheer, 2026-11-21
+- D11. How the rule is tested: a read-only check on Dev of the 24 existing
+  Manager Notes against all 12 active users (done 21 Nov, 0 mismatches), not
+  temporary test notes. The zone-only Area Manager case, which Dev's existing
+  notes don't cover, is tested in the Dev E2E by logging a Manager Note on the
+  real screens; if that proves impossible, fall back to one temporary note in a
+  rolled-back transaction, with his approval — Basheer, 2026-11-21
 
 ## Figures and sources
 
@@ -70,9 +80,10 @@ After this change a Manager Note shows only to:
 - Admin and the General Manager;
 - the SBU Manager of the rep's business unit;
 - an Area Manager who is above the rep in the reporting line, or who covers
-  the customer's zone. For example, the Area Manager covering Hubli would see
-  the note to Dhanushma at Secure Hospital even if Dhanushma doesn't report
-  to them.
+  the customer's zone and is in the rep's business unit. For example, the Area
+  Manager covering Hubli would see the note to Dhanushma at Secure Hospital
+  even if Dhanushma doesn't report to them, provided they are in
+  Dhanushma's business unit.
 
 Everyone else no longer sees it, on the customer's Activity tab or on the
 Opportunity's timeline. Comments on the note follow the note automatically:
@@ -100,9 +111,10 @@ No screen changes.
    unchanged. Basheer runs the upgrade himself:
    `! cmd //c "cd /d C:\Users\Basheer\GitHub\Calicut_Bio_Medicals\backend && .venv\Scripts\alembic.exe upgrade head"`.
    Then regenerate `docs/Physical-Schema.sql`.
-3. **Tests.** Who sees what, for a linked and an unlinked note (see section
-   6), plus a visit staying visible as today. Full backend tests, type check
-   and lint. Commit (shown first, own approval).
+3. **Check and tests.** Who sees what, checked on Dev against the existing
+   Manager Notes (D11, done 21 Nov; matrix in section 6), plus a visit staying
+   visible as today. Full backend tests, type check and lint. Commit (shown
+   first, own approval).
 4. **E2E on Dev.** Test plan written with the `cabio-e2e-testing` skill
    before this step.
 5. **UAT** with the next full move (D9), its own approval.
@@ -149,16 +161,19 @@ where noted.
   `opportunity_id IS NULL OR user_id = uid OR cabio_app_has_split(opportunity_id)
   OR cabio_app_assigned_reminder(opportunity_id) OR (opportunity visible AND NOT
   tier-hidden)`.
-- New rule: `(activity_type <> 'MANAGER_NOTE' AND <today's expression>) OR
-  (activity_type = 'MANAGER_NOTE' AND (user_id = uid OR created_by = uid OR
-  role IN ('Admin','General Manager') OR (role = 'SBU Manager' AND
-  cabio_app_user_sbu_id(user_id) = cabio_app_sbu_id()) OR (role = 'Area Manager'
-  AND (cabio_app_is_above(user_id) OR account zone under one of my user_zone
-  rows via zone_closure))) AND NOT tier-hidden(user_id))`. The rep is
-  `activity.user_id`, the writer `created_by` (`activity/service.py:220`).
-  A helper for the rep's SBU may be needed (SECURITY DEFINER, like
-  `cabio_app_user_role_name`), since a viewer can't always read the rep's
-  `user_profile` row — confirm in step 2.
+- New rule (migration 0067, applied to Dev 21 Nov): `(activity_type <>
+  'MANAGER_NOTE' AND <today's expression>) OR (activity_type = 'MANAGER_NOTE'
+  AND (user_id = uid OR created_by = uid OR role IN ('Admin','General Manager')
+  OR (NOT tier-hidden(user_id) AND ((role = 'SBU Manager' AND my SBU = the rep's
+  SBU) OR (role = 'Area Manager' AND (cabio_app_is_above(user_id) OR (my SBU =
+  the rep's SBU AND the note's account zone is under one of my user_zone rows
+  via zone_closure)))))))` — the "my SBU = the rep's SBU" test on the zone path
+  is D10; the reporting-line path has no SBU test. The rep is `activity.user_id`,
+  the writer `created_by` (`activity/service.py:220`). No helper function was
+  needed: `user_profile`, `account`, `user_zone` and `zone_closure` carry no
+  row-level security, so the rule reads them inline. The tier-hidden test
+  (D6) applies only to the SBU Manager and Area Manager branches, so the rep
+  and the writer always see their own note.
 - `cabio_app_is_above` (Physical-Schema:236) already walks the whole `manager_id` chain.
 - Inherit automatically: `activity_comment_select` (3382), `reminder_select`
   (3804), `reminder_update` (3812). `notification_select` (3651) is
@@ -167,6 +182,13 @@ where noted.
   with `_CONTACT_ACTIVITY_TYPES` (`reporting/repository.py:87`), which excludes `MANAGER_NOTE`.
 - Test matrix, linked and unlinked note: sees — rep, writer, Admin, GM, own-SBU
   SBU Manager, Area Manager above the rep, Area Manager covering the
-  customer's zone; doesn't see — another rep, split holder, reminder holder,
-  other SBU's SBU Manager, Area Manager in another zone not above the rep,
-  Area Manager when the note is about an SBU Manager. A visit stays visible as today.
+  customer's zone and in the rep's business unit (D10); doesn't see — another
+  rep, split holder, reminder holder, other SBU's SBU Manager, Area Manager in
+  another zone not above the rep, Area Manager covering the zone but in the
+  other business unit (D10), Area Manager when the note is about an SBU
+  Manager. A visit stays visible as today.
+- Result, Dev read-only check 21 Nov (D11), all 12 active users against the 24
+  existing Manager Notes: 0 mismatches against the matrix worked out from the
+  data; the 38 unlinked other activities still visible to everyone; no comment
+  visible on a note the viewer can't see. Not covered by Dev's existing notes:
+  the zone-only Area Manager grant (0 pairs) — to be covered in the E2E (D11).
