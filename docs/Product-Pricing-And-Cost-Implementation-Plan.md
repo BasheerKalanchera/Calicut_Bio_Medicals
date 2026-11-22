@@ -75,6 +75,16 @@ of it).
   never sit below cost — Basheer, 2026-11-18 (found in the pre-E2E review;
   two Admins saving the same product at the same moment can overwrite each
   other's prices — accepted for now, Backlog)
+- D16. Rounding at the first load: prices stay in lakhs with 2 decimals
+  (nearest ₹1,000), like Opportunity values. The sheet's 9 figures that
+  aren't whole thousands, in 5 products, round half-up at load: both
+  Equipwell monitor stands ₹3,500 / 3,200 / 3,000 / 2,800 → ₹4,000 /
+  3,000 / 3,000 / 3,000; EDAN Sonotrax Basic Area Manager's lowest
+  ₹14,500 → ₹15,000; EDAN H100B CEO's lowest ₹27,500 → ₹28,000; EDAN M3A
+  CEO's lowest ₹42,500 → ₹43,000. A third decimal was looked at and not
+  taken: Opportunity quotes stay in ₹1,000 steps, so a lowest price exact
+  to ₹100 couldn't be matched — Basheer, 2026-11-21 ("keep it simple"),
+  Haroon's OK by WhatsApp, 2026-11-22
 
 ## Figures and sources
 
