@@ -20,7 +20,7 @@ about any line older than 14 days (Basheer, 2026-10-16).
   section 6.
 - **Cabio leadership team** (raised 2026-11-09) — should reps sell to a
   set margin, with incentives tied to it? (The lowest-price part is now
-  planned: `docs/Product-Pricing-And-Cost-Implementation-Plan.md`.)
+  built and on Dev: `docs/Product-Pricing-And-Cost-Implementation-Plan.md`.)
 - **Haroon** (raised 2026-11-10) — the demo qualification checklist items
   and which are required (Q-H1); the Dr. Moopen's repeat order with a demo
   date (Q-H3); and
@@ -31,10 +31,13 @@ about any line older than 14 days (Basheer, 2026-10-16).
   `docs/Discussion-Demo-Qualification-2026-11.md` section 4.
 - **Fahad** (sent 2026-11-14) — Ambalpadi: are the EMIs paid to Cabio or
   to a lender? Progress-Archive 12 Nov.
-- **Haroon** (sent to the Cabio leadership team 2026-11-16) — send his
-  pricing sheet (needed for the pricing plan's step 4 only; steps 1–3 start
-  without it, D14, 18 Nov); leadership team's reply to the plan summary (Latheef
-  Bhai's view on the leak concern).
+- **Cabio leadership team** — the reply to the pricing plan summary
+  (Latheef Bhai's view on the leak concern; sent 2026-11-16). The sheet
+  answers came 23 Nov (4 rows corrected; the 13 blank products aren't sold
+  by Cabio; Progress-Archive 23 Nov).
+- **Haroon** (WhatsApp 2026-11-23) — elite V6 on the ZYRA Koppam
+  Opportunity: which model instead? SE-1202E marketing lead: which ECG
+  model, or close it?
   `docs/Product-Pricing-And-Cost-Implementation-Plan.md` D7, D12.
 - **Cabio leadership team** (raised 2026-11-13) — review of
   `docs/Payment-Terms-Implementation-Plan.md` before it is built (Basheer).

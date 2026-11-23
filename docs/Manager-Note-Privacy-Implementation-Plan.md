@@ -1,6 +1,6 @@
 # Manager Notes: only the rep and their managers can see them — Implementation Plan
 
-**Status:** Approved 2026-11-20 (Basheer).
+**Status:** Approved 2026-11-20 (Basheer). Built and on Dev — `dac003f` (21 Nov 2026, migration 0067), automated check `d7defb0` (22 Nov); manual E2E pending.
 **Traceability rows:** to confirm at review (a fix to an existing feature, BR-ACT-02).
 **Design / discussion:** Build & Test's write-up of 20 Nov and Plan & Chore's review of it
 (Progress-Archive-2026-11, 20 Nov); the earlier notes-privacy work this builds on:

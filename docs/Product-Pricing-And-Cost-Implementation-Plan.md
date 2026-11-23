@@ -5,7 +5,7 @@
 Haroon's pricing sheet (D14, 18 Nov); only step 4 (loading it) waits.
 **Progress (19 Nov 2026):** steps 1–3 built, pre-E2E review done and its
 fixes in; merged to `main` (`ebd3bdd`, 19 Nov); migration 0066 applied to Dev
-19 Nov (`alembic current` = 0066; schema file `290386a`). E2E pending:
+19 Nov (`alembic current` = 0066; schema file `290386a`). E2E 44 of 51 Pass on Dev, 19 Nov (`417c38e`); the other 7 pending:
 `docs/Product-Pricing-And-Cost-Manual-E2E-Test-Plan.md`.
 **Traceability rows:** 4.3 Revenue per product/brand analytics (Margin
 part), 11.1 Core reports (Margin Report); beyond-contract row 1 (pricing
