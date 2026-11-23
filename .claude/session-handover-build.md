@@ -12,24 +12,16 @@ session edits this note._
   ahead of a full promotion go by the hotfix-branch route
   (`docs/Deployment-Topology.md` "Fix to UAT ahead of a full promotion").
 
-## NOW (23 Nov) — Manager Note privacy: built and pushed, E2E next (plan: `docs/Manager-Note-Privacy-Implementation-Plan.md`, Approved 20 Nov)
-**Pushed:** `dac003f` (21 Nov, migration 0067, Dev `alembic current` = `0067 (head)`),
-`d7defb0` (22 Nov, automated Dev check, `RUN_DEV_DB_TESTS=1`), `ee5be3f` (23 Nov, `fix:`
-Activity Levels no longer counts Manager Notes), `320981e` (23 Nov, `test:` reminder
-holder D5 and peer Area Manager). 10 passed on Dev; full pytest 1622 passed, 10 skipped;
-ruff clean. Partial: E2E not run, so no post-commit checklist, Traceability or scorecard.
-**Pre-E2E `/code-review` (high):** findings 1 and 6 fixed; 2, 3, 5 left; 4 is a watch
-line in E2E step 8. **E2E plan** `docs/Manager-Note-Privacy-Manual-E2E-Test-Plan.md`: 27
-steps, 11 logins, 1 new save (step 4, stays on Dev); counts re-checked 23 Nov, identical to
-22 Nov (scratchpad `dev_mn_e2e_*_2026-11-23.txt`); Team Activity is a rolling 30 days, so
-on the run day I give him the per-person list (read-only Dev query; the 31 Oct notes leave
-the window 1 Dec). **Next, in order:** (a) Dev backend restart (his) for `ee5be3f`; pytest,
-ruff, tsc, lint report; then the E2E with him, `cabio-e2e-testing` loaded; (b) after Plan &
-Chore commits its docs batch: Backlog line under "Activity log privacy hole" option A, D11
-line in the plan (the rolled-back test was his 21 Nov choice), any doc line saying Activity
-Levels counts every activity type; (c) UAT with the next full move (D9), needs his yes
-for the UAT people check; Haroon to be told about D5. **Retro 23 Nov written** (5);
-docs batch committed `a742437` (E2E plan, this note, my archive entry), pushed 23 Nov.
+## NOW (23 Nov) — Manager Note privacy: E2E done on Dev, docs batch awaiting approval
+E2E 23 Nov: 26 of 27 Pass, 0 Fail, step 22 not applicable (detail: Progress-Archive
+23 Nov). Code pushed: `dac003f`, `d7defb0`, `ee5be3f`, `320981e`. **Next:** Basheer's yes to
+the docs-batch commit (E2E plan, Backlog, this note, archive entry + retro, the
+privacy plan's Status line); then push. Not mine, leave out of the commit: Plan &
+Chore's Progress-Archive lines, pricing E2E plan, Deactivate E2E plan, Traceability
+(pricing line), `session-handover-plan.md`. **Open after that:** (a) plan D11 wording
+(Plan & Chore's batch; the rolled-back test was his 21 Nov choice); (b) fix E2E plan
+wording at 9b and step 21; (c) UAT with the next full move (D9): needs his yes for the
+UAT people check, Haroon to be told about D5. Backlog has "Show who a Manager Note is for".
 
 ## NOW (19 Nov, evening) — Product pricing E2E: 44 of 51 Pass; open: 29b–29e, 30, 31, 32
 **Waiting on the leadership team's price sheet** (template is done; Basheer sends it

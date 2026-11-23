@@ -7,7 +7,7 @@
 `0067 (head)`); automated Dev check `d7defb0`, extended by `320981e` (10 passed
 with `RUN_DEV_DB_TESTS=1`); review fix `ee5be3f` (the Activity Levels report no
 longer counts Manager Notes).
-**Where:** Dev. Written 22 Nov 2026, updated 23 Nov, not yet run (0 of 27). The
+**Where:** Dev. Written 22 Nov 2026, updated 23 Nov, run 23 Nov: 26 of 27 Pass, step 22 not applicable, 0 Fail. The
 pre-E2E `/code-review` (high: a database-rule change) was run 22 Nov; its
 findings 1 and 6 are fixed (`ee5be3f`, `320981e`), finding 4 is a watch line in
 step 8, findings 2, 3 and 5 were left as they are.
@@ -118,57 +118,60 @@ the Activity tab with a shortened list.
 ## Pre-flight
 
 - P1. [Simple] Dev backend restarted since migration 0067 (no frontend change,
-  so no screen restart needed). —
+  so no screen restart needed). **Pass** (23 Nov, Basheer: servers started).
 - P2. [Simple] Basheer can sign in as each of the 11 people in the groups
   below; say now if any login (Fahad, Vivek, Arun Adarsh, Nishad K V) is not
-  available, and that group is recorded as skipped. —
+  available, and that group is recorded as skipped. **Pass** (23 Nov): signed in as 10 of the 11;
+  Marketing User not used (step 22 not applicable).
 - P3. [Simple] Counts re-run on the day (Claude, read-only), and nobody has
   logged a Manager Note on Dev since 22 Nov. Re-run 23 Nov: identical to
-  22 Nov; repeat if the run is on a later day. —
+  22 Nov; repeat if the run is on a later day. **Pass** (23 Nov): re-run
+  again on the run day, identical (`..._2026-11-23b.txt`).
 - P4. [Simple] Claude has the Team Activity list for the run day (read-only
-  Dev query, no Manager Notes counted), for steps 3b, 5b, 9b, 20b, 21b. —
+  Dev query, no Manager Notes counted), for steps 3b, 5b, 9b, 20b, 21b. **Pass**
+  (23 Nov): `dev_mn_e2e_teamactivity_2026-11-23.txt`.
 
 ## A — Haroon Sidheeq (General Manager): baseline and the one save
 
 1. [Simple] Customer 360 → Activity tab, each of six customers; count the
    Manager Note badges. **Expected:** Al Shifa Hospital Perinthalmanna 10;
    Aster MIMS Calicut 4; aster medicity 2; another hospital 5; Aster DM 2;
-   aster hospital 0. —
+   aster hospital 0. **Pass** (23 Nov).
 2. [Simple] Opportunity → Activity tab, three Opportunities. **Expected:**
    "USG M/c - Test Aug 18" (Aster MIMS Calicut) 2; "usg m/c" (aster medicity)
-   1; "New opportunity for hospital pick" (Al Shifa Hospital Perinthalmanna) 4. —
+   1; "New opportunity for hospital pick" (Al Shifa Hospital Perinthalmanna) 4. **Pass** (23 Nov).
 3. [Simple] Daily Activity Report (side menu), Date 9 Sep 2026, Team Member on
    All. **Expected:** Manager Note rows are listed. Note how many; step 18
-   compares. —
+   compares. **Pass** (23 Nov): 9 Manager Note rows.
 3b. [Simple] Insights → **Team Activity** tab ("Team Activity — last 30
    days"). **Expected:** each person's number equals Claude's list for the run
    day (P4), with no Manager Note counted. Write down every person's number;
    steps 9b, 20b and 21b compare with it. Note Rudrappa's number, or that he
-   is not listed. —
+   is not listed. **Pass** (23 Nov): Basheer K 11, Fahad 6, Haroon 2, Arun Adarsh 1, Vivek 1; Rudrappa not listed.
 4. [Simple] Customer 360 → aster hospital (Kozhikode) → Activity tab →
    **Log Activity**: **Type** = Manager Note; **This Note Is For** = Rudrappa;
    **Opportunity** left on "None — customer-level"; **Urgent** unticked; text
    "Privacy E2E note about Rudrappa"; click **Log**. *Basheer clicks, Claude
    watches.* **Expected:** saves without an error; the Activity tab shows 1
-   Manager Note, about Rudrappa, written by Haroon Sidheeq. —
+   Manager Note, about Rudrappa, written by Haroon Sidheeq. **Pass** (23 Nov): saved; note stays on Dev.
 5. [Simple] Customer 360 → Al Shifa Hospital Perinthalmanna → Activity tab.
-   **Expected:** still 10 Manager Notes (nothing else moved). —
+   **Expected:** still 10 Manager Notes (nothing else moved). **Pass** (23 Nov).
 5b. [Simple] Insights → **Team Activity** tab; leave the screen and come back
    (or reload) so it refreshes. **Expected:** Rudrappa's number is exactly what
    you noted in step 3b (or he is still not listed): the note saved in step 4
    is inside the 30 days, but Manager Notes are not counted. Nobody else's
-   number moved. —
+   number moved. **Pass** (23 Nov).
 
 ## B — Fazal (Area Manager, Imaging): the zone-only case
 
 6. [Simple] Customer 360 → aster hospital (Kozhikode) → Activity tab.
    **Expected:** 1 Manager Note, about Rudrappa, written by Haroon Sidheeq.
    Rudrappa reports to Shruthi, not Fazal; Kozhikode is in Fazal's area and
-   both are Imaging — the one case Dev's old notes could not show. —
+   both are Imaging — the one case Dev's old notes could not show. **Pass** (23 Nov).
 7. [Simple] Customer 360 → Activity tab, the other five customers.
    **Expected:** Al Shifa Hospital Perinthalmanna 6 (the 5 about him and 1
    about Fahad, his rep; not the 4 about Rudrappa); Aster MIMS Calicut 2;
-   Aster DM 1; aster medicity 0; another hospital 0. —
+   Aster DM 1; aster medicity 0; another hospital 0. **Pass** (23 Nov).
 8. [Simple] Opportunity → Activity tab. **Expected:** "USG M/c - Test Aug 18"
    (Aster MIMS Calicut) 2; "New opportunity for hospital pick" (Al Shifa
    Hospital Perinthalmanna) 4; "usg m/c" (aster medicity) opens because he
@@ -179,7 +182,7 @@ the Activity tab with a shortened list.
    Al Shifa Hospital Perinthalmanna, and two on "USG M/c - Test Aug 18", Aster
    MIMS Calicut) — follow a note's Opportunity link if the screen shows one. If
    an Opportunity does not open for him, record exactly what he sees (empty
-   page, message, error); that is reported to Basheer, not failed on its own. —
+   page, message, error); that is reported to Basheer, not failed on its own. **Pass** (23 Nov).
 
 ## C — Shruthi (Area Manager, Imaging)
 
@@ -187,44 +190,44 @@ the Activity tab with a shortened list.
    new note; she is above Rudrappa and does not cover Kozhikode); Al Shifa
    Hospital Perinthalmanna 4 (the four about Rudrappa, none of the six about
    Fahad or Fazal); another hospital 4; Aster MIMS Calicut 1; Aster DM 1;
-   aster medicity 0. —
+   aster medicity 0. **Pass** (23 Nov).
 9b. [Simple] Insights → **Team Activity** tab (Shruthi sees herself and her
    team). **Expected:** every person listed has the same number as in step
    3b; people outside her team are simply not listed. Rudrappa's number is
-   the one from step 5b. —
+   the one from step 5b. **Pass in substance** (23 Nov): screen shows "No activity logged in this period." Shruthi's team is only Rudrappa (only Manager Notes, not counted) and herself (0), so empty is right (Dev query 23 Nov, `dev_mn_e2e_shruthi_scope_2026-11-23.txt`). Plan wording to fix: "every person listed" assumed someone is listed.
 
 ## D — Rudrappa (Sales Staff, Imaging)
 
 10. [Simple] Bell. **Expected:** "Haroon Sidheeq left you a manager note", no
     urgent pop-up. Click it: aster hospital's Customer 360 opens on the
     Activity tab with the note highlighted (plan section 3: the bell still
-    opens the note). —
+    opens the note). **Pass** (23 Nov).
 11. [Simple] Customer 360 → Activity tab. **Expected:** aster hospital 1; Al
     Shifa Hospital Perinthalmanna 4 (about him only); another hospital 2;
-    Aster MIMS Calicut 0; aster medicity 0; Aster DM 0. —
+    Aster MIMS Calicut 0; aster medicity 0; Aster DM 0. **Pass** (23 Nov).
 
 ## E — Fahad (Sales Staff, Imaging): split and reminder holder
 
 12. [Simple] Opportunity "USG M/c - Test Aug 18" (Aster MIMS Calicut) →
     Activity tab. **Expected:** the Opportunity opens and its other
-    activities show, but 0 Manager Notes (two exist, both about Fazal). —
+    activities show, but 0 Manager Notes (two exist, both about Fazal). **Pass** (23 Nov).
 13. [Simple] Customer 360 → Activity tab. **Expected:** Al Shifa Hospital
     Perinthalmanna 1 (the one about himself); aster hospital 0; every other
-    customer 0. —
+    customer 0. **Pass** (23 Nov).
 
 ## F — Vivek (Sales Staff, Critical Care): reminder holder
 
 14. [Simple] Opportunity "usg m/c" (aster medicity) → Activity tab.
-    **Expected:** opens, 0 Manager Notes (one exists, about the SBU Manager). —
+    **Expected:** opens, 0 Manager Notes (one exists, about the SBU Manager). **Pass** (23 Nov).
 15. [Simple] Customer 360 → Activity tab. **Expected:** aster medicity 1 (the
     one about him, written by Arun Adarsh); aster hospital 0; every other
-    customer 0. —
+    customer 0. **Pass** (23 Nov).
 
 ## G — Arun Adarsh (Area Manager, Critical Care)
 
 16. [Simple] Customer 360 → Activity tab. **Expected:** aster medicity 1 of
     the 2 (the one about Vivek, whom he leads; not the one about the SBU
-    Manager); aster hospital 0; every other customer 0. —
+    Manager); aster hospital 0; every other customer 0. **Pass** (23 Nov).
 
 ## H — Nishad K V (Area Manager, Critical Care): covers the zone, wrong unit
 
@@ -233,13 +236,13 @@ the Activity tab with a shortened list.
     Shifa Hospital Perinthalmanna: North Kerala covers both, but he is
     Critical Care and the reps are Imaging. Ordinary activities are unchanged:
     Al Shifa Hospital Perinthalmanna still lists its 3 calls; another
-    hospital its 10 calls, 1 email and 1 meeting. —
+    hospital its 10 calls, 1 email and 1 meeting. **Pass** (23 Nov).
 18. [Simple] Daily Activity Report (side menu), Date 9 Sep 2026. **Expected:**
-    no row with the Manager Note badge (compare with Haroon's step 3). —
+    no row with the Manager Note badge (compare with Haroon's step 3). **Pass** (23 Nov).
 19. [Complex: phone layout] Customer 360 → Al Shifa Hospital Perinthalmanna →
     Activity tab at 390, 768 and 1280 px. **Expected:** the shorter list (3
     calls) looks normal, nothing runs past the card or looks squashed; no
-    change of look is expected from this feature. —
+    change of look is expected from this feature. **Pass** (23 Nov).
 
 ## I — Basheer K (SBU Manager, Imaging)
 
@@ -249,25 +252,30 @@ the Activity tab with a shortened list.
     2 (his own; not Vivek's, a Critical Care rep); Aster DM 1 (the one about
     Fazal; not Haroon's about himself). "USG M/c - Test Aug 18" (Aster MIMS
     Calicut) 2; "usg m/c" (aster medicity) 1; "New opportunity for hospital
-    pick" (Al Shifa Hospital Perinthalmanna) 4. —
+    pick" (Al Shifa Hospital Perinthalmanna) 4. **Pass** (23 Nov).
 20b. [Simple] Insights → **Team Activity** tab (the SBU Manager sees the whole
     Imaging team). **Expected:** every person listed has the same number as in
     step 3b, including Basheer K's own number (the notes about him are not
-    counted) and Rudrappa's (as in step 5b). —
+    counted) and Rudrappa's (as in step 5b). **Pass** (23 Nov): only Basheer K 11 and Fahad 6 listed.
 
 ## J — Abdul Latheef P (Admin)
 
 21. [Simple] Customer 360 → Activity tab, six customers. **Expected:** as
     Haroon in step 1, with aster hospital 1: Al Shifa Hospital Perinthalmanna
-    10; Aster MIMS Calicut 4; aster medicity 2; another hospital 5; Aster DM 2. —
+    10; Aster MIMS Calicut 4; aster medicity 2; another hospital 5; Aster DM 2.
+    **Pass** (23 Nov).
 21b. [Simple] Insights → **Team Activity** tab. **Expected:** the same numbers
-    as Haroon's in step 3b, person for person. —
+    as Haroon's in step 3b, person for person. **Pass** (23 Nov).
 
 ## K — Marketing User
 
 22. [Simple] Customer 360 → Activity tab, six customers. **Expected:** every
     customer opens and shows 0 Manager Notes (no manager role, no business
-    unit). —
+    unit). **Not applicable** (Basheer, 23 Nov): a Marketing User has no customer
+    screens, only the Marketing section (`DemoApp.tsx:424`). The database side was
+    checked read-only on 22 and 23 Nov: Marketing User and Marketing Test User open
+    all six customers with 0 Manager Notes, and no access to the three Opportunities
+    (`dev_mn_e2e_counts_2026-11-23.txt`).
 
 ## Not repeated here
 

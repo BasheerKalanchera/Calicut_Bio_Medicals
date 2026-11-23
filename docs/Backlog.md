@@ -965,6 +965,18 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
 
 ## Deferred / undecided items
 
+- **Show who a Manager Note is for (Basheer, 23 Nov 2026; not started, no
+  design yet).** On the Customer 360 and Opportunity Activity tabs a Manager
+  Note shows only the manager who wrote it, never the rep it is about; the
+  reader can tell only if the note's own text names the person (found in
+  Manager Note privacy E2E step 20, Aster DM: written by Shruthi, for Fazal,
+  and only the text said so). Since notes are now private this matters more:
+  a manager can't see why a note is, or isn't, shown to them. Likely a small
+  screen change, such as "To: <name>" on Manager Note rows. The data is
+  already there: `ActivityTimeline.tsx:115` shows `created_by_user` (the
+  writer) and keeps `activity.user` (the rep it is about) for old rows only.
+  Not part of the privacy plan (D7: no screen change).
+
 - **My Work and Next Actions: the next-actions lookup is slow (UAT
   read-only check, 12 Nov 2026; decide after the small batch is on UAT).**
   The rule that decides which next actions a person may see scans the whole
@@ -1844,7 +1856,7 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   the rep the note is about (`user_id`), not the writer. Ready to scope.
   **Manager Note part built on Dev, 2026-11-21** (migration `0067`, applied to Dev; plan:
   `docs/Manager-Note-Privacy-Implementation-Plan.md`) — Manager Notes are now private to the rep,
-  the writer and their managers; UAT gets it with the next full move. **Still open:** every other
+  the writer and their managers; Dev E2E passed 23 Nov (26 of 27, 0 Fail); UAT gets it with the next full move. **Still open:** every other
   activity type with no Opportunity (visits, calls, ordinary notes, Sales Development Activities)
   stays visible to everyone — option A, recorded as decided, not built.
 
