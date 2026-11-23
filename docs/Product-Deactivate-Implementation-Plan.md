@@ -1,21 +1,21 @@
 # Product Deactivate / Reactivate — Implementation Plan
 
-**Status:** Draft, 2026-11-23.
-**Traceability rows:** none — catalog upkeep, not a signed-requirement row (to confirm, D8).
+**Status:** Approved, 2026-11-23 (Basheer).
+**Traceability rows:** none — catalog upkeep, not a signed-requirement row (D8).
 **Design / discussion:** Plan & Chore, 23 Nov 2026 (Progress-Archive 23 Nov). Modelled on
 the User Directory's Deactivate (`backend/app/domains/organization/service.py:167–190`)
 and `docs/Zone-Deactivate-Reactivate-Implementation-Plan.md` (built `b0b4109`).
 
 ## Decisions
 
-- D1. Only the GM and Admin can deactivate or reactivate a product — the same people who can add and edit products today — proposed
-- D2. Deactivating only takes the product out of the pickers for **new** lines and leads. Existing Opportunity lines, leads, installed equipment and documents keep it, unchanged — proposed
+- D1. Only the GM and Admin can deactivate or reactivate a product — the same people who can add and edit products today — Basheer, 2026-11-23
+- D2. Deactivating only takes the product out of the pickers for **new** lines and leads. Existing Opportunity lines, leads, installed equipment and documents keep it, unchanged — Basheer, 2026-11-23
 - D3. Before confirming, the pop-up shows "N open Opportunities and N marketing leads waiting for a decision use this product". It doesn't stop the deactivation. The Opportunity count is a link that opens the Opportunity Pipeline list showing those Opportunities; marketing leads stay a count — Basheer, 2026-11-23
 - D4. Counted and listed: every Opportunity not Won or Lost (Active and On Hold today; Stalled too if it's switched on — On Hold is a planned pause and will restart, so it needs the product swapped too). Needs a new "open only" option on the Pipeline drill-down. A lead "waiting" means status New — Basheer, 2026-11-23
-- D5. The Product Catalog gets a "Show inactive" button (GM and Admin only). Inactive products show dimmed with an "Inactive" label and a Reactivate button. Everyone else never sees inactive products — proposed
-- D6. Reactivating is refused, with a plain message, when another active product already exists for the same model (the catalog allows one active product per model) — proposed
-- D7. No database change: the product's Active field already exists — proposed
-- D8. No Traceability row; recorded as a new business rule BR-CAT-07 — proposed
+- D5. The Product Catalog gets a "Show inactive" button (GM and Admin only). Inactive products show dimmed with an "Inactive" label and a Reactivate button. Everyone else never sees inactive products — Basheer, 2026-11-23
+- D6. Reactivating is refused, with a plain message, when another active product already exists for the same model (the catalog allows one active product per model) — Basheer, 2026-11-23
+- D7. No database change: the product's Active field already exists — Basheer, 2026-11-23
+- D8. No Traceability row; recorded as a new business rule BR-CAT-07 — Basheer, 2026-11-23
 
 ## Figures and sources
 
