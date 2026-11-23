@@ -12,34 +12,23 @@ session edits this note._
   ahead of a full promotion go by the hotfix-branch route
   (`docs/Deployment-Topology.md` "Fix to UAT ahead of a full promotion").
 
-## NOW (21 Nov) — Manager Note privacy: steps 2–3 built, **uncommitted** (plan: `docs/Manager-Note-Privacy-Implementation-Plan.md`, Approved 20 Nov)
-Everything before this was pushed (`main` = `4e09a39`). Done 21 Nov, all
-uncommitted: `backend/alembic/versions/0067_manager_note_privacy.py` **applied to
-Dev** (Basheer ran it; `alembic current` = `0067 (head)`); `docs/Physical-Schema.sql`
-regenerated (diff = the new rule plus header and restrict key only); plan edited
-(D10 same business unit on the zone path, D11 how it is tested, sections 1, 2, 6).
-**Dev read-only check done:** all 12 active users against the 24 existing Manager
-Notes, 0 mismatches; 38 unlinked other activities still visible to all; no
-comment visible on a hidden note. Scripts and output in the 21 Nov scratchpad
-(`dev_manager_note_visibility_check.py`, `visibility_check_out.txt`,
-`dev_zone_only_candidates.py`, `zone_only_out.txt`).
-**Open gap (D11):** the zone-only Area Manager grant has 0 pairs on Dev; test it
-in the E2E on the real screens: Haroon or Abdul logs a Manager Note about Rudrappa
-(reports to Shruthi) on a Fazal-zone customer (Kannur, Kasaragod, Kozhikode,
-Mangalore) and Fazal sees it; or Fahad (Fazal) on a Bangalore/Mandya customer and
-Shruthi sees it; or Vivek (Arun) on a North Kerala customer and Nishad sees it.
-Fallback only with his yes: one temporary note in a rolled-back transaction.
-**Done 21 Nov, uncommitted:** full backend pytest 1621 passed, ruff, tsc, eslint
-(0 errors, 134 known `any` warnings) all pass; his approved doc edits made in
-Business-Rules BR-ACT-02, the 5 Sep Opportunity-Notes-Privacy plan, Backlog
-"Activity log privacy hole", Business-Rule-Implementation-Matrix row BR-ACT-02.
-**Next, in order:** (3) commit proposal for migration + schema + plan + those 4 docs
-(own approval; message records "applied to Dev, `alembic current` = 0067 (head)"
-and the pytest count; leave out the Traceability line, Progress-Archive and the
-Plan & Chore note);
-(4) E2E test plan via `cabio-e2e-testing`; (5) UAT with the next full move (D9),
-needs his yes for the UAT people check. Haroon to be told about D5. **Retro for
-this session not done yet.**
+## NOW (23 Nov) — Manager Note privacy: built and pushed, E2E next (plan: `docs/Manager-Note-Privacy-Implementation-Plan.md`, Approved 20 Nov)
+**Pushed:** `dac003f` (21 Nov, migration 0067, Dev `alembic current` = `0067 (head)`),
+`d7defb0` (22 Nov, automated Dev check, `RUN_DEV_DB_TESTS=1`), `ee5be3f` (23 Nov, `fix:`
+Activity Levels no longer counts Manager Notes), `320981e` (23 Nov, `test:` reminder
+holder D5 and peer Area Manager). 10 passed on Dev; full pytest 1622 passed, 10 skipped;
+ruff clean. Partial: E2E not run, so no post-commit checklist, Traceability or scorecard.
+**Pre-E2E `/code-review` (high):** findings 1 and 6 fixed; 2, 3, 5 left; 4 is a watch
+line in E2E step 8. **E2E plan** `docs/Manager-Note-Privacy-Manual-E2E-Test-Plan.md`: 27
+steps, 11 logins, 1 new save (step 4, stays on Dev); counts re-checked 23 Nov, identical to
+22 Nov (scratchpad `dev_mn_e2e_*_2026-11-23.txt`); Team Activity is a rolling 30 days, so
+on the run day I give him the per-person list (read-only Dev query; the 31 Oct notes leave
+the window 1 Dec). **Next, in order:** (a) Dev backend restart (his) for `ee5be3f`; pytest,
+ruff, tsc, lint report; then the E2E with him, `cabio-e2e-testing` loaded; (b) after Plan &
+Chore commits its docs batch: Backlog line under "Activity log privacy hole" option A, D11
+line in the plan (the rolled-back test was his 21 Nov choice), any doc line saying Activity
+Levels counts every activity type; (c) UAT with the next full move (D9), needs his yes
+for the UAT people check; Haroon to be told about D5. **Retro 23 Nov written** (5).
 
 ## NOW (19 Nov, evening) — Product pricing E2E: 44 of 51 Pass; open: 29b–29e, 30, 31, 32
 **Waiting on the leadership team's price sheet** (template is done; Basheer sends it
