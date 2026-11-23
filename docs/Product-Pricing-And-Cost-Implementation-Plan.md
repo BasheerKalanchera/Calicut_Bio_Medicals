@@ -5,8 +5,12 @@
 Haroon's pricing sheet (D14, 18 Nov); only step 4 (loading it) waits.
 **Progress (19 Nov 2026):** steps 1–3 built, pre-E2E review done and its
 fixes in; merged to `main` (`ebd3bdd`, 19 Nov); migration 0066 applied to Dev
-19 Nov (`alembic current` = 0066; schema file `290386a`). E2E 44 of 51 Pass on Dev, 19 Nov (`417c38e`); the other 7 pending:
-`docs/Product-Pricing-And-Cost-Manual-E2E-Test-Plan.md`.
+19 Nov (`alembic current` = 0066; schema file `290386a`). **E2E 51 of 51 Pass
+on Dev, 0 Fail** (44 on 19 Nov, `417c38e`; the last 7 on 23 Nov):
+`docs/Product-Pricing-And-Cost-Manual-E2E-Test-Plan.md`. Step 4: Dev catalog
+brought in line with UAT and the corrected price sheet loaded on Dev, 23 Nov
+(58 products priced, 13 left blank; Cost blank). Loading it on UAT waits for
+the UAT move, with its own yes from Basheer (D7).
 **Traceability rows:** 4.3 Revenue per product/brand analytics (Margin
 part), 11.1 Core reports (Margin Report); beyond-contract row 1 (pricing
 ladder, parked for Phase 2 on 16 Oct — this plan takes only a first slice
