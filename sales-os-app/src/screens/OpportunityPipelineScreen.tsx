@@ -41,6 +41,8 @@ interface Props {
     brandId?: string;
     tradeInsOnly?: boolean;
     noProductsOnly?: boolean;
+    // Open Opportunities only (not Won/Lost) -- the Product Deactivate pop-up link.
+    openOnly?: boolean;
     // Zone tree's "(not in a sub-zone)" row: that zone only, not its subtree.
     zoneExact?: boolean;
     closedFrom?: string;
@@ -314,6 +316,7 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMod
         brand_id: initialFilter?.brandId,
         has_trade_in: initialFilter?.tradeInsOnly,
         has_no_items: initialFilter?.noProductsOnly,
+        open_only: initialFilter?.openOnly,
         zone_exact: initialFilter?.zoneExact,
         closed_from: initialFilter?.closedFrom,
         closed_to: initialFilter?.closedTo,

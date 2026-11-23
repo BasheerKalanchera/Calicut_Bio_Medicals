@@ -28,6 +28,7 @@ export type UserUpdate = components["schemas"]["UserUpdate"];
 export type UserBlastRadius = components["schemas"]["UserBlastRadius"];
 export type ProductListResponse = components["schemas"]["ProductListResponse"];
 export type ProductResponse = components["schemas"]["ProductResponse"];
+export type ProductUsageResponse = components["schemas"]["ProductUsageResponse"];
 // Hand-written: the generated `ProductPrices` is `unknown`, because the server
 // leaves out any figure the caller may not see (backend/app/domains/product/
 // schemas.py `ProductPrices`) and the generator can't describe that. Keep these

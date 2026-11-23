@@ -187,6 +187,10 @@ export const HELP_CONTENT: Record<string, HelpTopic> = {
         heading: "Adding to an Opportunity",
         body: "You can only add a product to an Opportunity if it belongs to that Opportunity's own SBU — browsing is company-wide, but adding to an Opportunity stays SBU-scoped.",
       },
+      {
+        heading: "Deactivating a product (General Manager and Admin)",
+        body: "Deactivate stops a product from appearing when anyone adds a new Opportunity line or a new marketing lead. Existing Opportunity lines, leads and documents are not changed. Before you confirm, the pop-up shows how many open Opportunities and waiting marketing leads still use the product. Press \"Show inactive\" at the top to see switched-off products and Reactivate one. If a newer active product already exists for the same Model, Reactivate is refused.",
+      },
     ],
   },
 

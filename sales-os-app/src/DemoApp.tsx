@@ -226,7 +226,7 @@ export default function DemoApp() {
   // the deals behind that number, same one-shot pattern as
   // nextActionsInitialDueBefore above.
   const [pipelineInitialFilter, setPipelineInitialFilter] = useState<
-    | { ownerId?: string; zoneId?: string; sbuId?: string; productId?: string; brandId?: string; tradeInsOnly?: boolean; noProductsOnly?: boolean; zoneExact?: boolean; closedFrom?: string; closedTo?: string; statusId?: string; stageId?: string; expectedCount?: number; label: string }
+    | { ownerId?: string; zoneId?: string; sbuId?: string; productId?: string; brandId?: string; tradeInsOnly?: boolean; noProductsOnly?: boolean; openOnly?: boolean; zoneExact?: boolean; closedFrom?: string; closedTo?: string; statusId?: string; stageId?: string; expectedCount?: number; label: string }
     | undefined
   >(undefined);
   // Which report screen a drill-down came from, so the banner's back arrow
@@ -812,7 +812,7 @@ export default function DemoApp() {
 
           {/* Product Catalog — always mounted, hidden when not active */}
           <Box sx={{ flex: 1, overflow: "hidden", display: view === "catalog" ? "flex" : "none", flexDirection: "column" }}>
-            <ProductCatalogScreen />
+            <ProductCatalogScreen onDrillToPipeline={handleDrillToPipeline} />
           </Box>
 
           {/* User Directory — always mounted, hidden when not active; nav entry is Admin/GM-gated */}

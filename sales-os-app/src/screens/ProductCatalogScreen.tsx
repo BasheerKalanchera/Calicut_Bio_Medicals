@@ -16,7 +16,16 @@ import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import { listProducts, countProducts, getProduct, createProduct, updateProduct } from "../services/products";
+import {
+  listProducts,
+  countProducts,
+  getProduct,
+  createProduct,
+  updateProduct,
+  getProductUsage,
+  deactivateProduct,
+  reactivateProduct,
+} from "../services/products";
 import { listProductDocuments, createProductDocument, deleteDocument } from "../services/documents";
 import { listBrands, createBrand, listModels, createModel, listCategories, createCategory } from "../services/catalogHierarchy";
 import { listSbus } from "../services/masterData";
@@ -316,11 +325,16 @@ function ProductDetail({
   productId,
   onBack,
   onEdit,
+  onToggleActive,
+  toggleBusy,
   canEdit,
 }: {
   productId: string;
   onBack: () => void;
   onEdit: (product: ProductResponse) => void;
+  // Deactivate (opens the pop-up) or Reactivate (runs at once), by the product's state.
+  onToggleActive: (product: { id: string; name: string; is_active: boolean | null }) => void;
+  toggleBusy: boolean;
   canEdit: boolean;
 }) {
   const { userProfile } = useAuth();
@@ -381,8 +395,16 @@ function ProductDetail({
           {product.sbu && (
             <Chip label={product.sbu.name} size="small" variant="outlined" sx={sbuChipSx(product.sbu.name)} />
           )}
+          {product.is_active === false && (
+            <Chip label="Inactive" size="small" />
+          )}
           {canEdit && (
             <Button size="small" onClick={() => onEdit(product)}>Edit</Button>
+          )}
+          {canEdit && (
+            <Button size="small" disabled={toggleBusy} onClick={() => onToggleActive(product)}>
+              {product.is_active === false ? "Reactivate" : "Deactivate"}
+            </Button>
           )}
         </Box>
       </Box>
@@ -412,13 +434,23 @@ function ProductDetail({
   );
 }
 
-export default function ProductCatalogScreen() {
+export default function ProductCatalogScreen({
+  onDrillToPipeline,
+}: {
+  // Opens the Opportunity Pipeline list filtered to the given slice (DemoApp.handleDrillToPipeline).
+  onDrillToPipeline: (filter: { productId: string; openOnly: boolean; expectedCount: number }, label: string) => void;
+}) {
   const { userProfile } = useAuth();
   const canEdit = CATALOG_WRITE_ROLES.has(userProfile?.role_name);
   const queryClient = useQueryClient();
 
   const [search, setSearch] = useState("");
   const [sbuFilter, setSbuFilter] = useState("");
+  // "Show inactive" is for the GM and Admin only (BR-CAT-07); the server also ignores it for others.
+  const [showInactive, setShowInactive] = useState(false);
+  const includeInactive = canEdit && showInactive;
+  const [deactivating, setDeactivating] = useState<{ id: string; name: string } | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const pageSize = 50;
 
@@ -435,19 +467,23 @@ export default function ProductCatalogScreen() {
     staleTime: Infinity,
   });
 
-  const listFilters = { search: debouncedSearch || undefined, sbu_id: sbuFilter || undefined };
+  const listFilters = {
+    search: debouncedSearch || undefined,
+    sbu_id: sbuFilter || undefined,
+    include_inactive: includeInactive,
+  };
 
   // Items and count fire in parallel — neither depends on the other's result, only on
   // the same filter/page state (Guiding Principle 3, Frontend-Implementation-Standards §3.1).
   const { data: productsData, isLoading, isError, refetch } = useQuery({
-    queryKey: ["products", "list", debouncedSearch, sbuFilter, page],
+    queryKey: ["products", "list", debouncedSearch, sbuFilter, includeInactive, page],
     queryFn: () =>
       listProducts({ ...listFilters, page, page_size: pageSize, include_count: false }) as Promise<{
         items: ProductListResponse[];
       }>,
   });
   const { data: total = 0 } = useQuery({
-    queryKey: ["products", "count", debouncedSearch, sbuFilter],
+    queryKey: ["products", "count", debouncedSearch, sbuFilter, includeInactive],
     queryFn: () => countProducts(listFilters) as Promise<number>,
   });
 
@@ -541,13 +577,107 @@ export default function ProductCatalogScreen() {
     handleSaved();
   };
 
+  // Reactivate runs at once (a refusal, e.g. another active product for the same
+  // Model, shows as a plain message); Deactivate first opens the pop-up below.
+  const reactivateMutation = useMutation({
+    mutationFn: (productId: string) => reactivateProduct(productId),
+    onSuccess: () => {
+      setActionError(null);
+      handleSaved();
+    },
+    onError: (err) => setActionError(extractApiErrorMessage(err, "Couldn't reactivate this product")),
+  });
+
+  const handleToggleActive = (product: { id: string; name: string; is_active: boolean | null }) => {
+    setActionError(null);
+    if (product.is_active === false) {
+      reactivateMutation.mutate(product.id);
+    } else {
+      setDeactivating({ id: product.id, name: product.name });
+    }
+  };
+
+  // How many open Opportunities and waiting marketing leads still use the product.
+  // Informational only -- it never blocks the Deactivate (plan D3). Fetched fresh
+  // each time the pop-up opens (gcTime 0).
+  const { data: usage, isError: usageError } = useQuery({
+    queryKey: ["product-usage", deactivating?.id],
+    queryFn: () => getProductUsage(deactivating!.id),
+    enabled: deactivating !== null,
+    gcTime: 0,
+  });
+
+  const handleDeactivate = async () => {
+    if (!deactivating) return;
+    await deactivateProduct(deactivating.id);
+    handleSaved();
+  };
+
+  const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
+  const deactivateModal = (
+    <FormModal
+      isOpen={deactivating !== null}
+      onClose={() => setDeactivating(null)}
+      title={`Deactivate "${deactivating?.name ?? ""}"?`}
+      onSubmit={handleDeactivate}
+      submitLabel="Deactivate"
+    >
+      {usageError ? (
+        <Alert severity="error">Couldn't check where this product is used — try again.</Alert>
+      ) : !usage ? (
+        <Typography color="text.secondary">Checking where this product is used…</Typography>
+      ) : (
+        <>
+          <Typography>
+            {usage.open_opportunity_count > 0 && deactivating ? (
+              <Button
+                type="button"
+                variant="text"
+                size="small"
+                sx={{ p: 0, minWidth: 0, verticalAlign: "baseline", textTransform: "none", fontSize: "inherit" }}
+                onClick={() => {
+                  onDrillToPipeline(
+                    { productId: deactivating.id, openOnly: true, expectedCount: usage.open_opportunity_count },
+                    deactivating.name,
+                  );
+                  setDeactivating(null);
+                }}
+              >
+                {plural(usage.open_opportunity_count, "open Opportunity", "open Opportunities")}
+              </Button>
+            ) : (
+              plural(usage.open_opportunity_count, "open Opportunity", "open Opportunities")
+            )}{" "}
+            and {plural(usage.waiting_lead_count, "marketing lead", "marketing leads")} waiting for a decision use this
+            product.
+          </Typography>
+          <Alert severity="info">
+            They'll keep working exactly as before — deactivating only stops this product from being picked for{" "}
+            <strong>new</strong> Opportunity lines and marketing leads. Reactivate any time from "Show inactive" on the
+            Product Catalog.
+          </Alert>
+        </>
+      )}
+    </FormModal>
+  );
+
+  const actionErrorAlert = actionError && (
+    <Alert severity="error" sx={{ mx: 2, mt: 2 }} onClose={() => setActionError(null)}>
+      {actionError}
+    </Alert>
+  );
+
   if (selectedProductId) {
     return (
       <>
+        {actionErrorAlert}
         <ProductDetail
           productId={selectedProductId}
           onBack={() => setSelectedProductId(null)}
           onEdit={(product) => openEdit(product)}
+          onToggleActive={handleToggleActive}
+          toggleBusy={reactivateMutation.isPending}
           canEdit={canEdit}
         />
         <FormModal
@@ -559,12 +689,14 @@ export default function ProductCatalogScreen() {
         >
           <ProductFormFields form={form} setForm={setForm} sbus={sbus} canManageCatalog={canEdit} />
         </FormModal>
+        {deactivateModal}
       </>
     );
   }
 
   return (
     <Box sx={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", bgcolor: "gray.50" }}>
+      {actionErrorAlert}
       <Box sx={{ px: 2, pt: 2 }}>
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
           <Typography variant="h5" sx={{ fontWeight: 800 }}>Product Catalog</Typography>
@@ -617,6 +749,15 @@ export default function ProductCatalogScreen() {
                     variant={sbuFilter === sbu.id ? "filled" : "outlined"}
                   />
                 ))}
+                {canEdit && (
+                  <Chip
+                    label="Show inactive"
+                    size="small"
+                    onClick={() => { setShowInactive((v) => !v); setPage(1); }}
+                    color={showInactive ? "primary" : "default"}
+                    variant={showInactive ? "filled" : "outlined"}
+                  />
+                )}
               </Box>
             )}
           </Box>
@@ -662,7 +803,10 @@ export default function ProductCatalogScreen() {
                     "&:hover [data-part='product-chevron-icon']": { color: "primary.main" },
                   }}
                 >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                  {/* Opacity scoped to the info side -- a child can't undo its
+                      parent's opacity, so the Reactivate / Deactivate button
+                      lives outside this dimmed Box (same as User Directory). */}
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 2, opacity: product.is_active === false ? 0.5 : 1 }}>
                     <Box
                       data-part="product-avatar"
                       sx={{
@@ -686,6 +830,9 @@ export default function ProductCatalogScreen() {
                     <Box>
                       <Typography data-part="product-name" variant="body2" sx={{ fontWeight: 700, color: "gray.800", transition: "color 0.15s" }}>{product.name}</Typography>
                       <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 0.75, mt: 0.5 }}>
+                        {product.is_active === false && (
+                          <Chip label="Inactive" size="small" sx={{ height: 20, typography: "caption2" }} />
+                        )}
                         {product.sbu && (
                           <Chip label={product.sbu.name} size="small" variant="outlined" sx={{ ...sbuChipSx(product.sbu.name), height: 20, typography: "caption2" }} />
                         )}
@@ -710,8 +857,22 @@ export default function ProductCatalogScreen() {
                       <ListPriceLine prices={product.prices as ProductPricesShape | null | undefined} />
                     </Box>
                   </Box>
-                  <Box data-part="product-chevron-box" sx={{ bgcolor: "background.default", p: 1, borderRadius: "0.75rem", flexShrink: 0, ml: 1, transition: "background-color 0.15s" }}>
-                    <ChevronRightIcon data-part="product-chevron-icon" sx={{ width: 18, height: 18, color: "gray.400", transition: "color 0.15s" }} />
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexShrink: 0, ml: 1 }}>
+                    {canEdit && (
+                      <Button
+                        size="small"
+                        disabled={reactivateMutation.isPending}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleActive(product);
+                        }}
+                      >
+                        {product.is_active === false ? "Reactivate" : "Deactivate"}
+                      </Button>
+                    )}
+                    <Box data-part="product-chevron-box" sx={{ bgcolor: "background.default", p: 1, borderRadius: "0.75rem", transition: "background-color 0.15s" }}>
+                      <ChevronRightIcon data-part="product-chevron-icon" sx={{ width: 18, height: 18, color: "gray.400", transition: "color 0.15s" }} />
+                    </Box>
                   </Box>
                 </Box>
               ))}
@@ -751,6 +912,8 @@ export default function ProductCatalogScreen() {
       >
         <ProductFormFields form={form} setForm={setForm} sbus={sbus} canManageCatalog={canEdit} />
       </FormModal>
+
+      {deactivateModal}
     </Box>
   );
 }
