@@ -87,7 +87,8 @@ class TestProductRepositoryActiveFilter:
         ProductRepository(mock_db).list_products()
 
         sql = _compiled(mock_db.scalars.call_args.args[0])
-        assert "product.is_active = true" in sql
+        # "IS NOT false", not "= true": an empty (NULL) flag counts as active.
+        assert "product.is_active IS NOT false" in sql
 
     def test_active_only_false_includes_inactive_products(self):
         mock_db = MagicMock()
@@ -97,7 +98,7 @@ class TestProductRepositoryActiveFilter:
         ProductRepository(mock_db).list_products(active_only=False)
 
         sql = _compiled(mock_db.scalars.call_args.args[0])
-        assert "product.is_active = true" not in sql
+        assert "product.is_active IS NOT false" not in sql
 
 
 class TestProductRepositoryUsageCounts:

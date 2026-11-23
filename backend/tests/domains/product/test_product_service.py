@@ -180,6 +180,18 @@ class TestDeactivateProduct:
 
         repo.update.assert_not_called()
 
+    def test_empty_active_flag_counts_as_active(self):
+        """The column allows NULL (server default true); NULL can be deactivated."""
+        repo = _make_repo()
+        product = _make_product(is_active=None)
+        repo.get_by_id.return_value = product
+        repo.update.return_value = product
+
+        ProductService(repository=repo).deactivate_product(product.id, updated_by=uuid.uuid4(), role_name="Admin")
+
+        assert product.is_active is False
+        repo.update.assert_called_once_with(product)
+
     def test_does_not_check_whether_the_product_is_in_use(self):
         """Plan D2/D3: a product on open Opportunities can still be deactivated;
         the pop-up only warns."""
@@ -246,6 +258,17 @@ class TestReactivateProduct:
             ProductService(repository=repo).reactivate_product(
                 uuid.uuid4(), updated_by=uuid.uuid4(), role_name="Admin"
             )
+
+    def test_empty_active_flag_counts_as_already_active(self):
+        repo = _make_repo()
+        repo.get_by_id.return_value = _make_product(is_active=None)
+
+        with pytest.raises(ConflictError, match="already active"):
+            ProductService(repository=repo).reactivate_product(
+                uuid.uuid4(), updated_by=uuid.uuid4(), role_name="Admin"
+            )
+
+        repo.update.assert_not_called()
 
     def test_unknown_product_raises_not_found(self):
         repo = _make_repo()

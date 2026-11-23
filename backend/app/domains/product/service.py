@@ -113,7 +113,8 @@ class ProductService:
         if role_name not in _CATALOG_WRITE_ROLES:
             raise AuthorizationError("Only General Manager and Admin roles can deactivate products")
         product = self.get_product(product_id)
-        if not product.is_active:
+        # The column allows NULL (server default true); NULL counts as active.
+        if product.is_active is False:
             raise ConflictError("This product is already inactive")
         product.is_active = False
         product.updated_by = updated_by
@@ -123,7 +124,7 @@ class ProductService:
         if role_name not in _CATALOG_WRITE_ROLES:
             raise AuthorizationError("Only General Manager and Admin roles can reactivate products")
         product = self.get_product(product_id)
-        if product.is_active:
+        if product.is_active is not False:
             raise ConflictError("This product is already active")
         if self.repository.active_product_exists_for_model(product.model_id, exclude_id=product.id):
             raise ConflictError(

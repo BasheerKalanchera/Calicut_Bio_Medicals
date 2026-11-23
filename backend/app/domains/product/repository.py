@@ -80,7 +80,8 @@ class ProductRepository(BaseRepository[Product]):
     ) -> list:
         f = []
         if active_only:
-            f.append(Product.is_active == True)  # noqa: E712
+            # NULL counts as active, like the column's server default (true).
+            f.append(Product.is_active.is_not(False))
         if search:
             from app.domains.reference.models import SBU, Brand
             sbu_match = select(SBU.id).where(SBU.name.ilike(f"%{search}%")).scalar_subquery()

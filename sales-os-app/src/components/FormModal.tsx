@@ -35,6 +35,9 @@ interface FormModalProps {
   // run through onSubmit, so the dialog can't see it on its own. Greys out
   // the footer buttons and blocks closing, same as its own saving state.
   busy?: boolean;
+  // Greys out only the main (submit) button -- Cancel stays usable. For a pop-up
+  // that must show something first (e.g. the Product Deactivate counts).
+  submitDisabled?: boolean;
 }
 
 export default function FormModal({
@@ -48,6 +51,7 @@ export default function FormModal({
   maxWidth = "28rem",
   secondaryAction,
   busy = false,
+  submitDisabled = false,
 }: FormModalProps) {
   const [submittingSelf, setSubmitting] = useState(false);
   const submitting = submittingSelf || busy;
@@ -144,7 +148,7 @@ export default function FormModal({
               {secondaryAction.label}
             </Button>
           )}
-          <Button type="submit" variant="contained" disabled={submitting}>
+          <Button type="submit" variant="contained" disabled={submitting || submitDisabled}>
             {submitting ? "Saving..." : submitLabel}
           </Button>
         </DialogActions>

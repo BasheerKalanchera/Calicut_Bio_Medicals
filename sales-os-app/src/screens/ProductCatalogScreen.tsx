@@ -622,6 +622,8 @@ export default function ProductCatalogScreen({
       title={`Deactivate "${deactivating?.name ?? ""}"?`}
       onSubmit={handleDeactivate}
       submitLabel="Deactivate"
+      // Greyed out until the counts have loaded, so the GM always sees them first.
+      submitDisabled={!usage}
     >
       {usageError ? (
         <Alert severity="error">Couldn't check where this product is used — try again.</Alert>
@@ -806,7 +808,7 @@ export default function ProductCatalogScreen({
                   {/* Opacity scoped to the info side -- a child can't undo its
                       parent's opacity, so the Reactivate / Deactivate button
                       lives outside this dimmed Box (same as User Directory). */}
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 2, opacity: product.is_active === false ? 0.5 : 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 2, flex: 1, minWidth: 0, opacity: product.is_active === false ? 0.5 : 1 }}>
                     <Box
                       data-part="product-avatar"
                       sx={{
@@ -827,7 +829,7 @@ export default function ProductCatalogScreen({
                     >
                       {product.name.charAt(0).toUpperCase()}
                     </Box>
-                    <Box>
+                    <Box sx={{ minWidth: 0 }}>
                       <Typography data-part="product-name" variant="body2" sx={{ fontWeight: 700, color: "gray.800", transition: "color 0.15s" }}>{product.name}</Typography>
                       <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 0.75, mt: 0.5 }}>
                         {product.is_active === false && (
