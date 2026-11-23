@@ -207,6 +207,10 @@ class TestActivityLevels:
         assert "activity.activity_date >=" in sql
         assert "activity.activity_date <" in sql
 
+    def test_manager_notes_are_not_counted(self):
+        sql = _run("activity_levels", _make_current_user("Admin"), START, END)
+        assert "activity.activity_type != 'manager_note'" in sql.lower()
+
     def test_grouped_by_user(self):
         sql = _run("activity_levels", _make_current_user("Admin"), START, END)
         assert "group by user_profile.id" in sql.lower()

@@ -347,9 +347,13 @@ class ReportingRepository:
         zone_id: uuid.UUID | None = None,
         user_id: uuid.UUID | None = None,
     ) -> list[Row]:
-        # Deliberately no activity_type filter -- Sales Development Activities
+        # No activity_type allow-list -- Sales Development Activities
         # (training/conference/etc.) are ordinary rows in this same table and
         # should count same as any other logged activity, per the plan.
+        # The one exclusion is MANAGER_NOTE: since migration 0067 it is visible
+        # only to the rep and their managers, so counting it would make a rep's
+        # number differ by who is viewing the report
+        # (docs/Manager-Note-Privacy-Implementation-Plan.md).
         stmt = (
             select(
                 UserProfile.id.label("user_id"),
@@ -359,6 +363,7 @@ class ReportingRepository:
             .select_from(Activity)
             .join(UserProfile, Activity.user_id == UserProfile.id)
             .where(Activity.activity_date >= start, Activity.activity_date < end)
+            .where(Activity.activity_type != "MANAGER_NOTE")
             .group_by(UserProfile.id, UserProfile.display_name)
         )
         stmt = self._apply_owner_scope(stmt, current_user, user_id)
