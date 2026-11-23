@@ -135,9 +135,9 @@ def _build_scenario(s: Scenario) -> None:
             (taken,),
         )
     ]
-    if len(spare) < 4:
-        pytest.fail("Dev needs at least 4 more active people besides the Admin, SBU Manager and 4 Area Managers.")
-    rep, rep2, rep3, rep4 = spare[:4]
+    if len(spare) < 5:
+        pytest.fail("Dev needs at least 5 more active people besides the Admin, SBU Manager and 4 Area Managers.")
+    rep, rep2, rep3, rep4, rep5 = spare[:5]
     sbu_x = s.q("SELECT sbu_id::text AS s FROM user_profile WHERE id = %s", (sbu_mgr,))[0]["s"]
     sbu_y = s.q("SELECT id::text AS s FROM sbu WHERE id <> %s ORDER BY id LIMIT 1", (sbu_x,))[0]["s"]
 
@@ -174,6 +174,9 @@ def _build_scenario(s: Scenario) -> None:
     profile(
         rep2, role=roles["Sales Staff"], sbu=sbu_x, manager=am3
     )  # another rep; holds a split on the linked note (D5)
+    profile(
+        rep5, role=roles["Sales Staff"], sbu=sbu_x, manager=am3
+    )  # another rep; holds an assigned reminder on the linked Opportunity (D5)
     profile(rep3, role=roles["SBU Manager"], sbu=sbu_y, manager=None)  # the other business unit's SBU Manager
     profile(rep4, role=roles["General Manager"], sbu=None, manager=None)
     s.cur.execute("DELETE FROM user_zone WHERE user_id = ANY(%s::uuid[])", ([am1, am2, am3, am4],))
@@ -187,6 +190,7 @@ def _build_scenario(s: Scenario) -> None:
         "other_sbu_mgr": rep3,
         "rep": rep,
         "rep2_split": rep2,
+        "rep5_reminder": rep5,
         "am_above": am1,
         "am_zone": am2,
         "am_other_zone": am3,
@@ -224,7 +228,15 @@ def _build_scenario(s: Scenario) -> None:
     insert("by_am3", rep, am3, "MANAGER_NOTE")  # written by the other-zone Area Manager
     insert("about_sbu_mgr", sbu_mgr, admin, "MANAGER_NOTE")
     insert("about_admin", admin, admin, "MANAGER_NOTE")
+    insert("about_peer_am", am3, admin, "MANAGER_NOTE")  # about an Area Manager, seen by other Area Managers
     insert("visit", rep, admin, "VISIT")
+    insert("linked_visit", rep, admin, "VISIT", opp_id=opp)
+    # The reminder holder: an assigned reminder on an activity of the Opportunity (the "looped in" carve-out).
+    s.cur.execute(
+        "INSERT INTO reminder (activity_id, assigned_to_user_id, due_date, reminder_text, created_by) "
+        "VALUES (%s, %s, now() + interval '1 day', 'temporary test reminder', %s)",
+        (s.notes["linked_visit"], rep5, admin),
+    )
     s.cur.execute(
         "INSERT INTO activity_comment (activity_id, body, created_by) VALUES (%s, 'temporary test comment', %s)",
         (s.notes["unlinked"], admin),
@@ -232,7 +244,7 @@ def _build_scenario(s: Scenario) -> None:
 
 
 SEES = ["rep", "admin", "gm", "sbu_mgr", "am_above", "am_zone"]
-HIDDEN = ["rep2_split", "am_other_zone", "am_other_sbu", "other_sbu_mgr"]
+HIDDEN = ["rep2_split", "rep5_reminder", "am_other_zone", "am_other_sbu", "other_sbu_mgr"]
 
 
 @pytest.mark.parametrize("kind", ["unlinked", "linked"])
@@ -253,6 +265,24 @@ def test_zone_only_area_manager_needs_the_same_business_unit(sc):
 def test_split_holder_no_longer_sees_a_linked_manager_note(sc):
     nid = sc.notes["linked"]
     assert nid not in sc.sees("rep2_split", [nid])  # D5
+
+
+def test_reminder_holder_no_longer_sees_a_linked_manager_note(sc):
+    nid = sc.notes["linked"]
+    # The carve-out is live: the reminder holder still sees an ordinary activity on the Opportunity ...
+    assert sc.notes["linked_visit"] in sc.sees("rep5_reminder", [sc.notes["linked_visit"]])
+    # ... but not the Manager Note on it (D5).
+    assert nid not in sc.sees("rep5_reminder", [nid])
+
+
+def test_note_about_a_peer_area_manager(sc):
+    nid = sc.notes["about_peer_am"]
+    assert nid in sc.sees("am_other_zone", [nid])  # the Area Manager it is about
+    assert nid in sc.sees("am_zone", [nid])  # covers the zone, same business unit (D6 doesn't hide a peer)
+    assert nid in sc.sees("sbu_mgr", [nid])
+    assert nid not in sc.sees("am_above", [nid])  # an Area Manager neither above nor covering the zone
+    assert nid not in sc.sees("am_other_sbu", [nid])  # covers the zone, other business unit (D10)
+    assert nid not in sc.sees("rep2_split", [nid])
 
 
 def test_the_writer_sees_their_own_note(sc):
