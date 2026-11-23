@@ -38,17 +38,18 @@ the build branch, and reaches `main` at the merge (Basheer, 2026-10-17)._
   only is fine", now plan D9). NULL-flag products: 0 on Dev (read-only
   check 23 Nov), UAT not checked. SBU filter chips have no name above them (old, not
   from this change; left).
-- **Docs batch + E2E plan written, NOT committed (Basheer: one commit at
-  the end):** BR-CAT-07 + matrix row, plan D9 and "Built:" lines, Backlog
-  Dev-test-products pointer, Progress-Archive entry, this note, and
-  `docs/Product-Deactivate-Manual-E2E-Test-Plan.md` (27 steps; Plan & Chore's
-  copy from the main folder, untracked there — I corrected labels, D9, hashes.
-  Tell Plan & Chore (via Basheer) not to commit its own copy, or the merge clashes).
-  In-app help went in `662bcd2`. The commit message must mention the
-  BR-CAT-07 matrix row (commit guard). Retro waits for the session end.
-- **Next:** ONE docs commit (7 files incl. the E2E plan), shown first. Merge
-  only on Basheer's go after the E2E (`ExitWorktree` keep, merge, rebuild
-  `api.ts`, push, `cabio-post-commit`).
+- **Docs batch + E2E plan committed `f4d24e2`, pushed to
+  `origin/worktree-build` (23 Nov, 7 files):** BR-CAT-07 + matrix row, plan
+  D9 and "Built:" lines, Backlog pointer, Progress-Archive entry, this
+  note, `docs/Product-Deactivate-Manual-E2E-Test-Plan.md` (27 steps; Plan &
+  Chore's copy, labels/D9/hashes corrected by me). Plan & Chore is to commit
+  its own copy to `main` unchanged (Basheer to tell it; not confirmed); at the merge the
+  add/add clash on that file is resolved by keeping the branch's version.
+  Retro waits for the session end.
+- **Next:** nothing to build. Merge only on Basheer's go (after Build &
+  Test's current E2E): bring `main` in, keep branch's E2E plan, re-run
+  tests, push; `ExitWorktree` keep, merge to `main`, push, rebuild `api.ts`,
+  `cabio-post-commit`. This note's own edit rides in the next docs batch.
 - Tests: main's interpreter from the worktree `backend/`; frontend
   `npx --prefix sales-os-app tsc --noEmit -p sales-os-app` and
   `npm --prefix sales-os-app run lint`.
