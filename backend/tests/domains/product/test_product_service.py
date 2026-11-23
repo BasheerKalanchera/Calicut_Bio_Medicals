@@ -72,7 +72,7 @@ class TestListProducts:
         )
 
         repo.list_products.assert_called_once_with(
-            offset=0, limit=10, search="sono", sbu_id=None, include_count=True
+            offset=0, limit=10, search="sono", sbu_id=None, active_only=True, include_count=True
         )
         assert total == 0
 
@@ -86,6 +86,205 @@ class TestListProducts:
 
         assert total == 1
         assert results[0] is product
+
+
+class TestListInactiveProducts:
+    """Plan D5: only the GM and Admin may list inactive products; for anyone
+    else the request is ignored, not refused."""
+
+    @pytest.mark.parametrize("role_name", ["General Manager", "Admin"])
+    def test_gm_and_admin_get_inactive_products_when_asked(self, role_name):
+        repo = _make_repo()
+        repo.list_products.return_value = ([], 0)
+
+        ProductService(repository=repo).list_products(include_inactive=True, role_name=role_name)
+
+        assert repo.list_products.call_args.kwargs["active_only"] is False
+
+    @pytest.mark.parametrize("role_name", ["Sales Staff", "Area Manager", "SBU Manager", None])
+    def test_everyone_else_still_gets_active_only(self, role_name):
+        repo = _make_repo()
+        repo.list_products.return_value = ([], 0)
+
+        ProductService(repository=repo).list_products(include_inactive=True, role_name=role_name)
+
+        assert repo.list_products.call_args.kwargs["active_only"] is True
+
+    def test_gm_without_asking_gets_active_only(self):
+        repo = _make_repo()
+        repo.list_products.return_value = ([], 0)
+
+        ProductService(repository=repo).list_products(role_name="General Manager")
+
+        assert repo.list_products.call_args.kwargs["active_only"] is True
+
+    def test_count_follows_the_same_rule(self):
+        repo = _make_repo()
+        repo.count_products.return_value = 0
+        service = ProductService(repository=repo)
+
+        service.count_products(include_inactive=True, role_name="Admin")
+        assert repo.count_products.call_args.kwargs["active_only"] is False
+
+        service.count_products(include_inactive=True, role_name="Sales Staff")
+        assert repo.count_products.call_args.kwargs["active_only"] is True
+
+
+class TestDeactivateProduct:
+    @pytest.mark.parametrize("role_name", ["General Manager", "Admin"])
+    def test_allowed_roles_can_deactivate(self, role_name):
+        product = _make_product(is_active=True)
+        repo = _make_repo()
+        repo.get_by_id.return_value = product
+        repo.update.return_value = product
+        user_id = uuid.uuid4()
+
+        result = ProductService(repository=repo).deactivate_product(
+            product.id, updated_by=user_id, role_name=role_name
+        )
+
+        assert result is product
+        assert product.is_active is False
+        assert product.updated_by == user_id
+        repo.update.assert_called_once_with(product)
+
+    @pytest.mark.parametrize("role_name", ["Sales Staff", "Area Manager", "SBU Manager", "Marketing User"])
+    def test_other_roles_are_refused(self, role_name):
+        repo = _make_repo()
+
+        with pytest.raises(AuthorizationError):
+            ProductService(repository=repo).deactivate_product(
+                uuid.uuid4(), updated_by=uuid.uuid4(), role_name=role_name
+            )
+
+        repo.get_by_id.assert_not_called()
+        repo.update.assert_not_called()
+
+    def test_unknown_product_raises_not_found(self):
+        repo = _make_repo()
+        repo.get_by_id.return_value = None
+
+        with pytest.raises(NotFoundError):
+            ProductService(repository=repo).deactivate_product(
+                uuid.uuid4(), updated_by=uuid.uuid4(), role_name="Admin"
+            )
+
+    def test_already_inactive_is_a_conflict(self):
+        repo = _make_repo()
+        repo.get_by_id.return_value = _make_product(is_active=False)
+
+        with pytest.raises(ConflictError, match="already inactive"):
+            ProductService(repository=repo).deactivate_product(
+                uuid.uuid4(), updated_by=uuid.uuid4(), role_name="Admin"
+            )
+
+        repo.update.assert_not_called()
+
+    def test_does_not_check_whether_the_product_is_in_use(self):
+        """Plan D2/D3: a product on open Opportunities can still be deactivated;
+        the pop-up only warns."""
+        repo = _make_repo()
+        product = _make_product(is_active=True)
+        repo.get_by_id.return_value = product
+        repo.update.return_value = product
+
+        ProductService(repository=repo).deactivate_product(product.id, updated_by=uuid.uuid4(), role_name="Admin")
+
+        repo.usage_counts.assert_not_called()
+
+
+class TestReactivateProduct:
+    @pytest.mark.parametrize("role_name", ["General Manager", "Admin"])
+    def test_allowed_roles_can_reactivate(self, role_name):
+        product = _make_product(is_active=False)
+        repo = _make_repo()
+        repo.get_by_id.return_value = product
+        repo.active_product_exists_for_model.return_value = False
+        repo.update.return_value = product
+        user_id = uuid.uuid4()
+
+        result = ProductService(repository=repo).reactivate_product(
+            product.id, updated_by=user_id, role_name=role_name
+        )
+
+        assert result is product
+        assert product.is_active is True
+        assert product.updated_by == user_id
+        repo.active_product_exists_for_model.assert_called_once_with(product.model_id, exclude_id=product.id)
+
+    @pytest.mark.parametrize("role_name", ["Sales Staff", "Area Manager", "SBU Manager", "Marketing User"])
+    def test_other_roles_are_refused(self, role_name):
+        repo = _make_repo()
+
+        with pytest.raises(AuthorizationError):
+            ProductService(repository=repo).reactivate_product(
+                uuid.uuid4(), updated_by=uuid.uuid4(), role_name=role_name
+            )
+
+        repo.update.assert_not_called()
+
+    def test_refused_when_another_active_product_has_the_same_model(self):
+        """Plan D6: the catalog allows one active product per model."""
+        product = _make_product(is_active=False)
+        repo = _make_repo()
+        repo.get_by_id.return_value = product
+        repo.active_product_exists_for_model.return_value = True
+
+        with pytest.raises(ConflictError, match="another active product already exists"):
+            ProductService(repository=repo).reactivate_product(
+                product.id, updated_by=uuid.uuid4(), role_name="Admin"
+            )
+
+        assert product.is_active is False
+        repo.update.assert_not_called()
+
+    def test_already_active_is_a_conflict(self):
+        repo = _make_repo()
+        repo.get_by_id.return_value = _make_product(is_active=True)
+
+        with pytest.raises(ConflictError, match="already active"):
+            ProductService(repository=repo).reactivate_product(
+                uuid.uuid4(), updated_by=uuid.uuid4(), role_name="Admin"
+            )
+
+    def test_unknown_product_raises_not_found(self):
+        repo = _make_repo()
+        repo.get_by_id.return_value = None
+
+        with pytest.raises(NotFoundError):
+            ProductService(repository=repo).reactivate_product(
+                uuid.uuid4(), updated_by=uuid.uuid4(), role_name="Admin"
+            )
+
+
+class TestProductUsage:
+    @pytest.mark.parametrize("role_name", ["General Manager", "Admin"])
+    def test_returns_both_counts(self, role_name):
+        product = _make_product()
+        repo = _make_repo()
+        repo.get_by_id.return_value = product
+        repo.usage_counts.return_value = (3, 1)
+
+        usage = ProductService(repository=repo).get_usage(product.id, role_name=role_name)
+
+        assert usage.open_opportunity_count == 3
+        assert usage.waiting_lead_count == 1
+        repo.usage_counts.assert_called_once_with(product.id)
+
+    def test_other_roles_are_refused(self):
+        repo = _make_repo()
+
+        with pytest.raises(AuthorizationError):
+            ProductService(repository=repo).get_usage(uuid.uuid4(), role_name="Sales Staff")
+
+        repo.usage_counts.assert_not_called()
+
+    def test_unknown_product_raises_not_found(self):
+        repo = _make_repo()
+        repo.get_by_id.return_value = None
+
+        with pytest.raises(NotFoundError):
+            ProductService(repository=repo).get_usage(uuid.uuid4(), role_name="Admin")
 
 
 class TestCreateProduct:

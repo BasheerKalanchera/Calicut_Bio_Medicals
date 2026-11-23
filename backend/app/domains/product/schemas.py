@@ -158,6 +158,11 @@ class ProductListResponse(BaseModel):
         return response.model_copy(update={"prices": _prices_for(product, product_list_price_fields(role_name))})
 
 
+class ProductUsageResponse(BaseModel):
+    open_opportunity_count: int
+    waiting_lead_count: int
+
+
 class ProductResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

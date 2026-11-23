@@ -23,6 +23,13 @@ from app.domains.reference.models import (
 )
 
 
+def _open_status_ids():
+    # Every status that is not terminal (Active, On Hold, and Stalled if it is
+    # switched on) -- the pipeline's "open only" option (Product Deactivate
+    # plan D4). Won and Lost are terminal.
+    return select(OpportunityStatus.id).where(OpportunityStatus.is_terminal == False)  # noqa: E712
+
+
 def _name_only(relationship, *columns):
     # Join the related row, but only the columns the response shows, and
     # stop there: lazyload("*") switches off the related model's own
@@ -174,6 +181,7 @@ class OpportunityRepository(BaseRepository[Opportunity]):
         brand_id: uuid.UUID | None = None,
         has_trade_in: bool = False,
         has_no_items: bool = False,
+        open_only: bool = False,
         zone_exact: bool = False,
         closed_after: datetime | None = None,
         closed_before: datetime | None = None,
@@ -249,6 +257,8 @@ class OpportunityRepository(BaseRepository[Opportunity]):
             # an Active Opportunity with no line items at all still counts in the
             # report (Basheer, 2026-09-27), so it needs its own filter.
             stmt = stmt.where(~Opportunity.id.in_(select(OpportunityItem.opportunity_id)))
+        if open_only:
+            stmt = stmt.where(Opportunity.status_id.in_(_open_status_ids()))
         # Sales Report drill-down: the report's period filters on closed_at,
         # so the drilled list has to as well (half-open, same as
         # reporting's sales_summary).
@@ -293,6 +303,7 @@ class OpportunityRepository(BaseRepository[Opportunity]):
         brand_id: uuid.UUID | None = None,
         has_trade_in: bool = False,
         has_no_items: bool = False,
+        open_only: bool = False,
         zone_exact: bool = False,
         closed_after: datetime | None = None,
         closed_before: datetime | None = None,
@@ -341,6 +352,8 @@ class OpportunityRepository(BaseRepository[Opportunity]):
             )
         if has_no_items:
             stmt = stmt.where(~Opportunity.id.in_(select(OpportunityItem.opportunity_id)))
+        if open_only:
+            stmt = stmt.where(Opportunity.status_id.in_(_open_status_ids()))
         # Sales Report drill-down: the report's period filters on closed_at,
         # so the drilled list has to as well (half-open, same as
         # reporting's sales_summary).

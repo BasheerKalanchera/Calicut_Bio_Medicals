@@ -235,6 +235,102 @@ class TestCreateProduct:
         assert response.status_code == 403
 
 
+class TestDeactivateReactivateProduct:
+    """Product Deactivate plan D1/D2/D6: GM and Admin only; 409 when the
+    product is already in the asked state or a Reactivate would clash."""
+
+    def _call(self, client: TestClient, action: str, mock_db: MagicMock, role_name: str = "Admin"):
+        _setup_overrides(mock_db, role_name=role_name)
+        try:
+            return client.post(f"/api/v1/products/{TEST_PRODUCT_ID}/{action}")
+        finally:
+            _teardown_overrides()
+
+    def test_unauthenticated_returns_401(self, client: TestClient) -> None:
+        assert client.post(f"/api/v1/products/{TEST_PRODUCT_ID}/deactivate").status_code == 401
+        assert client.post(f"/api/v1/products/{TEST_PRODUCT_ID}/reactivate").status_code == 401
+
+    def test_deactivate_switches_the_product_off(self, client: TestClient) -> None:
+        product = _mock_product(is_active=True)
+        mock_db = MagicMock()
+        mock_db.get.return_value = product
+
+        response = self._call(client, "deactivate", mock_db, role_name="General Manager")
+
+        assert response.status_code == 200
+        assert product.is_active is False
+        assert product.updated_by == TEST_USER_ID
+
+    def test_reactivate_switches_the_product_on(self, client: TestClient) -> None:
+        product = _mock_product(is_active=False)
+        mock_db = MagicMock()
+        mock_db.get.return_value = product
+        mock_db.scalar.return_value = 0  # no other active product for this model
+
+        response = self._call(client, "reactivate", mock_db)
+
+        assert response.status_code == 200
+        assert product.is_active is True
+
+    def test_reactivate_clash_returns_409_with_plain_message(self, client: TestClient) -> None:
+        product = _mock_product(is_active=False)
+        mock_db = MagicMock()
+        mock_db.get.return_value = product
+        mock_db.scalar.return_value = 1  # another active product for this model
+
+        response = self._call(client, "reactivate", mock_db)
+
+        assert response.status_code == 409
+        assert product.is_active is False
+
+    def test_deactivate_already_inactive_returns_409(self, client: TestClient) -> None:
+        mock_db = MagicMock()
+        mock_db.get.return_value = _mock_product(is_active=False)
+
+        assert self._call(client, "deactivate", mock_db).status_code == 409
+
+    def test_unknown_product_returns_404(self, client: TestClient) -> None:
+        mock_db = MagicMock()
+        mock_db.get.return_value = None
+
+        assert self._call(client, "deactivate", mock_db).status_code == 404
+        assert self._call(client, "reactivate", mock_db).status_code == 404
+
+    def test_other_roles_forbidden(self, client: TestClient) -> None:
+        for role_name in ("Sales Staff", "Area Manager", "SBU Manager"):
+            for action in ("deactivate", "reactivate"):
+                mock_db = MagicMock()
+                assert self._call(client, action, mock_db, role_name=role_name).status_code == 403
+
+
+class TestProductUsage:
+    def test_returns_both_counts_for_admin(self, client: TestClient) -> None:
+        mock_db = MagicMock()
+        mock_db.get.return_value = _mock_product()
+        mock_db.scalar.side_effect = [3, 1]
+
+        _setup_overrides(mock_db)
+        try:
+            response = client.get(f"/api/v1/products/{TEST_PRODUCT_ID}/usage")
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 200
+        assert response.json()["data"] == {"open_opportunity_count": 3, "waiting_lead_count": 1}
+
+    def test_sales_staff_forbidden(self, client: TestClient) -> None:
+        _setup_overrides(MagicMock(), role_name="Sales Staff")
+        try:
+            response = client.get(f"/api/v1/products/{TEST_PRODUCT_ID}/usage")
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 403
+
+    def test_unauthenticated_returns_401(self, client: TestClient) -> None:
+        assert client.get(f"/api/v1/products/{TEST_PRODUCT_ID}/usage").status_code == 401
+
+
 class TestUpdateProduct:
     def test_unauthenticated_returns_401(self, client: TestClient) -> None:
         response = client.put(f"/api/v1/products/{TEST_PRODUCT_ID}", json={"name": "X"})

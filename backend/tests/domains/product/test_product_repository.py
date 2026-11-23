@@ -72,3 +72,63 @@ class TestProductRepositoryListProducts:
         repo.list_products(offset=10, limit=5)
 
         mock_db.scalars.assert_called_once()
+
+
+def _compiled(stmt) -> str:
+    return str(stmt.compile(compile_kwargs={"literal_binds": True}))
+
+
+class TestProductRepositoryActiveFilter:
+    def test_default_list_leaves_out_inactive_products(self):
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 0
+        mock_db.scalars.return_value.unique.return_value.all.return_value = []
+
+        ProductRepository(mock_db).list_products()
+
+        sql = _compiled(mock_db.scalars.call_args.args[0])
+        assert "product.is_active = true" in sql
+
+    def test_active_only_false_includes_inactive_products(self):
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 0
+        mock_db.scalars.return_value.unique.return_value.all.return_value = []
+
+        ProductRepository(mock_db).list_products(active_only=False)
+
+        sql = _compiled(mock_db.scalars.call_args.args[0])
+        assert "product.is_active = true" not in sql
+
+
+class TestProductRepositoryUsageCounts:
+    """Product Deactivate plan D3/D4: open Opportunities (status not terminal)
+    and marketing leads still waiting (status NEW)."""
+
+    def _run(self, opportunities: int | None, leads: int | None):
+        mock_db = MagicMock()
+        mock_db.scalar.side_effect = [opportunities, leads]
+        product_id = uuid.uuid4()
+        result = ProductRepository(mock_db).usage_counts(product_id)
+        opportunity_sql = _compiled(mock_db.scalar.call_args_list[0].args[0])
+        lead_sql = _compiled(mock_db.scalar.call_args_list[1].args[0])
+        return result, opportunity_sql, lead_sql, product_id
+
+    def test_returns_both_counts(self):
+        result, _, _, _ = self._run(2, 1)
+        assert result == (2, 1)
+
+    def test_none_counts_become_zero(self):
+        result, _, _, _ = self._run(None, None)
+        assert result == (0, 0)
+
+    def test_opportunities_counted_by_line_item_and_non_terminal_status(self):
+        _, sql, _, product_id = self._run(0, 0)
+        assert f"opportunity_item.product_id = '{product_id.hex}'" in sql
+        assert "opportunity_status.is_terminal = false" in sql
+        # Counted once per Opportunity, not once per line.
+        assert "JOIN opportunity_item" not in sql
+
+    def test_leads_counted_only_while_new(self):
+        _, _, sql, product_id = self._run(0, 0)
+        assert f"marketing_lead.product_id = '{product_id.hex}'" in sql
+        assert "marketing_lead.status = 'NEW'" in sql

@@ -8,7 +8,13 @@ from app.api.schemas import APIResponse, PaginatedResponse
 from app.db.session import get_db
 from app.domains.organization.models import UserProfile
 from app.domains.product.repository import ProductRepository
-from app.domains.product.schemas import ProductCreate, ProductListResponse, ProductResponse, ProductUpdate
+from app.domains.product.schemas import (
+    ProductCreate,
+    ProductListResponse,
+    ProductResponse,
+    ProductUpdate,
+    ProductUsageResponse,
+)
 from app.domains.product.service import ProductService
 
 router = APIRouter(prefix="/products", tags=["Products"])
@@ -27,6 +33,7 @@ def list_products(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=100),
     include_count: bool = Query(default=True),
+    include_inactive: bool = Query(default=False),
     current_user: UserProfile = Depends(get_current_user),
     service: ProductService = Depends(_get_service),
 ) -> APIResponse[PaginatedResponse[ProductListResponse]]:
@@ -37,6 +44,8 @@ def list_products(
         search=search,
         sbu_id=sbu_id,
         include_count=include_count,
+        include_inactive=include_inactive,
+        role_name=current_user.role.role_name,
     )
     total_pages = (total + page_size - 1) // page_size if include_count else 0
 
@@ -55,10 +64,18 @@ def list_products(
 def count_products(
     search: str | None = Query(None),
     sbu_id: uuid.UUID | None = Query(None),
+    include_inactive: bool = Query(default=False),
     current_user: UserProfile = Depends(get_current_user),
     service: ProductService = Depends(_get_service),
 ) -> APIResponse[int]:
-    return APIResponse(data=service.count_products(search=search, sbu_id=sbu_id))
+    return APIResponse(
+        data=service.count_products(
+            search=search,
+            sbu_id=sbu_id,
+            include_inactive=include_inactive,
+            role_name=current_user.role.role_name,
+        )
+    )
 
 
 @router.post("", status_code=201)
@@ -78,6 +95,39 @@ def get_product(
     service: ProductService = Depends(_get_service),
 ) -> APIResponse[ProductResponse]:
     product = service.get_product(product_id)
+    return APIResponse(data=ProductResponse.for_role(product, current_user.role.role_name))
+
+
+@router.get("/{product_id}/usage")
+def get_product_usage(
+    product_id: uuid.UUID,
+    current_user: UserProfile = Depends(get_current_user),
+    service: ProductService = Depends(_get_service),
+) -> APIResponse[ProductUsageResponse]:
+    return APIResponse(data=service.get_usage(product_id, role_name=current_user.role.role_name))
+
+
+@router.post("/{product_id}/deactivate")
+def deactivate_product(
+    product_id: uuid.UUID,
+    current_user: UserProfile = Depends(get_current_user),
+    service: ProductService = Depends(_get_service),
+) -> APIResponse[ProductResponse]:
+    product = service.deactivate_product(
+        product_id, updated_by=current_user.id, role_name=current_user.role.role_name
+    )
+    return APIResponse(data=ProductResponse.for_role(product, current_user.role.role_name))
+
+
+@router.post("/{product_id}/reactivate")
+def reactivate_product(
+    product_id: uuid.UUID,
+    current_user: UserProfile = Depends(get_current_user),
+    service: ProductService = Depends(_get_service),
+) -> APIResponse[ProductResponse]:
+    product = service.reactivate_product(
+        product_id, updated_by=current_user.id, role_name=current_user.role.role_name
+    )
     return APIResponse(data=ProductResponse.for_role(product, current_user.role.role_name))
 
 

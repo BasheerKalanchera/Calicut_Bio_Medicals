@@ -841,6 +841,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/products/{product_id}/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Product Usage */
+        get: operations["get_product_usage_api_v1_products__product_id__usage_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/products/{product_id}/deactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Deactivate Product */
+        post: operations["deactivate_product_api_v1_products__product_id__deactivate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/products/{product_id}/reactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reactivate Product */
+        post: operations["reactivate_product_api_v1_products__product_id__reactivate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/products/{product_id}/documents": {
         parameters: {
             query?: never;
@@ -2309,6 +2360,20 @@ export interface components {
              */
             message: string;
             data: components["schemas"]["ProductResponse"];
+        };
+        /** APIResponse[ProductUsageResponse] */
+        APIResponse_ProductUsageResponse_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["ProductUsageResponse"];
         };
         /** APIResponse[ProjectResponse] */
         APIResponse_ProjectResponse_: {
@@ -5196,6 +5261,13 @@ export interface components {
             /** Cost Lakhs */
             cost_lakhs?: number | string | null;
         };
+        /** ProductUsageResponse */
+        ProductUsageResponse: {
+            /** Open Opportunity Count */
+            open_opportunity_count: number;
+            /** Waiting Lead Count */
+            waiting_lead_count: number;
+        };
         /** ProjectCreate */
         ProjectCreate: {
             /** Name */
@@ -7741,6 +7813,8 @@ export interface operations {
                 brand_id?: string | null;
                 has_trade_in?: boolean;
                 has_no_items?: boolean;
+                /** @description Leave out Won and Lost (every non-terminal status stays) */
+                open_only?: boolean;
                 zone_exact?: boolean;
                 closed_from?: string | null;
                 /** @description Inclusive */
@@ -8878,6 +8952,7 @@ export interface operations {
                 page?: number;
                 page_size?: number;
                 include_count?: boolean;
+                include_inactive?: boolean;
             };
             header?: {
                 authorization?: string | null;
@@ -8947,6 +9022,7 @@ export interface operations {
             query?: {
                 search?: string | null;
                 sbu_id?: string | null;
+                include_inactive?: boolean;
             };
             header?: {
                 authorization?: string | null;
@@ -9025,6 +9101,105 @@ export interface operations {
                 "application/json": components["schemas"]["ProductUpdate"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_ProductResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_product_usage_api_v1_products__product_id__usage_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                product_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_ProductUsageResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    deactivate_product_api_v1_products__product_id__deactivate_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                product_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_ProductResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reactivate_product_api_v1_products__product_id__reactivate_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                product_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {

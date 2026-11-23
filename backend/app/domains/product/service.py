@@ -5,9 +5,15 @@ from itertools import pairwise
 from app.core.exceptions import AuthorizationError, ConflictError, NotFoundError, ValidationError
 from app.domains.product.models import Product
 from app.domains.product.repository import ProductRepository
-from app.domains.product.schemas import ProductCreate, ProductUpdate
+from app.domains.product.schemas import ProductCreate, ProductUpdate, ProductUsageResponse
 
 _CATALOG_WRITE_ROLES = {"General Manager", "Admin"}
+
+
+def _may_see_inactive(include_inactive: bool, role_name: str | None) -> bool:
+    """Only the GM and Admin may list inactive products (plan D5); for anyone
+    else the request is ignored, not refused."""
+    return include_inactive and role_name in _CATALOG_WRITE_ROLES
 
 # The price ladder, highest first (plan D15): Full price >= Rep's lowest >=
 # Area Manager's lowest >= CEO's lowest >= Cost. Names match the Add/Edit
@@ -70,12 +76,15 @@ class ProductService:
         search: str | None = None,
         sbu_id: uuid.UUID | None = None,
         include_count: bool = True,
+        include_inactive: bool = False,
+        role_name: str | None = None,
     ) -> tuple[list[Product], int]:
         return self.repository.list_products(
             offset=offset,
             limit=limit,
             search=search,
             sbu_id=sbu_id,
+            active_only=not _may_see_inactive(include_inactive, role_name),
             include_count=include_count,
         )
 
@@ -84,8 +93,46 @@ class ProductService:
         *,
         search: str | None = None,
         sbu_id: uuid.UUID | None = None,
+        include_inactive: bool = False,
+        role_name: str | None = None,
     ) -> int:
-        return self.repository.count_products(search=search, sbu_id=sbu_id)
+        return self.repository.count_products(
+            search=search,
+            sbu_id=sbu_id,
+            active_only=not _may_see_inactive(include_inactive, role_name),
+        )
+
+    def get_usage(self, product_id: uuid.UUID, *, role_name: str) -> ProductUsageResponse:
+        if role_name not in _CATALOG_WRITE_ROLES:
+            raise AuthorizationError("Only General Manager and Admin roles can see where a product is used")
+        self.get_product(product_id)
+        open_opportunities, waiting_leads = self.repository.usage_counts(product_id)
+        return ProductUsageResponse(open_opportunity_count=open_opportunities, waiting_lead_count=waiting_leads)
+
+    def deactivate_product(self, product_id: uuid.UUID, *, updated_by: uuid.UUID, role_name: str) -> Product:
+        if role_name not in _CATALOG_WRITE_ROLES:
+            raise AuthorizationError("Only General Manager and Admin roles can deactivate products")
+        product = self.get_product(product_id)
+        if not product.is_active:
+            raise ConflictError("This product is already inactive")
+        product.is_active = False
+        product.updated_by = updated_by
+        return self.repository.update(product)
+
+    def reactivate_product(self, product_id: uuid.UUID, *, updated_by: uuid.UUID, role_name: str) -> Product:
+        if role_name not in _CATALOG_WRITE_ROLES:
+            raise AuthorizationError("Only General Manager and Admin roles can reactivate products")
+        product = self.get_product(product_id)
+        if product.is_active:
+            raise ConflictError("This product is already active")
+        if self.repository.active_product_exists_for_model(product.model_id, exclude_id=product.id):
+            raise ConflictError(
+                "Can't reactivate: another active product already exists for this Model. "
+                "Deactivate that one first, or leave this one inactive."
+            )
+        product.is_active = True
+        product.updated_by = updated_by
+        return self.repository.update(product)
 
     def create_product(self, data: ProductCreate, *, created_by: uuid.UUID, role_name: str) -> Product:
         if role_name not in _CATALOG_WRITE_ROLES:

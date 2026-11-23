@@ -42,6 +42,31 @@ class ProductRepository(BaseRepository[Product]):
             stmt = stmt.where(Product.id != exclude_id)
         return (self.db.scalar(stmt) or 0) > 0
 
+    def usage_counts(self, product_id: uuid.UUID) -> tuple[int, int]:
+        """(open Opportunities, marketing leads waiting for a decision) that use
+        the product -- Product Deactivate plan D3/D4. "Open" means the status
+        is not terminal (Active, On Hold, and Stalled if it is switched on);
+        "waiting" means lead status NEW."""
+        from app.domains.marketing_lead.models import MarketingLead
+        from app.domains.opportunity.models import Opportunity, OpportunityItem
+        from app.domains.reference.models import OpportunityStatus
+
+        open_statuses = select(OpportunityStatus.id).where(OpportunityStatus.is_terminal == False)  # noqa: E712
+        open_opportunities = self.db.scalar(
+            select(func.count(Opportunity.id)).where(
+                Opportunity.status_id.in_(open_statuses),
+                Opportunity.id.in_(
+                    select(OpportunityItem.opportunity_id).where(OpportunityItem.product_id == product_id)
+                ),
+            )
+        )
+        waiting_leads = self.db.scalar(
+            select(func.count(MarketingLead.id)).where(
+                MarketingLead.product_id == product_id, MarketingLead.status == "NEW"
+            )
+        )
+        return open_opportunities or 0, waiting_leads or 0
+
     def get_model_sbu_id(self, model_id: uuid.UUID) -> uuid.UUID | None:
         from app.domains.reference.models import Model
         return self.db.scalar(select(Model.sbu_id).where(Model.id == model_id))

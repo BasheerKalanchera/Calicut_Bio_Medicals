@@ -314,6 +314,56 @@ class TestCountPipelineFilters:
         assert "user_profile" not in sql
 
 
+class TestProductLookupIgnoresActiveFlag:
+    """Product Deactivate plan D2: switching a product off only hides it from
+    pickers. An Opportunity that already has it must still save, so the
+    SBU check on save must not filter on is_active."""
+
+    def test_sbu_lookup_has_no_active_filter(self):
+        mock_db = MagicMock()
+        mock_db.execute.return_value.all.return_value = []
+        OpportunityRepository(mock_db).get_product_sbu_ids({uuid.uuid4()})
+        assert "is_active" not in _compiled(mock_db.execute.call_args.args[0])
+
+
+class TestOpenOnlyFilter:
+    """Product Deactivate plan D4: the pipeline's "open only" option leaves
+    out Won and Lost (every status that is terminal), on the list and on the
+    count that sits beside it."""
+
+    def _list_sql(self, **kwargs) -> str:
+        mock_db = MagicMock()
+        mock_db.scalars.return_value.unique.return_value.all.return_value = []
+        OpportunityRepository(mock_db).list_pipeline(**kwargs)
+        return _compiled(mock_db.scalars.call_args.args[0])
+
+    def _count_sql(self, **kwargs) -> str:
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 0
+        OpportunityRepository(mock_db).count_pipeline(**kwargs)
+        return _compiled(mock_db.scalar.call_args.args[0])
+
+    def test_list_open_only_keeps_non_terminal_statuses(self):
+        sql = self._list_sql(open_only=True)
+        assert "opportunity.status_id IN (SELECT opportunity_status.id" in sql
+        assert "opportunity_status.is_terminal = false" in sql
+
+    def test_count_open_only_keeps_non_terminal_statuses(self):
+        sql = self._count_sql(open_only=True)
+        assert "opportunity.status_id IN (SELECT opportunity_status.id" in sql
+        assert "opportunity_status.is_terminal = false" in sql
+
+    def test_off_by_default_so_existing_drill_downs_are_unchanged(self):
+        assert "opportunity_status.is_terminal = false" not in self._list_sql()
+        assert "opportunity_status.is_terminal = false" not in self._count_sql()
+
+    def test_combines_with_the_product_filter(self):
+        product_id = uuid.uuid4()
+        sql = self._count_sql(product_id=product_id, open_only=True)
+        assert f"opportunity_item.product_id = '{product_id.hex}'" in sql
+        assert "opportunity_status.is_terminal = false" in sql
+
+
 class TestCountOpportunitiesGroupedByStakeholderIds:
     def test_returns_empty_dict_for_empty_input(self):
         mock_db = MagicMock()
