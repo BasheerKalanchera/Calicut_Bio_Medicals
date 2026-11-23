@@ -914,7 +914,9 @@ since 2026-09-27. Left over, none blocking:
    active product, or accept it as retired with the product.
 3. **E2E test data in Dev** — "E2E Test Brand"/"E2E Test Category" (+ model,
    and product if one was saved), "iM90 Test"/"iM91 Test" models and the
-   "EDAN iM91 Test ECG Machine" product. Deactivate when convenient.
+   "EDAN iM91 Test ECG Machine" product. Deactivate when convenient —
+   from the Product Catalog's Deactivate button once the Product Deactivate
+   feature is on Dev (`docs/Product-Deactivate-Implementation-Plan.md`).
 
 ### Vendor pipeline report — "Export to Excel" for Admin/GM (requested 2026-09-26)
 

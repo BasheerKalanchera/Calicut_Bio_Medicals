@@ -16,6 +16,7 @@ and `docs/Zone-Deactivate-Reactivate-Implementation-Plan.md` (built `b0b4109`).
 - D6. Reactivating is refused, with a plain message, when another active product already exists for the same model (the catalog allows one active product per model) — Basheer, 2026-11-23
 - D7. No database change: the product's Active field already exists — Basheer, 2026-11-23
 - D8. No Traceability row; recorded as a new business rule BR-CAT-07 — Basheer, 2026-11-23
+- D9. Hiding only: the server does not refuse a new Opportunity line or lead that names an inactive product if one is sent directly (e.g. from a screen left open before the product was switched off). Only the pickers hide it — Basheer, 2026-11-23, after the pre-E2E review ("hiding only is fine")
 
 ## Figures and sources
 
@@ -72,6 +73,13 @@ One build, one `feat:` commit. Nothing on Dev stops working at any point.
    option on the product list for GM/Admin; tests.
 2. Frontend: the Product Catalog buttons, the pop-up, "Show inactive"; help text.
 3. Pre-E2E review, then a short manual E2E on Dev (Dev test products only).
+
+**Built (Build session, 23 Nov, on the Build branch `worktree-build`, pushed; not merged to `main`):**
+- Step 1, backend: `61ad9b5`. Pytest 1673 passed, 10 skipped; ruff clean.
+- Step 2, frontend: `662bcd2`. `tsc` clean, lint 0 errors.
+- Pre-E2E review fixes: `efd752e` — the Deactivate button waits for the counts; an empty (NULL) active flag counts as active; a phone width guard on the list row. Pytest 1675 passed, 10 skipped; ruff, `tsc` clean; lint 0 errors.
+- Differences from the plan: Deactivate / Reactivate sits on the list block and on the product page (the list has no Edit button); a refused Reactivate shows a red message at the top of the screen. Deactivating an inactive product (or reactivating an active one) gives a 409 — a choice, not in the plan.
+- Empty active flag: Dev has 0 such products (read-only check 23 Nov); UAT not checked. The E2E plan is `docs/Product-Deactivate-Manual-E2E-Test-Plan.md` (written by Plan & Chore, labels corrected from the built code by the Build session).
 
 ## 3. What could be affected
 
