@@ -28,7 +28,8 @@ ruff, tsc, lint report; then the E2E with him, `cabio-e2e-testing` loaded; (b) a
 Chore commits its docs batch: Backlog line under "Activity log privacy hole" option A, D11
 line in the plan (the rolled-back test was his 21 Nov choice), any doc line saying Activity
 Levels counts every activity type; (c) UAT with the next full move (D9), needs his yes
-for the UAT people check; Haroon to be told about D5. **Retro 23 Nov written** (5).
+for the UAT people check; Haroon to be told about D5. **Retro 23 Nov written** (5);
+docs batch committed `a742437` (E2E plan, this note, my archive entry), pushed 23 Nov.
 
 ## NOW (19 Nov, evening) — Product pricing E2E: 44 of 51 Pass; open: 29b–29e, 30, 31, 32
 **Waiting on the leadership team's price sheet** (template is done; Basheer sends it
