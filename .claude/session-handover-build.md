@@ -12,12 +12,18 @@ session edits this note._
   ahead of a full promotion go by the hotfix-branch route
   (`docs/Deployment-Topology.md` "Fix to UAT ahead of a full promotion").
 
-## NOW (24 Nov) — nothing in progress
-Product Deactivate E2E finished 24 Nov: 27 of 27 Pass, fixes in `289b56f`, pushed
-(archive 24 Nov). **Next:** nothing queued for this session; ask Basheer.
-**For Plan & Chore (tell via Basheer):** its 4 lines sit at the end of
-`docs/Progress-Archive-2026-11.md` in its own "24 Nov — Plan & Chore: UAT backup"
-section, uncommitted; this session's 24 Nov section follows them.
+## NOW (24 Nov) — nothing in progress; docs batch waiting
+"First activity" keeps-typing fix pushed as `121216e`; its E2E (10 new steps, 0 Fail)
+is in `docs/Why-This-Change-and-First-Activity-Keep-Typing-Manual-E2E-Test-Plan.md`
+(archive 24 Nov, with the retro). The Product Catalog phone header (buttons in the
+"Product Detail" row, label "Details" on a phone) got Basheer's phone look — works
+fine — committed and pushed as `3c91f94`. **Uncommitted, mine:** the new E2E plan,
+my archive entry + retro, this note. **Next:** docs batch (plan, archive hunks
+that are mine, this note) — leave out Plan & Chore's `session-handover-plan.md`,
+its archive lines and `docs/Backlog.md` (not mine). Needs his go-ahead.
+**For Plan & Chore (tell via Basheer):** its lines in
+`docs/Progress-Archive-2026-11.md` sit in the section "24 Nov — Plan & Chore: UAT
+backup", uncommitted; my 24 Nov entries follow in the Build & Test section.
 **Other open:** (a) plan D11 wording (Plan & Chore's batch; the rolled-back test was
 his 21 Nov choice); (b) fix E2E plan wording at 9b and step 21; (c) UAT with the
 next full move (D9): needs his yes for the UAT people check, Haroon to be told
