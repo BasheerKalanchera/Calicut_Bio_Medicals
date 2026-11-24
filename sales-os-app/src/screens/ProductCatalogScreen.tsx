@@ -1,4 +1,4 @@
-import { useState, type Dispatch, type SetStateAction, type FormEvent } from "react";
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction, type FormEvent } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import {
   Box,
@@ -436,9 +436,13 @@ function ProductDetail({
 
 export default function ProductCatalogScreen({
   onDrillToPipeline,
+  reopenDeactivateSignal,
 }: {
   // Opens the Opportunity Pipeline list filtered to the given slice (DemoApp.handleDrillToPipeline).
   onDrillToPipeline: (filter: { productId: string; openOnly: boolean; expectedCount: number }, label: string) => void;
+  // DemoApp adds 1 each time the user presses Back on a Pipeline list that was opened from this
+  // screen, so the Deactivate pop-up that sent them there can come back (it recounts fresh).
+  reopenDeactivateSignal: number;
 }) {
   const { userProfile } = useAuth();
   const canEdit = CATALOG_WRITE_ROLES.has(userProfile?.role_name);
@@ -450,6 +454,14 @@ export default function ProductCatalogScreen({
   const [showInactive, setShowInactive] = useState(false);
   const includeInactive = canEdit && showInactive;
   const [deactivating, setDeactivating] = useState<{ id: string; name: string } | null>(null);
+  // The product whose pop-up was closed by the "open Opportunities" link; reopened on Back.
+  const pendingReopenRef = useRef<{ id: string; name: string } | null>(null);
+  useEffect(() => {
+    if (reopenDeactivateSignal > 0 && pendingReopenRef.current) {
+      setDeactivating(pendingReopenRef.current);
+      pendingReopenRef.current = null;
+    }
+  }, [reopenDeactivateSignal]);
   const [actionError, setActionError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const pageSize = 50;
@@ -639,6 +651,7 @@ export default function ProductCatalogScreen({
                 size="small"
                 sx={{ p: 0, minWidth: 0, verticalAlign: "baseline", textTransform: "none", fontSize: "inherit" }}
                 onClick={() => {
+                  pendingReopenRef.current = { id: deactivating.id, name: deactivating.name };
                   onDrillToPipeline(
                     { productId: deactivating.id, openOnly: true, expectedCount: usage.open_opportunity_count },
                     deactivating.name,
@@ -753,7 +766,7 @@ export default function ProductCatalogScreen({
                 ))}
                 {canEdit && (
                   <Chip
-                    label="Show inactive"
+                    label={showInactive ? "Hide inactive" : "Show inactive"}
                     size="small"
                     onClick={() => { setShowInactive((v) => !v); setPage(1); }}
                     color={showInactive ? "primary" : "default"}

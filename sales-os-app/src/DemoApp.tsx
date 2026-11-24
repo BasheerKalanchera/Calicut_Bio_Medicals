@@ -233,6 +233,9 @@ export default function DemoApp() {
   // (distinct from "Clear filter") can return there — same returnView
   // pattern as accountReturnView/projectReturnView above.
   const [pipelineReturnView, setPipelineReturnView] = useState<string | null>(null);
+  // Goes up by 1 when Back returns from a Pipeline list opened by the Product Catalog's
+  // Deactivate pop-up, so the Catalog can reopen that pop-up.
+  const [catalogReopenSignal, setCatalogReopenSignal] = useState(0);
 
   const customerCreateRef        = useRef<(() => void) | null>(null);
   const projectCreateRef         = useRef<(() => void) | null>(null);
@@ -344,6 +347,7 @@ export default function DemoApp() {
   }
 
   function handleBackFromPipelineDrill() {
+    if (pipelineReturnView === "catalog") setCatalogReopenSignal((n) => n + 1);
     setPipelineInitialFilter(undefined);
     setView(pipelineReturnView ?? "opportunities");
     setPipelineReturnView(null);
@@ -812,7 +816,7 @@ export default function DemoApp() {
 
           {/* Product Catalog — always mounted, hidden when not active */}
           <Box sx={{ flex: 1, overflow: "hidden", display: view === "catalog" ? "flex" : "none", flexDirection: "column" }}>
-            <ProductCatalogScreen onDrillToPipeline={handleDrillToPipeline} />
+            <ProductCatalogScreen onDrillToPipeline={handleDrillToPipeline} reopenDeactivateSignal={catalogReopenSignal} />
           </Box>
 
           {/* User Directory — always mounted, hidden when not active; nav entry is Admin/GM-gated */}
