@@ -380,18 +380,17 @@ function ProductDetail({
   return (
     <Box sx={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", bgcolor: "gray.50" }}>
       <Box sx={{ px: 2, pt: 2 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
           <IconButton onClick={onBack} aria-label="Back">
             <ArrowBackIcon />
           </IconButton>
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="overline" sx={{ color: "primary.main", fontWeight: 800, letterSpacing: "0.15em", display: "block" }}>
-              Product Detail
-            </Typography>
-            <Typography variant="h6" sx={{ fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {product.name}
-            </Typography>
-          </Box>
+          <Typography
+            variant="overline"
+            sx={{ flex: 1, minWidth: 0, color: "primary.main", fontWeight: 800, letterSpacing: "0.15em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+          >
+            <Box component="span" sx={{ display: { xs: "inline", sm: "none" } }}>Details</Box>
+            <Box component="span" sx={{ display: { xs: "none", sm: "inline" } }}>Product Detail</Box>
+          </Typography>
           {product.sbu && (
             <Chip label={product.sbu.name} size="small" variant="outlined" sx={sbuChipSx(product.sbu.name)} />
           )}
@@ -407,6 +406,9 @@ function ProductDetail({
             </Button>
           )}
         </Box>
+        <Typography variant="h6" sx={{ fontWeight: 800, mt: 0.5, mb: 2, overflowWrap: "anywhere" }}>
+          {product.name}
+        </Typography>
       </Box>
 
       <Box sx={{ flex: 1, overflow: "auto", px: 2, pb: 2 }}>
