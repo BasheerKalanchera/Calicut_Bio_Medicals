@@ -1,6 +1,6 @@
 # Product Deactivate / Reactivate — Implementation Plan
 
-**Status:** Approved, 2026-11-23 (Basheer).
+**Status:** Approved, 2026-11-23 (Basheer). Built; merged to `main` (`7f93875`, 23 Nov). Manual E2E done on Dev 24 Nov: 4 pre-flight + 27 steps, all Pass; two small screen fixes from it in `289b56f`. Not yet on UAT (goes with the next full move).
 **Traceability rows:** none — catalog upkeep, not a signed-requirement row (D8).
 **Design / discussion:** Plan & Chore, 23 Nov 2026 (Progress-Archive 23 Nov). Modelled on
 the User Directory's Deactivate (`backend/app/domains/organization/service.py:167–190`)
@@ -74,10 +74,11 @@ One build, one `feat:` commit. Nothing on Dev stops working at any point.
 2. Frontend: the Product Catalog buttons, the pop-up, "Show inactive"; help text.
 3. Pre-E2E review, then a short manual E2E on Dev (Dev test products only).
 
-**Built (Build session, 23 Nov, on the Build branch `worktree-build`, pushed; not merged to `main`):**
+**Built (Build session, 23 Nov, on the Build branch `worktree-build`; merged to `main` as `7f93875`, 23 Nov):**
 - Step 1, backend: `61ad9b5`. Pytest 1673 passed, 10 skipped; ruff clean.
 - Step 2, frontend: `662bcd2`. `tsc` clean, lint 0 errors.
 - Pre-E2E review fixes: `efd752e` — the Deactivate button waits for the counts; an empty (NULL) active flag counts as active; a phone width guard on the list row. Pytest 1675 passed, 10 skipped; ruff, `tsc` clean; lint 0 errors.
+- E2E fixes (Build & Test, 24 Nov): `289b56f` — Back from the "open Opportunities" list now returns to the product page and reopens the Deactivate pop-up (fresh counts); the "Show inactive" chip reads "Hide inactive" while on, as in the User Directory. Frontend only. `tsc` clean, lint 0 errors, pytest 1675 passed, 10 skipped.
 - Differences from the plan: Deactivate / Reactivate sits on the list block and on the product page (the list has no Edit button); a refused Reactivate shows a red message at the top of the screen. Deactivating an inactive product (or reactivating an active one) gives a 409 — a choice, not in the plan.
 - Empty active flag: Dev has 0 such products (read-only check 23 Nov); UAT not checked. The E2E plan is `docs/Product-Deactivate-Manual-E2E-Test-Plan.md` (written by Plan & Chore, labels corrected from the built code by the Build session).
 

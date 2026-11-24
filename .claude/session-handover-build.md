@@ -12,35 +12,19 @@ session edits this note._
   ahead of a full promotion go by the hotfix-branch route
   (`docs/Deployment-Topology.md` "Fix to UAT ahead of a full promotion").
 
-## NOW (23 Nov) — Manager Note privacy: E2E done on Dev, docs batch awaiting approval
-E2E 23 Nov: 26 of 27 Pass, 0 Fail, step 22 not applicable (detail: Progress-Archive
-23 Nov). Code pushed: `dac003f`, `d7defb0`, `ee5be3f`, `320981e`. **Next:** Basheer's yes to
-the docs-batch commit (E2E plan, Backlog, this note, archive entry + retro, the
-privacy plan's Status line); then push. Not mine, leave out of the commit: Plan &
-Chore's Progress-Archive lines, pricing E2E plan, Deactivate E2E plan, Traceability
-(pricing line), `session-handover-plan.md`. **Open after that:** (a) plan D11 wording
-(Plan & Chore's batch; the rolled-back test was his 21 Nov choice); (b) fix E2E plan
-wording at 9b and step 21; (c) UAT with the next full move (D9): needs his yes for the
-UAT people check, Haroon to be told about D5. Backlog has "Show who a Manager Note is for".
-
-## NOW (19 Nov, evening) — Product pricing E2E: 44 of 51 Pass; open: 29b–29e, 30, 31, 32
-**Waiting on the leadership team's price sheet** (template is done; Basheer sends it
-with the WhatsApp I drafted). **Before step 30, sync Dev's catalog to UAT** (UAT
-drifted since ~27 Sep: 4 renames, 12 new products; details in Progress-Archive
-19 Nov). Next, in order: (1) his yes for one more UAT read-only (brand fiscal-year
-start months, descriptions of the 16); (2) show the exact list, he approves and runs
-the script (`!`) — E2E plan section E2, steps 29b–29e; (3) step 30. Scratchpad has
-the scripts and `uat_audit.json`. Open: `docs/Selling rates -2026 - CEO.pdf`
-untracked in `docs/` (has prices): move to Desktop or `.gitignore`? He hasn't said.
-Pushed (checked against git 20 Nov): `417c38e`, `db4f163`, `223c172` ("CEO's
-lowest" rename). **Still uncommitted, mine:** the one Traceability line (row 1); at
-the end of the E2E commit it with a regenerated scorecard (`generate_scorecard.py`,
-then `--check`; never hand-edit; load `cabio-post-commit`). Pricing steps 1–3 on
-`main` (`ebd3bdd`). Dev S70 holds test prices 35/33/31/29/24 until section F
-overwrites them. If Build merges before the next pull, regenerate `api.ts`.
-Pending for Basheer: send Plan & Chore the ask to group E2E steps by login
-(wording drafted 18 Nov). "Account" → "Customer" rename parked in the Backlog
-(`46c4214`). **After deploy to UAT:** Basheer times `weekly-followup` in F12 Network.
+## NOW (24 Nov) — nothing in progress
+Product Deactivate E2E finished 24 Nov: 27 of 27 Pass, fixes in `289b56f`, pushed
+(archive 24 Nov). **Next:** nothing queued for this session; ask Basheer.
+**For Plan & Chore (tell via Basheer):** its 4 lines sit at the end of
+`docs/Progress-Archive-2026-11.md` in its own "24 Nov — Plan & Chore: UAT backup"
+section, uncommitted; this session's 24 Nov section follows them.
+**Other open:** (a) plan D11 wording (Plan & Chore's batch; the rolled-back test was
+his 21 Nov choice); (b) fix E2E plan wording at 9b and step 21; (c) UAT with the
+next full move (D9): needs his yes for the UAT people check, Haroon to be told
+about D5, and the 13 products switched off from the screen once it is on UAT;
+(d) after the pricing deploy to UAT, Basheer times `weekly-followup` in F12
+Network. Backlog has "Show who a Manager Note is for", and the Dev test product
+"EDAN iM91 Test ECG Machine" to deactivate when convenient (now possible).
 
 ## Parked
 - Annual Target E2E section L (11 steps, three widths): re-read against the
