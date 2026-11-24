@@ -1,7 +1,7 @@
 # Manager Notes: only the rep and their managers can see them — Implementation Plan
 
-**Status:** Approved 2026-11-20 (Basheer). Built and on Dev — `dac003f` (21 Nov 2026, migration 0067), automated check `d7defb0` (22 Nov); manual E2E pending.
-**Traceability rows:** to confirm at review (a fix to an existing feature, BR-ACT-02).
+**Status:** Approved 2026-11-20 (Basheer). Built and on Dev — `dac003f` (21 Nov 2026, migration 0067), automated check `d7defb0` (22 Nov), fixes `ee5be3f` and `320981e` (23 Nov). Manual E2E run on Dev 23 Nov: 26 of 27 Pass, 0 Fail, step 22 not applicable (`docs/Manager-Note-Privacy-Manual-E2E-Test-Plan.md`). UAT with the next full move (D9).
+**Traceability rows:** none — no Traceability row covers this fix (checked 23 Nov), so no scorecard change.
 **Design / discussion:** Build & Test's write-up of 20 Nov and Plan & Chore's review of it
 (Progress-Archive-2026-11, 20 Nov); the earlier notes-privacy work this builds on:
 `docs/Opportunity-Notes-Privacy-Implementation-Plan.md` (built `552c0ee`, 5 Sep).

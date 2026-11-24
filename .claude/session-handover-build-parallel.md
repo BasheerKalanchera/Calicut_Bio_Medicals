@@ -45,7 +45,8 @@ the build branch, and reaches `main` at the merge (Basheer, 2026-10-17)._
   Chore's copy, labels/D9/hashes corrected by me). Plan & Chore is to commit
   its own copy to `main` unchanged (Basheer to tell it; not confirmed); at the merge the
   add/add clash on that file is resolved by keeping the branch's version.
-  Retro waits for the session end.
+  Retro (3 corrections) + tracker P109 + handover committed `ff508be`,
+  pushed (23 Nov). Retro done.
 - **Next:** nothing to build. Merge only on Basheer's go (after Build &
   Test's current E2E): bring `main` in, keep branch's E2E plan, re-run
   tests, push; `ExitWorktree` keep, merge to `main`, push, rebuild `api.ts`,
