@@ -55,6 +55,11 @@ interface Props {
     ownerName?: string;
     initial?: { activity_type?: ActivityType; activity_date?: string; notes?: string };
     onSave: (activity: FirstActivity) => Promise<void>;
+    // What the rep typed on their last Create press, kept by the New
+    // Opportunity form so a refused Create (Cancel, fix the form, Create
+    // again) doesn't lose it. It takes the place of `initial`.
+    draft?: FirstActivityDraft | null;
+    onKeep?: (draft: FirstActivityDraft) => void;
   };
 }
 
@@ -66,6 +71,16 @@ export interface FirstActivity {
   next_action_text: string;
   next_action_due_date: string;
   next_action_owner_id?: string;
+}
+
+// The "First activity" pop-up's fields as typed, kept after a refused Create.
+export interface FirstActivityDraft {
+  activityType: ActivityType;
+  activityDate: string;
+  notes: string;
+  nextActionText: string;
+  nextActionDueDate: string;
+  nextActionOwnerId: string;
 }
 
 // The pop-up's own fields as typed, kept after a failed Save. The follow-up
@@ -283,6 +298,16 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
         setNextActionOwnerId(draft.nextActionOwnerId);
       }
     }
+    // First-activity mode: what was typed before a refused Create replaces the pre-fill.
+    const firstDraft = firstActivity?.draft;
+    if (firstDraft) {
+      setActivityType(firstDraft.activityType);
+      setActivityDate(firstDraft.activityDate);
+      setNotes(firstDraft.notes);
+      setNextActionText(firstDraft.nextActionText);
+      setNextActionDueDate(firstDraft.nextActionDueDate);
+      setNextActionOwnerId(firstDraft.nextActionOwnerId);
+    }
   }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Won/Lost needs no follow-up, so the box isn't pre-filled there (a
@@ -407,19 +432,39 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
 
   async function handleFirstActivitySubmit() {
     if (!firstActivity) return;
+    setNotice(null);
     if (!activityDate) { setActiveTab("details"); throw new Error("Date is required"); }
     if (!notes.trim()) { setActiveTab("details"); throw new Error("Say what happened"); }
     if (!nextActionText.trim()) { setActiveTab("followUp"); throw new Error("Next action is required"); }
     if (!nextActionDueDate) { setActiveTab("followUp"); throw new Error("Next action due date is required"); }
-    await firstActivity.onSave({
-      activity_type: activityType,
-      activity_date: new Date(activityDate).toISOString(),
-      notes: notes.trim(),
-      next_action_text: nextActionText.trim(),
-      next_action_due_date: new Date(nextActionDueDate).toISOString(),
-      // Left out, the server gives it to the Opportunity's owner (D16).
-      ...(nextActionOwnerId && { next_action_owner_id: nextActionOwnerId }),
-    });
+    firstActivity.onKeep?.({ activityType, activityDate, notes, nextActionText, nextActionDueDate, nextActionOwnerId });
+    try {
+      await firstActivity.onSave({
+        activity_type: activityType,
+        activity_date: new Date(activityDate).toISOString(),
+        notes: notes.trim(),
+        next_action_text: nextActionText.trim(),
+        next_action_due_date: new Date(nextActionDueDate).toISOString(),
+        // Left out, the server gives it to the Opportunity's owner (D16).
+        ...(nextActionOwnerId && { next_action_owner_id: nextActionOwnerId }),
+      });
+    } catch (err) {
+      // Only when the New Opportunity form's content was refused (server 4xx,
+      // or the form's own check): a dropped connection or a server fault gives
+      // the rep nothing to fix there.
+      // Not once the Opportunity itself is saved (a failure after it, e.g.
+      // marking a lead converted): then there is no form to fix.
+      const e = err as { isAxiosError?: boolean; response?: { status?: number }; afterCreate?: boolean };
+      const status = e.response?.status;
+      const refused = !e.afterCreate && (status !== undefined ? status < 500 : !e.isAxiosError);
+      if (refused) {
+        setNotice({
+          severity: "info",
+          text: "Press Cancel, fix this on the New Opportunity form, then Create again — what you typed here is kept.",
+        });
+      }
+      throw err;
+    }
   }
 
   async function handleSubmit() {

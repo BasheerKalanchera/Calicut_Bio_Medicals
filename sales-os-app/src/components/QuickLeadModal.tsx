@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Autocomplete, Box, Button, Checkbox, FormControlLabel, MenuItem, TextField, Typography } from "@mui/material";
 import FormModal from "./FormModal";
 import AddCustomerModal from "./AddCustomerModal";
-import CloseReminderModal, { type FirstActivity } from "./CloseReminderModal";
+import CloseReminderModal, { type FirstActivity, type FirstActivityDraft } from "./CloseReminderModal";
 import { SilentModalError } from "../lib/formErrors";
 import type { ActivityType } from "../types/api-aliases";
 import OpportunityItemAddRow from "./OpportunityItemAddRow";
@@ -158,6 +158,14 @@ export default function QuickLeadModal({
   // its first activity and next action are one request.
   const [showFirstActivity, setShowFirstActivity] = useState(false);
   const firstActivityRef = useRef<FirstActivity | null>(null);
+  // What the pop-up held on its last Create press; given back if that Create
+  // was refused. Cleared on a successful create, when this form closes, and
+  // when it opens afresh.
+  const [firstActivityDraft, setFirstActivityDraft] = useState<FirstActivityDraft | null>(null);
+  const closeForm = () => {
+    setFirstActivityDraft(null);
+    onClose();
+  };
 
   // Searches server-side instead of preloading every account -- a plain
   // page_size bump still silently truncates once accounts exceed the
@@ -307,6 +315,7 @@ export default function QuickLeadModal({
     setGateOverrideChecked(false);
     setGateOverrideApproverId(""); setGateOverrideReasonId(""); setGateOverrideNote("");
     setShowFirstActivity(false);
+    setFirstActivityDraft(null);
   }, [isOpen, initialAccountId, initialProjectId, initialName, initialLeadSourceId]);
 
   // Falls back to the resolved initialAccountId's name only until the user
@@ -405,7 +414,14 @@ export default function QuickLeadModal({
     // does a second async call (markLeadConverted) that must complete, and
     // any failure there must surface through FormModal's normal error
     // handling, not become an unhandled rejection after this dialog closes.
-    await onCreated?.(created as { id: string });
+    try {
+      await onCreated?.(created as { id: string });
+    } catch (err) {
+      // The Opportunity is saved by now: the first-activity pop-up must not
+      // tell the rep to fix the form and Create again (that would duplicate it).
+      if (err && typeof err === "object") (err as { afterCreate?: boolean }).afterCreate = true;
+      throw err;
+    }
   }
 
   async function handleFirstActivitySave(activity: FirstActivity) {
@@ -417,12 +433,12 @@ export default function QuickLeadModal({
       throw err;
     }
     firstActivityRef.current = null;
-    onClose();
+    closeForm();
   }
 
   return (
     <>
-      <FormModal isOpen={isOpen} onClose={onClose} title="New Opportunity" onSubmit={handleSubmit} submitLabel="Create" disableEnforceFocus={showItemsModal || showAddCustomer || showFirstActivity}>
+      <FormModal isOpen={isOpen} onClose={closeForm} title="New Opportunity" onSubmit={handleSubmit} submitLabel="Create" disableEnforceFocus={showItemsModal || showAddCustomer || showFirstActivity}>
         {(marketingLeadContextNote || marketingLeadEventName || marketingLeadSourceName) && (
           <Box sx={{ p: 1.5, borderRadius: "0.75rem", bgcolor: "green.50", border: 1, borderColor: "green.200" }}>
             <Typography sx={{ typography: "tiny", fontWeight: 900, color: "green.600",textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.5 }}>
@@ -723,6 +739,8 @@ export default function QuickLeadModal({
           ownerName: users.find((u) => u.id === ownerId)?.display_name,
           // Plan D5: a marketing lead's note starts as "what happened".
           initial: initialFirstActivity ?? (marketingLeadContextNote ? { notes: marketingLeadContextNote } : undefined),
+          draft: firstActivityDraft,
+          onKeep: setFirstActivityDraft,
           onSave: handleFirstActivitySave,
         }}
       />
