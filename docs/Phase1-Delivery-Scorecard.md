@@ -5,15 +5,17 @@
 
 ## Summary
 
-Of **50** signed requirements: **38 done, 9 partly done, 3 not started** — plus **19 additional features built beyond the signed contract**: some requested by the Cabio leadership team for immediate business needs, others added by our team to make the system safer and easier to use (see "Commitment beyond contract" at the end). **3 more have been requested by Cabio leadership and are pending to build** (see "Requested" below that), and **1 more has been proposed but not yet decided** (see "Pending").
+Of **49** signed requirements: **38 done, 9 partly done, 2 not started** — plus **19 additional features built beyond the signed contract**: some requested by the Cabio leadership team for immediate business needs, others added by our team to make the system safer and easier to use (see "Commitment beyond contract" at the end). **3 more have been requested by Cabio leadership and are pending to build** (see "Requested" below that), and **1 more has been proposed but not yet decided** (see "Pending").
 
 | Done | Partly done | Not started | Commitment beyond contract |
 | :---: | :---: | :---: | :---: |
-| 38 | 9 | 3 | 19 |
+| 38 | 9 | 2 | 19 |
 
 **Real progress, two honest ways to read it:**
-- **Strictly done:** 38 of 50 = **76.0%**
-- **Counting partly-done items as half-credit** (the fairer "real progress" number, since 9 items aren't zero — they're mid-flight): (38 + 9×0.5) ÷ 50 = **85.0%**
+- **Strictly done:** 38 of 49 = **77.6%**
+- **Counting partly-done items as half-credit** (the fairer "real progress" number, since 9 items aren't zero — they're mid-flight): (38 + 9×0.5) ÷ 49 = **86.7%**
+
+**Closed (optional, not in Phase 1):** Account Manager role per customer
 
 ---
 
@@ -98,18 +100,17 @@ The management tools behind the scenes — targets, territories, roles, and who'
 | :---: | :--- | :--- | :--- | :--- | :--- |
 | 39 | *(untagged)* | Basic Beat Planning, upgradable to Google Maps tracking in Phase 2 | 6.1 Beat Planning | Done |  |
 | 40 | 2.1 | Territory & Ownership Mapping; multiple reps owning separate opportunities at one hospital | 6.2 Geographic Coverage & Ownership Mapping | Done |  |
-| 41 | *(untagged, optional)* | Account Manager role per customer | 6.3 Account Manager Assignment | Not started |  |
-| 42 | 3.1 | Sales target configuration: individual, team, regional | 6.4 Target Management | Done | Every salesperson can now set their own quarterly sales target, which their manager reviews and approves before it counts. Managers also see their whole team's targets rolled up in one place. |
-| 43 | 3.1 | Target splitting by product category, quarterly/annual tracking | 6.5 Product Category Targets | Done | Instead of product category wise targets we have now gone with Brand wise targets, as per Haroon's request. Each person's quarterly target is split by brand, and management can record what each brand's vendor expects for the quarter, with the gap shown at a glance. Category wise target setting will be done in later phases if required. |
-| 44 | 4.2 | Product-team mapping (who's authorized to sell what) | 6.6 Product-Team Mapping | Done |  |
-| 45 | 13.1 | Automated lead reassignment workflow, manager/admin approval | 6.7 Workflow Rules | Done |  |
+| 41 | 3.1 | Sales target configuration: individual, team, regional | 6.4 Target Management | Done | Every salesperson can now set their own quarterly sales target, which their manager reviews and approves before it counts. Managers also see their whole team's targets rolled up in one place. |
+| 42 | 3.1 | Target splitting by product category, quarterly/annual tracking | 6.5 Product Category Targets | Done | Instead of product category wise targets we have now gone with Brand wise targets, as per Haroon's request. Each person's quarterly target is split by brand, and management can record what each brand's vendor expects for the quarter, with the gap shown at a glance. Category wise target setting will be done in later phases if required. |
+| 43 | 4.2 | Product-team mapping (who's authorized to sell what) | 6.6 Product-Team Mapping | Done |  |
+| 44 | 13.1 | Automated lead reassignment workflow, manager/admin approval | 6.7 Workflow Rules | Done |  |
 
 ### 6b. User Roles & Access Control
 
 | # | Signed Feature ID | Requirement | PRD Section | Status | Notes |
 | :---: | :--- | :--- | :--- | :--- | :--- |
-| 46 | 4.1 | Collateral access restricted to managers/authorized staff | 7. User Roles & Access Control Module → Collateral Security | Done |  |
-| 47 | 12.1, 12.2 | Roles (Salesperson/Manager/GM/Admin); hierarchy-based and cross-region visibility limits | 7. User Roles & Access Control Module → Roles, Access Control | Done (exceeds spec) |  |
+| 45 | 4.1 | Collateral access restricted to managers/authorized staff | 7. User Roles & Access Control Module → Collateral Security | Done |  |
+| 46 | 12.1, 12.2 | Roles (Salesperson/Manager/GM/Admin); hierarchy-based and cross-region visibility limits | 7. User Roles & Access Control Module → Roles, Access Control | Done (exceeds spec) |  |
 
 ## 7. Technical Foundation
 
@@ -117,9 +118,9 @@ The plumbing underneath — hosting, security, and disaster recovery.
 
 | # | Signed Feature ID | Requirement | PRD Section | Status | Notes |
 | :---: | :--- | :--- | :--- | :--- | :--- |
-| 48 | 14.1, 14.2 | Responsive Web App (iOS/Android), simple UI minimizing manual entry | 10. System & Architecture Constraints → Mobility & UX | Done (exceeds spec) |  |
-| 49 | 15.1, 15.2, 16.1, 16.2 | Cloud deployment, API-first architecture, multi-region scalability, hybrid database | 10. System & Architecture Constraints → Technical Architecture, Scalability Requirements, Database Design | Done |  |
-| 50 | 16.1, 16.2, 16.3, 16.4 | Cloud deployment; hybrid DB; role-based access, encryption, backup/DR frequency | 10. System & Architecture Constraints → Database Design, Security & Compliance | Partial | Access control is fully enforced today. Data encryption relies on the hosting provider's standard protections. A tested backup process is in place for the test environment; the live environment's backup process is still to be finalized. |
+| 47 | 14.1, 14.2 | Responsive Web App (iOS/Android), simple UI minimizing manual entry | 10. System & Architecture Constraints → Mobility & UX | Done (exceeds spec) |  |
+| 48 | 15.1, 15.2, 16.1, 16.2 | Cloud deployment, API-first architecture, multi-region scalability, hybrid database | 10. System & Architecture Constraints → Technical Architecture, Scalability Requirements, Database Design | Done |  |
+| 49 | 16.1, 16.2, 16.3, 16.4 | Cloud deployment; hybrid DB; role-based access, encryption, backup/DR frequency | 10. System & Architecture Constraints → Database Design, Security & Compliance | Partial | Access control is fully enforced today. Data encryption relies on the hosting provider's standard protections. A tested backup process is in place for the test environment; the live environment's backup process is still to be finalized. |
 
 ---
 

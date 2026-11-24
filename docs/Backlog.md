@@ -430,6 +430,29 @@ steps 1–3. Pick up when prices are in real use.
   Fold into one list per side when a fourth role (an own SBU Manager level,
   plan D3) is added.
 
+### Opportunity product line: a short note per line (e.g. "2 probes, not 3") — not started (Basheer, 2026-11-24)
+
+- **Why:** raised at the partial demo to the Cabio leadership team (24 Nov).
+  An ultrasound machine's price includes its standard 2 or 3 probes, but a
+  customer sometimes asks for fewer. The Opportunity line can't say so today.
+- **For now (Basheer, 24 Nov):** the rep enters the quoted price on the
+  machine's line and records the setup ("quoted with 2 probes") in the
+  activity note, at Opportunity level.
+- **The idea:** let the rep type a short note on a product or accessory
+  line, shown under the product name. The database already stores a
+  description on every line (today only the trade-in line uses it, as
+  "Machine description"), so this is screen-only work, no migration.
+- **Watch-out:** keep the Add product row uncluttered (Basheer's concern) —
+  e.g. an "Add note" link that opens the box only when pressed. The items
+  list now shows the description *instead of* the product name; it must
+  show both.
+- **Related, not decided:** a quotation module (setup, price and discount
+  per quote, as in Salesforce CPQ or Dynamics Quotes) is beyond the signed
+  Phase 1 scope — the PRD has quotations only as attached documents
+  (B.2.13). The GST question on selling a machine with fewer probes belongs
+  to wherever Cabio makes its quotations and invoices, with Cabio's tax
+  adviser (archive 24 Nov).
+
 ### Sales Loss Report — why Cabio loses business — decided name and first filter, plan not started (Basheer, 2026-11-13)
 
 **Decided (Basheer, 2026-11-13):** the signed "Competitive Loss Report"
@@ -2122,6 +2145,8 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   ownership" (a separate, also-unbuilt PRD concept). Full analysis in
   `docs/Discussion-Strategic-Growth-Topics-2026-08.md` §2 — worth bringing to
   the Haroon/Latheef conversation as a starting point.
+  **Closed for now (Basheer, 2026-11-24):** optional in the signed scope,
+  removed from the Phase 1 list. Reopen only if the leadership team asks.
 - **New lines of business — geography expansion via joint venture partners —
   not yet conceptualized.** Raised in leadership discussion, 2026-08-05.
   Cabio is considering partnering with a third party to sell Cabio's

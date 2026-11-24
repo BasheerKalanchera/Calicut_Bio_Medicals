@@ -14,7 +14,7 @@ Regenerates:
     differently from its signed wording can say so). This is the same file published as the
     "Phase 1 Delivery Scorecard" Artifact; after running this script,
     republish it from that path to push the update live.
-  - .scratch/phase1-scorecard-by-status.html (client-facing, same 50 rows
+  - .scratch/phase1-scorecard-by-status.html (client-facing, same rows
     regrouped Done / Partial / Not Started / Commitment beyond contract first,
     then by module within each -- no PRD Section column, that's internal
     engineering reference only). Republish separately if this is the view
@@ -28,6 +28,11 @@ beyond contract" in Traceability.md. Unlike "Commitment beyond contract"
 kept in a visually distinct section/color so nothing there reads as
 shipped. Move an item from "Pending" into the main "Commitment beyond
 contract" table once it's actually built.
+
+A row with Status "Closed" (optional line closed by Basheer, e.g. the
+Account Manager role, 2026-11-24) is left out of the tally, the totals
+and the module tables, and listed in one short "Closed (optional, not in
+Phase 1)" line on every output instead.
 
 Run this after any Status/Note edit to Traceability.md. Never hand-edit
 either generated file directly. This also rewrites the "Current tally"
@@ -157,12 +162,13 @@ TALLY_PATTERN = re.compile(
 
 
 def render_traceability_with_tally(
-    original_text: str, done: int, partial: int, not_started: int
+    original_text: str, done: int, partial: int, not_started: int, closed_count: int = 0
 ) -> str:
     total = done + partial + not_started
+    closed_part = f"; {closed_count} closed, optional" if closed_count else ""
     replacement_body = (
         f"**Current tally: {done} Done · {partial} Partial · {not_started} Not "
-        f"started** ({total} signed lines\ntracked below)."
+        f"started** ({total} signed lines\ntracked below{closed_part})."
     )
     new_text, count = TALLY_PATTERN.subn(
         lambda m: m.group(1) + replacement_body + m.group(3), original_text
@@ -173,6 +179,35 @@ def render_traceability_with_tally(
             f"{TRACEABILITY.name}, found {count}"
         )
     return new_text
+
+
+def split_closed(
+    modules: list[tuple[str, list[dict]]],
+) -> tuple[list[tuple[str, list[dict]]], list[dict]]:
+    """Take Status "Closed" rows out of the modules (they don't count
+    towards Phase 1) and return them separately for the short "Closed" line."""
+    kept, closed = [], []
+    for title, rows in modules:
+        kept.append((title, [r for r in rows if r["status"] != "Closed"]))
+        closed.extend(r for r in rows if r["status"] == "Closed")
+    return kept, closed
+
+
+def closed_line_md(closed: list[dict]) -> list[str]:
+    if not closed:
+        return []
+    names = "; ".join(r["requirement"] for r in closed)
+    return [f"**Closed (optional, not in Phase 1):** {names}", ""]
+
+
+def closed_line_html(closed: list[dict]) -> str:
+    if not closed:
+        return ""
+    names = "; ".join(r["requirement"] for r in closed)
+    return (
+        '\n        <p class="note" style="margin-top:12px">'
+        f"Closed (optional, not in Phase 1): {html_lib.escape(names)}</p>"
+    )
 
 
 def compute_tally(modules: list[tuple[str, list[dict]]]) -> tuple[int, int, int]:
@@ -196,6 +231,7 @@ def render_scorecard(
     beyond_items: list[str],
     requested_items: list[tuple[str, str]],
     pending_items: list[tuple[str, str]],
+    closed: list[dict] | None = None,
 ) -> str:
     done, partial, not_started = compute_tally(modules)
     total = done + partial + not_started
@@ -231,6 +267,7 @@ def render_scorecard(
         f"{partial} items aren't zero — they're mid-flight): ({done} + {partial}×0.5) ÷ {total} = "
         f"**{half_credit_pct}%**",
         "",
+        *closed_line_md(closed or []),
         "---",
         "",
     ]
@@ -763,6 +800,7 @@ def render_client_html(
     beyond_items: list[str],
     requested_items: list[tuple[str, str]],
     pending_items: list[tuple[str, str]],
+    closed: list[dict] | None = None,
 ) -> str:
     done, partial, not_started = compute_tally(modules)
     total = done + partial + not_started
@@ -773,6 +811,7 @@ def render_client_html(
         return round(20 + pct / 100 * 860)
 
     strict_x, weighted_x = x_pos(strict_pct), x_pos(half_credit_pct)
+    closed_html = closed_line_html(closed or [])
 
     sections = group_sections(modules)
 
@@ -895,7 +934,7 @@ def render_client_html(
             <text class="lbl-strong" x="{weighted_x}" y="30" text-anchor="middle" fill="var(--accent)">{half_credit_pct}% weighted</text>
             <line x1="{strict_x}" y1="54" x2="{weighted_x}" y2="54" stroke="var(--accent)" stroke-width="2" stroke-dasharray="1 5" stroke-linecap="round"/>
           </svg>
-        </div>
+        </div>{closed_html}
       </div>
     </header>
 
@@ -978,8 +1017,9 @@ def render_by_status_html(
     beyond_items: list[str],
     requested_items: list[tuple[str, str]],
     pending_items: list[tuple[str, str]],
+    closed: list[dict] | None = None,
 ) -> str:
-    """Same 50 rows as render_client_html, regrouped by status first (Done /
+    """Same rows as render_client_html, regrouped by status first (Done /
     Partial / Not Started / Commitment beyond contract) and by module second, with
     the PRD Section column dropped -- that's internal engineering reference
     only, not meaningful to a client reader."""
@@ -992,6 +1032,7 @@ def render_by_status_html(
         return round(20 + pct / 100 * 860)
 
     strict_x, weighted_x = x_pos(strict_pct), x_pos(half_credit_pct)
+    closed_html = closed_line_html(closed or [])
 
     sections = group_sections(modules)
     counts = {"done": done, "partial": partial, "not-started": not_started}
@@ -1053,7 +1094,7 @@ def render_by_status_html(
     <header class="top">
       <div class="eyebrow"><span class="dot"></span>Cabio Sales OS &middot; Leadership Summary</div>
       <h1 class="title">Phase 1 Delivery Scorecard &mdash; By Status</h1>
-      <p class="subtitle">The same 50 signed requirements as the module-by-module scorecard, grouped here by delivery status first, then by the part of the app each one belongs to.</p>
+      <p class="subtitle">The same {total} signed requirements as the module-by-module scorecard, grouped here by delivery status first, then by the part of the app each one belongs to.</p>
       <div class="meta-line">SOURCE: Signed&#8209;Requirements&#8209;to&#8209;PRD&#8209;Traceability.md</div>
 
       <div class="vitals">
@@ -1112,7 +1153,7 @@ def render_by_status_html(
             <text class="lbl-strong" x="{weighted_x}" y="30" text-anchor="middle" fill="var(--accent)">{half_credit_pct}% weighted</text>
             <line x1="{strict_x}" y1="54" x2="{weighted_x}" y2="54" stroke="var(--accent)" stroke-width="2" stroke-dasharray="1 5" stroke-linecap="round"/>
           </svg>
-        </div>
+        </div>{closed_html}
       </div>
     </header>
 
@@ -1192,14 +1233,15 @@ def main() -> None:
 
     original_traceability_text = TRACEABILITY.read_text(encoding="utf-8")
     modules, beyond_items, requested_items, pending_items = parse_traceability()
+    modules, closed = split_closed(modules)
     done, partial, not_started = compute_tally(modules)
 
     new_traceability_text = render_traceability_with_tally(
-        original_traceability_text, done, partial, not_started
+        original_traceability_text, done, partial, not_started, len(closed)
     )
-    new_scorecard_text = render_scorecard(modules, beyond_items, requested_items, pending_items)
-    new_html_text = render_client_html(modules, beyond_items, requested_items, pending_items)
-    new_by_status_html_text = render_by_status_html(modules, beyond_items, requested_items, pending_items)
+    new_scorecard_text = render_scorecard(modules, beyond_items, requested_items, pending_items, closed)
+    new_html_text = render_client_html(modules, beyond_items, requested_items, pending_items, closed)
+    new_by_status_html_text = render_by_status_html(modules, beyond_items, requested_items, pending_items, closed)
 
     targets = [
         (TRACEABILITY, new_traceability_text),
