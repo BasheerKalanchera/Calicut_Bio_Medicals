@@ -184,7 +184,14 @@ class ProductService:
         _check_price_order(
             {field: changes[field] if field in changes else getattr(product, field) for field, _ in _PRICE_LADDER}
         )
+        # Margin Report plan D16: only the FIRST cost (empty -> a value) fills the
+        # product's Won sales that have no saved cost. Read it before the loop
+        # below overwrites it. A changed cost touches no past sale.
+        first_cost = product.cost_lakhs is None and changes.get("cost_lakhs") is not None
         for field, value in changes.items():
             setattr(product, field, value)
         product.updated_by = updated_by
-        return self.repository.update(product)
+        updated = self.repository.update(product)
+        if first_cost:
+            self.repository.fill_empty_won_costs(product.id, product.cost_lakhs)
+        return updated

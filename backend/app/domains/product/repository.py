@@ -1,6 +1,7 @@
 import uuid
+from decimal import Decimal
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, or_, select, update
 from sqlalchemy.orm import Session, noload
 
 from app.db.base import BaseRepository
@@ -66,6 +67,30 @@ class ProductRepository(BaseRepository[Product]):
             )
         )
         return open_opportunities or 0, waiting_leads or 0
+
+    def fill_empty_won_costs(self, product_id: uuid.UUID, cost_lakhs: Decimal) -> None:
+        """Margin Report plan D16: copy a product's first catalog cost onto its
+        Won product lines that have no saved cost, marked "filled in later".
+        Lines that already have a saved cost are never touched."""
+        from app.domains.opportunity.models import Opportunity, OpportunityItem
+        from app.domains.reference.models import OpportunityStatus
+
+        won_opportunities = (
+            select(Opportunity.id)
+            .join(OpportunityStatus, OpportunityStatus.id == Opportunity.status_id)
+            .where(OpportunityStatus.status_code == "WON")
+        )
+        self.db.execute(
+            update(OpportunityItem)
+            .where(
+                OpportunityItem.product_id == product_id,
+                OpportunityItem.line_type == "PRODUCT",
+                OpportunityItem.cost_at_won_lakhs.is_(None),
+                OpportunityItem.opportunity_id.in_(won_opportunities),
+            )
+            .values(cost_at_won_lakhs=cost_lakhs, cost_filled_in_later=True)
+            .execution_options(synchronize_session=False)
+        )
 
     def get_model_sbu_id(self, model_id: uuid.UUID) -> uuid.UUID | None:
         from app.domains.reference.models import Model

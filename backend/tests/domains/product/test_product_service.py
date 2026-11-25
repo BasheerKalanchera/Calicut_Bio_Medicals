@@ -1,4 +1,5 @@
 import uuid
+from decimal import Decimal
 from unittest.mock import MagicMock
 
 import pytest
@@ -448,3 +449,50 @@ class TestUpdateProduct:
         )
 
         repo.active_product_exists_for_model.assert_not_called()
+
+
+class TestFirstCostFillsWonSales:
+    """Margin Report plan D16: only a product's FIRST cost (empty -> a value)
+    fills its Won sales that have no saved cost."""
+
+    def _save(self, old_cost, data: ProductUpdate, role_name: str = "General Manager"):
+        product = _make_product(cost_lakhs=old_cost)
+        repo = _make_repo()
+        repo.get_by_id.return_value = product
+        repo.update.return_value = product
+        ProductService(repository=repo).update_product(
+            product.id, data, updated_by=uuid.uuid4(), role_name=role_name
+        )
+        return repo, product
+
+    def test_first_cost_fills_with_the_product_id_and_the_new_cost(self):
+        repo, product = self._save(None, ProductUpdate(cost_lakhs=Decimal("5.00")))
+        repo.fill_empty_won_costs.assert_called_once_with(product.id, Decimal("5.00"))
+
+    def test_fill_runs_after_the_product_is_saved(self):
+        repo, _ = self._save(None, ProductUpdate(cost_lakhs=Decimal("5.00")))
+        names = [c[0] for c in repo.method_calls if c[0] in ("update", "fill_empty_won_costs")]
+        assert names == ["update", "fill_empty_won_costs"]
+
+    def test_a_changed_cost_fills_nothing(self):
+        repo, _ = self._save(Decimal("20.00"), ProductUpdate(cost_lakhs=Decimal("22.00")))
+        repo.fill_empty_won_costs.assert_not_called()
+
+    def test_a_save_that_leaves_the_cost_alone_fills_nothing(self):
+        repo, _ = self._save(None, ProductUpdate(description="New Description"))
+        repo.fill_empty_won_costs.assert_not_called()
+
+    def test_clearing_the_cost_fills_nothing(self):
+        repo, _ = self._save(Decimal("20.00"), ProductUpdate(cost_lakhs=None))
+        repo.fill_empty_won_costs.assert_not_called()
+
+    def test_a_refused_save_fills_nothing(self):
+        repo = _make_repo()
+        with pytest.raises(AuthorizationError):
+            ProductService(repository=repo).update_product(
+                uuid.uuid4(),
+                ProductUpdate(cost_lakhs=Decimal("5.00")),
+                updated_by=uuid.uuid4(),
+                role_name="Sales Staff",
+            )
+        repo.fill_empty_won_costs.assert_not_called()

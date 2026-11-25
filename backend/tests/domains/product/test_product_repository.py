@@ -1,4 +1,5 @@
 import uuid
+from decimal import Decimal
 from unittest.mock import MagicMock
 
 from app.domains.product.models import Product
@@ -99,6 +100,37 @@ class TestProductRepositoryActiveFilter:
 
         sql = _compiled(mock_db.scalars.call_args.args[0])
         assert "product.is_active IS NOT false" not in sql
+
+
+class TestFillEmptyWonCosts:
+    """Margin Report plan D16: a product's first catalog cost fills its Won
+    product lines that have no saved cost, marked "filled in later"."""
+
+    def _run(self):
+        mock_db = MagicMock()
+        product_id = uuid.uuid4()
+        ProductRepository(mock_db).fill_empty_won_costs(product_id, Decimal("5.00"))
+        mock_db.execute.assert_called_once()
+        return _compiled(mock_db.execute.call_args.args[0]), product_id
+
+    def test_updates_only_this_products_product_lines(self):
+        sql, product_id = self._run()
+        assert sql.startswith("UPDATE opportunity_item SET")
+        assert f"opportunity_item.product_id = '{product_id.hex}'" in sql
+        assert "opportunity_item.line_type = 'PRODUCT'" in sql
+
+    def test_never_touches_a_line_that_already_has_a_saved_cost(self):
+        sql, _ = self._run()
+        assert "opportunity_item.cost_at_won_lakhs IS NULL" in sql
+
+    def test_only_reaches_lines_on_won_opportunities(self):
+        sql, _ = self._run()
+        assert "opportunity_status.status_code = 'WON'" in sql
+
+    def test_copies_the_cost_and_sets_the_filled_in_later_marker(self):
+        sql, _ = self._run()
+        assert "cost_at_won_lakhs=5.00" in sql
+        assert "cost_filled_in_later=true" in sql
 
 
 class TestProductRepositoryUsageCounts:
