@@ -11,8 +11,8 @@
 -- it is not consumed by Alembic or the application at runtime, and cannot be
 -- used as an `alembic stamp <rev>` checkpoint.
 --
--- Regenerated 2026-11-21 from the Dev database, catching up migration
--- 0067: Manager Notes visible only to the rep, the writer and the rep's managers
+-- Regenerated 2026-11-25 from the Dev database, catching up migration
+-- 0068: opportunity_item: cost saved on the day the Opportunity is marked Won
 -- See docs/Backend-Implementation-Standards.md's migration workflow.
 --
 -- Regenerate with: .\scripts\regen_physical_schema.ps1
@@ -22,7 +22,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Eny63UiZKqSBs5ddG9rfoovZZwl2B8BcsmzcV2Iz9lc1yQQ6LO6QZBUgs0zE8RO
+\restrict agRdHg7YbICEiLSbaLnpXCctdP2DemMC0B2b8bETXSZsDKGozCyUMGIm2XoMoyw
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.11 (Debian 17.11-1.pgdg13+2)
@@ -799,6 +799,9 @@ CREATE TABLE public.opportunity_item (
     updated_by uuid,
     line_type character varying(20) DEFAULT 'PRODUCT'::character varying NOT NULL,
     description text,
+    cost_at_won_lakhs numeric(15,2),
+    cost_filled_in_later boolean DEFAULT false NOT NULL,
+    CONSTRAINT ck_opportunity_item_cost_at_won_non_negative CHECK (((cost_at_won_lakhs IS NULL) OR (cost_at_won_lakhs >= (0)::numeric))),
     CONSTRAINT ck_opportunity_item_line_type CHECK (((line_type)::text = ANY ((ARRAY['PRODUCT'::character varying, 'BUYBACK'::character varying])::text[]))),
     CONSTRAINT ck_opportunity_item_product_id_or_buyback CHECK (((product_id IS NOT NULL) OR ((line_type)::text = 'BUYBACK'::text))),
     CONSTRAINT opportunity_item_quantity_check CHECK ((quantity > 0))
@@ -4030,5 +4033,5 @@ CREATE POLICY target_plan_write ON public.target_plan FOR INSERT WITH CHECK ((us
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Eny63UiZKqSBs5ddG9rfoovZZwl2B8BcsmzcV2Iz9lc1yQQ6LO6QZBUgs0zE8RO
+\unrestrict agRdHg7YbICEiLSbaLnpXCctdP2DemMC0B2b8bETXSZsDKGozCyUMGIm2XoMoyw
 

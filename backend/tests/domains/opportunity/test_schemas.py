@@ -21,6 +21,20 @@ from app.domains.opportunity.schemas import (
     StatusNested,
 )
 
+
+def test_no_opportunity_response_carries_a_cost():
+    # BR-CAT-04: cost is for the General Manager and Admin only, and only in the
+    # Margin Report -- the cost saved on a line (Margin Report plan D4) must
+    # never reach an Opportunity response.
+    from app.domains.opportunity import schemas
+
+    for name in dir(schemas):
+        model = getattr(schemas, name)
+        if isinstance(model, type) and hasattr(model, "model_fields"):
+            leaked = [f for f in model.model_fields if "cost" in f]
+            assert not leaked, f"{name} exposes {leaked}"
+
+
 ACCOUNT = AccountNested(id=uuid.uuid4(), name="Test Hospital")
 OWNER = OwnerNested(id=uuid.uuid4(), display_name="Test Owner")
 SBU = SBUNested(id=uuid.uuid4(), name="Imaging")

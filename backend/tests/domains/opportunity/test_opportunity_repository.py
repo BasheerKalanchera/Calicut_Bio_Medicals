@@ -492,6 +492,39 @@ class TestReplaceItems:
         assert existing_item.updated_by == original_actor
 
 
+class TestStampCostAtWon:
+    """Margin Report plan D4: one UPDATE copies each product's catalog cost onto
+    the Opportunity's product lines. The real copy is checked live against Dev
+    (E2E); this covers the shape of the statement."""
+
+    def _sql(self) -> str:
+        mock_db = MagicMock()
+        OpportunityRepository(mock_db).stamp_cost_at_won(uuid.uuid4())
+        mock_db.execute.assert_called_once()
+        stmt = mock_db.execute.call_args[0][0]
+        return str(stmt.compile(dialect=postgresql.dialect()))
+
+    def test_updates_only_the_cost_column_of_opportunity_item(self):
+        sql = self._sql()
+
+        assert sql.startswith("UPDATE opportunity_item SET cost_at_won_lakhs=")
+        assert "cost_filled_in_later" not in sql  # the marker stays false for a real Won
+        assert "FROM product" in sql  # the cost is read from the catalog
+
+    def test_limited_to_this_opportunitys_product_lines_with_no_saved_cost(self):
+        sql = self._sql()
+
+        assert "opportunity_item.opportunity_id =" in sql
+        assert "opportunity_item.line_type =" in sql
+        assert "opportunity_item.cost_at_won_lakhs IS NULL" in sql
+
+    def test_product_without_a_cost_leaves_the_line_empty(self):
+        sql = self._sql()
+
+        assert "(SELECT product.cost_lakhs" in sql
+        assert ") IS NOT NULL" in sql
+
+
 class TestReplaceSplits:
     """Upserts by (opportunity_id, user_id) instead of delete-all-then-
     reinsert -- same reasoning as TestReplaceItems above."""

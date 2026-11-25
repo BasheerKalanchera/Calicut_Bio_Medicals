@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import case, func, or_, select
+from sqlalchemy import case, func, or_, select, update
 from sqlalchemy.orm import Session, contains_eager, joinedload, lazyload, noload
 
 from app.db.base import BaseRepository
@@ -450,6 +450,26 @@ class OpportunityRepository(BaseRepository[Opportunity]):
                 .where(OpportunityItem.opportunity_id == opportunity_id)
                 .options(*_item_options())
             ).unique().all()
+        )
+
+    def stamp_cost_at_won(self, opportunity_id: uuid.UUID) -> None:
+        """Margin Report plan D4: copy each product's current catalog cost onto the
+        Opportunity's PRODUCT lines, on the day it is marked Won. One UPDATE, no
+        lines loaded. A line whose product has no cost stays empty; a line that
+        already holds a saved cost (e.g. migration 0068's later fill) is left alone."""
+        product_cost = (
+            select(Product.cost_lakhs).where(Product.id == OpportunityItem.product_id).scalar_subquery()
+        )
+        self.db.execute(
+            update(OpportunityItem)
+            .where(
+                OpportunityItem.opportunity_id == opportunity_id,
+                OpportunityItem.line_type == "PRODUCT",
+                OpportunityItem.cost_at_won_lakhs.is_(None),
+                product_cost.is_not(None),
+            )
+            .values(cost_at_won_lakhs=product_cost)
+            .execution_options(synchronize_session=False)
         )
 
     def get_item(self, item_id: uuid.UUID) -> "OpportunityItem | None":

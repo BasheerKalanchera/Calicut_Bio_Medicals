@@ -1160,6 +1160,36 @@ class TestUpdateOpportunity:
         assert opp.full_payment_confirmed_by == USER_ID
         assert opp.full_payment_note == "RTGS 88231"
 
+    # Margin Report plan D4: the cost is saved on the product lines on the
+    # first move to Won, and only then.
+
+    def test_transition_to_won_stamps_cost_on_product_lines(self):
+        _, repo, service = self._won_update_setup(80, "PAYMENT_PENDING")
+
+        service.update_opportunity(
+            OPP_ID, _noted(status_id=STATUS_WON_ID, confirm_full_payment=True), updated_by=USER_ID
+        )
+
+        repo.stamp_cost_at_won.assert_called_once_with(OPP_ID)
+
+    def test_refused_won_stamps_no_cost(self):
+        _, repo, service = self._won_update_setup(80, "PAYMENT_PENDING")
+
+        with pytest.raises(BusinessRuleViolation, match="full payment"):
+            service.update_opportunity(OPP_ID, _noted(status_id=STATUS_WON_ID), updated_by=USER_ID)
+
+        repo.stamp_cost_at_won.assert_not_called()
+
+    def test_save_on_already_won_opportunity_stamps_no_cost(self):
+        opp, repo, service = self._won_update_setup(90, "WON")
+        repo.get_status.side_effect = None
+        repo.get_status.return_value = _make_status("WON", is_terminal=True)
+        opp.closed_at = datetime.now(_IST)
+
+        service.update_opportunity(OPP_ID, OpportunityUpdate(name="Renamed"), updated_by=USER_ID)
+
+        repo.stamp_cost_at_won.assert_not_called()
+
     def test_transition_to_won_refused_without_payment_tick(self):
         opp, repo, service = self._won_update_setup(80, "PAYMENT_PENDING")
 
@@ -1361,6 +1391,7 @@ class TestUpdateOpportunity:
         )
 
         assert opp.closed_at is not None
+        repo.stamp_cost_at_won.assert_not_called()
 
     def test_non_terminal_transition_does_not_stamp_closed_at(self):
         opp = _make_opportunity(
@@ -1380,6 +1411,7 @@ class TestUpdateOpportunity:
         )
 
         assert opp.closed_at is None
+        repo.stamp_cost_at_won.assert_not_called()
 
     def test_transition_to_on_hold_with_past_reactivation_date_raises(self):
         yesterday = _today_ist() - timedelta(days=1)

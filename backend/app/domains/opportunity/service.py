@@ -504,6 +504,8 @@ class OpportunityService:
                 po_date=opportunity.po_date,
             )
 
+        moved_to_won = False
+
         # BR-OP-02 / BR-OP-03 / BR-OP-05 / BR-OP-09: status transition validation
         if "status_id" in updates:
             loss_reason_code: str | None = None
@@ -532,6 +534,7 @@ class OpportunityService:
             # BR-OP-17: stamp who confirmed full payment, and when, plus the
             # optional note, on the move to Won (BR-OP-09: only ever once).
             if effective_status.status_code == "WON" and current_status_code != "WON":
+                moved_to_won = True
                 opportunity.full_payment_confirmed_at = func.now()
                 opportunity.full_payment_confirmed_by = updated_by
                 opportunity.full_payment_note = full_payment_note
@@ -557,6 +560,10 @@ class OpportunityService:
             )
 
         opportunity = self.repository.update(opportunity)
+        if moved_to_won:
+            # Margin Report plan D4: save each product's cost as it is today, on the
+            # first move to Won (after the flush, so a failed save stamps nothing).
+            self.repository.stamp_cost_at_won(opportunity_id)
         if change_note is not None:
             # After the flush above, so the closing's Won/Lost follow-up
             # exemption (BR-ACT-05) reads the new status.

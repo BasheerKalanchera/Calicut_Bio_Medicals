@@ -205,6 +205,10 @@ class OpportunityItem(AuditMixin, Base):
             "product_id IS NOT NULL OR line_type = 'BUYBACK'",
             name="ck_opportunity_item_product_id_or_buyback",
         ),
+        CheckConstraint(
+            "cost_at_won_lakhs IS NULL OR cost_at_won_lakhs >= 0",
+            name="ck_opportunity_item_cost_at_won_non_negative",
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -228,6 +232,14 @@ class OpportunityItem(AuditMixin, Base):
     # handling happens where the value is summed (frontend today -- see the rule text),
     # not in extended_value_lakhs itself, which stays a plain positive line value.
     line_type: Mapped[str] = mapped_column(String(20), nullable=False, server_default="PRODUCT")
+    # Margin Report plan D4/D12: the product's cost (INR Lakhs per unit) as it was on
+    # the day the Opportunity was marked Won, so a later catalog cost change never
+    # alters a past margin. Stamped by OpportunityService on the first move to Won;
+    # NULL when the product had no cost that day. cost_filled_in_later marks lines
+    # filled afterwards (migration 0068's one-time fill). BR-CAT-04: never added to
+    # any Opportunity response schema.
+    cost_at_won_lakhs: Mapped[Decimal | None] = mapped_column(Numeric(15, 2), nullable=True)
+    cost_filled_in_later: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
 
     opportunity: Mapped["Opportunity"] = relationship(back_populates="items", lazy="joined")
     product: Mapped["Product | None"] = relationship(back_populates="opportunity_items", lazy="joined")
