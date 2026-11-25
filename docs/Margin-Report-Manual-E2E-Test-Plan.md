@@ -1,7 +1,8 @@
 <!-- e2e-template v1: checked on save by .claude/hooks/test_plan_guard.py -->
 # Margin Report — Manual E2E Test Plan
 
-**Covers:** `docs/Margin-Report-Implementation-Plan.md` (Approved 24 Nov 2026, D1–D13).
+**Covers:** `docs/Margin-Report-Implementation-Plan.md` (Approved 24 Nov 2026, D1–D13;
+D13a–D16 added 25 Nov).
 **Built:** not built yet — handed to Build & Test 24 Nov 2026 (Basheer). Commit hashes filled in after the build.
 **Where:** Dev only. Nothing here runs on UAT; the UAT one-time cost fill (D12) waits for the price sheet there.
 
@@ -21,7 +22,8 @@ just before the E2E.
   fastrack opportunity from Project 360" (Aster MIMS Calicut)), Basheer K (SBU Manager,
   Imaging), Fazal (Area Manager, Imaging), Marketing Test User (Marketing User).
 - **Who can approve:** n/a — there is no approval step. A Won/Lost product change
-  needs a reason, not an approver (D13).
+  needs a reason, not an approver (D13; reason-only "Why this change?" pop-up,
+  saved as an Activity-tab Note, D13a–D13d — Basheer, 25 Nov).
 - **Who can save:** products on a Won or Lost Opportunity — Haroon Sidheeq and Abdul
   Latheef P only, with a reason (D13). Products on an open Opportunity — unchanged;
   checked here with Fahad on his own "Test one more direct Opportunity" (EMS Hospital),
@@ -85,11 +87,10 @@ reason box.
 
 **Opportunities:** every Opportunity is named with its hospital in brackets.
 
-**Open question for Basheer (not in the plan's Decisions yet):** Margin % on the totals
-row and on any row with some no-cost lines — divide by the sold-for of the **costed
-lines only** (recommended: ₹13.00 L ÷ ₹48.00 L = 27.1% for section A) or by all sold-for
-including no-cost lines (₹13.00 L ÷ ₹53.00 L = 24.5%)? The figures below use the
-recommended way; they change if Basheer picks the other.
+**Margin % with some no-cost lines (plan D14, Basheer 25 Nov):** on the totals row and
+on any row with some no-cost lines, margin ÷ the sold-for of the **costed lines only**
+(₹13.00 L ÷ ₹48.00 L = 27.1% for section A), not ÷ all sold-for (24.5%). The figures
+below use this.
 
 ## Before the build applies its migration (set-up — order matters)
 
@@ -119,11 +120,11 @@ the test costs must be in the catalog **before** Basheer runs `alembic upgrade h
 3. [Complex: several values] Read the rows. **Expected:** SonoScape E2 — Quantity 3,
    Sold for ₹19.00 L, Cost ₹15.00 L, Margin ₹4.00 L, 21.1%; SonoScape S50 Elite —
    Quantity 1, ₹29.00 L, ₹20.00 L, ₹9.00 L, 31.0%. —
-4. [Simple] Read the no-cost line. **Expected:** "1 lines worth ₹5.00 L have no cost
-   entered — not in the margin" (wording from the code, P2) (D5). —
+4. [Simple] Read the no-cost list. **Expected:** one product listed — SonoScape E1,
+   1 sale, ₹5.00 L, no cost entered, not in the margin (wording from the code, P2)
+   (D5, D15). —
 5. [Complex: several values] Read the totals row at the top. **Expected:** Sold for
-   ₹53.00 L (no-cost lines included, D5), Cost ₹35.00 L, Margin ₹13.00 L, 27.1% (see the
-   open question). —
+   ₹53.00 L (no-cost lines included, D5), Cost ₹35.00 L, Margin ₹13.00 L, 27.1% (D14). —
 6. [Simple] Look for the "cost filled in later" mark. **Expected:** shown — every costed
    line here was filled by the one-time fill (D12). —
 7. [Complex: several values] Group by Rep. **Expected:** Basheer K — costed Sold for
@@ -170,15 +171,27 @@ the test costs must be in the catalog **before** Basheer runs `alembic upgrade h
     keeps its ₹20.00 L too. —
 21. [Simple] "zz E2E Margin – win" (Baby Memorial Hospital) → Products tab.
     **Expected:** Edit and + Add shown. —
-22. [Simple] + Add SonoScape E2, quantity 1, price ₹8.00 L; leave the reason empty;
-    Save. **Expected:** refused with the plain message asking for a reason (D13). —
-23. [Complex: saves to Dev] Type the reason "PO shows E2 added" → Save. Basheer clicks,
-    Claude watches. **Expected:** saved; both lines shown. —
+21a. [Simple] Edit → Save without changing anything. **Expected:** no pop-up, nothing
+    saved, no new note on the Activity tab (D13b). —
+22. [Simple] + Add SonoScape E2, quantity 1, price ₹8.00 L → Save. **Expected:** the
+    "Why this change?" pop-up opens with one reason box, "Who asked for this change,
+    and why?", no next-action questions (D13c); its Save can't go through with the box
+    empty. —
+23. [Complex: saves to Dev] Type the reason "Fahad: PO shows E2 added" → Save. Basheer
+    clicks, Claude watches. **Expected:** saved; both lines shown. Not refused even
+    though Haroon has an open next action of his own on this Opportunity (D13d; Build &
+    Test adds that next action to pre-flight from the built code). —
 24. [Complex: several values] Margin Report, This Month, by Product. **Expected:** S50
     Elite still Cost ₹20.00 L (kept, D13); E2 — Quantity 1, ₹8.00 L, Cost ₹5.00 L
     (today's catalog cost), Margin ₹3.00 L, 37.5%. —
-25. [Simple] "zz E2E Margin – win" (Baby Memorial Hospital) → history log.
-    **Expected:** the product change with the reason "PO shows E2 added". —
+25. [Simple] "zz E2E Margin – win" (Baby Memorial Hospital) → Activity tab.
+    **Expected:** one new Note by Haroon listing the change (E2 added, 1 unit) and the
+    reason "Fahad: PO shows E2 added" (D13a, D13c); Haroon's own next action still open
+    and no new next action (D13d). The history log shows the E2 line added. —
+25a. [Simple] Fahad's Active "Test one more direct Opportunity" (EMS Hospital) →
+    Edit → change the stage → Save. **Expected:** the usual "Why this change?" pop-up
+    with its next-action questions, unchanged by the new mode. Cancel; don't save
+    (D13e, pop-up re-test). —
 26. [Simple] Lost "new lead" (aster medicity) → Products tab. **Expected:** Edit shown
     for Haroon. Don't save. —
 27. [Simple] Product Catalog → S50 Elite → Cost back to 20.00 → Save. **Expected:**
@@ -188,6 +201,16 @@ the test costs must be in the catalog **before** Basheer runs `alembic upgrade h
 
 28. [Simple] Reports → Margin Report, This Quarter. **Expected:** menu item shown; same
     totals Haroon sees after step 24. —
+28a. [Complex: saves to Dev] Product Catalog → SonoScape E1 (no cost yet) → Cost 4.00 →
+    Save. Basheer clicks, Claude watches. **Expected:** saved (first cost, D16). —
+28b. [Complex: several values] Margin Report, This Quarter, by Product. **Expected:** E1
+    now has a row with Cost at ₹4.00 L a unit, marked "cost filled in later"; the
+    no-cost list is gone; Margin % and totals now include E1 (D14, D16). S50 Elite and
+    E2 unchanged. Claude works the expected figures from step 4's E1 line before the
+    run. —
+28c. [Complex: saves to Dev] Product Catalog → E1 → Cost 4.50 → Save, then Margin
+    Report. **Expected:** E1 still at ₹4.00 L a unit — changing an existing cost
+    touches no past sale (D16, D4). E1 keeps a Dev cost afterwards (test value). —
 
 ## E — Fahad (Sales Staff, Imaging): hide-checks
 

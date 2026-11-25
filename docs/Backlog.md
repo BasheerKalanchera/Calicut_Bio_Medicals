@@ -430,6 +430,21 @@ steps 1–3. Pick up when prices are in real use.
   Fold into one list per side when a fourth role (an own SBU Manager level,
   plan D3) is added.
 
+### Won/Lost Opportunity: lock Overview and other edits too? — not started, undecided (Basheer, 2026-11-25)
+
+- **Why:** found while deciding the Margin Report's D13 (25 Nov). On a Won
+  or Lost Opportunity, only the stage and status are frozen and only the
+  Splits tab is locked (Won: GM only; Lost: nobody). The Overview Edit
+  (value, PO number and date, owner, dates), Stakeholders and Documents can
+  still be changed by anyone who can edit the Opportunity, with no reason
+  asked (read from `opportunity/service.py` and `OpportunityDetailScreen.tsx`,
+  25 Nov). Products get the GM/Admin lock and reason with the Margin Report
+  (`docs/Margin-Report-Implementation-Plan.md` D13, D13a–D13e).
+- **Already safe:** every such change is in the history log (before and
+  after, who, when); only the "why" is missing.
+- **To decide:** which Won/Lost edits to lock to GM/Admin, and whether they
+  use the same reason-only "Why this change?" pop-up.
+
 ### Opportunity product line: a short note per line (e.g. "2 probes, not 3") — not started (Basheer, 2026-11-24)
 
 - **Why:** raised at the partial demo to the Cabio leadership team (24 Nov).
