@@ -452,15 +452,19 @@ class OpportunityRepository(BaseRepository[Opportunity]):
             ).unique().all()
         )
 
-    def stamp_cost_at_won(self, opportunity_id: uuid.UUID) -> None:
+    def stamp_cost_at_won(
+        self, opportunity_id: uuid.UUID, *, line_ids: set[uuid.UUID] | None = None
+    ) -> None:
         """Margin Report plan D4: copy each product's current catalog cost onto the
         Opportunity's PRODUCT lines, on the day it is marked Won. One UPDATE, no
         lines loaded. A line whose product has no cost stays empty; a line that
-        already holds a saved cost (e.g. migration 0068's later fill) is left alone."""
+        already holds a saved cost (e.g. migration 0068's later fill) is left alone.
+        `line_ids` limits it to those lines (a GM/Admin's product change on a Won
+        Opportunity stamps only the new or swapped lines, plan D13)."""
         product_cost = (
             select(Product.cost_lakhs).where(Product.id == OpportunityItem.product_id).scalar_subquery()
         )
-        self.db.execute(
+        stmt = (
             update(OpportunityItem)
             .where(
                 OpportunityItem.opportunity_id == opportunity_id,
@@ -471,6 +475,15 @@ class OpportunityRepository(BaseRepository[Opportunity]):
             .values(cost_at_won_lakhs=product_cost)
             .execution_options(synchronize_session=False)
         )
+        if line_ids is not None:
+            stmt = stmt.where(OpportunityItem.id.in_(line_ids))
+        self.db.execute(stmt)
+
+    def get_product_names(self, product_ids: set[uuid.UUID]) -> dict[uuid.UUID, str]:
+        if not product_ids:
+            return {}
+        rows = self.db.execute(select(Product.id, Product.name).where(Product.id.in_(product_ids))).all()
+        return {row.id: row.name for row in rows}
 
     def get_item(self, item_id: uuid.UUID) -> "OpportunityItem | None":
         return self.db.get(OpportunityItem, item_id)
@@ -530,6 +543,14 @@ class OpportunityRepository(BaseRepository[Opportunity]):
                     or target.line_type != item.line_type
                 )
                 if changed:
+                    if target.product_id != item.product_id and (
+                        target.cost_at_won_lakhs is not None or target.cost_filled_in_later
+                    ):
+                        # Margin Report plan D13: a swapped product loses the
+                        # old product's saved cost (the service stamps the new
+                        # product's cost afterwards on a Won Opportunity).
+                        target.cost_at_won_lakhs = None
+                        target.cost_filled_in_later = False
                     target.product_id = item.product_id
                     target.description = item.description
                     target.quantity = item.quantity

@@ -16,6 +16,7 @@ from app.domains.notification.repository import NotificationRepository
 from app.domains.notification.service import NotificationService
 from app.domains.opportunity.repository import OpportunityRepository
 from app.domains.opportunity.schemas import (
+    ItemEditPermission,
     ItemsBulkUpdate,
     OpportunityCreate,
     OpportunityForStakeholder,
@@ -223,6 +224,16 @@ def list_opportunity_items(
     return APIResponse(data=[OpportunityItemResponse.model_validate(i) for i in items])
 
 
+@router.get("/opportunities/{opportunity_id}/items/can-edit")
+def can_edit_opportunity_items(
+    opportunity_id: uuid.UUID,
+    current_user: UserProfile = Depends(get_current_user),
+    service: OpportunityService = Depends(_get_service),
+) -> APIResponse[ItemEditPermission]:
+    can_edit = service.can_edit_products(opportunity_id, role_name=current_user.role.role_name)
+    return APIResponse(data=ItemEditPermission(can_edit=can_edit))
+
+
 @router.put("/opportunities/{opportunity_id}/items")
 def replace_opportunity_items(
     opportunity_id: uuid.UUID,
@@ -230,7 +241,9 @@ def replace_opportunity_items(
     current_user: UserProfile = Depends(get_current_user),
     service: OpportunityService = Depends(_get_service),
 ) -> APIResponse[list[OpportunityItemResponse]]:
-    items = service.replace_items(opportunity_id, body, updated_by=current_user.id)
+    items = service.replace_items(
+        opportunity_id, body, updated_by=current_user.id, role_name=current_user.role.role_name
+    )
     return APIResponse(data=[OpportunityItemResponse.model_validate(i) for i in items])
 
 

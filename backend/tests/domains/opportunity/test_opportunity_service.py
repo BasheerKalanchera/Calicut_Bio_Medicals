@@ -2431,6 +2431,7 @@ class TestReplaceItems:
                 OPP_ID,
                 ItemsBulkUpdate(items=[]),
                 updated_by=USER_ID,
+                role_name="Sales Staff",
             )
 
     def test_empty_items_clears_all(self):
@@ -2438,7 +2439,7 @@ class TestReplaceItems:
         repo.get_for_update.return_value = _make_opportunity()
         service = _make_service(repo)
 
-        service.replace_items(OPP_ID, ItemsBulkUpdate(items=[]), updated_by=USER_ID)
+        service.replace_items(OPP_ID, ItemsBulkUpdate(items=[]), updated_by=USER_ID, role_name="Sales Staff")
 
         repo.replace_items.assert_called_once_with(OPP_ID, [])
 
@@ -2455,7 +2456,7 @@ class TestReplaceItems:
                 discount_lakhs=Decimal("0.50"),
             )
         ])
-        service.replace_items(OPP_ID, data, updated_by=USER_ID)
+        service.replace_items(OPP_ID, data, updated_by=USER_ID, role_name="Sales Staff")
 
         new_items: list[OpportunityItem] = repo.replace_items.call_args[0][1]
         assert len(new_items) == 1
@@ -2471,7 +2472,7 @@ class TestReplaceItems:
         data = ItemsBulkUpdate(items=[
             OpportunityItemCreate(product_id=PRODUCT_ID, quantity=1, unit_price_lakhs=Decimal("5.00")),
         ])
-        service.replace_items(OPP_ID, data, updated_by=USER_ID)
+        service.replace_items(OPP_ID, data, updated_by=USER_ID, role_name="Sales Staff")
 
         new_items: list[OpportunityItem] = repo.replace_items.call_args[0][1]
         assert new_items[0].line_type == "PRODUCT"
@@ -2491,7 +2492,7 @@ class TestReplaceItems:
                 line_type="BUYBACK",
             ),
         ])
-        service.replace_items(OPP_ID, data, updated_by=USER_ID)
+        service.replace_items(OPP_ID, data, updated_by=USER_ID, role_name="Sales Staff")
 
         new_items: list[OpportunityItem] = repo.replace_items.call_args[0][1]
         assert new_items[0].line_type == "BUYBACK"
@@ -2521,6 +2522,219 @@ class TestAddItem:
         assert result.line_type == "BUYBACK"
         assert result.product_id is None
         assert result.description == "GE LOGIQ P9 ultrasound, 2018, working condition"
+
+
+# ===========================================================================
+# Margin Report plan D13: Won/Lost products lock, reason and Note
+# ===========================================================================
+
+LINE_ID = uuid.uuid4()
+OTHER_LINE_ID = uuid.uuid4()
+NEW_PRODUCT_ID = uuid.uuid4()
+_CLOSED = ["WON", "LOST"]
+_NOT_GM = ["Sales Staff", "Area Manager", "SBU Manager"]
+_GM = ["General Manager", "Admin"]
+
+
+def _line(line_id=LINE_ID, *, product_id=PRODUCT_ID, name="SonoScape S50", quantity=1, price="5.00") -> MagicMock:
+    line = MagicMock(spec=OpportunityItem)
+    line.id = line_id
+    line.product_id = product_id
+    line.product = MagicMock(name=name)
+    line.product.name = name
+    line.description = None
+    line.quantity = quantity
+    line.unit_price_lakhs = Decimal(price)
+    line.discount_lakhs = Decimal("0")
+    line.line_type = "PRODUCT"
+    return line
+
+
+def _same(line: MagicMock, **overrides) -> OpportunityItemCreate:
+    fields = dict(
+        id=line.id, product_id=line.product_id, quantity=line.quantity,
+        unit_price_lakhs=line.unit_price_lakhs, discount_lakhs=line.discount_lakhs,
+    )
+    fields.update(overrides)
+    return OpportunityItemCreate(**fields)
+
+
+def _closed_items_service(status_code: str, lines: list[MagicMock]) -> tuple[OpportunityService, MagicMock]:
+    repo = _make_repo()
+    repo.get_for_update.return_value = _make_opportunity()
+    repo.get_status.return_value = _make_status(status_code, is_terminal=status_code in _CLOSED)
+    repo.list_items.return_value = lines
+    repo.get_product_names.return_value = {NEW_PRODUCT_ID: "SonoScape S60"}
+    repo.replace_items.side_effect = lambda opp_id, new: [MagicMock(id=i.id or uuid.uuid4(), product_id=i.product_id)
+                                                          for i in new]
+    return _make_service(repo), repo
+
+
+def _note_of(service: OpportunityService) -> dict:
+    service.activity_service.log_stage_change_note.assert_called_once()
+    return service.activity_service.log_stage_change_note.call_args.kwargs
+
+
+class TestProductsLockOnClosedOpportunity:
+    @pytest.mark.parametrize("status_code", _CLOSED)
+    @pytest.mark.parametrize("role_name", _NOT_GM)
+    def test_other_roles_are_refused_and_nothing_is_saved(self, status_code, role_name):
+        line = _line()
+        service, repo = _closed_items_service(status_code, [line])
+        data = ItemsBulkUpdate(items=[_same(line, quantity=2)], reason="Customer asked")
+
+        assert service.can_edit_products(OPP_ID, role_name=role_name) is False
+        with pytest.raises(AuthorizationError, match="General Manager or Admin"):
+            service.replace_items(OPP_ID, data, updated_by=USER_ID, role_name=role_name)
+        repo.replace_items.assert_not_called()
+        service.activity_service.log_stage_change_note.assert_not_called()
+
+    @pytest.mark.parametrize("status_code", _CLOSED)
+    @pytest.mark.parametrize("role_name", _GM)
+    def test_gm_and_admin_may_edit(self, status_code, role_name):
+        service, _ = _closed_items_service(status_code, [_line()])
+        assert service.can_edit_products(OPP_ID, role_name=role_name) is True
+
+    @pytest.mark.parametrize("role_name", [*_NOT_GM, *_GM])
+    @pytest.mark.parametrize("status_code", ["ACTIVE", "ON_HOLD"])
+    def test_open_opportunity_is_unchanged_for_every_role(self, status_code, role_name):
+        service, repo = _closed_items_service(status_code, [_line()])
+        data = ItemsBulkUpdate(items=[], reason=None)
+
+        assert service.can_edit_products(OPP_ID, role_name=role_name) is True
+        service.replace_items(OPP_ID, data, updated_by=USER_ID, role_name=role_name)
+        repo.replace_items.assert_called_once()
+        repo.list_items.assert_not_called()
+        service.activity_service.log_stage_change_note.assert_not_called()
+
+    @pytest.mark.parametrize("status_code", _CLOSED)
+    @pytest.mark.parametrize("role_name", [*_NOT_GM, *_GM])
+    def test_single_add_is_refused_for_everyone(self, status_code, role_name):
+        service, repo = _closed_items_service(status_code, [])
+        data = OpportunityItemCreate(product_id=PRODUCT_ID, quantity=1, unit_price_lakhs=Decimal("5.00"))
+
+        with pytest.raises(AuthorizationError, match="Products tab"):
+            service.add_item(OPP_ID, data, created_by=USER_ID)
+        repo.add_item.assert_not_called()
+
+    @pytest.mark.parametrize("status_code", _CLOSED)
+    def test_single_delete_is_refused_for_everyone(self, status_code):
+        service, repo = _closed_items_service(status_code, [])
+        repo.get_item.return_value = _line()
+        repo.get_item.return_value.opportunity_id = OPP_ID
+
+        with pytest.raises(AuthorizationError, match="Products tab"):
+            service.delete_item(LINE_ID)
+        repo.delete_item.assert_not_called()
+
+    def test_single_add_and_delete_still_work_on_an_open_opportunity(self):
+        service, repo = _closed_items_service("ACTIVE", [])
+        repo.add_item.side_effect = lambda item: item
+        repo.get_item.return_value = _line()
+        repo.get_item.return_value.opportunity_id = OPP_ID
+
+        service.add_item(
+            OPP_ID, OpportunityItemCreate(product_id=PRODUCT_ID, quantity=1, unit_price_lakhs=Decimal("5.00")),
+            created_by=USER_ID,
+        )
+        service.delete_item(LINE_ID)
+        repo.add_item.assert_called_once()
+        repo.delete_item.assert_called_once()
+
+
+class TestClosedProductSaveReasonAndNote:
+    @pytest.mark.parametrize("role_name", _GM)
+    def test_unchanged_save_saves_nothing_and_asks_for_no_reason(self, role_name):
+        line = _line()
+        service, repo = _closed_items_service("WON", [line])
+
+        result = service.replace_items(
+            OPP_ID, ItemsBulkUpdate(items=[_same(line)]), updated_by=USER_ID, role_name=role_name
+        )
+
+        assert result == [line]
+        repo.replace_items.assert_not_called()
+        service.activity_service.log_stage_change_note.assert_not_called()
+
+    @pytest.mark.parametrize("reason", [None, "", "   "])
+    def test_a_change_without_a_reason_is_refused_and_nothing_is_saved(self, reason):
+        line = _line()
+        service, repo = _closed_items_service("WON", [line])
+        data = ItemsBulkUpdate(items=[_same(line, quantity=3)], reason=reason)
+
+        with pytest.raises(BusinessRuleViolation, match="Say why"):
+            service.replace_items(OPP_ID, data, updated_by=USER_ID, role_name="General Manager")
+        repo.replace_items.assert_not_called()
+        service.activity_service.log_stage_change_note.assert_not_called()
+
+    def test_a_change_with_a_reason_saves_and_writes_one_note_listing_it(self):
+        kept, dropped = _line(), _line(OTHER_LINE_ID, name="SonoScape S20", quantity=2)
+        service, repo = _closed_items_service("WON", [kept, dropped])
+        data = ItemsBulkUpdate(
+            items=[
+                _same(kept, quantity=3, unit_price_lakhs=Decimal("4.50")),
+                OpportunityItemCreate(product_id=NEW_PRODUCT_ID, quantity=1, unit_price_lakhs=Decimal("7.00")),
+            ],
+            reason="  Hospital changed the order  ",
+        )
+
+        service.replace_items(OPP_ID, data, updated_by=USER_ID, role_name="General Manager")
+
+        repo.replace_items.assert_called_once()
+        note = _note_of(service)
+        assert note["opportunity_id"] == OPP_ID
+        assert note["created_by"] == USER_ID
+        text = note["notes"]
+        assert "Reason: Hospital changed the order" in text
+        assert "Added: SonoScape S60 x 1 at ₹7.00 L each" in text
+        assert "Removed: SonoScape S20 x 2" in text
+        assert "Changed: SonoScape S50 (quantity 1 → 3; price ₹5.00 L → ₹4.50 L)" in text
+        assert "cost" not in text.lower()  # BR-CAT-04: sold prices only
+
+    def test_the_note_carries_no_next_action_and_ignores_the_changers_open_one(self):
+        # D13d: never refused for an open next action, neither closes nor creates one.
+        line = _line()
+        service, _ = _closed_items_service("LOST", [line])
+        service.reminder_service.has_open_own_on_opportunity.return_value = True
+        data = ItemsBulkUpdate(items=[_same(line, quantity=2)], reason="Wrong quantity")
+
+        service.replace_items(OPP_ID, data, updated_by=USER_ID, role_name="Admin")
+
+        note = _note_of(service)
+        assert note["next_action_text"] is None
+        assert note["next_action_due_date"] is None
+        assert note["next_action_owner_id"] is None
+        service.reminder_service.has_open_own_on_opportunity.assert_not_called()
+        service.reminder_service.close_for_stage_change.assert_not_called()
+
+    def test_won_stamps_only_new_and_swapped_lines(self):
+        kept, swapped = _line(), _line(OTHER_LINE_ID, name="SonoScape S20")
+        service, repo = _closed_items_service("WON", [kept, swapped])
+        data = ItemsBulkUpdate(
+            items=[_same(kept, quantity=2), _same(swapped, product_id=NEW_PRODUCT_ID)], reason="Swap",
+        )
+
+        service.replace_items(OPP_ID, data, updated_by=USER_ID, role_name="General Manager")
+
+        repo.stamp_cost_at_won.assert_called_once_with(OPP_ID, line_ids={OTHER_LINE_ID})
+
+    def test_won_quantity_only_change_stamps_nothing(self):
+        line = _line()
+        service, repo = _closed_items_service("WON", [line])
+        data = ItemsBulkUpdate(items=[_same(line, quantity=2)], reason="More units")
+
+        service.replace_items(OPP_ID, data, updated_by=USER_ID, role_name="General Manager")
+
+        repo.stamp_cost_at_won.assert_not_called()
+
+    def test_lost_never_stamps_a_cost(self):
+        line = _line()
+        service, repo = _closed_items_service("LOST", [line])
+        data = ItemsBulkUpdate(items=[_same(line, product_id=NEW_PRODUCT_ID)], reason="Swap")
+
+        service.replace_items(OPP_ID, data, updated_by=USER_ID, role_name="General Manager")
+
+        repo.stamp_cost_at_won.assert_not_called()
 
 
 # ===========================================================================

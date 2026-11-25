@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from decimal import Decimal
 from unittest.mock import MagicMock
 
 from sqlalchemy.dialects import postgresql
@@ -44,6 +45,8 @@ def _make_item(**overrides) -> MagicMock:
         "discount_lakhs": 0,
         "line_type": "PRODUCT",
         "updated_by": uuid.uuid4(),
+        "cost_at_won_lakhs": None,
+        "cost_filled_in_later": False,
     }
     defaults.update(overrides)
     item = MagicMock(spec=OpportunityItem)
@@ -491,6 +494,33 @@ class TestReplaceItems:
 
         assert existing_item.updated_by == original_actor
 
+    def test_swapping_a_lines_product_clears_its_saved_cost(self):
+        """Margin Report plan D13: the old product's cost must not stay on a
+        line that now holds another product."""
+        existing_item = _make_item(cost_at_won_lakhs=Decimal("3.00"), cost_filled_in_later=True)
+        repo, _ = self._repo_with_existing([existing_item])
+
+        swapped = _make_item(id=existing_item.id, product_id=uuid.uuid4())
+        repo.replace_items(uuid.uuid4(), [swapped])
+
+        assert existing_item.product_id == swapped.product_id
+        assert existing_item.cost_at_won_lakhs is None
+        assert existing_item.cost_filled_in_later is False
+
+    def test_a_quantity_or_price_change_keeps_the_saved_cost(self):
+        product_id = uuid.uuid4()
+        existing_item = _make_item(
+            product_id=product_id, quantity=1, cost_at_won_lakhs=Decimal("3.00"), cost_filled_in_later=True
+        )
+        repo, _ = self._repo_with_existing([existing_item])
+
+        edited = _make_item(id=existing_item.id, product_id=product_id, quantity=4)
+        repo.replace_items(uuid.uuid4(), [edited])
+
+        assert existing_item.quantity == 4
+        assert existing_item.cost_at_won_lakhs == Decimal("3.00")
+        assert existing_item.cost_filled_in_later is True
+
 
 class TestStampCostAtWon:
     """Margin Report plan D4: one UPDATE copies each product's catalog cost onto
@@ -523,6 +553,33 @@ class TestStampCostAtWon:
 
         assert "(SELECT product.cost_lakhs" in sql
         assert ") IS NOT NULL" in sql
+
+    def test_whole_opportunity_stamp_has_no_line_filter(self):
+        assert "opportunity_item.id IN" not in self._sql()
+
+    def test_line_ids_limit_the_stamp_to_those_lines(self):
+        mock_db = MagicMock()
+        OpportunityRepository(mock_db).stamp_cost_at_won(uuid.uuid4(), line_ids={uuid.uuid4()})
+        sql = str(mock_db.execute.call_args[0][0].compile(dialect=postgresql.dialect()))
+
+        assert "opportunity_item.id IN" in sql
+        assert "opportunity_item.cost_at_won_lakhs IS NULL" in sql
+
+
+class TestGetProductNames:
+    def test_returns_names_by_id(self):
+        pid = uuid.uuid4()
+        mock_db = MagicMock()
+        mock_db.execute.return_value.all.return_value = [MagicMock(id=pid, name="x")]
+        mock_db.execute.return_value.all.return_value[0].name = "SonoScape S50"
+
+        assert OpportunityRepository(mock_db).get_product_names({pid}) == {pid: "SonoScape S50"}
+
+    def test_no_ids_means_no_query(self):
+        mock_db = MagicMock()
+
+        assert OpportunityRepository(mock_db).get_product_names(set()) == {}
+        mock_db.execute.assert_not_called()
 
 
 class TestReplaceSplits:

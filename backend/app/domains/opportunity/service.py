@@ -1,4 +1,5 @@
 import uuid
+from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
 from zoneinfo import ZoneInfo
@@ -52,6 +53,80 @@ _GATE_OVERRIDE_ESCALATION_ROLE = "General Manager"
 _SPLIT_EDIT_DENIED_MSG = "Only the Opportunity's owner, their managers, or GM/Admin can change this split."
 _SPLIT_EDIT_WON_MSG = "This Opportunity is Won — only the General Manager can change its split."
 _SPLIT_EDIT_LOST_MSG = "This Opportunity is Lost — its split can no longer be changed."
+
+# Margin Report plan D13: once an Opportunity is Won or Lost, only GM/Admin may
+# change its products, and each save says why. Everyone else is refused.
+_PRODUCT_EDIT_ROLES = {"Admin", "General Manager"}
+_PRODUCT_EDIT_DENIED_MSG = "This Opportunity is {status} — only the General Manager or Admin can change its products."
+_PRODUCT_REASON_MSG = "Say why the products are being changed (who asked for this change, and why)."
+_PRODUCT_SINGLE_EDIT_MSG = (
+    "This Opportunity is {status} — change its products from the Products tab, which asks for a reason."
+)
+_STATUS_WORD = {"WON": "Won", "LOST": "Lost"}
+
+
+@dataclass(frozen=True)
+class _LineSnapshot:
+    """A product line as it was before a save, for the change list in the Note."""
+
+    product_id: uuid.UUID | None
+    label: str
+    quantity: int
+    unit_price_lakhs: Decimal
+    discount_lakhs: Decimal
+    line_type: str
+
+    @classmethod
+    def of(cls, line: OpportunityItem, *, name: str | None) -> "_LineSnapshot":
+        return cls(
+            product_id=line.product_id,
+            label=name or line.description or "Line",
+            quantity=line.quantity,
+            unit_price_lakhs=line.unit_price_lakhs,
+            discount_lakhs=line.discount_lakhs,
+            line_type=line.line_type,
+        )
+
+
+def _money(value: Decimal) -> str:
+    return f"₹{Decimal(value):.2f} L"
+
+
+def _describe_item_changes(
+    before: dict[uuid.UUID, _LineSnapshot],
+    incoming: list[OpportunityItemCreate],
+    names: dict[uuid.UUID, str],
+) -> list[str]:
+    """One plain line per added, removed or changed product line, in the order
+    Added, Removed, Changed. Empty when the save changes nothing. Shows sold
+    prices only -- never a cost (BR-CAT-04)."""
+    kept_ids = {i.id for i in incoming if i.id in before}
+    added, changed = [], []
+    for item in incoming:
+        old = before.get(item.id) if item.id is not None else None
+        label = names.get(item.product_id) if item.product_id else None
+        if label is None and old is not None and old.product_id == item.product_id:
+            label = old.label
+        label = label or item.description or "Line"
+        if old is None:
+            added.append(
+                f"- Added: {label} x {item.quantity} at {_money(item.unit_price_lakhs)} each"
+                + (f", discount {_money(item.discount_lakhs)}" if item.discount_lakhs else "")
+            )
+            continue
+        parts = []
+        if old.product_id != item.product_id or old.line_type != item.line_type:
+            parts.append(f"was {old.label}")
+        if old.quantity != item.quantity:
+            parts.append(f"quantity {old.quantity} → {item.quantity}")
+        if old.unit_price_lakhs != item.unit_price_lakhs:
+            parts.append(f"price {_money(old.unit_price_lakhs)} → {_money(item.unit_price_lakhs)}")
+        if old.discount_lakhs != item.discount_lakhs:
+            parts.append(f"discount {_money(old.discount_lakhs)} → {_money(item.discount_lakhs)}")
+        if parts:
+            changed.append(f"- Changed: {label} ({'; '.join(parts)})")
+    removed = [f"- Removed: {old.label} x {old.quantity}" for line_id, old in before.items() if line_id not in kept_ids]
+    return [*added, *removed, *changed]
 
 
 class OpportunityService:
@@ -656,6 +731,12 @@ class OpportunityService:
         opportunity = self.repository.get_for_update(opportunity_id)
         if not opportunity:
             raise NotFoundError(f"Opportunity {opportunity_id} not found")
+        # Margin Report plan D13: a Won/Lost Opportunity's products change only
+        # through the Products tab's save, which records a reason. A single add
+        # has no reason, so it is refused for everyone.
+        closed = self._closed_status_code(opportunity)
+        if closed:
+            raise AuthorizationError(_PRODUCT_SINGLE_EDIT_MSG.format(status=_STATUS_WORD[closed]))
         self._validate_item_sbus(
             opportunity.sbu_id, {data.product_id} if data.product_id is not None else set()
         )
@@ -665,7 +746,33 @@ class OpportunityService:
         item = self.repository.get_item(item_id)
         if not item:
             raise NotFoundError(f"Opportunity item {item_id} not found")
+        opportunity = self.repository.get_for_update(item.opportunity_id)
+        closed = self._closed_status_code(opportunity) if opportunity else None
+        if closed:
+            raise AuthorizationError(_PRODUCT_SINGLE_EDIT_MSG.format(status=_STATUS_WORD[closed]))
         self.repository.delete_item(item)
+
+    def _closed_status_code(self, opportunity: Opportunity) -> str | None:
+        """"WON" or "LOST" when the Opportunity is closed, else None."""
+        status = self.repository.get_status(opportunity.status_id)
+        code = status.status_code if status else None
+        return code if code in _STATUS_WORD else None
+
+    def _product_edit_refusal(self, opportunity: Opportunity, *, role_name: str) -> str | None:
+        """Margin Report plan D13: the reason this user may not change this
+        Opportunity's products, or None if they may. Open Opportunities are
+        unchanged for every role (D13e). Single source for replace_items and
+        the can-edit endpoint, so the screen and the server never disagree."""
+        closed = self._closed_status_code(opportunity)
+        if closed and role_name not in _PRODUCT_EDIT_ROLES:
+            return _PRODUCT_EDIT_DENIED_MSG.format(status=_STATUS_WORD[closed])
+        return None
+
+    def can_edit_products(self, opportunity_id: uuid.UUID, *, role_name: str) -> bool:
+        opportunity = self.repository.get_for_update(opportunity_id)
+        if not opportunity:
+            raise NotFoundError(f"Opportunity {opportunity_id} not found")
+        return self._product_edit_refusal(opportunity, role_name=role_name) is None
 
     def replace_items(
         self,
@@ -673,13 +780,83 @@ class OpportunityService:
         data: ItemsBulkUpdate,
         *,
         updated_by: uuid.UUID,
+        role_name: str,
     ) -> list[OpportunityItem]:
         opportunity = self.repository.get_for_update(opportunity_id)
         if not opportunity:
             raise NotFoundError(f"Opportunity {opportunity_id} not found")
+        refusal = self._product_edit_refusal(opportunity, role_name=role_name)
+        if refusal:
+            raise AuthorizationError(refusal)
         self._validate_item_sbus(
             opportunity.sbu_id, {item.product_id for item in data.items if item.product_id is not None}
         )
+
+        closed = self._closed_status_code(opportunity)
+        if closed:
+            return self._replace_closed_items(opportunity, data, closed=closed, updated_by=updated_by)
+        return self._replace_items(opportunity.id, data, updated_by=updated_by)
+
+    def _replace_closed_items(
+        self,
+        opportunity: Opportunity,
+        data: ItemsBulkUpdate,
+        *,
+        closed: str,
+        updated_by: uuid.UUID,
+    ) -> list[OpportunityItem]:
+        """Margin Report plan D13a-D13d: a GM/Admin save on a Won/Lost
+        Opportunity. Nothing changed: save nothing and ask for no reason
+        (D13b). Something changed: a reason is required, saved as one Note on
+        the Activity tab that lists the changes (D13a). The Note is written
+        straight through the activity service, not _record_change_note, so it
+        is never refused for the changer's own open next action and neither
+        closes nor creates one (D13d)."""
+        if self.activity_service is None:
+            raise RuntimeError("OpportunityService needs the activity service to record a product change note.")
+        before = self.repository.list_items(opportunity.id)
+        snapshot = {
+            line.id: _LineSnapshot.of(line, name=line.product.name if line.product else None)
+            for line in before
+        }
+        incoming_product_ids = {i.product_id for i in data.items if i.product_id is not None}
+        names = self.repository.get_product_names(incoming_product_ids)
+        change_lines = _describe_item_changes(snapshot, data.items, names)
+        if not change_lines:
+            return before
+
+        reason = (data.reason or "").strip()
+        if not reason:
+            raise BusinessRuleViolation(_PRODUCT_REASON_MSG)
+
+        result = self._replace_items(opportunity.id, data, updated_by=updated_by)
+        if closed == "WON":
+            # D4/D13: a new or swapped line takes today's catalog cost; a line
+            # whose product is unchanged keeps the cost it already has.
+            touched = {
+                line.id for line in result
+                if line.id not in snapshot or snapshot[line.id].product_id != line.product_id
+            }
+            if touched:
+                self.repository.stamp_cost_at_won(opportunity.id, line_ids=touched)
+
+        heading = f"Products changed on this {_STATUS_WORD[closed]} Opportunity."
+        self.activity_service.log_stage_change_note(
+            opportunity_id=opportunity.id,
+            account_id=opportunity.account_id,
+            project_id=opportunity.project_id,
+            activity_date=datetime.now(_IST),
+            notes="\n".join([heading, f"Reason: {reason}", *change_lines]),
+            next_action_text=None,
+            next_action_due_date=None,
+            next_action_owner_id=None,
+            created_by=updated_by,
+        )
+        return result
+
+    def _replace_items(
+        self, opportunity_id: uuid.UUID, data: ItemsBulkUpdate, *, updated_by: uuid.UUID
+    ) -> list[OpportunityItem]:
 
         new_items = [
             OpportunityItem(

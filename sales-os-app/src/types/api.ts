@@ -476,6 +476,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/opportunities/{opportunity_id}/items/can-edit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Can Edit Opportunity Items */
+        get: operations["can_edit_opportunity_items_api_v1_opportunities__opportunity_id__items_can_edit_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/opportunity-items/{item_id}": {
         parameters: {
             query?: never;
@@ -2052,6 +2069,20 @@ export interface components {
              */
             message: string;
             data: components["schemas"]["InstalledAssetResponse"];
+        };
+        /** APIResponse[ItemEditPermission] */
+        APIResponse_ItemEditPermission_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["ItemEditPermission"];
         };
         /** APIResponse[MarketingLeadCommentResponse] */
         APIResponse_MarketingLeadCommentResponse_: {
@@ -4056,10 +4087,21 @@ export interface components {
             /** Department */
             department?: string | null;
         };
+        /**
+         * ItemEditPermission
+         * @description Margin Report plan D13: whether the current user may change this
+         *     Opportunity's products (Won/Lost: GM/Admin only).
+         */
+        ItemEditPermission: {
+            /** Can Edit */
+            can_edit: boolean;
+        };
         /** ItemsBulkUpdate */
         ItemsBulkUpdate: {
             /** Items */
             items: components["schemas"]["OpportunityItemCreate"][];
+            /** Reason */
+            reason?: string | null;
         };
         /** LeadSourceNested */
         LeadSourceNested: {
@@ -8085,6 +8127,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["APIResponse_OpportunityItemResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    can_edit_opportunity_items_api_v1_opportunities__opportunity_id__items_can_edit_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                opportunity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_ItemEditPermission_"];
                 };
             };
             /** @description Validation Error */

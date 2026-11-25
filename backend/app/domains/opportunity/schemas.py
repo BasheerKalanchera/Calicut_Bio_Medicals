@@ -138,6 +138,16 @@ class OpportunityItemResponse(BaseModel):
 
 class ItemsBulkUpdate(BaseModel):
     items: list[OpportunityItemCreate]
+    # Margin Report plan D13a: why a GM/Admin is changing the products of a
+    # Won/Lost Opportunity. Ignored on an open one; kept as a Note, not here.
+    reason: str | None = Field(None, max_length=2000)
+
+
+class ItemEditPermission(BaseModel):
+    """Margin Report plan D13: whether the current user may change this
+    Opportunity's products (Won/Lost: GM/Admin only)."""
+
+    can_edit: bool
 
 
 # ------------------------------------------------------------------
