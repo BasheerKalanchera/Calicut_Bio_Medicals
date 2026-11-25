@@ -24,6 +24,7 @@ import {
   listOpportunityItems,
   listOpportunitySplits,
   canEditOpportunitySplits,
+  canEditOpportunityItems,
   listOpportunityStakeholders,
   patchOpportunity,
   replaceOpportunityItems,
@@ -303,11 +304,15 @@ function ProductsTab({
   opportunityId,
   sbuId,
   accountId,
+  statusCode,
+  ownerId,
   onIndicativeValueChange,
 }: {
   opportunityId: string;
   sbuId: string;
   accountId: string;
+  statusCode: string;
+  ownerId: string;
   onIndicativeValueChange: (value: string | null) => void;
 }) {
   const queryClient = useQueryClient();
@@ -316,7 +321,19 @@ function ProductsTab({
     queryFn:  () => listOpportunityItems(opportunityId),
     staleTime: 5 * 60 * 1000,
   });
+  // Margin Report plan D13: the server decides who may change a Won/Lost
+  // Opportunity's products (GM/Admin only; open ones are unchanged). Keyed on
+  // status and owner so a change on this screen re-asks. Hidden until
+  // answered -- a failed check leaves the tab read-only; the server still
+  // guards saves.
+  const { data: editPermission } = useQuery({
+    queryKey: ["opp-items-can-edit", opportunityId, statusCode, ownerId],
+    queryFn:  () => canEditOpportunityItems(opportunityId),
+  });
+  const canEdit = editPermission?.can_edit ?? false;
+  const isClosed = statusCode === "WON" || statusCode === "LOST";
 
+  const [showReason, setShowReason] = useState(false);
   const [editing, setEditing]     = useState(false);
   const [editItems, setEditItems] = useState<DraftOpportunityItem[]>([]);
   const [saving, setSaving]       = useState(false);
@@ -349,34 +366,71 @@ function ProductsTab({
     setEditing(true);
   };
 
+  // Throws on failure: the open-Opportunity Save shows it in the tab, the
+  // reason pop-up shows it in itself.
+  const persistItems = async (reason?: string) => {
+    await replaceOpportunityItems(
+      opportunityId,
+      // id round-tripped for existing rows (undefined for a newly-added
+      // line) so the backend can UPDATE in place instead of delete+insert
+      // -- see Audit-Trail-Extension-Implementation-Plan.md.
+      editItems.map((i) => ({
+        id: i.id,
+        product_id: i.product_id, description: i.description, quantity: i.quantity,
+        unit_price_lakhs: i.unit_price_lakhs, discount_lakhs: i.discount_lakhs,
+        line_type: i.line_type,
+      })),
+      reason,
+    );
+    await queryClient.invalidateQueries({ queryKey: ["opp-items", opportunityId] });
+    // BR-FIN-03 (dual-mode valuation): once items exist, the calculated
+    // total becomes the authoritative value — same auto-sync rule already
+    // implemented in QuickLeadModal.tsx's create flow.
+    const total = itemsTotal(editItems);
+    const newValue = editItems.length > 0 ? total.toFixed(2) : null;
+    await patchOpportunity(opportunityId, { indicative_value: newValue !== null ? Number(newValue) : null });
+    queryClient.invalidateQueries({ queryKey: ["pipeline"] });
+    // Project Directory stays mounted while this page is open, so its
+    // Opportunities list must be told the value changed (code review 2026-10-01).
+    queryClient.invalidateQueries({ queryKey: ["opportunities", "byAccount", accountId] });
+    // Plan D13a: a Won/Lost change also wrote a Note on the Activity tab.
+    if (reason) {
+      queryClient.invalidateQueries({ queryKey: ["activities", "opportunity", opportunityId] });
+      queryClient.invalidateQueries({ queryKey: ["activities", "account", accountId] });
+    }
+    onIndicativeValueChange(newValue);
+    setEditing(false);
+  };
+
+  // Plan D13b: did the GM/Admin change anything? Compared line by line on
+  // what is saved (a line with no id is new; a missing one was removed).
+  const itemsChanged = () => {
+    const before = items ?? [];
+    if (before.length !== editItems.length) return true;
+    return editItems.some((d) => {
+      const o = before.find((b) => b.id === d.id);
+      return !o
+        || o.product_id !== d.product_id
+        || (o.description ?? "") !== (d.description ?? "")
+        || o.quantity !== d.quantity
+        || o.line_type !== d.line_type
+        || parseFloat(o.unit_price_lakhs) !== Number(d.unit_price_lakhs)
+        || parseFloat(o.discount_lakhs) !== Number(d.discount_lakhs);
+    });
+  };
+
   const saveItems = async () => {
-    setSaving(true); setSaveError(null);
+    setSaveError(null);
+    if (isClosed) {
+      // Plan D13b/D13c: nothing changed saves nothing and asks nothing;
+      // something changed asks "Why this change?" first.
+      if (!itemsChanged()) { setEditing(false); return; }
+      setShowReason(true);
+      return;
+    }
+    setSaving(true);
     try {
-      await replaceOpportunityItems(
-        opportunityId,
-        // id round-tripped for existing rows (undefined for a newly-added
-        // line) so the backend can UPDATE in place instead of delete+insert
-        // -- see Audit-Trail-Extension-Implementation-Plan.md.
-        editItems.map((i) => ({
-          id: i.id,
-          product_id: i.product_id, description: i.description, quantity: i.quantity,
-          unit_price_lakhs: i.unit_price_lakhs, discount_lakhs: i.discount_lakhs,
-          line_type: i.line_type,
-        })),
-      );
-      await queryClient.invalidateQueries({ queryKey: ["opp-items", opportunityId] });
-      // BR-FIN-03 (dual-mode valuation): once items exist, the calculated
-      // total becomes the authoritative value — same auto-sync rule already
-      // implemented in QuickLeadModal.tsx's create flow.
-      const total = itemsTotal(editItems);
-      const newValue = editItems.length > 0 ? total.toFixed(2) : null;
-      await patchOpportunity(opportunityId, { indicative_value: newValue !== null ? Number(newValue) : null });
-      queryClient.invalidateQueries({ queryKey: ["pipeline"] });
-      // Project Directory stays mounted while this page is open, so its
-      // Opportunities list must be told the value changed (code review 2026-10-01).
-      queryClient.invalidateQueries({ queryKey: ["opportunities", "byAccount", accountId] });
-      onIndicativeValueChange(newValue);
-      setEditing(false);
+      await persistItems();
     } catch (e: any) {
       setSaveError(e.message || "Failed to save products");
     } finally {
@@ -424,6 +478,14 @@ function ProductsTab({
         />
 
         <OpportunityItemAddRow products={products} onAdd={(item) => setEditItems([...editItems, item])} />
+
+        {/* Plan D13c: a GM/Admin's change to a Won/Lost Opportunity's products. */}
+        <CloseReminderModal
+          isOpen={showReason}
+          onClose={() => setShowReason(false)}
+          reminder={null}
+          productChange={{ onSave: (reason) => persistItems(reason) }}
+        />
       </Box>
     );
   }
@@ -435,13 +497,15 @@ function ProductsTab({
         <Typography component="h4" sx={{ typography: "tiny", fontWeight: 900, color: "gray.400", textTransform: "uppercase", letterSpacing: "0.2em" }}>
           Products ({items?.length ?? 0})
         </Typography>
-        <Button
-          onClick={openEdit}
-          disableRipple
-          sx={{ typography: "caption", px: 1.5, py: 0.75, borderRadius: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "blue.50", "&:hover": { bgcolor: "blue.100" } }}
-        >
-          {items?.length ? "Edit" : "+ Add"}
-        </Button>
+        {canEdit && (
+          <Button
+            onClick={openEdit}
+            disableRipple
+            sx={{ typography: "caption", px: 1.5, py: 0.75, borderRadius: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "blue.50", "&:hover": { bgcolor: "blue.100" } }}
+          >
+            {items?.length ? "Edit" : "+ Add"}
+          </Button>
+        )}
       </Box>
       {!items?.length ? (
         <EmptyPlaceholder message="No products added to this opportunity." />
@@ -1815,6 +1879,8 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
             opportunityId={opp.id}
             sbuId={opp.sbu.id}
             accountId={opp.account.id}
+            statusCode={opp.status.status_code}
+            ownerId={opp.owner.id}
             onIndicativeValueChange={(v) => applyOppPatch({ indicative_value: v })}
           />
         )}

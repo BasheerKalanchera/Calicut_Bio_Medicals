@@ -61,6 +61,14 @@ interface Props {
     draft?: FirstActivityDraft | null;
     onKeep?: (draft: FirstActivityDraft) => void;
   };
+  // Margin Report plan D13c: the reason-only "Why this change?" pop-up a
+  // GM/Admin gets on pressing Save after changing the products of a Won or
+  // Lost Opportunity. `reminder` is ignored; one reason box, no next-action
+  // questions. Nothing is sent from here -- onSave saves the products with
+  // the reason (the server writes the one Activity-tab Note, D13a).
+  productChange?: {
+    onSave: (reason: string) => Promise<void>;
+  };
 }
 
 // Mirrors the server's FirstActivity (opportunity/schemas.py).
@@ -142,7 +150,7 @@ function nowPlusDaysLocal(days: number) {
   return d.toISOString().slice(0, 16);
 }
 
-export default function CloseReminderModal({ isOpen, onClose, reminder: reminderProp, onCompleted, loggedForUserId, initial: initialProp, closeChoices, stageChange, firstActivity }: Props) {
+export default function CloseReminderModal({ isOpen, onClose, reminder: reminderProp, onCompleted, loggedForUserId, initial: initialProp, closeChoices, stageChange, firstActivity, productChange }: Props) {
   const queryClient = useQueryClient();
   const { userProfile } = useAuth();
   const currentUserId = (userProfile as any)?.id;
@@ -173,7 +181,7 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
   const [followUpEdited, setFollowUpEdited] = useState(false);
 
   const ownReminders = stageChange?.ownReminders ?? [];
-  const plainClose = !stageChange && !firstActivity;
+  const plainClose = !stageChange && !firstActivity && !productChange;
   const contextReminder = reminderProp ?? closeChoices?.[0] ?? null;
   const opportunityId = plainClose ? contextReminder?.activity.opportunity?.id : undefined;
 
@@ -216,7 +224,7 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
   ].sort((a, b) => a.due_date.localeCompare(b.due_date));
   const closing = closingFor(tickedIds);
 
-  const reminder = firstActivity
+  const reminder = firstActivity || productChange
     ? null
     : stageChange ? ownReminders.find((r) => r.id === pickedReminderId) ?? null
     : closeChoices ? closing[0] ?? null : reminderProp;
@@ -232,7 +240,7 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
 
   const { data: users = [] } = useQuery({
     queryKey: ["users", "assignable"],
-    enabled: isOpen,
+    enabled: isOpen && !productChange,
     queryFn: async () => {
       const d = await listUsers("all");
       return Array.isArray(d) ? (d as UserOption[]) : [];
@@ -467,7 +475,14 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
     }
   }
 
+  async function handleProductChangeSubmit() {
+    if (!productChange) return;
+    if (!notes.trim()) throw new Error("Say who asked for this change, and why");
+    await productChange.onSave(notes.trim());
+  }
+
   async function handleSubmit() {
+    if (productChange) return handleProductChangeSubmit();
     if (firstActivity) return handleFirstActivitySubmit();
     if (stageChange) return handleStageChangeSubmit();
     if (closeChoices && !reminder) { setActiveTab("details"); throw new Error("Tick the next actions to close"); }
@@ -515,6 +530,37 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
   }
 
   const followUpRequired = !producedNewOpportunity && !followUpExempt;
+
+  // Plan D13c: reason-only -- no tabs, type, date or next-action questions
+  // (the server fills in the date and the Note type).
+  if (productChange) {
+    return (
+      <FormModal
+        isOpen={isOpen}
+        onClose={onClose}
+        title="Why this change?"
+        onSubmit={handleSubmit}
+        submitLabel="Save"
+      >
+        <Typography sx={{ typography: "caption", color: "gray.600" }}>
+          This Opportunity is closed. The reason is saved with the product change as a Note on its Activity tab.
+        </Typography>
+        <TextField
+          label="Who asked for this change, and why? *"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          multiline
+          rows={3}
+          fullWidth
+          size="small"
+          autoFocus
+          placeholder="e.g. Fahad — PO shows 2 units, not 1"
+          slotProps={{ htmlInput: { maxLength: 2000 } }}
+          sx={{ mt: 1.5 }}
+        />
+      </FormModal>
+    );
+  }
 
   return (
     <>

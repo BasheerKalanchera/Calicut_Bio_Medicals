@@ -4,6 +4,7 @@ import type {
   PipelineOpportunity,
   SplitResponse,
   SplitEditPermission,
+  ItemEditPermission,
   StakeholderLinkResponse,
   OpportunityItemResponse,
   OpportunityForStakeholder,
@@ -73,11 +74,24 @@ export async function listOpportunityItems(opportunityId: string): Promise<Oppor
   return response.data.data;
 }
 
+// Margin Report plan D13: whether the current user may change this
+// Opportunity's products (Won/Lost: GM/Admin only; open: unchanged).
+export async function canEditOpportunityItems(opportunityId: string): Promise<ItemEditPermission> {
+  const response = await api.get(`/opportunities/${opportunityId}/items/can-edit`);
+  return response.data.data;
+}
+
+// `reason` is only for a GM/Admin changing a Won/Lost Opportunity's products
+// (plan D13a); the server ignores it on an open one.
 export async function replaceOpportunityItems(
   opportunityId: string,
   items: unknown[],
+  reason?: string,
 ): Promise<OpportunityItemResponse[]> {
-  const response = await api.put(`/opportunities/${opportunityId}/items`, { items });
+  const response = await api.put(`/opportunities/${opportunityId}/items`, {
+    items,
+    ...(reason && { reason }),
+  });
   return response.data.data;
 }
 
