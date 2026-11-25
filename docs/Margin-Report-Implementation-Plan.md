@@ -82,6 +82,14 @@ D8–D10 and section 4; `Business-Rules.md` BR-CAT-04.
     every role. Considered and dropped: a reason on every product change,
     open ones included — it would add a pop-up and a note to each quote
     revision during negotiation — Basheer, 2026-11-25.
+  - D13f. A line whose product is swapped for another (same line, a
+    different product) on a Won Opportunity is treated like a new line:
+    the old product's saved cost (and its "filled in later" mark) is
+    dropped, and the new product takes the catalog cost on the day of the
+    correction — the old cost belonged to the old product. A new product
+    with no catalog cost leaves the line empty (D5 applies, and D16 fills
+    it at that product's first cost). Built in B1 (`595241e`) as Claude's
+    choice; agreed — Basheer, 2026-11-25.
   - Related gap, not in this plan: other Won/Lost edits (Overview value,
     PO, owner, dates; Stakeholders; Documents) need no reason and only
     Splits are locked — Backlog "Won/Lost Opportunity: lock Overview and
@@ -230,8 +238,11 @@ Sales Report row click still opens the right list).
   list (D13a, D13c) through its own route — not `_record_change_note`,
   whose open-own-next-action refusal (service.py:619) must not apply
   (D13d); no next-action fields; an unchanged `replace_items` saves
-  nothing and needs no reason (D13b). `replace_items` carries
-  `cost_at_won_lakhs` over by product, new lines get today's cost. Not
+  nothing and needs no reason (D13b). `replace_items` keeps a line's
+  `cost_at_won_lakhs` only while its product is unchanged; new lines and
+  swapped-product lines (D13f: `repository.replace_items` clears the old
+  cost and the "filled in later" mark, the service then stamps) get
+  today's cost. Not
   added to any Opportunity schema. `ProductsTab` gets status and role to
   hide Edit; `CloseReminderModal` gets a reason-only mode (next to
   `stageChange` / `firstActivity`) opened from its Save.
