@@ -468,14 +468,11 @@ steps 1–3. Pick up when prices are in real use.
   to wherever Cabio makes its quotations and invoices, with Cabio's tax
   adviser (archive 24 Nov).
 
-### Sales Loss Report — why Cabio loses business — decided name and first filter, plan not started (Basheer, 2026-11-13)
+### Lost Opportunities with no product line: Sales Report win rate and the Lost rule — not decided (2026-11-13)
 
-**Decided (Basheer, 2026-11-13):** the signed "Competitive Loss Report"
-(Traceability row 1.4) is built as the **Sales Loss Report**, with Loss
-Reason as one of its filters, so the team can analyse why Cabio is losing
-business. Today there is no list of Lost Opportunities in the Reports menu;
-Product Performance's "Lost" link reads product lines, so it can't show
-Lost Opportunities that have none. Other filters and columns: not decided.
+**The Sales Loss Report itself is planned and Approved (Basheer,
+2026-11-25):** `docs/Sales-Loss-Report-Implementation-Plan.md` (Traceability
+row 1.4). Its D10 leaves the two questions below outside that plan.
 
 Raised by the Small batch 12 Nov E2E (step 19). UAT read-only check, 13
 Nov: 25 Lost Opportunities, 6 with no product line; the Sales Report
@@ -484,8 +481,8 @@ all 25. Five of the six were closed from Lead although a quote or final
 rate had been given; the machine was known. Two related questions are still
 open and not decided: (1) make the Sales Report count Lost Opportunities
 with no product line (Won is unaffected, it needs a line); (2) ask for the
-product line when an Opportunity past Lead is marked Lost. The new report
-should show these six too, so it must not depend on product lines.
+product line when an Opportunity past Lead is marked Lost. (The Sales Loss
+Report shows these six, plan D2.)
 
 ### Block an SBU change while the user owns open Opportunities in another SBU — not started (2026-10-04)
 
