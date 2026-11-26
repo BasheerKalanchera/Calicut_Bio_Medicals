@@ -2,6 +2,9 @@
 
 **Status:** Approved 2026-11-25 (Basheer). Built by Build & Test or Build,
 whichever has room (Basheer, 2026-11-25).
+**Progress:** built on the Build branch 26 Nov (`e783951`, `14789d6`,
+`57c7e38`, `4d60caa`), pre-E2E review fixes `df6b2c1`; not merged; migration
+0069 not applied to Dev; manual E2E pending.
 **Traceability rows:** 1.4 Competitive Loss Report (Not started); 1.4 Lost
 deal intelligence — the missing competing-product field (Partial).
 **Design / discussion:** Backlog "Sales Loss Report — why Cabio loses
@@ -62,6 +65,24 @@ business"; Progress-Archive-2026-11, 13 Nov (Build & Test) and 25 Nov
 - D15. The "Competing product" box (D8) shows only when the Loss Reason is
   "Competitor Won", beside Competitor Name, as Competitor Name does today
   — Basheer, 2026-11-25
+- D16. Saving a Lost Opportunity with any Loss Reason other than
+  "Competitor Won" clears both the competitor name and the competing
+  product, so a hidden box never keeps a competitor against, say, a
+  "Price" loss. An emptied "Competing product" box is saved as empty —
+  Basheer, 2026-11-26
+- D17. The report shows a competitor and competing product (and counts the
+  competitor in "by Competitor") only when the Loss Reason is "Competitor
+  Won", so older Lost Opportunities with a name saved against another reason
+  don't count against that competitor — Basheer, 2026-11-26
+- D18. The phone card also shows the competing product, next to the
+  competitor — Basheer, 2026-11-26
+- D19. On a phone the report keeps its "Filters" button; no other report
+  has one today — Basheer, 2026-11-26
+- D20. The Owner box lists deactivated owners too, their names in red under
+  an "Inactive Owners" heading, as on the Pipeline screen — Basheer,
+  2026-11-26
+- D21. A Lost Opportunity whose only lines are trade-ins shows "—" as its
+  value, not a figure made from the trade-ins — Basheer, 2026-11-26
 
 ## Figures and sources
 
@@ -123,10 +144,10 @@ shows the names are messy.
 - The two summary tables are one block each: reason (or competitor), then
   count and value on one line.
 - Each Lost Opportunity is a card: Opportunity name; customer and owner;
-  reason and competitor; value, stage lost at and closed date (no loss
-  notes, D6a). Pressing the card opens that Opportunity's screen;
+  reason, competitor and competing product (D18); value, stage lost at and
+  closed date (no loss notes, D6a). Pressing the card opens that Opportunity's screen;
   Back returns to the report with its filters as they were.
-- The filters fold behind a "Filters" button, as on the other reports.
+- The filters fold behind a "Filters" button (D19).
 - Lost pop-up: "Competing product" sits under Competitor Name, full width.
 
 ## 2. Build order
@@ -181,7 +202,8 @@ Code search for `competitor_name` / `competitorName`, 25 Nov (backend,
 ## 5. Business rules and records to update
 
 - BR-OP-03 (Lost Status Validation): add `competitor_product_name` as an
-  optional field.
+  optional field; both competitor fields kept only for "Competitor Won"
+  (D16).
 - New BR-REP rule for the Sales Loss Report: who sees what, value rule.
 - Traceability rows 1.4 (both) once built and E2E-passed.
 - Backlog "Sales Loss Report": point to this plan.
@@ -196,14 +218,15 @@ Code search for `competitor_name` / `competitorName`, 25 Nov (backend,
   SBU/owner filters, zone through `ZoneClosure` descendants as in
   `no_activity_customers` (`:795`, D13; not On Hold's exact
   `Account.zone_id == zone_id`), `closed_at` period, `loss_reason_id` filter;
-  value = `COALESCE(SUM(opportunity_item.extended_value_lakhs) excluding
-  BUYBACK, indicative_value)` via an outer-joined subquery so no-line
-  Opportunities stay; competitor grouping on `lower(trim(competitor_name))`.
+  value = `SUM(opportunity_item.extended_value_lakhs)` excluding BUYBACK when
+  the Opportunity has any line (NULL if only trade-ins, D21), else
+  `indicative_value`, via an outer-joined subquery so no-line Opportunities
+  stay; competitor grouping on `lower(trim(competitor_name))`.
   Router `GET /reporting/sales-loss`. Tests per role and for no-line Lost.
 - Frontend: `SalesLossReportScreen.tsx` (MUI only), `services/reporting.ts`,
   `types/reporting.ts`, menu entry in `DemoApp.tsx` `REPORTS_SECTION`;
   period box reuses `getFiscalQuarterBounds` as in `SalesReportScreen.tsx`.
-- E2E: `docs/Sales-Loss-Report-Manual-E2E-Test-Plan.md` (4 pre-flight, 32
+- E2E: `docs/Sales-Loss-Report-Manual-E2E-Test-Plan.md` (4 pre-flight, 33
   steps; Dev has 6 Lost, 25 Nov, and the plan adds three). D7's middle case
   (no product line, typed value) can't be made from today's screens — the
   value box shows only from Qualified or once a product is added — so the

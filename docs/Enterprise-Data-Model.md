@@ -199,6 +199,7 @@ The Enterprise Data Model (EDM) serves as the structural foundation for the Cabi
     * `loss_reason_id` (FK → LossReason, nullable, required if Status = LOST)
     * `loss_notes` (Text, nullable)
     * `competitor_name` (Text, nullable, free text, required if loss reason = COMPETITOR_WON)
+    * `competitor_product_name` (Text, nullable, free text, optional; kept, like `competitor_name`, only when loss reason = COMPETITOR_WON — BR-OP-03)
     * `lead_source_id` (FK → LeadSource, nullable)
     * `indicative_value` (Numeric 15,2, nullable — used when no Opportunity Items exist)
     * `hold_reason_id` (FK → HoldReason, nullable, required when Status = ON_HOLD)

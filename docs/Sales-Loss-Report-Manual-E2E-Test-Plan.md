@@ -1,14 +1,12 @@
 <!-- e2e-template v1: checked on save by .claude/hooks/test_plan_guard.py -->
 # Sales Loss Report — Manual E2E Test Plan
 
-**Covers:** `docs/Sales-Loss-Report-Implementation-Plan.md` (Approved 25 Nov 2026, D1–D15, D6a).
-**Built:** not built yet — Build & Test or Build, whichever has room (Basheer, 25 Nov 2026). Commit hashes filled in after the build.
+**Covers:** `docs/Sales-Loss-Report-Implementation-Plan.md` (Approved 25 Nov 2026, D1–D21, D6a).
+**Built:** `e783951`, `14789d6`, `57c7e38`, `4d60caa`; pre-E2E review fixes `df6b2c1` (26 Nov 2026, Build branch).
 **Where:** Dev only. Nothing here runs on UAT (D11).
 
-**Written ahead of the build (Plan & Chore, 25 Nov 2026; corrected 26 Nov).** The Lost
-pop-up, "Why this change?" pop-up, New Opportunity form and Overview labels below are
-from today's code; the new screen's labels, column names and empty-list wording come
-from the plan. The builder corrects them from the built code in P2 before the run.
+**Written ahead of the build (Plan & Chore, 25 Nov 2026; corrected 26 Nov).** Labels,
+column names and messages were checked against the built code on 26 Nov (P2).
 
 **Decided while writing (Basheer, 25 Nov):** the zone filter includes the zones under
 the one picked (D13); the "by Competitor" summary lists only named competitors (D14);
@@ -92,6 +90,10 @@ table, no RLS filter); EMS Hospital's zone and the lead sources checked the same
   "Samsung " (trailing space), competing product "HS40", Expected Closure Date 31 Dec
   2026 — made-up test values
 - Expected counts and sums below — worked out by hand from the figures above
+- The new screen's headings, columns, messages, summary order, and the step 2 refusal —
+  `SalesLossReportScreen.tsx`, `domains/reporting/service.py` (`_sales_loss_response`),
+  `OpportunityDetailScreen.tsx:1571`, 26 Nov 2026
+- "zz test competitor" and "zz test product" (step 5) — made-up test values
 
 **Tags:** every step starts with `[Simple]` or `[Complex: <reason>]`. Basheer runs both
 kinds from these instructions; a step Claude drives in the browser says `[Complex:
@@ -112,7 +114,8 @@ until 31 Dec.
 
 - P1. [Simple] Dev backend restarted since the feature's last backend change. —
 - P2. [Complex: builder — labels from code] The builder corrects every label, column
-  name and message in this plan from the built code, and fills in **Built:**. —
+  name and message in this plan from the built code, and fills in **Built:**. Done 26
+  Nov 2026 (Build). —
 - P3. [Simple] Dev `alembic current` = head; `docs/Physical-Schema.sql` regenerated
   since the migration (new column `opportunity.competitor_product_name`). —
 - P4. [Complex: read-only Dev query] Claude re-runs the live-data check: the 6 Lost
@@ -130,7 +133,8 @@ until 31 Dec.
    **Expected:** created at Negotiation, Indicative Value (auto) ₹16.00 L. —
 2. [Simple] On "zz E2E Loss – Samsung" (Al Shifa Hospital Perinthalmanna) → Edit →
    Status "Lost", Loss Reason "Competitor Won", leave Competitor Name empty → Save.
-   **Expected:** refused — Competitor Name is still required (unchanged). —
+   **Expected:** refused — "Competitor Name is required when Loss Reason is
+   'Competitor Won'" (unchanged). —
 3. [Complex: saves to Dev] Same pop-up: Competitor Name "Samsung " (with a space at the
    end), Competing product "HS40" → Save → "Why this change?": "E2E: lost to Samsung" →
    Save. Basheer clicks, Claude watches. **Expected:** "Competing product" sits beside
@@ -141,9 +145,12 @@ until 31 Dec.
 5. [Complex: multi-step, saves to Dev] "+ Lead" → "zz E2E Loss – price"; Account * EMS
    Hospital; Stage * Lead; Owner * Fahad; no product; no value (the form shows no value
    box at Lead without a product) → Save. Then Edit → Status "Lost", Loss Reason
-   "Price" → Save → "Why this change?": "E2E: price" → Save. Basheer clicks, Claude
-   watches. **Expected:** no Competitor Name and no Competing product box for "Price"
-   (D15); Lost saves. —
+   "Competitor Won"; type Competitor Name "zz test competitor" and Competing product
+   "zz test product"; change Loss Reason to "Price" → Save → "Why this change?": "E2E:
+   price" → Save. Basheer clicks, Claude watches. **Expected:** both competitor boxes
+   disappear for "Price" (D15); Lost saves. —
+5b. [Simple] Overview card of "zz E2E Loss – price" (EMS Hospital). **Expected:** Loss
+   Reason "Price"; Competitor Name and Competing product both blank (D16). —
 6. [Complex: several values] Reports → Sales Loss Report. **Expected:** menu item
    listed; This Quarter selected (D4); exactly two rows, his own: "zz E2E Loss – price"
    (EMS Hospital) — Fahad, Lead, Price, no competitor, value "—" (D7), today; "zz E2E
@@ -170,21 +177,24 @@ until 31 Dec.
     Hospital), "zz E2E Loss – Samsung" (Al Shifa Hospital Perinthalmanna), "zz NA E2E –
     project" (Aster MIMS Calicut) 18 Nov, "zz NA E2E – top bar" (Baby Memorial Hospital)
     18 Oct, "new lead" (aster medicity) 17 Oct (D6). —
-11. [Simple] Look at the columns. **Expected:** Opportunity, customer, owner, stage lost
-    at, Loss Reason, competitor, competing product, value, closed date, on one line; no
-    loss notes column (D6). —
-12. [Complex: several values] "By Loss Reason" summary. **Expected:** Budget Cancelled
-    2, ₹1.00 L; Competitor Won 2, ₹16.00 L; Price 1, no value; Technical Mismatch 1, no
-    value (wording from the code, P2). Counts add up to 6 (D5). —
+11. [Simple] Look at the "Lost Opportunities" columns. **Expected:** Opportunity,
+    Customer, Owner, Stage lost at, Loss Reason, Competitor, Competing product, Value,
+    Closed date, on one line; no loss notes column (D6). On a narrower screen the list
+    scrolls sideways inside its card. —
+12. [Complex: several values] "By Loss Reason" summary (columns Loss Reason,
+    Opportunities, Value). **Expected, in this order:** Competitor Won 2, ₹16.00 L;
+    Budget Cancelled 2, ₹1.00 L; Price 1, "—"; Technical Mismatch 1, "—". Counts add up
+    to 6 (D5). —
 13. [Complex: several values] "By Competitor" summary. **Expected:** one row — Samsung
-    (or "samsung"; one row, not two, D9), 2, ₹16.00 L. Lost with no competitor named are
-    not listed (D14). —
+    (one row, not two, D9), 2, ₹16.00 L. Lost with no competitor named are not listed
+    (D14). —
 14. [Simple] Press "Budget Cancelled" in the reason summary. **Expected:** list shows
     "zz NA E2E – top bar" (Baby Memorial Hospital) and "new lead" (aster medicity) only
-    (D5). Clear it. —
+    (D5), with a "Budget Cancelled" tag on the "Lost Opportunities" card. Press the
+    tag's ✕. —
 15. [Simple] Press the Samsung row in the competitor summary. **Expected:** "zz NA E2E –
     project" (Aster MIMS Calicut) and "zz E2E Loss – Samsung" (Al Shifa Hospital
-    Perinthalmanna) only. Clear it. —
+    Perinthalmanna) only. Press the same row again to clear it. —
 16. [Complex: several values] Filters one at a time, This Quarter. **Expected:** SBU
     Critical Care → "zz E2E Loss – CC" (Aster MIMS Calicut) only; owner Fahad → his two;
     Loss Reason Price → "zz E2E Loss – price" (EMS Hospital) only; zone Malappuram → "zz
@@ -193,7 +203,8 @@ until 31 Dec.
     "zz E2E Loss – Samsung" (Al Shifa Hospital Perinthalmanna; Malappuram is under North
     Kerala, D13), "zz NA E2E – project" (Aster MIMS Calicut), "zz NA E2E – top bar" (Baby
     Memorial Hospital); zone South Kerala → "new lead" (aster medicity) (Ernakulam) only.
-    Summaries follow each filter. —
+    Summaries follow each filter. Open the Owner box: any deactivated owners show in
+    red under "Inactive Owners" (D20). —
 17. [Complex: several values] All Time. **Expected:** 9 rows; "Test opportunity" (Al
     Shifa Hospital Perinthalmanna), "usg" (another hospital), "test Opp 3" (Aster MIMS
     Calicut) at the bottom with no closed date. Competitor Won 5, ₹89.00 L; competitors
@@ -212,7 +223,8 @@ until 31 Dec.
     "HS40". —
 22. [Simple] Open the Sales Report. **Expected:** name "Sales Report" (D12); looks and
     counts as before. —
-23. [Simple] Reports menu. **Expected:** the other seven reports are listed and open. —
+23. [Simple] Reports menu. **Expected:** the other eight reports (with Margin
+    Report) are listed and open. —
 24. [Simple] Open "zz E2E Loss – price" (EMS Hospital) → Edit, change nothing, Cancel.
     **Expected:** nothing asked, nothing saved. —
 25. [Simple] Product Performance, This Quarter → a product's "Lost" link. **Expected:**
@@ -224,8 +236,9 @@ until 31 Dec.
     (both summaries, the list, Filters) and the Lost pop-up with "Competing product"
     (open it on "zz E2E Loss – price" (EMS Hospital) → Edit, pick "Competitor Won" to
     show the box, then Cancel — nothing saved). **Expected:** on a phone each summary is
-    a block; each Lost Opportunity a card — name; customer and owner; reason and
-    competitor; value, stage lost at and closed date; no notes (D6a); pressing a card
+    a block; each Lost Opportunity a card — name; customer and owner; reason,
+    competitor and competing product; value, stage lost at and closed date; no notes
+    (D6a, D18); pressing a card
     opens the Opportunity; filters behind "Filters"; "Competing product" under
     Competitor Name; nothing runs past the card. —
 
@@ -242,7 +255,8 @@ until 31 Dec.
 
 30. [Simple] As Fazal, Sales Loss Report, All Time. **Expected:** Fahad's two only; none
     of Basheer K's (hide-check). —
-31. [Simple] As Vivek, Sales Loss Report, All Time. **Expected:** menu item shown; empty
-    list with the empty-list wording (P2); summaries empty, no error. —
+31. [Simple] As Vivek, Sales Loss Report, All Time. **Expected:** menu item shown; "By
+    Loss Reason" says "Nothing to summarise.", "By Competitor" "No competitor named.",
+    the list "No Lost Opportunities for these filters."; no error. —
 32. [Simple] As Marketing Test User, Sales Loss Report, All Time. **Expected:** empty,
     as step 31. —
