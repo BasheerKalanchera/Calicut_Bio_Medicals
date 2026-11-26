@@ -440,6 +440,12 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Rationale:** A product Cabio no longer sells should stop being picked, without rewriting history or forcing every affected Opportunity to be fixed first.
 * **Enforcement:** Server: roles and the same-Model check in `ProductService.deactivate_product` / `reactivate_product`; `include_inactive` on the product list is honoured for General Manager and Admin only (`_may_see_inactive`); the counts come from `ProductService.get_usage`; one active product per Model is also held by the index `uq_product_model_id_active`. Hiding is by the list's default active-only filter, so it is **hiding only**: the server does not refuse a new line or lead that names an inactive product if one is sent directly (Basheer, 2026-11-23, plan D9). Screen: `ProductCatalogScreen.tsx`.
 
+### BR-CAT-08: Ultrasound Machine-and-Probe Sets (2026-11-26)
+* **Rule:** An ultrasound machine sold with a given probe set is entered as its own Model, one set per Model, with its own prices and cost; the Model name says which set it is (made-up example: "P20 Gynae") and the probes in the set are written in the product's description. A probe sold as an extra is its own product of type Accessory (BR-CAT-02). Only the sets Cabio actually sells are loaded — Cabio is reviewing its invoices to find them (Basheer, 2026-11-26; leadership's option 2 from the 24 Nov demo).
+* **Rationale:** The vendor quotes each set as one price that Cabio can't split into machine and probes, so a priced set fits how Cabio buys and sells; separate machine and probe lines would need a price and cost per probe that Cabio doesn't have (Progress-Archive-2026-11, 25 Nov midday).
+* **Enforcement:** None needed — the catalog already takes it: one active product per Model (`uq_product_model_id_active`), and the four EDAN CX12 entries on UAT are set up this way (UAT read-only check, 18 Nov). No build.
+* **Side effect to know:** an Opportunity whose only lines are Accessory products (e.g. just extra probes) is not counted as customer contact by the No-activity customers report (`docs/Physical-Schema.sql`, last-contact function, `product_type <> 'ACCESSORY'`).
+
 ---
 
 # 4a. Project & Tender Rules

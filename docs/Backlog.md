@@ -1380,6 +1380,10 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   (one USG model pairs with several probes, one probe may fit several models), closer
   to a new child table (something like `product_probe_price`: model product, probe
   product or name, price) than a field on `product` itself.
+  **Part (2) decided 2026-11-26 (Basheer) — no compatibility table:** each
+  machine-and-probe set is its own Model with its own price, and extra probes
+  are Accessory products (BR-CAT-08). Part (1) is covered by the four price
+  levels (BR-CAT-04).
   **Open policy question, not just an engineering one:** is this a single published
   list price, or does it need to vary by zone/discount tier the way deal pricing
   already can — and should every Sales Staff role see it, or does publishing an exact
