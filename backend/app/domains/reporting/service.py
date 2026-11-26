@@ -192,27 +192,23 @@ _MARGIN_DENIED_MSG = "Only the General Manager and Admin can see the Margin Repo
 _MARGIN_SUMS = (
     "quantity",
     "sold_for_lakhs",
-    "costed_line_count",
-    "costed_sold_for_lakhs",
     "cost_lakhs",
     "filled_later_line_count",
 )
 
 
 def _margin_figures(sums: dict) -> dict:
-    """Margin = sold-for of the costed lines minus their cost (D3, D5);
-    % is of those same lines' sold-for (D14)."""
-    has_cost = sums["costed_line_count"] > 0
-    base = Decimal(sums["costed_sold_for_lakhs"])
-    cost = Decimal(sums["cost_lakhs"]) if has_cost else None
-    margin = base - cost if has_cost else None
+    """Margin = sold-for minus cost (D3), over lines that all have a saved
+    cost (D20); % is of their sold-for."""
+    sold_for = Decimal(sums["sold_for_lakhs"])
+    cost = Decimal(sums["cost_lakhs"])
+    margin = sold_for - cost
     percent = None
-    if margin is not None and base > 0:
-        percent = (margin / base * 100).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP)
+    if sold_for > 0:
+        percent = (margin / sold_for * 100).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP)
     return {
         "quantity": sums["quantity"],
-        "sold_for_lakhs": sums["sold_for_lakhs"],
-        "costed_sold_for_lakhs": base,
+        "sold_for_lakhs": sold_for,
         "cost_lakhs": cost,
         "margin_lakhs": margin,
         "margin_percent": percent,

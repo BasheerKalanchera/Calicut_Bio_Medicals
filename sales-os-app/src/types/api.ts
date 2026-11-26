@@ -4185,12 +4185,10 @@ export interface components {
             quantity: number;
             /** Sold For Lakhs */
             sold_for_lakhs: string;
-            /** Costed Sold For Lakhs */
-            costed_sold_for_lakhs: string;
             /** Cost Lakhs */
-            cost_lakhs: string | null;
+            cost_lakhs: string;
             /** Margin Lakhs */
-            margin_lakhs: string | null;
+            margin_lakhs: string;
             /** Margin Percent */
             margin_percent: string | null;
             /** Filled Later Line Count */
@@ -4231,12 +4229,10 @@ export interface components {
             quantity: number;
             /** Sold For Lakhs */
             sold_for_lakhs: string;
-            /** Costed Sold For Lakhs */
-            costed_sold_for_lakhs: string;
             /** Cost Lakhs */
-            cost_lakhs: string | null;
+            cost_lakhs: string;
             /** Margin Lakhs */
-            margin_lakhs: string | null;
+            margin_lakhs: string;
             /** Margin Percent */
             margin_percent: string | null;
             /** Filled Later Line Count */

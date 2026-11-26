@@ -296,15 +296,13 @@ class MarginFigures(BaseModel):
     """Margin Report (docs/Margin-Report-Implementation-Plan.md). Carries cost,
     so it is served only to GM/Admin (BR-CAT-04, D9)."""
 
+    # Every figure covers only the product lines with a saved cost; the rest
+    # are in MarginSummaryResponse.missing_cost (D20).
     quantity: int
-    # Every product line, with or without a cost (D5).
     sold_for_lakhs: Decimal
-    # Sold-for of the lines that have a saved cost -- the margin % base (D14).
-    costed_sold_for_lakhs: Decimal
-    # None = no line here has a saved cost; never shown as a zero cost.
-    cost_lakhs: Decimal | None
-    margin_lakhs: Decimal | None
-    # 27.1 means 27.1%. None also when the costed lines were sold for nothing.
+    cost_lakhs: Decimal
+    margin_lakhs: Decimal
+    # 27.1 means 27.1%. None when nothing here was sold for anything.
     margin_percent: Decimal | None
     # Lines whose cost was filled after the Won day (D12, D16).
     filled_later_line_count: int

@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Box, MenuItem, TextField, Typography } from "@mui/material";
+import { Box, Card, CardContent, MenuItem, TextField, Typography } from "@mui/material";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { LoadingOrEmpty, SectionCard, ZoneTreeNote } from "../components/ReportingUI";
 import TableOrCards, { TocCell, TocPair, TocRow } from "../components/TableOrCards";
+import useIsPhone from "../hooks/useIsPhone";
 import { getMarginSummary } from "../services/reporting";
 import { listStatuses } from "../services/masterData";
 import type { MarginFigures, MarginGroupBy, MarginSummaryRow } from "../types/api-aliases";
@@ -34,11 +35,8 @@ const DRILL_KEYS = {
 
 type DrillFilter = { ownerId?: string; zoneId?: string; sbuId?: string; productId?: string; brandId?: string; zoneExact?: boolean; closedFrom?: string; closedTo?: string; statusId?: string };
 
-// "—" where nothing in the row has a saved cost (D17); a loss in red (D18).
-function money(value: string | null) {
-  return value === null ? "—" : formatLakhsExact(value);
-}
-
+// A loss is shown with a minus sign and in red (D18). No percent when
+// nothing was sold for anything.
 function percent(value: string | null) {
   if (value === null) return "—";
   const n = Number(value);
@@ -49,19 +47,62 @@ function lossColour(value: string | null) {
   return value !== null && Number(value) < 0 ? { color: "error.main" } : {};
 }
 
-function FigureCells({ figures }: { figures: MarginFigures }) {
+// The total row passes no quantity: units of different machines don't add up
+// to anything useful (D20).
+function FigureCells({ figures, quantity }: { figures: MarginFigures; quantity?: number }) {
   return (
     <>
-      <TocCell label="Quantity" align="right">{figures.quantity}</TocCell>
+      <TocCell label="Quantity" align="right">{quantity}</TocCell>
       <TocPair>
-        <TocCell label="Sold for" align="right">{money(figures.sold_for_lakhs)}</TocCell>
-        <TocCell label="Cost" align="right">{money(figures.cost_lakhs)}</TocCell>
+        <TocCell label="Sold for" align="right">{formatLakhsExact(figures.sold_for_lakhs)}</TocCell>
+        <TocCell label="Cost" align="right">{formatLakhsExact(figures.cost_lakhs)}</TocCell>
       </TocPair>
       <TocPair>
-        <TocCell label="Margin" align="right" sx={lossColour(figures.margin_lakhs)}>{money(figures.margin_lakhs)}</TocCell>
+        <TocCell label="Margin" align="right" sx={lossColour(figures.margin_lakhs)}>{formatLakhsExact(figures.margin_lakhs)}</TocCell>
         <TocCell label="Margin %" align="right" sx={lossColour(figures.margin_percent)}>{percent(figures.margin_percent)}</TocCell>
       </TocPair>
     </>
+  );
+}
+
+function TotalsFigure({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <Box>
+      <Box component="span" sx={{ color: "text.secondary", fontWeight: 400 }}>{label} </Box>
+      {children}
+    </Box>
+  );
+}
+
+// The totals on a phone, held above the rows in one line, with no title and no
+// margin % so that the three figures fit (D21). Margin drops to a second line
+// rather than being cut off.
+function PhoneTotals({ figures }: { figures: MarginFigures }) {
+  return (
+    <Card variant="outlined" sx={{ mx: 2, mb: 1.5, flexShrink: 0, bgcolor: "gray.50" }}>
+      <CardContent
+        sx={{
+          p: 1.5,
+          "&:last-child": { pb: 1.5 },
+          display: "flex",
+          flexWrap: "wrap",
+          justifyContent: "space-between",
+          columnGap: 1,
+          rowGap: 0.5,
+          typography: "body3",
+          fontWeight: 700,
+          whiteSpace: "nowrap",
+        }}
+      >
+        <TotalsFigure label="Sold for">{formatLakhsExact(figures.sold_for_lakhs)}</TotalsFigure>
+        <TotalsFigure label="Cost">{formatLakhsExact(figures.cost_lakhs)}</TotalsFigure>
+        <TotalsFigure label="Margin">
+          <Box component="span" sx={lossColour(figures.margin_lakhs)}>
+            {formatLakhsExact(figures.margin_lakhs)}
+          </Box>
+        </TotalsFigure>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -74,6 +115,7 @@ export default function MarginReportScreen({
 }) {
   const [period, setPeriod] = useState<ReportPeriod>("quarter");
   const [groupBy, setGroupBy] = useState<MarginGroupBy>("product");
+  const phone = useIsPhone();
   const filters = reportPeriodFilters(period);
 
   // Fetched afresh each time the screen is opened: a catalog cost or a product
@@ -99,44 +141,77 @@ export default function MarginReportScreen({
   const groupLabel = GROUP_BY_OPTIONS.find((o) => o.value === groupBy)?.label;
   const periodLabel = REPORT_PERIOD_OPTIONS.find((o) => o.value === period)?.label;
 
-  // The drilled list carries Won and the same closed dates, so it holds the
-  // Opportunities the row counted.
-  function openRow(row: MarginSummaryRow) {
-    const label = period === "all" ? `${row.group_name}, Won` : `${row.group_name}, Won, ${periodLabel}`;
+  // The drilled list carries Won and the same closed dates. It holds every
+  // such Opportunity for the row, with or without a saved cost (D20).
+  function openWon(filter: DrillFilter, name: string) {
+    const label = period === "all" ? `${name}, Won` : `${name}, Won, ${periodLabel}`;
     onDrillToPipeline(
-      {
-        [DRILL_KEYS[groupBy]]: row.group_id,
-        statusId: wonStatusId,
-        closedFrom: filters.period_start,
-        closedTo: filters.period_end,
-        ...(row.zone_exact && { zoneExact: true }),
-      },
+      { ...filter, statusId: wonStatusId, closedFrom: filters.period_start, closedTo: filters.period_end },
       label,
     );
   }
 
+  function openRow(row: MarginSummaryRow) {
+    openWon({ [DRILL_KEYS[groupBy]]: row.group_id, ...(row.zone_exact && { zoneExact: true }) }, row.group_name);
+  }
+
   return (
     <Box sx={{ flex: 1, overflow: "hidden", bgcolor: "background.default", display: "flex", flexDirection: "column" }}>
-      {/* The two boxes stay put; the figures below scroll (§6.1). */}
-      <Box sx={{ p: 2, pb: 1.5, flexShrink: 0, display: "flex", justifyContent: "flex-end", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
-        <Typography variant="caption" color="text.secondary">{reportPeriodDates(period)}</Typography>
-        <TextField select size="small" label="Period" value={period} onChange={(e) => setPeriod(e.target.value as ReportPeriod)} sx={{ minWidth: 140 }}>
+      {/* The title has its own band here; on a phone it shares the boxes'
+          line (D19). */}
+      {!phone && (
+        <Box sx={{ px: 2, py: 1.5, bgcolor: "background.paper", borderBottom: 1, borderColor: "gray.100", flexShrink: 0 }}>
+          <Typography component="h2" sx={{ typography: "h5", fontWeight: 800, color: "gray.800", letterSpacing: "-0.025em" }}>
+            Margin Report
+          </Typography>
+        </Box>
+      )}
+
+      {/* The two boxes and the totals stay put; the rows below scroll (§6.1). */}
+      <Box sx={{ px: 2, pt: { xs: 1.5, sm: 2 }, pb: 1.5, flexShrink: 0, display: "flex", justifyContent: "flex-end", alignItems: "center", flexWrap: "wrap", gap: { xs: 0.75, sm: 1 } }}>
+        {phone ? (
+          <Typography component="h2" sx={{ typography: "body1", fontWeight: 800, color: "gray.800", letterSpacing: "-0.025em", mr: "auto" }}>
+            Margin Report
+          </Typography>
+        ) : (
+          <Typography variant="caption" color="text.secondary">{reportPeriodDates(period)}</Typography>
+        )}
+        {/* On a phone the closed box shows the dates themselves. */}
+        <TextField
+          select
+          size="small"
+          label="Period"
+          value={period}
+          onChange={(e) => setPeriod(e.target.value as ReportPeriod)}
+          slotProps={phone ? { input: { sx: { typography: "body2" } }, select: { renderValue: () => reportPeriodDates(period) } } : undefined}
+          sx={{ minWidth: { xs: 128, sm: 140 } }}
+        >
           {REPORT_PERIOD_OPTIONS.map((o) => (
             <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
           ))}
         </TextField>
-        <TextField select size="small" label="Group by" value={groupBy} onChange={(e) => setGroupBy(e.target.value as MarginGroupBy)} sx={{ minWidth: 110 }}>
+        <TextField
+          select
+          size="small"
+          label="Group by"
+          value={groupBy}
+          onChange={(e) => setGroupBy(e.target.value as MarginGroupBy)}
+          slotProps={phone ? { input: { sx: { typography: "body2" } } } : undefined}
+          sx={{ minWidth: { xs: 96, sm: 110 } }}
+        >
           {GROUP_BY_OPTIONS.map((o) => (
             <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
           ))}
         </TextField>
       </Box>
 
+      {phone && report && rows.length > 0 && <PhoneTotals figures={report.totals} />}
+
       <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", px: 2, pb: 2, display: "flex", flexDirection: "column", gap: 1.5, "& > *": { flexShrink: 0 } }}>
         <LoadingOrEmpty
           isLoading={reportQuery.isLoading}
           isError={reportQuery.isError}
-          isEmpty={report !== undefined && rows.length === 0 && tradeIn === 0}
+          isEmpty={report !== undefined && rows.length === 0 && missingCost.length === 0 && tradeIn === 0}
           emptyText="No Opportunities won in this period."
           errorText="Couldn't load the margin report."
           onRetry={() => reportQuery.refetch()}
@@ -155,12 +230,14 @@ export default function MarginReportScreen({
                 { label: "Margin %", align: "right" },
                 { toggle: true },
               ]}
+              pinned={
+                <TocRow total shaded>
+                  <TocCell title>Total</TocCell>
+                  <FigureCells figures={report.totals} />
+                  <TocCell />
+                </TocRow>
+              }
             >
-              <TocRow total shaded>
-                <TocCell title>Total</TocCell>
-                <FigureCells figures={report.totals} />
-                <TocCell phone={false} />
-              </TocRow>
               {rows.map((row) => {
                 const open = wonStatusId ? () => openRow(row) : undefined;
                 return (
@@ -171,7 +248,7 @@ export default function MarginReportScreen({
                         <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>cost filled in later</Typography>
                       )}
                     </TocCell>
-                    <FigureCells figures={row} />
+                    <FigureCells figures={row} quantity={row.quantity} />
                     <TocCell action align="right">
                       {open && <ChevronRightIcon fontSize="small" sx={{ color: "gray.400" }} />}
                     </TocCell>
@@ -185,14 +262,20 @@ export default function MarginReportScreen({
 
         {missingCost.length > 0 && (
           <SectionCard title="No cost entered — not in the margin">
-            <TableOrCards columns={[{ label: "Product" }, { label: "Sales", align: "right" }, { label: "Value sold", align: "right" }]}>
-              {missingCost.map((p) => (
-                <TocRow key={p.product_id}>
-                  <TocCell title>{p.product_name}</TocCell>
-                  <TocCell label="Sales" align="right">{p.sale_count}</TocCell>
-                  <TocCell label="Value sold" align="right">{formatLakhsExact(p.sold_for_lakhs)}</TocCell>
-                </TocRow>
-              ))}
+            <TableOrCards columns={[{ label: "Product" }, { label: "Sales", align: "right" }, { label: "Value sold", align: "right" }, { toggle: true }]}>
+              {missingCost.map((p) => {
+                const open = wonStatusId ? () => openWon({ productId: p.product_id }, p.product_name) : undefined;
+                return (
+                  <TocRow key={p.product_id} onClick={open}>
+                    <TocCell title>{p.product_name}</TocCell>
+                    <TocCell label="Sales" align="right">{p.sale_count}</TocCell>
+                    <TocCell label="Value sold" align="right">{formatLakhsExact(p.sold_for_lakhs)}</TocCell>
+                    <TocCell action align="right">
+                      {open && <ChevronRightIcon fontSize="small" sx={{ color: "gray.400" }} />}
+                    </TocCell>
+                  </TocRow>
+                );
+              })}
             </TableOrCards>
           </SectionCard>
         )}

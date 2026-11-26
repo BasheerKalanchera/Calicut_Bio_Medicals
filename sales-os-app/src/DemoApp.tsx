@@ -1016,11 +1016,6 @@ export default function DemoApp() {
           {/* Mounted for Admin/GM only, so no other role asks the server for it. */}
           {ADMIN_ROLES.has((userProfile as { role_name?: string } | null)?.role_name ?? "") && (
             <Box sx={{ flex: 1, overflow: "hidden", display: view === "marginReport" ? "flex" : "none", flexDirection: "column" }}>
-              <Box sx={{ px: 2, py: 1.5, bgcolor: "background.paper", borderBottom: 1, borderColor: "gray.100", flexShrink: 0 }}>
-                <Typography component="h2" sx={{ typography: "h5", fontWeight: 800, color: "gray.800", letterSpacing: "-0.025em" }}>
-                  Margin Report
-                </Typography>
-              </Box>
               <MarginReportScreen isActive={view === "marginReport"} onDrillToPipeline={handleDrillToPipeline} />
             </Box>
           )}
