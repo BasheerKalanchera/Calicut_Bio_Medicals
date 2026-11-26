@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Box, Button, Chip, Collapse, MenuItem, TextField, Typography } from "@mui/material";
+import { Box, Button, Chip, Collapse, ListSubheader, MenuItem, TextField, Typography } from "@mui/material";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import { LoadingOrEmpty, SectionCard } from "../components/ReportingUI";
@@ -143,10 +143,10 @@ function LossList({
           <TocRow key={row.opportunity_id} onClick={open}>
             <TocCell title>{row.opportunity_name}</TocCell>
             {phone ? (
-              // D6a: three lines under the name.
+              // Three lines under the name (D6a, D18).
               <>
                 <TocCell>{row.account_name} · {row.owner_name}</TocCell>
-                <TocCell>{[reason, row.competitor_name].filter(Boolean).join(" · ")}</TocCell>
+                <TocCell>{[reason, row.competitor_name, row.competitor_product_name].filter(Boolean).join(" · ")}</TocCell>
                 <TocCell>{money(row.value_lakhs)} · {row.stage_name} · {closed ?? "No closed date"}</TocCell>
               </>
             ) : (
@@ -212,11 +212,14 @@ export default function SalesLossReportScreen({
     queryFn: () => listSbus() as Promise<SbuOption[]>,
     enabled: isActive,
   });
+  // Deactivated owners too (D20): this filters past losses, it assigns no work.
   const { data: reps = [] } = useQuery({
-    queryKey: ["users", "reps", "scoped"],
-    queryFn: () => listRepUsers("scoped"),
+    queryKey: ["users", "reps", "include-inactive"],
+    queryFn: () => listRepUsers("scoped", true),
     enabled: isActive,
   });
+  const activeOwners = reps.filter((u) => u.is_active !== false);
+  const inactiveOwners = reps.filter((u) => u.is_active === false);
   const { data: lossReasons = [] } = useQuery({
     queryKey: ["lossReasons"],
     queryFn: async () => (await listLossReasons()) as LossReasonOption[],
@@ -272,9 +275,16 @@ export default function SalesLossReportScreen({
       {reps.length > 1 && (
         <TextField select size="small" label="Owner" value={userId} onChange={(e) => changeFilter(setUserId)(e.target.value)} slotProps={emptyMeansAll} sx={filterSx}>
           <MenuItem value="">All owners</MenuItem>
-          {reps.map((u) => (
+          {activeOwners.map((u) => (
             <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>
           ))}
+          {/* As on the Pipeline screen's Owner box. */}
+          {inactiveOwners.length > 0 && [
+            <ListSubheader key="inactive-header" sx={{ fontWeight: 700 }}>Inactive Owners</ListSubheader>,
+            ...inactiveOwners.map((u) => (
+              <MenuItem key={u.id} value={u.id} sx={{ color: "error.main" }}>{u.display_name}</MenuItem>
+            )),
+          ]}
         </TextField>
       )}
       <TextField select size="small" label="Loss Reason" value={lossReasonId} onChange={(e) => changeFilter(setLossReasonId)(e.target.value)} slotProps={emptyMeansAll} sx={filterSx}>

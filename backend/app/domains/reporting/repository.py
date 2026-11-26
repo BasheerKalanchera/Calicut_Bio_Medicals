@@ -11,6 +11,7 @@ from app.domains.activity.repository import _REMINDER_ORDER, _reminder_display_o
 from app.domains.asset.models import InstalledAsset
 from app.domains.audit.models import AuditLog
 from app.domains.opportunity.models import Opportunity, OpportunityItem
+from app.domains.opportunity.validators import COMPETITOR_WON
 from app.domains.organization.models import UserProfile, UserZone
 from app.domains.organization.repository import TEAM_SCOPE_BUILDERS, UNRESTRICTED_ROLES
 from app.domains.planning.models import TargetPlan, TargetPlanAccount
@@ -822,6 +823,9 @@ class ReportingRepository:
             .group_by(OpportunityItem.opportunity_id)
             .subquery("line_totals")
         )
+        # D17: a competitor counts only on a "Competitor Won" loss; a name
+        # saved earlier against another reason is left out (NULL).
+        competitor_won = LossReason.reason_code == COMPETITOR_WON
         stmt = (
             select(
                 Opportunity.id.label("opportunity_id"),
@@ -831,8 +835,8 @@ class ReportingRepository:
                 OpportunityStage.stage_name.label("stage_name"),
                 Opportunity.loss_reason_id.label("loss_reason_id"),
                 LossReason.reason_name.label("loss_reason"),
-                Opportunity.competitor_name.label("competitor_name"),
-                Opportunity.competitor_product_name.label("competitor_product_name"),
+                case((competitor_won, Opportunity.competitor_name)).label("competitor_name"),
+                case((competitor_won, Opportunity.competitor_product_name)).label("competitor_product_name"),
                 func.coalesce(line_totals.c.total_lakhs, Opportunity.indicative_value).label("value_lakhs"),
                 Opportunity.closed_at.label("closed_date"),
             )

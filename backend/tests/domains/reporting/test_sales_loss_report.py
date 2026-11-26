@@ -97,6 +97,15 @@ class TestWhichOpportunities:
         assert "coalesce(line_totals.total_lakhs, opportunity.indicative_value) AS value_lakhs" in sql
         assert "opportunity_item.line_type != 'BUYBACK'" in sql
 
+    @pytest.mark.parametrize("column", ["competitor_name", "competitor_product_name"])
+    def test_competitor_shown_only_when_competitor_won(self, column):
+        # D17.
+        sql = _sql(_make_user("Admin"))
+        assert (
+            f"CASE WHEN (loss_reason.reason_code = 'COMPETITOR_WON') THEN opportunity.{column} END AS {column}"
+            in sql
+        )
+
     def test_newest_closed_first(self):
         assert "ORDER BY opportunity.closed_at DESC NULLS LAST" in _sql(_make_user("Admin"))
 
