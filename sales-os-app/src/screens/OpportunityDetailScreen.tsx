@@ -41,7 +41,7 @@ import { listOpportunityDocuments, uploadOpportunityDocument, getDocumentDownloa
 import type { PipelineOpportunity, PipelinePage, DocumentResponse, ReminderResponse } from "../types/api-aliases";
 import type { DraftOpportunityItem, ProductOption } from "../types/opportunityItems";
 import { isReactivationOverdue, HIGH_CHANCE_NEEDS_CLOSURE_DATE_MSG, needsClosureDateForChance, breaksHighChanceRule } from "../utils/opportunityStatus";
-import { itemsTotal } from "../utils/opportunityItems";
+import { itemsTotal, roundLakhs } from "../utils/opportunityItems";
 import { sumAllocation, isAllocationBalanced } from "../utils/allocationSplit";
 import ActivityTimeline from "../components/ActivityTimeline";
 import LogActivityModal from "../components/LogActivityModal";
@@ -369,12 +369,17 @@ function ProductsTab({
   // Throws on failure: the open-Opportunity Save shows it in the tab, the
   // reason pop-up shows it in itself.
   const persistItems = async (reason?: string) => {
+    const lines = editItems.map((i) => ({
+      ...i,
+      unit_price_lakhs: roundLakhs(Number(i.unit_price_lakhs)),
+      discount_lakhs: roundLakhs(Number(i.discount_lakhs)),
+    }));
     await replaceOpportunityItems(
       opportunityId,
       // id round-tripped for existing rows (undefined for a newly-added
       // line) so the backend can UPDATE in place instead of delete+insert
       // -- see Audit-Trail-Extension-Implementation-Plan.md.
-      editItems.map((i) => ({
+      lines.map((i) => ({
         id: i.id,
         product_id: i.product_id, description: i.description, quantity: i.quantity,
         unit_price_lakhs: i.unit_price_lakhs, discount_lakhs: i.discount_lakhs,
@@ -386,9 +391,13 @@ function ProductsTab({
     // BR-FIN-03 (dual-mode valuation): once items exist, the calculated
     // total becomes the authoritative value — same auto-sync rule already
     // implemented in QuickLeadModal.tsx's create flow.
-    const total = itemsTotal(editItems);
-    const newValue = editItems.length > 0 ? total.toFixed(2) : null;
-    await patchOpportunity(opportunityId, { indicative_value: newValue !== null ? Number(newValue) : null });
+    const total = itemsTotal(lines);
+    const newValue = lines.length > 0 ? total.toFixed(2) : null;
+    // On a Won/Lost Opportunity the server updates the value in the same step as
+    // the products and the Note; an open one sends it separately.
+    if (!isClosed) {
+      await patchOpportunity(opportunityId, { indicative_value: newValue !== null ? Number(newValue) : null });
+    }
     queryClient.invalidateQueries({ queryKey: ["pipeline"] });
     // Project Directory stays mounted while this page is open, so its
     // Opportunities list must be told the value changed (code review 2026-10-01).
@@ -403,19 +412,26 @@ function ProductsTab({
   };
 
   // Plan D13b: did the GM/Admin change anything? Compared line by line on
-  // what is saved (a line with no id is new; a missing one was removed).
+  // what is saved (a line with no id is new; a missing one was removed). As on
+  // the server, a product removed and added again is the same line (D13g).
   const itemsChanged = () => {
     const before = items ?? [];
     if (before.length !== editItems.length) return true;
+    const keptIds = new Set(editItems.map((d) => d.id));
+    const matched = new Set<string>();
     return editItems.some((d) => {
-      const o = before.find((b) => b.id === d.id);
-      return !o
-        || o.product_id !== d.product_id
+      const o = d.id
+        ? before.find((b) => b.id === d.id)
+        : before.find((b) => !keptIds.has(b.id) && !matched.has(b.id)
+            && !!d.product_id && b.product_id === d.product_id && b.line_type === d.line_type);
+      if (!o) return true;
+      matched.add(o.id);
+      return o.product_id !== d.product_id
         || (o.description ?? "") !== (d.description ?? "")
         || o.quantity !== d.quantity
         || o.line_type !== d.line_type
-        || parseFloat(o.unit_price_lakhs) !== Number(d.unit_price_lakhs)
-        || parseFloat(o.discount_lakhs) !== Number(d.discount_lakhs);
+        || parseFloat(o.unit_price_lakhs) !== roundLakhs(Number(d.unit_price_lakhs))
+        || parseFloat(o.discount_lakhs) !== roundLakhs(Number(d.discount_lakhs));
     });
   };
 

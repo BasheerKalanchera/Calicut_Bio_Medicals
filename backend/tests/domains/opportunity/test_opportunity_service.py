@@ -2565,8 +2565,9 @@ def _closed_items_service(status_code: str, lines: list[MagicMock]) -> tuple[Opp
     repo.get_status.return_value = _make_status(status_code, is_terminal=status_code in _CLOSED)
     repo.list_items.return_value = lines
     repo.get_product_names.return_value = {NEW_PRODUCT_ID: "SonoScape S60"}
-    repo.replace_items.side_effect = lambda opp_id, new: [MagicMock(id=i.id or uuid.uuid4(), product_id=i.product_id)
-                                                          for i in new]
+    repo.replace_items.side_effect = lambda opp_id, new: [
+        MagicMock(id=i.id or uuid.uuid4(), product_id=i.product_id, line_type=i.line_type) for i in new
+    ]
     return _make_service(repo), repo
 
 
@@ -2604,7 +2605,7 @@ class TestProductsLockOnClosedOpportunity:
         assert service.can_edit_products(OPP_ID, role_name=role_name) is True
         service.replace_items(OPP_ID, data, updated_by=USER_ID, role_name=role_name)
         repo.replace_items.assert_called_once()
-        repo.list_items.assert_not_called()
+        repo.update.assert_not_called()  # an open one's value is sent separately by the screen
         service.activity_service.log_stage_change_note.assert_not_called()
 
     @pytest.mark.parametrize("status_code", _CLOSED)
@@ -2735,6 +2736,109 @@ class TestClosedProductSaveReasonAndNote:
         service.replace_items(OPP_ID, data, updated_by=USER_ID, role_name="General Manager")
 
         repo.stamp_cost_at_won.assert_not_called()
+
+    @pytest.mark.parametrize("status_code", _CLOSED)
+    def test_the_value_is_saved_with_the_lines_net_of_buyback(self, status_code):
+        line = _line()
+        service, repo = _closed_items_service(status_code, [line])
+        trade_in = OpportunityItemCreate(
+            description="Old machine", quantity=1, unit_price_lakhs=Decimal("2.00"), line_type="BUYBACK"
+        )
+        data = ItemsBulkUpdate(
+            items=[_same(line, quantity=3, discount_lakhs=Decimal("0.50")), trade_in], reason="Revised PO"
+        )
+
+        service.replace_items(OPP_ID, data, updated_by=USER_ID, role_name="General Manager")
+
+        saved = repo.update.call_args.args[0]
+        assert saved.indicative_value == Decimal("12.50")  # 3 x 5.00 - 0.50 - 2.00
+        assert saved.updated_by == USER_ID
+
+    def test_removing_every_line_clears_the_value(self):
+        service, repo = _closed_items_service("WON", [_line()])
+        data = ItemsBulkUpdate(items=[], reason="Entered by mistake")
+
+        service.replace_items(OPP_ID, data, updated_by=USER_ID, role_name="General Manager")
+
+        assert repo.update.call_args.args[0].indicative_value is None
+
+    def test_a_description_only_change_is_saved_and_listed(self):
+        line = _line()
+        service, repo = _closed_items_service("WON", [line])
+        data = ItemsBulkUpdate(items=[_same(line, description="With trolley")], reason="Clarify")
+
+        service.replace_items(OPP_ID, data, updated_by=USER_ID, role_name="General Manager")
+
+        repo.replace_items.assert_called_once()
+        assert 'description "" → "With trolley"' in _note_of(service)["notes"]
+
+    def test_a_buyback_line_turned_into_a_product_line_is_stamped(self):
+        line = _line()
+        line.line_type = "BUYBACK"
+        service, repo = _closed_items_service("WON", [line])
+        data = ItemsBulkUpdate(items=[_same(line, line_type="PRODUCT")], reason="Wrong type")
+
+        service.replace_items(OPP_ID, data, updated_by=USER_ID, role_name="General Manager")
+
+        repo.stamp_cost_at_won.assert_called_once_with(OPP_ID, line_ids={LINE_ID})
+
+    def test_a_third_decimal_is_not_a_change(self):
+        line = _line()
+        service, repo = _closed_items_service("WON", [line])
+        data = ItemsBulkUpdate(items=[_same(line, unit_price_lakhs=Decimal("5.001"))])
+
+        service.replace_items(OPP_ID, data, updated_by=USER_ID, role_name="General Manager")
+
+        repo.replace_items.assert_not_called()
+
+
+class TestReaddedLine:
+    """Margin Report plan D13g: a product removed and added again before Save
+    is the same line."""
+
+    def _readded(self, **overrides) -> OpportunityItemCreate:
+        fields = dict(product_id=PRODUCT_ID, quantity=1, unit_price_lakhs=Decimal("5.00"))
+        fields.update(overrides)
+        return OpportunityItemCreate(**fields)
+
+    @pytest.mark.parametrize("status_code", ["ACTIVE", "WON"])
+    def test_it_takes_the_removed_lines_id(self, status_code):
+        service, repo = _closed_items_service(status_code, [_line()])
+        data = ItemsBulkUpdate(items=[self._readded(quantity=2)], reason="Re-entered")
+
+        service.replace_items(OPP_ID, data, updated_by=USER_ID, role_name="General Manager")
+
+        assert [item.id for item in repo.replace_items.call_args.args[1]] == [LINE_ID]
+        repo.stamp_cost_at_won.assert_not_called()  # a Won line keeps its saved cost
+
+    def test_on_a_won_opportunity_the_note_lists_it_as_changed(self):
+        service, _ = _closed_items_service("WON", [_line()])
+        data = ItemsBulkUpdate(items=[self._readded(quantity=2)], reason="Re-entered")
+
+        service.replace_items(OPP_ID, data, updated_by=USER_ID, role_name="General Manager")
+
+        text = _note_of(service)["notes"]
+        assert "Changed: SonoScape S50 (quantity 1 → 2)" in text
+        assert "Added" not in text
+        assert "Removed" not in text
+
+    def test_readded_exactly_as_it_was_saves_nothing(self):
+        service, repo = _closed_items_service("WON", [_line()])
+        data = ItemsBulkUpdate(items=[self._readded()])
+
+        service.replace_items(OPP_ID, data, updated_by=USER_ID, role_name="General Manager")
+
+        repo.replace_items.assert_not_called()
+        service.activity_service.log_stage_change_note.assert_not_called()
+
+    def test_a_second_line_for_a_product_still_held_is_left_as_new(self):
+        line = _line()
+        service, repo = _closed_items_service("ACTIVE", [line])
+        data = ItemsBulkUpdate(items=[_same(line), self._readded()])
+
+        service.replace_items(OPP_ID, data, updated_by=USER_ID, role_name="General Manager")
+
+        assert [item.id for item in repo.replace_items.call_args.args[1]] == [LINE_ID, None]
 
 
 # ===========================================================================

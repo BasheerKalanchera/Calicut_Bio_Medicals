@@ -71,6 +71,7 @@ class _LineSnapshot:
 
     product_id: uuid.UUID | None
     label: str
+    description: str | None
     quantity: int
     unit_price_lakhs: Decimal
     discount_lakhs: Decimal
@@ -81,6 +82,7 @@ class _LineSnapshot:
         return cls(
             product_id=line.product_id,
             label=name or line.description or "Line",
+            description=line.description,
             quantity=line.quantity,
             unit_price_lakhs=line.unit_price_lakhs,
             discount_lakhs=line.discount_lakhs,
@@ -90,6 +92,45 @@ class _LineSnapshot:
 
 def _money(value: Decimal) -> str:
     return f"₹{Decimal(value):.2f} L"
+
+
+def _match_readded_lines(
+    before: list[OpportunityItem], incoming: list[OpportunityItemCreate]
+) -> list[OpportunityItemCreate]:
+    """A product removed and added again before Save arrives as a new line. It
+    takes the removed line's id, so that line is updated in place: a second row
+    for the same product would break the one-line-per-product rule, and on a Won
+    Opportunity the line keeps its saved cost (Margin Report plan D13g)."""
+    existing_ids = {line.id for line in before}
+    kept_ids = {item.id for item in incoming if item.id in existing_ids}
+    removed = {
+        (line.product_id, line.line_type): line.id
+        for line in before
+        if line.id not in kept_ids and line.product_id is not None
+    }
+    result = []
+    for item in incoming:
+        if item.id not in existing_ids:
+            line_id = removed.pop((item.product_id, item.line_type), None)
+            if line_id is not None:
+                item = item.model_copy(update={"id": line_id})
+        result.append(item)
+    return result
+
+
+def _items_value(items: list[OpportunityItemCreate]) -> Decimal | None:
+    """BR-FIN-03: the Opportunity Value from its product lines -- Buyback lines
+    come off the total. None when there are no lines."""
+    if not items:
+        return None
+    return sum(
+        (
+            (-1 if item.line_type == "BUYBACK" else 1)
+            * (item.quantity * item.unit_price_lakhs - item.discount_lakhs)
+            for item in items
+        ),
+        Decimal("0"),
+    )
 
 
 def _describe_item_changes(
@@ -117,6 +158,8 @@ def _describe_item_changes(
         parts = []
         if old.product_id != item.product_id or old.line_type != item.line_type:
             parts.append(f"was {old.label}")
+        if (old.description or "") != (item.description or ""):
+            parts.append(f'description "{old.description or ""}" → "{item.description or ""}"')
         if old.quantity != item.quantity:
             parts.append(f"quantity {old.quantity} → {item.quantity}")
         if old.unit_price_lakhs != item.unit_price_lakhs:
@@ -792,9 +835,13 @@ class OpportunityService:
             opportunity.sbu_id, {item.product_id for item in data.items if item.product_id is not None}
         )
 
+        before = self.repository.list_items(opportunity.id)
+        data = data.model_copy(update={"items": _match_readded_lines(before, data.items)})
         closed = self._closed_status_code(opportunity)
         if closed:
-            return self._replace_closed_items(opportunity, data, closed=closed, updated_by=updated_by)
+            return self._replace_closed_items(
+                opportunity, data, before=before, closed=closed, updated_by=updated_by
+            )
         return self._replace_items(opportunity.id, data, updated_by=updated_by)
 
     def _replace_closed_items(
@@ -802,6 +849,7 @@ class OpportunityService:
         opportunity: Opportunity,
         data: ItemsBulkUpdate,
         *,
+        before: list[OpportunityItem],
         closed: str,
         updated_by: uuid.UUID,
     ) -> list[OpportunityItem]:
@@ -814,7 +862,6 @@ class OpportunityService:
         closes nor creates one (D13d)."""
         if self.activity_service is None:
             raise RuntimeError("OpportunityService needs the activity service to record a product change note.")
-        before = self.repository.list_items(opportunity.id)
         snapshot = {
             line.id: _LineSnapshot.of(line, name=line.product.name if line.product else None)
             for line in before
@@ -830,12 +877,20 @@ class OpportunityService:
             raise BusinessRuleViolation(_PRODUCT_REASON_MSG)
 
         result = self._replace_items(opportunity.id, data, updated_by=updated_by)
+        # The value changes in the same save as the lines and the Note, so a
+        # failure leaves none of the three half done.
+        opportunity.indicative_value = _items_value(data.items)
+        opportunity.updated_by = updated_by
+        self.repository.update(opportunity)
         if closed == "WON":
-            # D4/D13: a new or swapped line takes today's catalog cost; a line
-            # whose product is unchanged keeps the cost it already has.
+            # D4/D13: a new or swapped line, or a Buyback line turned into a
+            # Product line, takes today's catalog cost; any other line keeps
+            # the cost it already has.
             touched = {
                 line.id for line in result
-                if line.id not in snapshot or snapshot[line.id].product_id != line.product_id
+                if line.id not in snapshot
+                or snapshot[line.id].product_id != line.product_id
+                or snapshot[line.id].line_type != line.line_type
             }
             if touched:
                 self.repository.stamp_cost_at_won(opportunity.id, line_ids=touched)

@@ -1,12 +1,17 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Box, MenuItem, TextField, Typography } from "@mui/material";
-import dayjs from "dayjs";
 import { LoadingOrEmpty, MiniBar, SectionCard, StatTile, ZoneTreeNote } from "../components/ReportingUI";
 import { getSalesHeadline, getSalesSummary } from "../services/reporting";
 import { listStatuses } from "../services/masterData";
-import type { ReportingFilters, SalesGroupBy } from "../types/reporting";
-import { formatLakhs, formatPlanningPeriod, getCurrentPlanningPeriod, getFiscalQuarterBounds } from "../utils/formatter";
+import type { SalesGroupBy } from "../types/reporting";
+import {
+  formatLakhs,
+  REPORT_PERIOD_OPTIONS,
+  reportPeriodDates,
+  reportPeriodFilters,
+  type ReportPeriod,
+} from "../utils/formatter";
 
 const GROUP_BY_OPTIONS: { value: SalesGroupBy; label: string }[] = [
   { value: "rep", label: "Rep" },
@@ -15,35 +20,6 @@ const GROUP_BY_OPTIONS: { value: SalesGroupBy; label: string }[] = [
   { value: "product", label: "Product" },
   { value: "brand", label: "Brand" },
 ];
-
-type Period = "month" | "quarter" | "all";
-
-const PERIOD_OPTIONS: { value: Period; label: string }[] = [
-  { value: "month", label: "This Month" },
-  { value: "quarter", label: "This Quarter" },
-  { value: "all", label: "All Time" },
-];
-
-function periodFilters(period: Period): ReportingFilters {
-  if (period === "all") return {};
-  if (period === "month") {
-    const today = dayjs();
-    return {
-      period_start: today.startOf("month").format("YYYY-MM-DD"),
-      period_end: today.endOf("month").format("YYYY-MM-DD"),
-    };
-  }
-  const { start, end } = getFiscalQuarterBounds();
-  return { period_start: start, period_end: end };
-}
-
-// The dates the period box covers, spelled out ("This Quarter" alone changes
-// meaning on 1 January). Quarter reads like Target vs Actuals ("Oct–Dec 2026").
-function periodDates(period: Period): string {
-  if (period === "all") return "All time";
-  if (period === "month") return dayjs().format("MMM YYYY");
-  return formatPlanningPeriod(getCurrentPlanningPeriod());
-}
 
 function formatPercent(v: number) {
   return `${(v * 100).toFixed(1)}%`;
@@ -56,9 +32,9 @@ export default function SalesReportScreen({
 }: {
   onDrillToPipeline?: (filter: Omit<DrillFilter, "label">, label: string) => void;
 }) {
-  const [period, setPeriod] = useState<Period>("quarter");
+  const [period, setPeriod] = useState<ReportPeriod>("quarter");
   const [groupBy, setGroupBy] = useState<SalesGroupBy>("rep");
-  const filters = periodFilters(period);
+  const filters = reportPeriodFilters(period);
 
   const headlineQuery = useQuery({
     queryKey: ["reporting", "sales-headline", period],
@@ -81,7 +57,7 @@ export default function SalesReportScreen({
   // Every drill carries the selected period too (closed_at window), so the
   // drilled list is the same Won Opportunities the bar counted -- not all-time.
   const drillBase = { statusId: wonStatusId, closedFrom: filters.period_start, closedTo: filters.period_end };
-  const periodLabel = PERIOD_OPTIONS.find((o) => o.value === period)?.label;
+  const periodLabel = REPORT_PERIOD_OPTIONS.find((o) => o.value === period)?.label;
   const drillLabel = (name: string) => (period === "all" ? `${name}, Won` : `${name}, Won, ${periodLabel}`);
 
   const headline = headlineQuery.data;
@@ -95,9 +71,9 @@ export default function SalesReportScreen({
           §6.1, Simpler Table D15/D16, same as the Pipeline Report). */}
       <Box sx={{ p: 2, pb: 1.5, flexShrink: 0, display: "flex", flexDirection: "column", gap: 1.5 }}>
         <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
-          <Typography variant="caption" color="text.secondary">{periodDates(period)}</Typography>
-          <TextField select size="small" label="Period" value={period} onChange={(e) => setPeriod(e.target.value as Period)} sx={{ minWidth: 140 }}>
-            {PERIOD_OPTIONS.map((o) => (
+          <Typography variant="caption" color="text.secondary">{reportPeriodDates(period)}</Typography>
+          <TextField select size="small" label="Period" value={period} onChange={(e) => setPeriod(e.target.value as ReportPeriod)} sx={{ minWidth: 140 }}>
+            {REPORT_PERIOD_OPTIONS.map((o) => (
               <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
             ))}
           </TextField>

@@ -1,5 +1,10 @@
 import type { DraftOpportunityItem } from "../types/opportunityItems";
 
+// Lakhs to 2 places, as the server stores them (5.005 rounds up to 5.01).
+export function roundLakhs(value: number): number {
+  return Math.round(Number((value * 100).toFixed(6))) / 100;
+}
+
 // BR-FIN-03: Opportunity Value nets BUYBACK lines against PRODUCT/ACCESSORY
 // lines rather than adding to them.
 export function signedValue(

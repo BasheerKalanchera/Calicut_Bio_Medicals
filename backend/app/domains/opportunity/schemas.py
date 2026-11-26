@@ -1,10 +1,10 @@
 import uuid
 from datetime import date, datetime
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 from enum import StrEnum
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator, model_validator
 
 from app.domains.activity.schemas import NOT_CUSTOMER_FACING_TYPES, ActivityType
 
@@ -107,6 +107,13 @@ class OpportunityItemCreate(BaseModel):
     unit_price_lakhs: Decimal = Field(..., ge=0)
     discount_lakhs: Decimal = Field(Decimal("0"), ge=0)
     line_type: OpportunityItemLineType = OpportunityItemLineType.PRODUCT
+
+    @field_validator("unit_price_lakhs", "discount_lakhs")
+    @classmethod
+    def _two_places(cls, value: Decimal) -> Decimal:
+        # Money is stored to 2 places (NUMERIC(15,2)). Rounding here, the same
+        # way the database does, keeps a third decimal from counting as a change.
+        return value.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
     @model_validator(mode="after")
     def _check_product_or_description(self) -> "OpportunityItemCreate":
