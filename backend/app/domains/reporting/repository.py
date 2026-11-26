@@ -19,6 +19,7 @@ from app.domains.reference.models import (
     SBU,
     Brand,
     HoldReason,
+    LossReason,
     OpportunityStage,
     OpportunityStatus,
     Zone,
@@ -794,6 +795,73 @@ class ReportingRepository:
         if zone_id is not None:
             stmt = stmt.where(Account.zone_id == zone_id)
         stmt = stmt.order_by(days_on_hold.desc())
+        return list(self.db.execute(stmt).all())
+
+    def sales_loss_report(
+        self,
+        current_user: UserProfile,
+        *,
+        sbu_id: uuid.UUID | None = None,
+        zone_id: uuid.UUID | None = None,
+        user_id: uuid.UUID | None = None,
+        loss_reason_id: uuid.UUID | None = None,
+        period_start: datetime | None = None,
+        period_end: datetime | None = None,
+    ) -> list[Row]:
+        """Every Lost Opportunity in scope, newest first, with or without a
+        product line (Sales Loss Report plan D2)."""
+        # D7: the product lines' total (trade-ins left out), else the
+        # indicative value, else NULL. Outer-joined, so an Opportunity with no
+        # product line stays listed.
+        line_totals = (
+            select(
+                OpportunityItem.opportunity_id,
+                func.sum(OpportunityItem.extended_value_lakhs).label("total_lakhs"),
+            )
+            .where(OpportunityItem.line_type != "BUYBACK")
+            .group_by(OpportunityItem.opportunity_id)
+            .subquery("line_totals")
+        )
+        stmt = (
+            select(
+                Opportunity.id.label("opportunity_id"),
+                Opportunity.name.label("opportunity_name"),
+                Account.name.label("account_name"),
+                UserProfile.display_name.label("owner_name"),
+                OpportunityStage.stage_name.label("stage_name"),
+                Opportunity.loss_reason_id.label("loss_reason_id"),
+                LossReason.reason_name.label("loss_reason"),
+                Opportunity.competitor_name.label("competitor_name"),
+                Opportunity.competitor_product_name.label("competitor_product_name"),
+                func.coalesce(line_totals.c.total_lakhs, Opportunity.indicative_value).label("value_lakhs"),
+                Opportunity.closed_at.label("closed_date"),
+            )
+            .select_from(Opportunity)
+            .join(OpportunityStatus, Opportunity.status_id == OpportunityStatus.id)
+            .join(OpportunityStage, Opportunity.stage_id == OpportunityStage.id)
+            .join(UserProfile, Opportunity.owner_id == UserProfile.id)
+            .join(Account, Opportunity.account_id == Account.id)
+            .outerjoin(LossReason, Opportunity.loss_reason_id == LossReason.id)
+            .outerjoin(line_totals, line_totals.c.opportunity_id == Opportunity.id)
+            .where(OpportunityStatus.status_code == "LOST")
+        )
+        if period_start is not None:
+            stmt = stmt.where(Opportunity.closed_at >= period_start)
+        if period_end is not None:
+            stmt = stmt.where(Opportunity.closed_at < period_end)
+        stmt = self._apply_owner_scope(stmt, current_user, user_id)
+        if sbu_id is not None:
+            stmt = stmt.where(Opportunity.sbu_id == sbu_id)
+        if zone_id is not None:
+            # D13: the zone and every zone under it.
+            stmt = stmt.where(
+                Account.zone_id.in_(
+                    select(ZoneClosure.descendant_zone_id).where(ZoneClosure.ancestor_zone_id == zone_id)
+                )
+            )
+        if loss_reason_id is not None:
+            stmt = stmt.where(Opportunity.loss_reason_id == loss_reason_id)
+        stmt = stmt.order_by(Opportunity.closed_at.desc().nulls_last(), Opportunity.name)
         return list(self.db.execute(stmt).all())
 
     def _no_activity_subject(self, current_user: UserProfile, user_id: uuid.UUID | None) -> UserProfile | None:

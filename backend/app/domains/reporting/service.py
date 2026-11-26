@@ -1,4 +1,5 @@
 import uuid
+from collections import Counter
 from datetime import date, datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 from zoneinfo import ZoneInfo
@@ -32,6 +33,10 @@ from app.domains.reporting.schemas import (
     RepActivityLevelRow,
     SalesGroupBy,
     SalesHeadline,
+    SalesLossCompetitorSummary,
+    SalesLossReasonSummary,
+    SalesLossResponse,
+    SalesLossRow,
     SalesSummaryResponse,
     SalesSummaryRow,
     StagnantOpportunitiesResponse,
@@ -60,6 +65,48 @@ def _opportunity_list(rows: list[WeeklyFollowupOpportunityRow]) -> WeeklyFollowu
     return WeeklyFollowupOpportunityList(
         count=len(rows), value_lakhs=sum((r.value_lakhs for r in rows), Decimal(0)), rows=rows
     )
+
+
+def _sum_known_values(rows: list[SalesLossRow]) -> Decimal | None:
+    values = [r.value_lakhs for r in rows if r.value_lakhs is not None]
+    return sum(values, Decimal(0)) if values else None
+
+
+def _sales_loss_response(rows: list[SalesLossRow]) -> SalesLossResponse:
+    by_reason: dict[uuid.UUID | None, list[SalesLossRow]] = {}
+    by_competitor: dict[str, list[SalesLossRow]] = {}
+    for row in rows:
+        by_reason.setdefault(row.loss_reason_id, []).append(row)
+        # D9: one competitor whatever the capitals and spaces.
+        words = (row.competitor_name or "").split()
+        if words:
+            row.competitor_key = " ".join(words).casefold()
+            by_competitor.setdefault(row.competitor_key, []).append(row)
+
+    reasons = [
+        SalesLossReasonSummary(
+            loss_reason_id=reason_id,
+            loss_reason=group[0].loss_reason,
+            opportunity_count=len(group),
+            value_lakhs=_sum_known_values(group),
+        )
+        for reason_id, group in by_reason.items()
+    ]
+    # D14: only Lost Opportunities with a competitor named. Shown under the
+    # spelling used most often; a tie goes to the newest loss.
+    competitors = [
+        SalesLossCompetitorSummary(
+            competitor_key=key,
+            competitor_name=Counter(" ".join(r.competitor_name.split()) for r in group).most_common(1)[0][0],
+            opportunity_count=len(group),
+            value_lakhs=_sum_known_values(group),
+        )
+        for key, group in by_competitor.items()
+    ]
+    # Most losses first, then the larger value.
+    reasons.sort(key=lambda s: (-s.opportunity_count, -(s.value_lakhs or 0), s.loss_reason or ""))
+    competitors.sort(key=lambda s: (-s.opportunity_count, -(s.value_lakhs or 0), s.competitor_key))
+    return SalesLossResponse(by_loss_reason=reasons, by_competitor=competitors, rows=rows)
 
 
 def _has_team_to_roll_up(current_user: UserProfile) -> bool:
@@ -505,6 +552,28 @@ class ReportingService:
     ) -> OpportunitiesOnHoldResponse:
         rows = self.repository.opportunities_on_hold(current_user, sbu_id=sbu_id, zone_id=zone_id, user_id=user_id)
         return OpportunitiesOnHoldResponse(rows=[OpportunityOnHoldRow.model_validate(r) for r in rows])
+
+    def sales_loss_report(
+        self,
+        current_user: UserProfile,
+        *,
+        sbu_id: uuid.UUID | None = None,
+        zone_id: uuid.UUID | None = None,
+        user_id: uuid.UUID | None = None,
+        loss_reason_id: uuid.UUID | None = None,
+        period_start: datetime | None = None,
+        period_end: datetime | None = None,
+    ) -> SalesLossResponse:
+        rows = self.repository.sales_loss_report(
+            current_user,
+            sbu_id=sbu_id,
+            zone_id=zone_id,
+            user_id=user_id,
+            loss_reason_id=loss_reason_id,
+            period_start=period_start,
+            period_end=period_end,
+        )
+        return _sales_loss_response([SalesLossRow.model_validate(r) for r in rows])
 
     @staticmethod
     def _no_activity_zone_scope(current_user: UserProfile) -> str:
