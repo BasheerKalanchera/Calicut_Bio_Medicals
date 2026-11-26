@@ -813,13 +813,15 @@ class ReportingRepository:
         product line (Sales Loss Report plan D2)."""
         # D7: the product lines' total (trade-ins left out), else the
         # indicative value, else NULL. Outer-joined, so an Opportunity with no
-        # product line stays listed.
+        # product line stays listed. D21: with only trade-in lines the total is
+        # NULL and the indicative value (made from those lines) is not used.
         line_totals = (
             select(
                 OpportunityItem.opportunity_id,
-                func.sum(OpportunityItem.extended_value_lakhs).label("total_lakhs"),
+                func.sum(OpportunityItem.extended_value_lakhs)
+                .filter(OpportunityItem.line_type != "BUYBACK")
+                .label("total_lakhs"),
             )
-            .where(OpportunityItem.line_type != "BUYBACK")
             .group_by(OpportunityItem.opportunity_id)
             .subquery("line_totals")
         )
@@ -837,7 +839,10 @@ class ReportingRepository:
                 LossReason.reason_name.label("loss_reason"),
                 case((competitor_won, Opportunity.competitor_name)).label("competitor_name"),
                 case((competitor_won, Opportunity.competitor_product_name)).label("competitor_product_name"),
-                func.coalesce(line_totals.c.total_lakhs, Opportunity.indicative_value).label("value_lakhs"),
+                case(
+                    (line_totals.c.opportunity_id.is_(None), Opportunity.indicative_value),
+                    else_=line_totals.c.total_lakhs,
+                ).label("value_lakhs"),
                 Opportunity.closed_at.label("closed_date"),
             )
             .select_from(Opportunity)

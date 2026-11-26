@@ -94,8 +94,20 @@ class TestWhichOpportunities:
     def test_value_is_product_lines_else_indicative_value(self):
         # D7, including its middle case: no product line, a typed value.
         sql = _sql(_make_user("Admin"))
-        assert "coalesce(line_totals.total_lakhs, opportunity.indicative_value) AS value_lakhs" in sql
-        assert "opportunity_item.line_type != 'BUYBACK'" in sql
+        assert (
+            "CASE WHEN (line_totals.opportunity_id IS NULL) THEN opportunity.indicative_value "
+            "ELSE line_totals.total_lakhs END AS value_lakhs" in sql
+        )
+
+    def test_only_trade_in_lines_gives_no_value(self):
+        # D21: trade-ins are left out of the sum, not out of the line list, so
+        # such an Opportunity has a row with a NULL total.
+        sql = _sql(_make_user("Admin"))
+        assert (
+            "sum(opportunity_item.extended_value_lakhs) "
+            "FILTER (WHERE opportunity_item.line_type != 'BUYBACK') AS total_lakhs" in sql
+        )
+        assert "FROM opportunity_item GROUP BY opportunity_item.opportunity_id" in " ".join(sql.split())
 
     @pytest.mark.parametrize("column", ["competitor_name", "competitor_product_name"])
     def test_competitor_shown_only_when_competitor_won(self, column):

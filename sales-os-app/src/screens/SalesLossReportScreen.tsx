@@ -240,11 +240,6 @@ export default function SalesLossReportScreen({
   }
 
   const report = query.data;
-  const allRows = report?.rows ?? [];
-  const rows = !pick
-    ? allRows
-    : allRows.filter((r) => (pick.by === "reason" ? r.loss_reason_id === pick.key : r.competitor_key === pick.key));
-
   const reasonLines: SummaryLine[] = (report?.by_loss_reason ?? []).map((s) => ({
     pick: { by: "reason", key: s.loss_reason_id, label: s.loss_reason ?? NO_REASON },
     count: s.opportunity_count,
@@ -255,6 +250,16 @@ export default function SalesLossReportScreen({
     count: s.opportunity_count,
     value: s.value_lakhs,
   }));
+  // A row pressed earlier counts only while a summary still lists it: a refresh
+  // can drop its group, which must not leave the list filtered to nothing.
+  const activePick =
+    [...reasonLines, ...competitorLines].find((l) => l.pick.by === pick?.by && l.pick.key === pick?.key)?.pick ?? null;
+  const allRows = report?.rows ?? [];
+  const rows = !activePick
+    ? allRows
+    : allRows.filter((r) =>
+        activePick.by === "reason" ? r.loss_reason_id === activePick.key : r.competitor_key === activePick.key,
+      );
 
   const filterBoxes = (
     <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 2, pt: 1 }}>
@@ -333,13 +338,13 @@ export default function SalesLossReportScreen({
         {report && (
           <>
             <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", md: "repeat(2, minmax(0, 1fr))" }, alignItems: "start" }}>
-              <Summary title="By Loss Reason" nameLabel="Loss Reason" lines={reasonLines} emptyText="Nothing to summarise." picked={pick} onPick={togglePick} />
-              <Summary title="By Competitor" nameLabel="Competitor" lines={competitorLines} emptyText="No competitor named." picked={pick} onPick={togglePick} />
+              <Summary title="By Loss Reason" nameLabel="Loss Reason" lines={reasonLines} emptyText="Nothing to summarise." picked={activePick} onPick={togglePick} />
+              <Summary title="By Competitor" nameLabel="Competitor" lines={competitorLines} emptyText="No competitor named." picked={activePick} onPick={togglePick} />
             </Box>
 
             <SectionCard
               title="Lost Opportunities"
-              action={pick && <Chip size="small" label={pick.label} onDelete={() => setPick(null)} />}
+              action={activePick && <Chip size="small" label={activePick.label} onDelete={() => setPick(null)} />}
             >
               {rows.length === 0 ? (
                 <Typography variant="body2" color="text.secondary">No Lost Opportunities for these filters.</Typography>
