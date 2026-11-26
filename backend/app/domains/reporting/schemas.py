@@ -237,6 +237,56 @@ class SalesSummaryResponse(BaseModel):
     rows: list[SalesSummaryRow]
 
 
+MarginGroupBy = Literal["product", "brand", "sbu", "zone", "rep"]
+
+
+class MarginFigures(BaseModel):
+    """Margin Report (docs/Margin-Report-Implementation-Plan.md). Carries cost,
+    so it is served only to GM/Admin (BR-CAT-04, D9)."""
+
+    quantity: int
+    # Every product line, with or without a cost (D5).
+    sold_for_lakhs: Decimal
+    # Sold-for of the lines that have a saved cost -- the margin % base (D14).
+    costed_sold_for_lakhs: Decimal
+    # None = no line here has a saved cost; never shown as a zero cost.
+    cost_lakhs: Decimal | None
+    margin_lakhs: Decimal | None
+    # 27.1 means 27.1%. None also when the costed lines were sold for nothing.
+    margin_percent: Decimal | None
+    # Lines whose cost was filled after the Won day (D12, D16).
+    filled_later_line_count: int
+
+
+class MarginSummaryRow(MarginFigures):
+    # str, not uuid.UUID -- same shape as SalesSummaryRow, whose Pipeline
+    # drill-down this report's row click reuses (D10).
+    group_id: str
+    group_name: str
+    # Zone breakdown only -- see PipelineSummaryRow.
+    depth: int | None = None
+    zone_exact: bool | None = None
+
+
+class MarginMissingCostRow(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    product_id: uuid.UUID
+    product_name: str
+    # Won Opportunities that sold it without a saved cost (D15).
+    sale_count: int
+    sold_for_lakhs: Decimal
+
+
+class MarginSummaryResponse(BaseModel):
+    group_by: MarginGroupBy
+    totals: MarginFigures
+    rows: list[MarginSummaryRow]
+    missing_cost: list[MarginMissingCostRow]
+    # Trade-ins in the period, outside every figure above (D6).
+    trade_in_lakhs: Decimal
+
+
 class NoActivityCustomerRow(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

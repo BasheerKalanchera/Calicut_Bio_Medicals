@@ -1441,6 +1441,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/reporting/margin-summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Margin Summary */
+        get: operations["get_margin_summary_api_v1_reporting_margin_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/marketing-leads": {
         parameters: {
             query?: never;
@@ -2083,6 +2100,20 @@ export interface components {
              */
             message: string;
             data: components["schemas"]["ItemEditPermission"];
+        };
+        /** APIResponse[MarginSummaryResponse] */
+        APIResponse_MarginSummaryResponse_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["MarginSummaryResponse"];
         };
         /** APIResponse[MarketingLeadCommentResponse] */
         APIResponse_MarketingLeadCommentResponse_: {
@@ -4112,6 +4143,81 @@ export interface components {
             id: string;
             /** Name */
             name: string;
+        };
+        /**
+         * MarginFigures
+         * @description Margin Report (docs/Margin-Report-Implementation-Plan.md). Carries cost,
+         *     so it is served only to GM/Admin (BR-CAT-04, D9).
+         */
+        MarginFigures: {
+            /** Quantity */
+            quantity: number;
+            /** Sold For Lakhs */
+            sold_for_lakhs: string;
+            /** Costed Sold For Lakhs */
+            costed_sold_for_lakhs: string;
+            /** Cost Lakhs */
+            cost_lakhs: string | null;
+            /** Margin Lakhs */
+            margin_lakhs: string | null;
+            /** Margin Percent */
+            margin_percent: string | null;
+            /** Filled Later Line Count */
+            filled_later_line_count: number;
+        };
+        /** MarginMissingCostRow */
+        MarginMissingCostRow: {
+            /**
+             * Product Id
+             * Format: uuid
+             */
+            product_id: string;
+            /** Product Name */
+            product_name: string;
+            /** Sale Count */
+            sale_count: number;
+            /** Sold For Lakhs */
+            sold_for_lakhs: string;
+        };
+        /** MarginSummaryResponse */
+        MarginSummaryResponse: {
+            /**
+             * Group By
+             * @enum {string}
+             */
+            group_by: "product" | "brand" | "sbu" | "zone" | "rep";
+            totals: components["schemas"]["MarginFigures"];
+            /** Rows */
+            rows: components["schemas"]["MarginSummaryRow"][];
+            /** Missing Cost */
+            missing_cost: components["schemas"]["MarginMissingCostRow"][];
+            /** Trade In Lakhs */
+            trade_in_lakhs: string;
+        };
+        /** MarginSummaryRow */
+        MarginSummaryRow: {
+            /** Quantity */
+            quantity: number;
+            /** Sold For Lakhs */
+            sold_for_lakhs: string;
+            /** Costed Sold For Lakhs */
+            costed_sold_for_lakhs: string;
+            /** Cost Lakhs */
+            cost_lakhs: string | null;
+            /** Margin Lakhs */
+            margin_lakhs: string | null;
+            /** Margin Percent */
+            margin_percent: string | null;
+            /** Filled Later Line Count */
+            filled_later_line_count: number;
+            /** Group Id */
+            group_id: string;
+            /** Group Name */
+            group_name: string;
+            /** Depth */
+            depth?: number | null;
+            /** Zone Exact */
+            zone_exact?: boolean | null;
         };
         /** MarkReadRequest */
         MarkReadRequest: {
@@ -10522,6 +10628,45 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["APIResponse_SalesSummaryResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_margin_summary_api_v1_reporting_margin_summary_get: {
+        parameters: {
+            query?: {
+                group_by?: "product" | "brand" | "sbu" | "zone" | "rep";
+                sbu_id?: string | null;
+                zone_id?: string | null;
+                user_id?: string | null;
+                period_start?: string | null;
+                /** @description Inclusive */
+                period_end?: string | null;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_MarginSummaryResponse_"];
                 };
             };
             /** @description Validation Error */

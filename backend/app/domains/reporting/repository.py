@@ -1,5 +1,6 @@
 import uuid
 from datetime import date, datetime
+from decimal import Decimal
 
 from sqlalchemy import Row, String, case, cast, func, or_, select, text
 from sqlalchemy.orm import Session
@@ -297,6 +298,129 @@ class ReportingRepository:
             stmt = stmt.where(Account.zone_id == zone_id)
         stmt = stmt.order_by(group_name_col)
         return list(self.db.execute(stmt).all())
+
+    def _won_lines(
+        self,
+        stmt,
+        current_user: UserProfile,
+        line_type: str,
+        *,
+        sbu_id: uuid.UUID | None,
+        zone_id: uuid.UUID | None,
+        user_id: uuid.UUID | None,
+        period_start: datetime | None,
+        period_end: datetime | None,
+    ):
+        """Margin Report plan D2: the lines of one type on Won Opportunities
+        closed in the period, under the Sales Report's own filters -- shared
+        by the three margin queries so their figures cover the same lines."""
+        stmt = (
+            stmt.select_from(Opportunity)
+            .join(OpportunityItem, OpportunityItem.opportunity_id == Opportunity.id)
+            .join(OpportunityStatus, Opportunity.status_id == OpportunityStatus.id)
+            .join(UserProfile, Opportunity.owner_id == UserProfile.id)
+            .join(SBU, Opportunity.sbu_id == SBU.id)
+            .join(Account, Opportunity.account_id == Account.id)
+            .join(Zone, Account.zone_id == Zone.id)
+            .where(OpportunityStatus.status_code == "WON", OpportunityItem.line_type == line_type)
+        )
+        if period_start is not None:
+            stmt = stmt.where(Opportunity.closed_at >= period_start)
+        if period_end is not None:
+            stmt = stmt.where(Opportunity.closed_at < period_end)
+        stmt = self._apply_owner_scope(stmt, current_user, user_id)
+        if sbu_id is not None:
+            stmt = stmt.where(Opportunity.sbu_id == sbu_id)
+        if zone_id is not None:
+            stmt = stmt.where(Account.zone_id == zone_id)
+        return stmt
+
+    def margin_summary(
+        self,
+        current_user: UserProfile,
+        group_by: str,
+        *,
+        sbu_id: uuid.UUID | None = None,
+        zone_id: uuid.UUID | None = None,
+        user_id: uuid.UUID | None = None,
+        period_start: datetime | None = None,
+        period_end: datetime | None = None,
+    ) -> list[Row]:
+        """One row per group over PRODUCT lines. Cost is the one saved on the
+        line (D4), never today's catalog cost; a line without one counts in
+        quantity and sold-for only (D5)."""
+        group_id_col, group_name_col = _group_columns(group_by)
+        cost = OpportunityItem.cost_at_won_lakhs
+        sold_for = OpportunityItem.extended_value_lakhs
+        stmt = select(
+            group_id_col.label("group_id"),
+            group_name_col.label("group_name"),
+            func.count(OpportunityItem.id).label("line_count"),
+            func.sum(OpportunityItem.quantity).label("quantity"),
+            func.sum(sold_for).label("sold_for_lakhs"),
+            func.count(cost).label("costed_line_count"),
+            func.coalesce(func.sum(case((cost.is_not(None), sold_for), else_=0)), 0).label(
+                "costed_sold_for_lakhs"
+            ),
+            # SUM skips the lines whose cost is NULL.
+            func.coalesce(func.sum(OpportunityItem.quantity * cost), 0).label("cost_lakhs"),
+            func.count(case((OpportunityItem.cost_filled_in_later, 1))).label("filled_later_line_count"),
+        )
+        stmt = self._won_lines(
+            stmt, current_user, "PRODUCT", sbu_id=sbu_id, zone_id=zone_id, user_id=user_id,
+            period_start=period_start, period_end=period_end,
+        )
+        stmt = _outerjoin_line_dimension(stmt, group_by)
+        stmt = stmt.group_by(group_id_col, group_name_col).order_by(group_name_col)
+        return list(self.db.execute(stmt).all())
+
+    def margin_missing_cost(
+        self,
+        current_user: UserProfile,
+        *,
+        sbu_id: uuid.UUID | None = None,
+        zone_id: uuid.UUID | None = None,
+        user_id: uuid.UUID | None = None,
+        period_start: datetime | None = None,
+        period_end: datetime | None = None,
+    ) -> list[Row]:
+        """D15: the products sold without a saved cost."""
+        stmt = select(
+            Product.id.label("product_id"),
+            Product.name.label("product_name"),
+            func.count(func.distinct(Opportunity.id)).label("sale_count"),
+            func.sum(OpportunityItem.extended_value_lakhs).label("sold_for_lakhs"),
+        )
+        stmt = self._won_lines(
+            stmt, current_user, "PRODUCT", sbu_id=sbu_id, zone_id=zone_id, user_id=user_id,
+            period_start=period_start, period_end=period_end,
+        )
+        stmt = (
+            stmt.join(Product, OpportunityItem.product_id == Product.id)
+            .where(OpportunityItem.cost_at_won_lakhs.is_(None))
+            .group_by(Product.id, Product.name)
+            .order_by(Product.name)
+        )
+        return list(self.db.execute(stmt).all())
+
+    def margin_trade_in_total(
+        self,
+        current_user: UserProfile,
+        *,
+        sbu_id: uuid.UUID | None = None,
+        zone_id: uuid.UUID | None = None,
+        user_id: uuid.UUID | None = None,
+        period_start: datetime | None = None,
+        period_end: datetime | None = None,
+    ) -> Decimal:
+        """D6: trade-ins stay out of the margin; one total, as a plain
+        positive amount."""
+        stmt = select(func.coalesce(func.sum(OpportunityItem.extended_value_lakhs), 0))
+        stmt = self._won_lines(
+            stmt, current_user, "BUYBACK", sbu_id=sbu_id, zone_id=zone_id, user_id=user_id,
+            period_start=period_start, period_end=period_end,
+        )
+        return self.db.execute(stmt).scalar_one()
 
     def stagnant_opportunities(
         self,

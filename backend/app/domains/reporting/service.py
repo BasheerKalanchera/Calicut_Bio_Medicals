@@ -1,8 +1,9 @@
 import uuid
 from datetime import date, datetime, timedelta
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 from zoneinfo import ZoneInfo
 
+from app.core.exceptions import AuthorizationError
 from app.core.periods import ist_midnight, quarter_of, today_ist
 from app.domains.activity.schemas import ReminderResponse
 from app.domains.organization.models import UserProfile
@@ -10,6 +11,11 @@ from app.domains.organization.repository import TEAM_SCOPE_BUILDERS, UNRESTRICTE
 from app.domains.reference.schemas import ZoneSearchResult
 from app.domains.reporting.repository import ReportingRepository
 from app.domains.reporting.schemas import (
+    MarginFigures,
+    MarginGroupBy,
+    MarginMissingCostRow,
+    MarginSummaryResponse,
+    MarginSummaryRow,
     NoActivityCustomerRow,
     NoActivityCustomersResponse,
     OpportunitiesOnHoldResponse,
@@ -131,6 +137,42 @@ def _zone_tree_rows(rows, zones, count_field: str, sum_fields: tuple[str, ...]) 
     return out
 
 
+# Margin Report plan D9 / BR-CAT-04: cost and margin are for these roles only.
+_MARGIN_ROLES = {"General Manager", "Admin"}
+_MARGIN_DENIED_MSG = "Only the General Manager and Admin can see the Margin Report."
+
+# What the margin query counts per group; all of them add up across groups.
+_MARGIN_SUMS = (
+    "quantity",
+    "sold_for_lakhs",
+    "costed_line_count",
+    "costed_sold_for_lakhs",
+    "cost_lakhs",
+    "filled_later_line_count",
+)
+
+
+def _margin_figures(sums: dict) -> dict:
+    """Margin = sold-for of the costed lines minus their cost (D3, D5);
+    % is of those same lines' sold-for (D14)."""
+    has_cost = sums["costed_line_count"] > 0
+    base = Decimal(sums["costed_sold_for_lakhs"])
+    cost = Decimal(sums["cost_lakhs"]) if has_cost else None
+    margin = base - cost if has_cost else None
+    percent = None
+    if margin is not None and base > 0:
+        percent = (margin / base * 100).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP)
+    return {
+        "quantity": sums["quantity"],
+        "sold_for_lakhs": sums["sold_for_lakhs"],
+        "costed_sold_for_lakhs": base,
+        "cost_lakhs": cost,
+        "margin_lakhs": margin,
+        "margin_percent": percent,
+        "filled_later_line_count": sums["filled_later_line_count"],
+    }
+
+
 class ReportingService:
     def __init__(self, repository: ReportingRepository):
         self.repository = repository
@@ -213,6 +255,56 @@ class ReportingService:
         return SalesSummaryResponse(
             group_by=group_by,
             rows=[SalesSummaryRow.model_validate(r) for r in rows],
+        )
+
+    def margin_summary(
+        self,
+        current_user: UserProfile,
+        group_by: MarginGroupBy,
+        *,
+        sbu_id: uuid.UUID | None = None,
+        zone_id: uuid.UUID | None = None,
+        user_id: uuid.UUID | None = None,
+        period_start: datetime | None = None,
+        period_end: datetime | None = None,
+    ) -> MarginSummaryResponse:
+        if current_user.role.role_name not in _MARGIN_ROLES:
+            raise AuthorizationError(_MARGIN_DENIED_MSG)
+        filters = {
+            "sbu_id": sbu_id,
+            "zone_id": zone_id,
+            "user_id": user_id,
+            "period_start": period_start,
+            "period_end": period_end,
+        }
+        rows = self.repository.margin_summary(current_user, group_by, **filters)
+        # Totals come from the groups before the zone roll-up (which repeats a
+        # line under every ancestor); each line is in exactly one group.
+        totals = {f: sum((getattr(r, f) for r in rows), 0) for f in _MARGIN_SUMS}
+        if group_by == "zone":
+            grouped = _zone_tree_rows(rows, self.repository.zone_tree(), "line_count", _MARGIN_SUMS)
+        else:
+            grouped = [
+                {f: getattr(r, f) for f in ("group_id", "group_name", *_MARGIN_SUMS)} for r in rows
+            ]
+        return MarginSummaryResponse(
+            group_by=group_by,
+            totals=MarginFigures(**_margin_figures(totals)),
+            rows=[
+                MarginSummaryRow(
+                    group_id=g["group_id"],
+                    group_name=g["group_name"],
+                    depth=g.get("depth"),
+                    zone_exact=g.get("zone_exact"),
+                    **_margin_figures(g),
+                )
+                for g in grouped
+            ],
+            missing_cost=[
+                MarginMissingCostRow.model_validate(r)
+                for r in self.repository.margin_missing_cost(current_user, **filters)
+            ],
+            trade_in_lakhs=self.repository.margin_trade_in_total(current_user, **filters),
         )
 
     def stagnant_opportunities(

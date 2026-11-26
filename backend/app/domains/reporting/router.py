@@ -12,6 +12,8 @@ from app.domains.organization.models import UserProfile
 from app.domains.reference.schemas import ZoneSearchResult
 from app.domains.reporting.repository import ReportingRepository
 from app.domains.reporting.schemas import (
+    MarginGroupBy,
+    MarginSummaryResponse,
     NoActivityCustomersResponse,
     OpportunitiesOnHoldResponse,
     OverdueActionsResponse,
@@ -186,6 +188,28 @@ def get_sales_summary(
     start_dt, end_dt = period_bounds(period_start, period_end)
     return APIResponse(
         data=service.sales_summary(
+            current_user, group_by, sbu_id=sbu_id, zone_id=zone_id, user_id=user_id,
+            period_start=start_dt, period_end=end_dt,
+        )
+    )
+
+
+# General Manager and Admin only (the service refuses everyone else) -- the
+# one report that carries cost (BR-CAT-04).
+@router.get("/margin-summary")
+def get_margin_summary(
+    group_by: MarginGroupBy = Query("product"),
+    sbu_id: uuid.UUID | None = Query(None),
+    zone_id: uuid.UUID | None = Query(None),
+    user_id: uuid.UUID | None = Query(None),
+    period_start: date | None = Query(None),
+    period_end: date | None = Query(None, description="Inclusive"),
+    current_user: UserProfile = Depends(get_current_user),
+    service: ReportingService = Depends(_get_service),
+) -> APIResponse[MarginSummaryResponse]:
+    start_dt, end_dt = period_bounds(period_start, period_end)
+    return APIResponse(
+        data=service.margin_summary(
             current_user, group_by, sbu_id=sbu_id, zone_id=zone_id, user_id=user_id,
             period_start=start_dt, period_end=end_dt,
         )
