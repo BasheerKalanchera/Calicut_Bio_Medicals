@@ -13,7 +13,7 @@ import type {
   SalesSummaryResponse,
   StagnantOpportunitiesResponse,
 } from "../types/reporting";
-import type { NoActivityCustomersResponse, WeeklyFollowupResponse } from "../types/api-aliases";
+import type { MarginGroupBy, MarginSummaryResponse, NoActivityCustomersResponse, WeeklyFollowupResponse } from "../types/api-aliases";
 import type { ZoneSearchResult } from "./masterData";
 
 // Customer with No Activity (docs/Exception-Report-Implementation-Plan.md):
@@ -97,6 +97,18 @@ export async function getOpportunitiesOnHold(
 
 export async function getSalesHeadline(filters: ReportingFilters = {}): Promise<SalesHeadline> {
   const r = await api.get("/reporting/sales-headline", { params: filters });
+  return r.data.data;
+}
+
+// Margin Report (docs/Margin-Report-Implementation-Plan.md): GM and Admin
+// only, the server refuses everyone else (D9).
+export async function getMarginSummary(
+  groupBy: MarginGroupBy,
+  filters: ReportingFilters = {},
+): Promise<MarginSummaryResponse> {
+  const r = await api.get("/reporting/margin-summary", {
+    params: { group_by: groupBy, ...filters },
+  });
   return r.data.data;
 }
 

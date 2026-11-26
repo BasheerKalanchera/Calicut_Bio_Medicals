@@ -65,3 +65,7 @@ export type NoActivityCustomersResponse = components["schemas"]["NoActivityCusto
 export type WeeklyFollowupOpportunityRow = components["schemas"]["WeeklyFollowupOpportunityRow"];
 export type WeeklyFollowupOpportunityList = components["schemas"]["WeeklyFollowupOpportunityList"];
 export type WeeklyFollowupCustomerList = components["schemas"]["WeeklyFollowupCustomerList"];
+export type MarginFigures = components["schemas"]["MarginFigures"];
+export type MarginSummaryRow = components["schemas"]["MarginSummaryRow"];
+export type MarginSummaryResponse = components["schemas"]["MarginSummaryResponse"];
+export type MarginGroupBy = MarginSummaryResponse["group_by"];

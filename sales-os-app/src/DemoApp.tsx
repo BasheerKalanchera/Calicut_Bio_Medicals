@@ -29,6 +29,7 @@ import OpportunitiesOnHoldReportScreen from "./screens/OpportunitiesOnHoldReport
 import ProductPerformanceReportScreen from "./screens/ProductPerformanceReportScreen";
 import PipelineReportScreen from "./screens/PipelineReportScreen";
 import SalesReportScreen from "./screens/SalesReportScreen";
+import MarginReportScreen from "./screens/MarginReportScreen";
 import UserDirectoryScreen from "./screens/UserDirectoryScreen";
 import TerritoryAdminScreen from "./screens/TerritoryAdminScreen";
 import AuditLogScreen from "./screens/AuditLogScreen";
@@ -86,6 +87,13 @@ const REPORTS_SECTION = {
   ],
 };
 
+// Reports only Admin/GM see: cost and margin are theirs alone (Margin Report
+// plan D9).
+const ADMIN_REPORTS_SECTION = {
+  ...REPORTS_SECTION,
+  items: [...REPORTS_SECTION.items, { id: "marginReport", label: "Margin Report", icon: "🧮" }],
+};
+
 // Admin/GM get an Administration section (Product Catalog management, plus
 // the other admin-only screens); every other role never sees this section
 // at all -- it would otherwise show up with only Product Catalog under it,
@@ -94,7 +102,7 @@ function getNavSections(isAdmin: boolean) {
   if (isAdmin) {
     return [
       { title: "SALES EXECUTION", items: SALES_EXECUTION_ITEMS },
-      REPORTS_SECTION,
+      ADMIN_REPORTS_SECTION,
       {
         title: "ADMINISTRATION",
         items: [
@@ -993,6 +1001,18 @@ export default function DemoApp() {
             </Box>
             <SalesReportScreen onDrillToPipeline={handleDrillToPipeline} />
           </Box>
+
+          {/* Mounted for Admin/GM only, so no other role asks the server for it. */}
+          {ADMIN_ROLES.has((userProfile as { role_name?: string } | null)?.role_name ?? "") && (
+            <Box sx={{ flex: 1, overflow: "hidden", display: view === "marginReport" ? "flex" : "none", flexDirection: "column" }}>
+              <Box sx={{ px: 2, py: 1.5, bgcolor: "background.paper", borderBottom: 1, borderColor: "gray.100", flexShrink: 0 }}>
+                <Typography component="h2" sx={{ typography: "h5", fontWeight: 800, color: "gray.800", letterSpacing: "-0.025em" }}>
+                  Margin Report
+                </Typography>
+              </Box>
+              <MarginReportScreen isActive={view === "marginReport"} onDrillToPipeline={handleDrillToPipeline} />
+            </Box>
+          )}
 
           <Box sx={{ flex: 1, overflow: "hidden", display: view === "targetPlanning" ? "flex" : "none", flexDirection: "column" }}>
             <Box sx={{ px: 2, py: 1.5, bgcolor: "background.paper", borderBottom: 1, borderColor: "gray.100", flexShrink: 0 }}>

@@ -10,6 +10,13 @@ export function formatPriceLakhs(v: number | string) {
   return `₹${Number(v).toFixed(2).replace(/\.?0+$/, "")}L`;
 }
 
+// Lakhs with both decimals, the minus sign ahead of the rupee sign
+// ("−₹5.00L") -- Margin Report, where a loss has to read as one (D18).
+export function formatLakhsExact(v: number | string) {
+  const n = Number(v);
+  return `${n < 0 ? "−" : ""}₹${Math.abs(n).toFixed(2)}L`;
+}
+
 // Cabio's fiscal year is April-March (Indian FY, see CLAUDE.md), not a
 // calendar quarter -- Sales Report's "This Quarter" period needs the real
 // FY quarter (Q1 Apr-Jun ... Q4 Jan-Mar), computed here client-side rather
@@ -68,6 +75,37 @@ export function formatPlanningPeriod(period: string): string {
   const fyStartYear = parseInt(match[1], 10);
   const q = parseInt(match[2], 10);
   return `${QUARTER_MONTHS[q - 1]} ${q === 4 ? fyStartYear + 1 : fyStartYear}`;
+}
+
+// The Period box of the reports that count Won Opportunities by closed date.
+export type ReportPeriod = "month" | "quarter" | "all";
+
+export const REPORT_PERIOD_OPTIONS: { value: ReportPeriod; label: string }[] = [
+  { value: "month", label: "This Month" },
+  { value: "quarter", label: "This Quarter" },
+  { value: "all", label: "All Time" },
+];
+
+// The start and end dates sent to the server; All Time sends none.
+export function reportPeriodFilters(period: ReportPeriod): { period_start?: string; period_end?: string } {
+  if (period === "all") return {};
+  if (period === "month") {
+    const today = dayjs();
+    return {
+      period_start: today.startOf("month").format("YYYY-MM-DD"),
+      period_end: today.endOf("month").format("YYYY-MM-DD"),
+    };
+  }
+  const { start, end } = getFiscalQuarterBounds();
+  return { period_start: start, period_end: end };
+}
+
+// The dates the period box covers, spelled out ("This Quarter" alone changes
+// meaning on 1 January). Quarter reads like Target vs Actuals ("Oct–Dec 2026").
+export function reportPeriodDates(period: ReportPeriod): string {
+  if (period === "all") return "All time";
+  if (period === "month") return dayjs().format("MMM YYYY");
+  return formatPlanningPeriod(getCurrentPlanningPeriod());
 }
 
 // Steps a "YYYY-Qn" planning period forward/backward by `delta` quarters --

@@ -1,4 +1,4 @@
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useContext, type KeyboardEvent, type ReactNode } from "react";
 import {
   Box,
   Card,
@@ -103,8 +103,12 @@ export function TocRow({
   shaded = false,
   detail,
   subRows,
+  onClick,
 }: {
   children: ReactNode;
+  // The whole row (or card) opens something; give it a chevron at its end
+  // (§6.11 rule 9).
+  onClick?: () => void;
   // Depth in the reporting tree.
   indent?: number;
   // A total line (bold, rule above it on a laptop).
@@ -117,11 +121,19 @@ export function TocRow({
 }) {
   const ctx = useContext(TocContext);
   const row = { indent, total };
+  const clickProps = onClick && {
+    onClick,
+    onKeyDown: (e: KeyboardEvent) => {
+      if (e.key === "Enter") onClick();
+    },
+    tabIndex: 0,
+  };
 
   if (!ctx.phone) {
     // One "& > td" object: two spreads with the same key would drop the first.
     const rowSx: SxProps<Theme> = {
       ...(shaded && { bgcolor: "gray.50" }),
+      ...(onClick && { cursor: "pointer" }),
       "& > td": {
         ...(total && { fontWeight: 700, borderTop: "2px solid", borderColor: "divider" }),
         ...(detail && { borderBottom: "none" }),
@@ -130,7 +142,7 @@ export function TocRow({
     return (
       <TocRowContext.Provider value={row}>
         {/* Every table: a row lights up under the mouse (fix 2, Basheer 28 Oct). */}
-        <TableRow hover={!total} sx={rowSx}>{children}</TableRow>
+        <TableRow hover={!total} sx={rowSx} {...clickProps}>{children}</TableRow>
         {detail && (
           <TableRow>
             <TableCell colSpan={ctx.columnCount}>{detail}</TableCell>
@@ -168,7 +180,7 @@ export function TocRow({
     return <Box sx={{ borderTop: 1, borderColor: "divider", pt: 0.75, mt: 0.75 }}>{content}</Box>;
   }
   return (
-    <Card variant="outlined" sx={{ ml: indent * 2, ...(shaded && { bgcolor: "gray.50" }) }}>
+    <Card variant="outlined" sx={{ ml: indent * 2, ...(shaded && { bgcolor: "gray.50" }), ...(onClick && { cursor: "pointer" }) }} {...clickProps}>
       <CardContent sx={{ p: 1.5, "&:last-child": { pb: 1.5 } }}>{content}</CardContent>
     </Card>
   );
@@ -253,6 +265,27 @@ export function TocCell({
     <Box sx={[{ gridColumn: "2 / -1", display: "flex", flexWrap: "wrap", columnGap: 0.5, alignItems: "baseline", typography: "body2" }, ...(Array.isArray(sx) ? sx : [sx])]}>
       {label && <Typography variant="body2" color="text.secondary" component="span">{label}:</Typography>}
       <Box component="span" sx={{ minWidth: 0, overflowWrap: "anywhere", ...(total && { fontWeight: 700 }) }}>{children}</Box>
+    </Box>
+  );
+}
+
+// Two cells side by side on one line of a phone card (e.g. "Sold for" and
+// "Cost"); on a laptop they are just two cells.
+export function TocPair({ children }: { children: ReactNode }) {
+  const ctx = useContext(TocContext);
+  if (!ctx.phone) return <>{children}</>;
+  return (
+    <Box
+      sx={{
+        gridColumn: "2 / -1",
+        display: "grid",
+        gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+        columnGap: 1,
+        // Each cell takes one half, not the card's columns.
+        "& > div": { gridColumn: "auto" },
+      }}
+    >
+      {children}
     </Box>
   );
 }
