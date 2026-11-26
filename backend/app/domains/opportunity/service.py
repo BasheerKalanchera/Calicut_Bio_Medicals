@@ -28,6 +28,7 @@ from app.domains.opportunity.schemas import (
     StakeholderLinkUpdate,
 )
 from app.domains.opportunity.validators import (
+    COMPETITOR_WON,
     validate_high_chance_closure_date,
     validate_po_date,
     validate_po_date_kept,
@@ -676,6 +677,14 @@ class OpportunityService:
                 win_probability=opportunity.win_probability,
                 expected_closure_date=opportunity.expected_closure_date,
             )
+
+        # BR-OP-03: competitor details belong only to "Competitor Won" -- any
+        # other loss reason clears them, so a box the rep can't see keeps nothing.
+        if effective_status.status_code == "LOST" and opportunity.loss_reason_id:
+            reason = self.repository.get_loss_reason(opportunity.loss_reason_id)
+            if reason and reason.reason_code != COMPETITOR_WON:
+                opportunity.competitor_name = None
+                opportunity.competitor_product_name = None
 
         opportunity = self.repository.update(opportunity)
         if moved_to_won:

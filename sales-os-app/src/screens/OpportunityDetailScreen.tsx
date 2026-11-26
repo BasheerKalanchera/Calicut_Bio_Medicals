@@ -247,6 +247,7 @@ function OverviewTab({
           <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, mt: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "red.50", border: "1px solid", borderColor: "red.200" }}>
             <Field label="Loss Reason"      value={lossReasonName ?? null} />
             <Field label="Competitor Name"  value={opp.competitor_name ?? null} />
+            <Field label="Competing product" value={opp.competitor_product_name ?? null} />
           </Box>
         )}
         {opp.gate_override_approver_id && (
@@ -1347,6 +1348,7 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
   const [editReactivationDate, setEditReactivationDate] = useState("");
   const [editLossReasonId, setEditLossReasonId]   = useState("");
   const [editCompetitorName, setEditCompetitorName] = useState("");
+  const [editCompetitorProduct, setEditCompetitorProduct] = useState("");
   // BR-FIN-07: referral credit, only relevant when Lead Source = Referral.
   const [editIsExternalReferrer, setEditIsExternalReferrer] = useState(false);
   const [editReferredByUserId, setEditReferredByUserId]     = useState("");
@@ -1535,6 +1537,7 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
     setEditReactivationDate(opp.reactivation_date ?? "");
     setEditLossReasonId(opp.loss_reason_id ?? "");
     setEditCompetitorName(opp.competitor_name ?? "");
+    setEditCompetitorProduct(opp.competitor_product_name ?? "");
     setEditIsExternalReferrer(!!opp.referred_by_note);
     setEditReferredByUserId(opp.referred_by?.id ?? "");
     setEditReferredByNote(opp.referred_by_note ?? "");
@@ -1628,9 +1631,15 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
       payload.hold_reason_id = editHoldReasonId;
       payload.reactivation_date = editReactivationDate;
     }
+    // BR-OP-03: the competitor fields belong only to "Competitor Won"; the
+    // server clears them for any other reason.
+    const isCompetitorWon = selectedLossReason?.reason_code === "COMPETITOR_WON";
     if (newStatus?.status_code === "LOST") {
       payload.loss_reason_id = editLossReasonId;
-      if (editCompetitorName.trim()) payload.competitor_name = editCompetitorName.trim();
+      if (isCompetitorWon) {
+        payload.competitor_name = editCompetitorName.trim();
+        payload.competitor_product_name = editCompetitorProduct.trim() || null;
+      }
     }
     if (referralLeadSourceCode === "REFERRAL") {
       if (editIsExternalReferrer) {
@@ -1706,7 +1715,8 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
       hold_reason_id:       newStatus?.status_code === "ON_HOLD" ? editHoldReasonId : opp.hold_reason_id,
       reactivation_date:     newStatus?.status_code === "ON_HOLD" ? editReactivationDate : opp.reactivation_date,
       loss_reason_id:        newStatus?.status_code === "LOST" ? editLossReasonId : opp.loss_reason_id,
-      competitor_name:       newStatus?.status_code === "LOST" ? (editCompetitorName.trim() || opp.competitor_name) : opp.competitor_name,
+      competitor_name:       newStatus?.status_code === "LOST" ? (isCompetitorWon ? editCompetitorName.trim() : null) : opp.competitor_name,
+      competitor_product_name: newStatus?.status_code === "LOST" ? (isCompetitorWon ? (editCompetitorProduct.trim() || null) : null) : opp.competitor_product_name,
       referred_by_note:      referralLeadSourceCode === "REFERRAL" ? (editIsExternalReferrer ? (editReferredByNote.trim() || null) : null) : null,
       referred_by:           referralLeadSourceCode === "REFERRAL" ? (newReferredBy ?? null) : null,
       gate_override_approver_id: gateOverrideChecked ? (editGateOverrideApproverId || null) : null,
@@ -2124,7 +2134,10 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
               {lossReasons.map((r) => <MenuItem key={r.id} value={r.id}>{r.reason_name}</MenuItem>)}
             </TextField>
             {editLossReasonCode === "COMPETITOR_WON" && (
-              <TextField label="Competitor Name *" value={editCompetitorName} onChange={(e) => setEditCompetitorName(e.target.value)} placeholder="e.g. Siemens" fullWidth size="small" />
+              <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
+                <TextField label="Competitor Name *" value={editCompetitorName} onChange={(e) => setEditCompetitorName(e.target.value)} placeholder="e.g. Siemens" fullWidth size="small" />
+                <TextField label="Competing product" value={editCompetitorProduct} onChange={(e) => setEditCompetitorProduct(e.target.value)} fullWidth size="small" />
+              </Box>
             )}
           </Box>
         )}

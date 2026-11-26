@@ -4737,6 +4737,8 @@ export interface components {
             loss_notes: string | null;
             /** Competitor Name */
             competitor_name: string | null;
+            /** Competitor Product Name */
+            competitor_product_name: string | null;
             /** Hold Reason Id */
             hold_reason_id: string | null;
             /** Reactivation Date */
@@ -4835,6 +4837,8 @@ export interface components {
             loss_notes?: string | null;
             /** Competitor Name */
             competitor_name?: string | null;
+            /** Competitor Product Name */
+            competitor_product_name?: string | null;
             /** Hold Reason Id */
             hold_reason_id?: string | null;
             /** Reactivation Date */
@@ -5085,6 +5089,8 @@ export interface components {
             loss_reason_id: string | null;
             /** Competitor Name */
             competitor_name: string | null;
+            /** Competitor Product Name */
+            competitor_product_name: string | null;
             /** Hold Reason Id */
             hold_reason_id: string | null;
             /** Reactivation Date */

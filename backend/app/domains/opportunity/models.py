@@ -73,6 +73,7 @@ class Opportunity(AuditMixin, Base):
     )
     loss_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     competitor_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    competitor_product_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     hold_reason_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("hold_reason.id"), nullable=True
     )

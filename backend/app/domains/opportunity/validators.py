@@ -17,8 +17,9 @@ def _today_ist() -> date:
     return datetime.now(ZoneInfo("Asia/Kolkata")).date()
 
 
-# Loss reason code that mandates competitor_name
-_COMPETITOR_WON = "COMPETITOR_WON"
+# Loss reason code that mandates competitor_name, and the only one that keeps
+# the competitor fields (BR-OP-03).
+COMPETITOR_WON = "COMPETITOR_WON"
 
 # Stage display_order thresholds (from Seed-Data.sql)
 _ORDER_QUALIFIED = 20
@@ -204,7 +205,7 @@ def validate_status_transition(
             raise BusinessRuleViolation(
                 "Loss Reason is required to mark an opportunity as Lost."
             )
-        if loss_reason_code == _COMPETITOR_WON and not competitor_name:
+        if loss_reason_code == COMPETITOR_WON and not competitor_name:
             raise BusinessRuleViolation(
                 "Competitor Name is required when Loss Reason is 'Competitor Won'."
             )
