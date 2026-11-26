@@ -26,8 +26,9 @@ business"; Progress-Archive-2026-11, 13 Nov (Build & Test) and 25 Nov
   below to it — Basheer, 2026-11-25
 - D6. The list, one row per Lost Opportunity: Opportunity name, customer,
   owner, stage it was lost at, Loss Reason, competitor, competing product,
-  value, closed date — on one line; no loss notes column (they stay on the
-  Opportunity's screen); newest first; pressing a row opens the
+  value, closed date — on one line; no loss notes column (the rep's words
+  on a loss are the "Why this change?" note on the Opportunity's Activity
+  tab; the app has no loss-notes box); newest first; pressing a row opens the
   Opportunity — Basheer, 2026-11-25 (notes left out to fit one row)
 - D6a. Phone card without the loss notes too (same as the computer list)
   — Basheer, 2026-11-25
@@ -50,6 +51,17 @@ business"; Progress-Archive-2026-11, 13 Nov (Build & Test) and 25 Nov
   any other feature — Basheer, 2026-11-25
 - D12. Keep the existing "Sales Report" name (not "Sales Won Report") —
   Basheer, 2026-11-25
+- D13. The zone filter includes every zone under the one picked — "North
+  Kerala" includes Malappuram — as the No-activity customers report does
+  and as the Sales Report's zone figures do. Not the On Hold report's exact
+  match (its screen has no zone filter, so that code is never used) —
+  Basheer, 2026-11-25
+- D14. The "by Competitor" summary lists only Lost Opportunities with a
+  competitor named; no "No competitor" row (the "by Loss Reason" summary
+  already counts every loss) — Basheer, 2026-11-25
+- D15. The "Competing product" box (D8) shows only when the Loss Reason is
+  "Competitor Won", beside Competitor Name, as Competitor Name does today
+  — Basheer, 2026-11-25
 
 ## Figures and sources
 
@@ -83,10 +95,12 @@ are we losing business, and to whom?".
   Opportunities in the list below.
 - Below, the list of Lost Opportunities: name, customer, owner, the stage
   it was at when lost, the reason, competitor, competing product, value
-  and closed date, on one line. The rep's loss notes are not in the list;
-  pressing a row opens the Opportunity, where they are.
+  and closed date, on one line. The rep's own words on why it was lost
+  are not in the list; pressing a row opens the Opportunity, where they
+  are the "Why this change?" note on its Activity tab.
 - Filters at the top, as on the other reports: period (by the closed date),
-  SBU, zone, owner, Loss Reason.
+  SBU, zone, owner, Loss Reason. Picking a zone includes the zones under
+  it ("North Kerala" includes Malappuram, D13).
 - It shows every Lost Opportunity, including those where the rep never
   added a product. The value then comes from the Opportunity's own
   estimated value.
@@ -179,7 +193,9 @@ Code search for `competitor_name` / `competitorName`, 25 Nov (backend,
 - Backend: `opportunity` model, schemas, update path beside
   `competitor_name`; `reporting/repository.py` new `sales_loss_report`
   modelled on `opportunities_on_hold` (`:616`) — `_apply_owner_scope`,
-  SBU/zone/owner filters, `closed_at` period, `loss_reason_id` filter;
+  SBU/owner filters, zone through `ZoneClosure` descendants as in
+  `no_activity_customers` (`:795`, D13; not On Hold's exact
+  `Account.zone_id == zone_id`), `closed_at` period, `loss_reason_id` filter;
   value = `COALESCE(SUM(opportunity_item.extended_value_lakhs) excluding
   BUYBACK, indicative_value)` via an outer-joined subquery so no-line
   Opportunities stay; competitor grouping on `lower(trim(competitor_name))`.
@@ -187,5 +203,8 @@ Code search for `competitor_name` / `competitorName`, 25 Nov (backend,
 - Frontend: `SalesLossReportScreen.tsx` (MUI only), `services/reporting.ts`,
   `types/reporting.ts`, menu entry in `DemoApp.tsx` `REPORTS_SECTION`;
   period box reuses `getFiscalQuarterBounds` as in `SalesReportScreen.tsx`.
-- E2E: Dev has about 5 Lost Opportunities (13 Nov) — enough for the list,
-  thin for the summaries; the E2E plan will say what test data it adds.
+- E2E: `docs/Sales-Loss-Report-Manual-E2E-Test-Plan.md` (4 pre-flight, 32
+  steps; Dev has 6 Lost, 25 Nov, and the plan adds three). D7's middle case
+  (no product line, typed value) can't be made from today's screens — the
+  value box shows only from Qualified or once a product is added — so the
+  builder's automated test covers it (26 Nov).
