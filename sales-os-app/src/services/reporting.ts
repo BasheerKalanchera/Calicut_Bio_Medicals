@@ -13,7 +13,7 @@ import type {
   SalesSummaryResponse,
   StagnantOpportunitiesResponse,
 } from "../types/reporting";
-import type { MarginGroupBy, MarginSummaryResponse, NoActivityCustomersResponse, WeeklyFollowupResponse } from "../types/api-aliases";
+import type { MarginGroupBy, MarginSummaryResponse, NoActivityCustomersResponse, SalesLossResponse, WeeklyFollowupResponse } from "../types/api-aliases";
 import type { ZoneSearchResult } from "./masterData";
 
 // Customer with No Activity (docs/Exception-Report-Implementation-Plan.md):
@@ -92,6 +92,15 @@ export async function getOpportunitiesOnHold(
   filters: ReportingFilters = {},
 ): Promise<OpportunitiesOnHoldResponse> {
   const r = await api.get("/reporting/opportunities-on-hold", { params: filters });
+  return r.data.data;
+}
+
+// Sales Loss Report (docs/Sales-Loss-Report-Implementation-Plan.md): every Lost
+// Opportunity in the viewer's reach, with the two summaries over the same rows.
+export async function getSalesLossReport(
+  filters: ReportingFilters & { loss_reason_id?: string } = {},
+): Promise<SalesLossResponse> {
+  const r = await api.get("/reporting/sales-loss", { params: filters });
   return r.data.data;
 }
 

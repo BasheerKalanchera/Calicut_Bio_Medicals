@@ -30,6 +30,7 @@ import ProductPerformanceReportScreen from "./screens/ProductPerformanceReportSc
 import PipelineReportScreen from "./screens/PipelineReportScreen";
 import SalesReportScreen from "./screens/SalesReportScreen";
 import MarginReportScreen from "./screens/MarginReportScreen";
+import SalesLossReportScreen from "./screens/SalesLossReportScreen";
 import UserDirectoryScreen from "./screens/UserDirectoryScreen";
 import TerritoryAdminScreen from "./screens/TerritoryAdminScreen";
 import AuditLogScreen from "./screens/AuditLogScreen";
@@ -84,6 +85,7 @@ const REPORTS_SECTION = {
     { id: "productPerformance", label: "Product Performance", icon: "🏆" },
     { id: "pipelineReport", label: "Pipeline Report", icon: "🧭" },
     { id: "salesReport", label: "Sales Report", icon: "💰" },
+    { id: "salesLossReport", label: "Sales Loss Report", icon: "📉" },
   ],
 };
 
@@ -1000,6 +1002,15 @@ export default function DemoApp() {
               </Typography>
             </Box>
             <SalesReportScreen onDrillToPipeline={handleDrillToPipeline} />
+          </Box>
+
+          <Box sx={{ flex: 1, overflow: "hidden", display: view === "salesLossReport" ? "flex" : "none", flexDirection: "column" }}>
+            <Box sx={{ px: 2, py: 1.5, bgcolor: "background.paper", borderBottom: 1, borderColor: "gray.100", flexShrink: 0 }}>
+              <Typography component="h2" sx={{ typography: "h5", fontWeight: 800, color: "gray.800", letterSpacing: "-0.025em" }}>
+                Sales Loss Report
+              </Typography>
+            </Box>
+            <SalesLossReportScreen isActive={view === "salesLossReport"} onSelectOpportunity={handleSelectOpportunity} />
           </Box>
 
           {/* Mounted for Admin/GM only, so no other role asks the server for it. */}
