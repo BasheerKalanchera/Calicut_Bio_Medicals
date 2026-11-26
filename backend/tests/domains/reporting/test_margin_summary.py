@@ -1,6 +1,6 @@
 """
 Margin Report (docs/Margin-Report-Implementation-Plan.md): who may see it
-(D9), how the figures are worked out (D3, D5, D6, D14, D15), the period
+(D9), how the figures are worked out (D3, D6, D15, D20), the period
 bounds, and what the three queries read. The worked figures are the E2E
 plan's section A (made-up test costs).
 """
@@ -37,20 +37,15 @@ def _user(role_name: str) -> MagicMock:
     return user
 
 
-def _group(
-    name, *, lines, quantity, sold, costed_lines=0, costed_sold="0", cost="0", filled=0, group_id=None
-):
+def _group(name, *, lines, quantity, sold, cost, filled=0, group_id=None):
     return SimpleNamespace(
         group_id=group_id or name, group_name=name, line_count=lines, quantity=quantity,
-        sold_for_lakhs=Decimal(sold), costed_line_count=costed_lines,
-        costed_sold_for_lakhs=Decimal(costed_sold), cost_lakhs=Decimal(cost),
-        filled_later_line_count=filled,
+        sold_for_lakhs=Decimal(sold), cost_lakhs=Decimal(cost), filled_later_line_count=filled,
     )
 
 
-E2 = _group("E2", lines=3, quantity=3, sold="19", costed_lines=3, costed_sold="19", cost="15", filled=3)
-S50 = _group("S50", lines=1, quantity=1, sold="29", costed_lines=1, costed_sold="29", cost="20", filled=1)
-E1 = _group("E1", lines=1, quantity=1, sold="5")
+E2 = _group("E2", lines=3, quantity=3, sold="19", cost="15", filled=3)
+S50 = _group("S50", lines=1, quantity=1, sold="29", cost="20", filled=1)
 
 
 def _repo(rows=(), missing=(), trade_in="0") -> MagicMock:
@@ -89,29 +84,18 @@ class TestFigures:
         assert _figures(rows[1]) == (1, Decimal(29), Decimal(20), Decimal(9), Decimal("31.0"))
         assert rows[1].filled_later_line_count == 1
 
-    def test_a_group_with_no_cost_shows_no_cost_or_margin_rather_than_zero(self):
-        row = _summary(_repo([E1])).rows[0]
-        assert _figures(row) == (1, Decimal(5), None, None, None)
-
-    def test_totals_count_all_sold_for_but_take_percent_over_costed_lines(self):
-        # D14: 13 / 48 = 27.1%, not 13 / 53 = 24.5%.
-        totals = _summary(_repo([E1, E2, S50])).totals
-        assert _figures(totals) == (5, Decimal(53), Decimal(35), Decimal(13), Decimal("27.1"))
-        assert totals.costed_sold_for_lakhs == Decimal(48)
+    def test_totals_add_up_the_rows(self):
+        totals = _summary(_repo([E2, S50])).totals
+        assert _figures(totals) == (4, Decimal(48), Decimal(35), Decimal(13), Decimal("27.1"))
         assert totals.filled_later_line_count == 4
 
-    def test_a_row_with_some_uncosted_lines(self):
-        rep = _group("Basheer K", lines=4, quantity=4, sold="23", costed_lines=3, costed_sold="18", cost="10")
-        row = _summary(_repo([rep]), "rep").rows[0]
-        assert _figures(row) == (4, Decimal(23), Decimal(10), Decimal(8), Decimal("44.4"))
-
     def test_sold_below_cost_is_a_negative_margin(self):
-        loss = _group("X", lines=1, quantity=1, sold="8", costed_lines=1, costed_sold="8", cost="10")
+        loss = _group("X", lines=1, quantity=1, sold="8", cost="10")
         row = _summary(_repo([loss])).rows[0]
         assert (row.margin_lakhs, row.margin_percent) == (Decimal(-2), Decimal("-25.0"))
 
     def test_sold_for_nothing_has_a_margin_but_no_percent(self):
-        free = _group("X", lines=1, quantity=1, sold="0", costed_lines=1, cost="3")
+        free = _group("X", lines=1, quantity=1, sold="0", cost="3")
         row = _summary(_repo([free])).rows[0]
         assert (row.margin_lakhs, row.margin_percent) == (Decimal(-3), None)
 
@@ -119,26 +103,25 @@ class TestFigures:
         report = _summary(_repo())
         assert report.rows == []
         assert report.missing_cost == []
-        assert _figures(report.totals) == (0, Decimal(0), None, None, None)
+        assert _figures(report.totals) == (0, Decimal(0), Decimal(0), Decimal(0), None)
         assert report.trade_in_lakhs == Decimal(0)
 
     def test_missing_cost_list_and_trade_ins_are_passed_through(self):
         missing = SimpleNamespace(
             product_id=uuid.uuid4(), product_name="E1", sale_count=1, sold_for_lakhs=Decimal(5)
         )
-        report = _summary(_repo([E1], missing=[missing], trade_in="2"))
+        report = _summary(_repo([E2], missing=[missing], trade_in="2"))
         assert [(m.product_name, m.sale_count, m.sold_for_lakhs) for m in report.missing_cost] == [
             ("E1", 1, Decimal(5))
         ]
         assert report.trade_in_lakhs == Decimal(2)
-        # D6: trade-ins stay out of the totals.
-        assert report.totals.sold_for_lakhs == Decimal(5)
+        # D6, D20: trade-ins and sales without a cost stay out of the totals.
+        assert report.totals.sold_for_lakhs == Decimal(19)
 
     def test_zone_rows_roll_up_and_totals_are_not_double_counted(self):
         kerala, north = uuid.uuid4(), uuid.uuid4()
         repo = _repo([
-            _group("North Kerala", group_id=str(north), lines=1, quantity=1, sold="29",
-                   costed_lines=1, costed_sold="29", cost="20"),
+            _group("North Kerala", group_id=str(north), lines=1, quantity=1, sold="29", cost="20"),
         ])
         repo.zone_tree.return_value = [
             SimpleNamespace(id=kerala, name="Kerala", parent_zone_id=None),
@@ -193,6 +176,10 @@ class TestQueries:
         assert "opportunity_item.cost_at_won_lakhs" in sql
         assert "product.cost_lakhs" not in sql
         assert "line_type = 'PRODUCT'" in sql
+
+    def test_summary_counts_only_lines_with_a_saved_cost(self):
+        sql = _statement("margin_summary", "product")
+        assert "opportunity_item.cost_at_won_lakhs IS NOT NULL" in sql
 
     @pytest.mark.parametrize("group_by", ["product", "brand", "sbu", "zone", "rep"])
     def test_every_grouping_builds(self, group_by):

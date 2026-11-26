@@ -48,6 +48,9 @@ interface TocContextValue {
   columnCount: number;
   // True inside a phone card (a sub-row): no card of its own.
   nested: boolean;
+  // True in a pinned row: it sits with the headings but its cells are
+  // ordinary ones, not headings.
+  pinned?: boolean;
 }
 
 const TocContext = createContext<TocContextValue>({ phone: false, columnCount: 1, nested: false });
@@ -60,10 +63,14 @@ export default function TableOrCards({
   columns,
   children,
   stickyHeader,
+  pinned,
 }: {
   columns: TocColumn[];
   children: ReactNode;
   stickyHeader?: boolean;
+  // Rows held with the column headings while the rest scroll (a totals row).
+  // Laptop only: a phone screen holds its own block above the cards.
+  pinned?: ReactNode;
 }) {
   const phone = useIsPhone();
   const inCard = useContext(InCardContext);
@@ -80,8 +87,10 @@ export default function TableOrCards({
   }
   return (
     <TocContext.Provider value={value}>
-      <Table size="small" stickyHeader={stickyHeader}>
-        <TableHead>
+      {/* With pinned rows the whole heading block sticks, not each cell, or
+          the rows would sit on top of one another. */}
+      <Table size="small" stickyHeader={stickyHeader && !pinned} sx={pinned ? { borderCollapse: "separate" } : undefined}>
+        <TableHead sx={pinned ? { position: "sticky", top: 0, zIndex: 2, bgcolor: "background.paper" } : undefined}>
           <TableRow>
             {columns.map((c, i) => (
               <TableCell key={i} align={c.align} padding={c.toggle ? "checkbox" : undefined} sx={c.width !== undefined ? { width: c.width } : undefined}>
@@ -89,6 +98,7 @@ export default function TableOrCards({
               </TableCell>
             ))}
           </TableRow>
+          <TocContext.Provider value={{ ...value, pinned: true }}>{pinned}</TocContext.Provider>
         </TableHead>
         <TableBody>{children}</TableBody>
       </Table>
@@ -227,6 +237,7 @@ export function TocCell({
   if (!ctx.phone) {
     return (
       <TableCell
+        {...(ctx.pinned && { component: "td", variant: "body" as const })}
         align={align}
         colSpan={colSpan}
         padding={toggle ? "checkbox" : undefined}

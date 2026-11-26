@@ -346,9 +346,10 @@ class ReportingRepository:
         period_start: datetime | None = None,
         period_end: datetime | None = None,
     ) -> list[Row]:
-        """One row per group over PRODUCT lines. Cost is the one saved on the
-        line (D4), never today's catalog cost; a line without one counts in
-        quantity and sold-for only (D5)."""
+        """One row per group over the PRODUCT lines that have a saved cost.
+        Cost is the one saved on the line (D4), never today's catalog cost; a
+        line without one is in no figure here -- margin_missing_cost lists it
+        (D20)."""
         group_id_col, group_name_col = _group_columns(group_by)
         cost = OpportunityItem.cost_at_won_lakhs
         sold_for = OpportunityItem.extended_value_lakhs
@@ -358,19 +359,14 @@ class ReportingRepository:
             func.count(OpportunityItem.id).label("line_count"),
             func.sum(OpportunityItem.quantity).label("quantity"),
             func.sum(sold_for).label("sold_for_lakhs"),
-            func.count(cost).label("costed_line_count"),
-            func.coalesce(func.sum(case((cost.is_not(None), sold_for), else_=0)), 0).label(
-                "costed_sold_for_lakhs"
-            ),
-            # SUM skips the lines whose cost is NULL.
-            func.coalesce(func.sum(OpportunityItem.quantity * cost), 0).label("cost_lakhs"),
+            func.sum(OpportunityItem.quantity * cost).label("cost_lakhs"),
             func.count(case((OpportunityItem.cost_filled_in_later, 1))).label("filled_later_line_count"),
         )
         stmt = self._won_lines(
             stmt, current_user, "PRODUCT", sbu_id=sbu_id, zone_id=zone_id, user_id=user_id,
             period_start=period_start, period_end=period_end,
         )
-        stmt = _outerjoin_line_dimension(stmt, group_by)
+        stmt = _outerjoin_line_dimension(stmt, group_by).where(cost.is_not(None))
         stmt = stmt.group_by(group_id_col, group_name_col).order_by(group_name_col)
         return list(self.db.execute(stmt).all())
 
