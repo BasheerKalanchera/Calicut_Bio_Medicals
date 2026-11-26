@@ -12,53 +12,54 @@ session edits this note._
   ahead of a full promotion go by the hotfix-branch route
   (`docs/Deployment-Topology.md` "Fix to UAT ahead of a full promotion").
 
-## NOW (24 Nov, evening) — Margin Report: read-only checks only, nothing edited
-Basheer told this session to build `docs/Margin-Report-Implementation-Plan.md`
-(Approved, D1–D13; build order in its section 2, check in before each step). So
-far only reading: no migration written, nothing on Dev changed. E2E plan written
-ahead: `docs/Margin-Report-Manual-E2E-Test-Plan.md` — its **P0 must run before
-Basheer applies the migration** (test costs in the catalog, so the one-time fill
-has something to copy); correct its labels from the code in P2.
-- **25 Nov:** Plan & Chore decided D13a–e (reason = Activity-tab Note, reason-only
-  "Why this change?" pop-up), D14 (Margin % over costed lines), D15, D16.
-  **Step 1 done and pushed (25 Nov, `18ae6c3`, checkpoint, partial):** 0068
-  applied to Dev (`alembic current` = 0068 head; 4 Won lines filled, 2 left
-  empty: X3, E1), schema regenerated, model + Won stamp
-  (`stamp_cost_at_won`, `service.py` after `repository.update`) + tests,
-  pytest 1682 passed / 10 skipped. Real Dev copy on a new Won not yet seen
-  working — E2E steps cover it.
-- **D16 pushed (25 Nov, `0084a92`):** first catalog cost fills a product's empty
-  Won lines (`ProductRepository.fill_empty_won_costs`); 1692 passed.
-- **Part B1 (server) committed and pushed (25 Nov, `595241e`, checkpoint, partial):** `opportunity/service.py`
-  (`_product_edit_refusal`, `can_edit_products`, `replace_items` takes `role_name`
-  + `data.reason`, `_replace_closed_items` writes one Note via
-  `log_stage_change_note` with no next action; `add_item`/`delete_item` refused
-  for everyone on Won/Lost), `repository.py` (`stamp_cost_at_won(line_ids=)`,
-  `get_product_names`, swapped product clears its cost), `schemas.py`
-  (`reason`, `ItemEditPermission`), `router.py` (`GET .../items/can-edit`),
-  api.ts regenerated. pytest 1741 passed / 10 skipped, ruff clean. `main` in
-  sync with `origin/main`; B2 screen pending.
-  **Until B2 lands on Dev:** a GM/Admin Save on a Won/Lost Opportunity's products
-  is refused (old screen sends no reason); reps see Edit but are refused on save.
-- **B2 (screen) committed and pushed 25 Nov (`36a931a`, checkpoint, partial),
-  NOT yet seen in a browser — Basheer chose to leave it to the full E2E
-  (steps 21–26, 30–31, 35):**
-  `opportunities.ts` (`canEditOpportunityItems`, `reason` on replace),
-  `api-aliases.ts`, `CloseReminderModal.tsx` (`productChange` reason-only mode),
-  `OpportunityDetailScreen.tsx` (`ProductsTab`: Edit/+ Add via can-edit; Won/Lost
-  Save = unchanged → nothing, changed → pop-up). `tsc` clean, eslint 0 errors.
-  Still to do: re-read the other two pop-up modes' code for regressions
-  (pre-E2E review). Swapped-product cost rule agreed by Basheer and written
-  into the plan as D13f + section 6 (25 Nov, uncommitted, docs batch); the E2E
-  plan has no swap step yet — offer to add one.
-- **Next:** plan step 2 (margin query/endpoint, GM/Admin only, nothing on
-  screen changes) — check in first; then step 3 (screen).
-  Add the swapped-product cost rule to the plan addendum (section 6).
-  Open ask from Plan & Chore (not yet approved by Basheer): E2E plan pre-flight —
-  step 23 needs Haroon to have an open next action on that Opportunity (show
-  wording first). Retro for 25 Nov is already in Progress-Archive.
-- Last session's work: "First activity" `121216e`, Product Catalog header
-  `3c91f94`, docs batch `fa9a65c`, all pushed.
+## NOW (26 Nov) — date picker cut off on short laptop screens
+Backlog entry "Date picker cut off on short laptop screens". Basheer parked the
+Margin Report E2E for this (26 Nov). Fix made, **not committed**:
+`utils/datePicker.ts` (820px), `CloseReminderModal.tsx`, `LogActivityModal.tsx`.
+Reviewed; pytest 1788 / 10 skipped, ruff, tsc clean, lint 0 errors.
+**Next:** E2E `docs/Date-Picker-Short-Screen-Manual-E2E-Test-Plan.md`: 6 of 10
+passed (P1, P2, 1–4). Step 6 with the switch on, then restore it, then 5, 7, 8.
+Then `fix:` commit (needs his yes), Backlog entry closed.
+Session refresh (26 Nov evening): retro written to the archive (3 corrections);
+docs commit proposed, awaiting his yes. Switch still in the code.
+Scrolling finding fixed (Basheer yes): header hidden below 660px screen height
+(`DATE_TIME_TOOLBAR`); diff reviewed, tsc clean, lint 0 errors; not yet seen.
+**TEMPORARY SWITCH IN `utils/datePicker.ts` (Basheer yes, 26 Nov):** "before"
+seen by Basheer (cut off, bug reproduced); now "after" = `(min-height: 820px)`.
+Restore
+`"@media (pointer: fine) and (min-height: 820px)"` and drop the TEMPORARY
+comment before any commit.
+Why the switch: this laptop's Chrome reports touch only even with the mouse, so
+the real code always centres here. Centred box measured 587px tall.
+Review points: centred box may scroll on very short screens (step 5); crossing
+820 while a box is open closes it (accept); older bug, impossible date may keep
+the previous one (step 7, fix separately if seen).
+
+## PARKED (26 Nov) — Margin Report E2E, resume at step 13
+Plan `docs/Margin-Report-Implementation-Plan.md` (Approved, D1–D21; build order
+complete). E2E plan `docs/Margin-Report-Manual-E2E-Test-Plan.md`.
+- **Pushed:** D19–D21 changes `1852540` (26 Nov; pytest 1788 passed / 10
+  skipped, ruff, tsc clean, lint 0 errors). Earlier build commits: the E2E
+  plan's "Built:" lines.
+- **E2E:** section A done — P1–P4 and steps 1–12 (incl. 11a) Pass, 17 of 54.
+  **Next: step 13** (login Basheer K, saves to Dev: Basheer clicks, Claude
+  watches). Confirm the Dev backend is current before starting.
+- **First seen at E2E:** the Won/Lost products screens (steps 21–26, 30–31, 35;
+  also re-read the other two pop-up modes in `CloseReminderModal.tsx`) and the
+  Dev cost copy on a newly Won Opportunity. Phone header and one-line totals
+  card: check by eye at step 36 (may wrap; review estimate, not measured).
+- **Open questions to Basheer:** (1) rows' Quantity — proposed keep in Product
+  view only; (2) accept that a click may list more Opportunities than the
+  figures count (rows and no-cost list), then add to D20.
+- **Small-fixes batch:** Activity Note writes "₹12.00 L", screens "₹12.00L"
+  (proposed, not answered).
+- **After the E2E:** post-commit checklist (Backlog entry, Traceability row
+  11.1, scorecard).
+- **Docs commit pending** (Basheer, 26 Nov: do it at the end of the next
+  Build & Test session; needs its own approval): this note, the Margin plan,
+  its E2E plan and Build & Test's `docs/Progress-Archive-2026-11.md` sections.
+- Leave `scripts/uat_case_study_scan.py` and the Plan & Chore note alone.
+
 **Other open:** (a) plan D11 wording (Plan & Chore's batch; the rolled-back test was
 his 21 Nov choice); (b) fix E2E plan wording at 9b and step 21; (c) UAT with the
 next full move (D9): needs his yes for the UAT people check, Haroon to be told

@@ -2281,6 +2281,12 @@ edited in code and nothing was written to UAT.
 - **UAT read-only check for sample probe sets (Basheer approved, 26 Nov; one read-only transaction, Admin context verified, rolled back):** 17 USG catalog products (12 USG Machine + 5 Portable), none with probes in the name, 1 description mentions a set ("P25 elite CV — Only for cardiac"); 92 Opportunities with a USG line (the count also takes in a few EDAN Sonotrax fetal Doppler Opportunities, caught by the word "doppler"), every line a machine only — probes appear only in activity notes (94 matching notes on those Opportunities, 46 elsewhere). Most sets the notes name are 4 standard probes (convex, linear, TV, cardiac), a fetal set with volume probes, or a cardiac set; the same machine is quoted with different probe counts (E2 with 1, 2 and 3). Hospital names and prices left out of the repo (client data, Basheer 26 Nov); working files deleted.
 - **One-page sample list for the Cabio leadership team** (Basheer asked): given to Basheer as a PDF for WhatsApp — 18 sample sets with an "invoice confirms?" column, 4 lone probes, 2 questions (standard kinds per machine; keep every E2 probe count?). The actual list comes from Cabio's analysis of past POs and invoices. Kept out of the repo (client data).
 
+## 26 Nov 2026 — Build & Test: Margin Report steps 2 and 3 pushed
+
+- **Shipped:** step 2, server margin figures (`GET /reporting/margin-summary`, GM/Admin only, `d3baaa6`; pytest 1778 passed / 10 skipped, ruff clean, run read-only on Dev), and step 3, the Margin Report screen with its Reports menu item (`2cb5a0b`; `tsc` clean, lint 0 errors). Both checkpoints, partial: build order complete, pre-E2E review and E2E pending, screen not yet seen in a browser.
+- **Decided (Basheer, 26 Nov):** D17 (a product with no cost gets its own row), D18 (a loss shows a minus sign, in red), phone layout B (two figures on a line: Sold for with Cost, Margin with Margin %).
+- **E2E plan:** figures reworked with Plan & Chore's review points, product-swap steps 25b/25c and step 21b added.
+
 ## 26 Nov 2026 — Plan & Chore: late retro for the morning session
 
 - **Retro, 26 Nov (Plan & Chore, morning session 06:07–08:46 IST; written late at the start of the next session — the morning session ended without it, and Basheer pointed out the retro belongs before a restart). Corrections from Basheer: 6** (counted from his 24 typed messages in the transcript). (1) "What was the issue in the present version of the product catalog…" — my one-line offer of a probe-sets paper didn't say what problem it would solve. (2) "go straight to UAT." — I had proposed a Dev practice run first. (3) "Not in .md format… share with them in WhatsApp." — leadership sheet made in a format he can't send. (4) He replaced my sheet's "What we need from you" paragraph with his own wording (list is from the UAT scan; the real list comes from Cabio's POs and invoices). (5) "Please remove docs/Discussion-USG-Probe-Sets-2026-11.md from your commit… sensitive client data for Cabio." — UAT-derived client data saved inside the project and staged; stopped before the commit ran, nothing pushed. (6) "Is it really time for a session refresh?" — I wound the session down without a reason, retro left undone. Judgement call, not counted: "Is it time for docs batch commit already?". Tracker: (5) touched UAT data → new P110 (open, proposal). No other slip touched live data or could be stopped by a guard.
@@ -2291,6 +2297,16 @@ edited in code and nothing was written to UAT.
 - **Two good-example timelines read (UAT, Basheer yes, 26 Nov; read-only, Admin context checked, rolled back).** Both Fahad's, both at Negotiation 70 %. Candidate 1 (S50 Elite + E2, 15 activities 9 Sep–24 Nov): visits every 1–2 weeks, typed in the same day, every visit closes with a next action, four people at the customer met; but the stage is ahead of the facts (notes say the MD has not yet called them in for negotiation), the closing date (30 Sep) was never updated, no stakeholders recorded, two thin call notes on 9 Oct (of three calls that day). Case C (good example) drafted for the Area Managers' WhatsApp group, same style as Cases A and B; kept in the session scratchpad.
 - **Weekly-check figures table drafted** (Basheer asked, 26 Nov): the 19 Nov manager weekly-check message gets a 19 Nov → 26 Nov table from the two scans, to replace its "Why this matters" paragraph. Only one count fell (model in the name not on the product lines, 9 → 8; fixed or marked Lost, not checked); the two new stage skips are Order → Payment Pending and Lead → Negotiation. Message still to be sent. Candidate 2 (P40 Elite, 14 activities 26 Oct–23 Nov): frequent and team-logged, but the demo dates on the record (12–14 Oct) don't match the notes (demo still being planned for late Nov), closing date 17 Oct, one next action overdue and still open. Recommendation to Basheer: candidate 1 as the good example with kind tips; not candidate 2. Names and output kept in the session scratchpad (client data).
 
+## 26 Nov 2026 — Build & Test: Margin Report pre-E2E review fixes pushed
+
+- **Review (high) of the Margin Report commits: 6 points, found by reading the code, none reproduced; all fixed in `fb31c08`** (Basheer: "fix all 6"). (1) Won/Lost products save and the Opportunity Value update were two calls; now one transaction. (2) Removing a product and adding it again before Save would likely have broken the one-line-per-product rule; now the same line is updated, and a Won line keeps its saved cost (D13g, Basheer). (3) A description-only change was reported saved but dropped. (4) A Buyback line turned into a Product line got no cost. (5) A third decimal counted as a change and could write a Note showing no difference. (6) A stray space. (3) and (4) are reachable only through the API.
+- Same commit: the Sales Report uses the shared period helpers (Basheer's yes; no visible change expected).
+- pytest 1789 passed / 10 skipped, ruff and tsc clean, lint 0 errors. Not yet seen in a browser or saved against the Dev database; E2E pending.
+
+## 26 Nov 2026 — Build & Test: end-of-session retro
+
+- **Retro, 26 Nov (Build & Test; 2 h 42 min worked at the checkpoint). Corrections from Basheer: 2** (counted from the 19 typed messages in the transcript). (1) "What is this? Please explain" — I listed the open items too tersely to follow. (2) "Please elaborate this" — my note on the phone layout change was not clear; I had also wrongly said the screen standards forbade two figures on a line. Not counted: the "pressed No" re-run (an accidental click) and the E1 question (raised on Plan & Chore's review). No slip touched live data or could be stopped by a guard; no tracker change.
+
 ## 26 Nov 2026 — Plan & Chore: possible duplicates read
 
 - **Possible-duplicate pairs read (UAT, Basheer asked, 26 Nov; read-only, Admin context checked, rolled back; 19 non-Lost Opportunities at the 7 customers).** Of the scan's 7 pairs: 3 are real duplicates (same machine, same customer contact, both open; one has a third empty Opportunity too), 1 is a partial duplicate (a Won machine also added as a line on a later Opportunity), 3 are separate purchases (repeat orders or a new project). Side findings: a repeat order carrying the first order's PO number, one PO number on two Opportunities, a quotation filed under what looks like the wrong customer. About 41–46 L counted twice. Names kept in the session scratchpad (client data). Basheer: a note to the team goes out tomorrow (27 Nov), so the reps fix their own; no data changed by Claude.
@@ -2300,3 +2316,80 @@ edited in code and nothing was written to UAT.
 
 - **Retro, 26 Nov (Plan & Chore, afternoon/evening session). Corrections from Basheer: 1** — "You do end of session retro before the session refresh right?" (I had listed the morning session's missing retro as a start-of-session item). Three of my own statements corrected by me before Basheer acted on them (the 9 → 8 count I'd called unchanged; the two new stage skips being different kinds; duplicate pair 4 first called a possible repeat order). No tracker line: none touched live data or lost work.
 - **Retro addendum, 26 Nov (same session, after `33ce392`). Corrections from Basheer: 2** — "How will BT see it?" (I had offered to move Haroon's photo to my scratchpad, where no other session can see it; it went into a new `docs/screenshots` folder instead); "You mean create docs/screenshots folder?" (my "start a screenshots folder" was not clear enough). Session total: 3. No tracker line: neither could be stopped by a tool check, and neither touched live data or lost work.
+
+## 26 Nov 2026 — Build & Test: Margin Report screen changes during E2E (D19)
+
+- **Basheer, from the phone view mid-E2E:** header on one line, a two-line totals card, totals held still while rows scroll, and no separate no-cost list when grouped by Product (plan D19). Also step 28c's test cost ₹4.50L → ₹3.50L (a cost above E1's CEO's lowest ₹4.25L is refused). Code uncommitted; tsc clean, lint 0 errors; not seen in a browser.
+- **Review (medium) of that code: 2 points, found by reading the code, both checked against it; not yet fixed.** (1) On laptop/tablet the held Total row's cells become heading cells, so it loses its bold figures and the line above it. (2) On a phone the title and boxes sit 4 px further in on the left and further out on the right than the cards below.
+- Both review points fixed (Basheer: "Fix both"); tsc clean, lint 0 errors; not seen in a browser.
+- Basheer then asked why the totals include E1's price ("the total appears wrong") and what the total quantity is for. Read from the code: E1 is not in the margin, but its ₹5.00L is in total Sold for (D5, as built), so ₹53.00L − ₹49.00L does not give −₹1.00L. Two changes proposed, awaiting Basheer.
+
+## 26 Nov 2026 — Build & Test: Margin Report, no-cost sales taken out of the table (D20)
+
+- Basheer: "We can go back to the earlier decision of keeping the Opportunities
+  without cost into a separate section." Also removed the total Quantity and
+  asked for the no-cost list to be clickable. Recorded as D20.
+- Built: rows and totals count only lines with a saved cost (server filter);
+  the list shows in all five groupings and opens the Pipeline list; the line
+  under a product's name (D19) removed. E2E expected figures reworked by
+  script; step 11a added.
+- Checks: pytest 1788 passed / 10 skipped; ruff clean; tsc clean; lint 0
+  errors, 134 warnings. Not seen in a browser.
+- Code review (medium) of the uncommitted D19 and D20 changes: no bug to fix.
+  Two minor points, both put to Basheer: a click can open more Opportunities
+  than the clicked figures count (the Pipeline filter ignores saved cost); the
+  one-line phone header may wrap at 360–390 px (estimate, not measured).
+- D21 (Basheer, choice A): phone totals card in one line (Sold for, Cost,
+  Margin), no "Total" word or margin %. His wording with both needed about
+  381 px against about 332 px on a 390 px phone (measured by script in the
+  Windows font). Checks: tsc clean, lint 0 errors; reviewed by re-reading the
+  change; not yet seen in a browser.
+- **Shipped:** D19–D21 as `1852540`, pushed 26 Nov. E2E section A (P1–P4,
+  steps 1–12 incl. 11a) passed on Dev, run by Basheer; 17 of 54. Feature not
+  finished: Traceability and scorecard unchanged.
+
+## 2026-11-26 — Build & Test retro (Margin Report E2E session)
+
+**Corrections from Basheer this session: 3**
+- Read "move the Margin figure to the total row" as a swap of rows; he had to
+  say "all 3 on the same line".
+- My D19 suggestion (hide the no-cost list by Product) left E1 counted and the
+  total looking wrong; he went back to the separate list (D20).
+- I listed "that section has no row click" as an effect without proposing the
+  fix; he asked "Why not make it that card also clickable?"
+
+## 26 Nov 2026 — Build & Test: date picker on short laptop screens
+
+- Basheer parked the Margin Report E2E at step 13 to fix the Backlog entry
+  (Haroon's report). Below a set screen-area height, the four date-and-time boxes
+  in Close Next Action and Log Activity now open in the centre.
+- Review (medium) found the proposed 760px too low: the attached box (about
+  390px, estimate) only flips above or below its field. Raised to 820px
+  (Basheer). Also noted: centred box may scroll on very short screens; crossing
+  the cut-off with a box open closes it; older code may keep the previous date
+  when an impossible date is typed (from reading code, not reproduced).
+- Checks: pytest 1788 passed / 10 skipped, ruff and tsc clean, lint 0 errors.
+  Not yet seen in a browser; not committed.
+- E2E: Basheer could not see any difference — Chrome on that laptop reports a
+  touch screen and no mouse (Windows does see the Bluetooth mouse), so old and
+  new both centre the box. With a temporary switch ignoring the mouse check he
+  reproduced the cut-off, then saw the centred box (step 2 Pass). Finding: on a
+  short window the centred box must be scrolled to reach Cancel and Next.
+- Fix (Basheer: yes, by height only, any device): the box's large date-and-time
+  header is hidden below 660px screen height (estimate). Reviewed: in the
+  centred box AM/PM is also a column in the clock tab (library code), so it stays
+  selectable. tsc clean, lint 0 errors on the three files. Step 2 to be re-run.
+- Steps 1–4 Pass after the header change (6 of 10 with P1–P2). Next: step 6
+  with the temporary switch still in the code, remove the switch, then 5, 7, 8.
+  Not committed.
+- **Retro, 26 Nov (Build & Test, date picker on short screens). Corrections
+  from Basheer this session: 3**, counted from his 17 typed messages in the
+  transcript: (1) "Didn't quite understand the diff between 760 & 820?" —
+  unclear explanation; (2) "I am unable to replicate… Show me." — before/after
+  steps given without checking how his browser reports the laptop; (3) "I
+  already use a mouse on this laptop using bluetooth mode?" — I suggested
+  plugging in a mouse without asking whether he used one. Not counted: "Which
+  all date pickers are impacted?" (I had said two windows; four — corrected);
+  "only for shrunk laptop windows right?" (clarifying); the scrolling problem
+  (E2E result, though the review had flagged it before he tested). No live data
+  or UAT touched; no guard could stop these; no tracker change.
