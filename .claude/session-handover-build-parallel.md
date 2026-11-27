@@ -9,7 +9,8 @@ the build branch, and reaches `main` at the merge (Basheer, 2026-10-17)._
 
 ## NOW (27 Nov): no build in progress
 - Sales Loss Report is on `main` and Dev (merge `c4de312`, migration 0069
-  applied). Its E2E is Build & Test's (message sent 27 Nov 20:44). If they
+  applied); after-merge documents `cd65a5b`, pushed; Build branch at the same
+  commit. Its E2E is Build & Test's (message sent 27 Nov 20:44). If they
   report a fault in the build, fix it as asked.
 - **Next:** Basheer names the next plan to build. **Last migration number
   chosen: 0069.**
@@ -26,6 +27,3 @@ the build branch, and reaches `main` at the merge (Basheer, 2026-10-17)._
 - Still open from 1 Nov: check the "Me (default)" wording in Frontend
   standards and Process-Improvements (Backlog block "Found in MUI round 1
   steps 5–7").
-- **To tell Plan & Chore (via Basheer):** add ◀ and "← Back" to
-  `check-mui-standard.js`; add the Sales Loss Report to the screens that
-  need `?` help.

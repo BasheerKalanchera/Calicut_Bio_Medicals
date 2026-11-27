@@ -2657,3 +2657,12 @@ Addendum, 20:24: no further corrections. Merge message sent to the Build session
 - The apply command given to Basheer first ran nothing: this session still had `MSYS_NO_PATHCONV` set from the old start-up shortcut. With `unset MSYS_NO_PATHCONV;` in front it ran.
 - Message sent to Build & Test with the merge commit, 27 Nov 20:44 (Basheer yes). E2E not started; Traceability unchanged until it passes. Scorecard `--check`: OK (40 Done, 7 Partial, 2 Not started).
 - No UAT connection.
+
+## 27 Nov 2026 — Build (parallel): end-of-session retro
+
+**Corrections from Basheer this session: 3** —
+- "Since Margin Report e2e is running. It will be good to wait till its is done" (I brought `main` into the Build branch while testing was still running; cancelled and redone later).
+- The command I gave to apply 0069 ran nothing, and Basheer had to run a second one (my shell still had the old start-up setting, which I had already seen that session).
+- "Why didn't you do the retro before the docs batch commit you did earlier?" (it went after `cd65a5b`; the session clock's reminder fires only on end-of-session wording).
+
+P93 +1 (retro put off): a check at the docs-only commit could stop it; for the weekly review to decide. Nothing changed live data wrongly, no UAT connection, no work lost. The old setting is already removed from the start-up files for new sessions.
