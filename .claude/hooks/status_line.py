@@ -3,7 +3,7 @@ Basheer 2026-11-27). Basheer never sees the session clock's hook output, only
 Claude does; this shows the same figures at the bottom of his screen.
 
 Uses session_clock.py's own counting, so the line and the refresh advice agree:
-idle gaps of 30 minutes or more left out; only Basheer's typed messages count.
+idle gaps of 10 minutes or more left out; only Basheer's typed messages count.
 Over the clock's 2-hour limit it adds "refresh due". Reads the status-line JSON
 on stdin; prints one line, or nothing if anything fails.
 """

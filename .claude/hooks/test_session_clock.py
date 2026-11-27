@@ -32,9 +32,9 @@ def reply(minutes):
 
 
 def session(messages, worked):
-    """`messages` typed messages, then replies every 10 minutes up to `worked`."""
+    """`messages` typed messages, then replies every 5 minutes up to `worked`."""
     entries = [typed(i, f"message {i + 1}") for i in range(messages)]
-    entries += [reply(m) for m in range(messages, worked + 1, 10)]
+    entries += [reply(m) for m in range(messages, worked + 1, 5)]
     entries.append(reply(worked))
     return entries
 
@@ -60,9 +60,9 @@ class Base(unittest.TestCase):
 
 class Facts(Base):
     def test_idle_gaps_are_left_out(self):
-        self.write([typed(0, "a"), reply(20), reply(49), typed(79, "b"), reply(89), typed(389, "c")])
+        self.write([typed(0, "a"), reply(5), reply(14), typed(24, "b"), reply(30), typed(330, "c")])
         minutes, count, last = session_facts(self.path)
-        self.assertEqual(minutes, 49 + 10)  # 30 and 300 minute gaps dropped
+        self.assertEqual(minutes, 14 + 6)  # 10 and 300 minute gaps dropped (IDLE = 10)
         self.assertEqual((count, last), (3, "c"))
 
     def test_only_typed_messages_count(self):

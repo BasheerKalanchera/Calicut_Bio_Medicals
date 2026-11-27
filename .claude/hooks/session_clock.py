@@ -13,7 +13,7 @@ pause on idle time alone:
 - After a successful `git push`: recommend a refresh if time worked is over 2
   hours, however few messages there have been.
 
-Time worked adds up only the gaps of under 30 minutes between transcript
+Time worked adds up only the gaps of under 10 minutes between transcript
 entries, so a window left open and idle doesn't count. A restarted session has
 a new transcript, so the clock starts again there. Counts as Basheer's
 messages: user entries that are typed text -- not tool results, skill text
@@ -31,7 +31,7 @@ PUSH_RE = re.compile(r"\bgit\b(?:\s+-C\s+\S+)?\s+push\b")
 FAILED_RE = re.compile(r"\b(?:rejected|fatal:|error: failed to push)", re.I)
 NOT_TYPED = ("[Request interrupted", "This session is being continued", "<task-notification>")
 HOURS, FIRST_CHECK, EVERY = 2, 25, 5  # Basheer, 2026-11-04
-IDLE = timedelta(minutes=30)
+IDLE = timedelta(minutes=10)  # Basheer, 2026-11-27 (was 30: time in a parallel session counted here)
 WHAT_TO_DO = (
     "Open this reply by recommending a refresh, with these figures: finish the current step, "
     "write this session's end-of-session retro to Progress-Archive (an addendum if one is already "
@@ -136,7 +136,7 @@ def due_on_message(minutes: int, count: int) -> bool:
 
 def figures(minutes: int, count: int) -> str:
     return (f"P98 session clock: this session has worked {minutes // 60} h {minutes % 60} min "
-            f"(idle gaps of 30 minutes or more left out), with {count} messages from Basheer")
+            f"(idle gaps of 10 minutes or more left out), with {count} messages from Basheer")
 
 
 def on_message(data: dict, facts: tuple):

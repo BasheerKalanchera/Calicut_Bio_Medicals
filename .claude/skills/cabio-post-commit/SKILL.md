@@ -13,7 +13,7 @@ Moved here word for word from CLAUDE.md on 2026-10-08
 The session clock (`.claude/hooks/session_clock.py`) decides when this is due and gives the figures; never call it on a guess. *(2026-11-04)*
 - On Basheer's message: from message 25, every 5 messages, if time worked is over 2 hours.
 - After a successful `git push`: if time worked is over 2 hours, however few messages there have been.
-- Time worked leaves out gaps of 30 minutes or more.
+- Time worked leaves out gaps of 10 minutes or more.
 
 When the clock says it's due:
 1. Claude finishes the current step and does NOT start the next task, unless Basheer says to carry on.

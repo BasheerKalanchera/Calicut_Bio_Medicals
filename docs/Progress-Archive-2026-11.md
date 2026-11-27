@@ -2536,6 +2536,62 @@ No guard or tracker line: nothing touched live data, UAT or lost work.
   the laptop and is fine as it is (no change). Title now uses `variant="screenTitle"`;
   tsc clean, lint 0 errors; Basheer's look check **Pass** (27 Nov).
 
+## 27 Nov 2026 — Plan & Chore (evening): session clock idle limit 30 → 10 minutes; UAT move plan decisions
+
+- **Session clock (Basheer, 27 Nov):** the clock counted every gap under 30
+  minutes as worked time, so time Basheer spent in Build & Test counted in Plan &
+  Chore too (status line showed 46 min, 15:56–16:43, for about 10 minutes of his
+  typing). `IDLE` in `.claude/hooks/session_clock.py` is now 10 minutes. The
+  status-line docstring and `cabio-post-commit` say the same. Tests: the helper's
+  sample replies now 5 minutes apart (10 was exactly the new limit) and the
+  idle-gap test rebuilt around 10 minutes; 20 passed.
+- **`PC` exit error** (Basheer saw it on exit): bash reads a running script from
+  its saved place; the launch scripts were rewritten at 14:20 while the session
+  ran, so on exit it resumed mid-comment. Harmless; `exec` fix offered, not
+  answered.
+- **UAT move plan, 29 Nov:** decisions D1–D10 shown in chat, not yet saved.
+  Found: Margin's commits (`18ae6c3`…`1852540`) sit before the date fix
+  `ba67000` on `main`, so "without Margin" means `3c91f94` plus a copy of
+  `ba67000` (trial merge clean, `git merge-tree`). The price load script
+  `dev_price_load.py` was not found on this computer.
+- **Plan written:** `docs/UAT-Promotion-2026-11-29-Plan.md` (Draft). Basheer
+  answered D0–D10 except D3a (load order; he asked for it to be explained).
+  Margin goes, no fallback (D1); Sales Loss only if its E2E is complete by Sat
+  6 pm (D2); Build & Test finishes the Margin fixes before the join today, no
+  message (D2a); Haroon's revised sheet (new product variations, with cost) by
+  Sat afternoon, else the current one (D3, D3b); Sunday's daily backup is the
+  rollback point if nothing was saved after it (D7).
+- **New scripting rule (Basheer's wording, 27 Nov):** a Dev load script for an
+  approved plan that must also run on UAT goes into `scripts/` and is committed
+  the same day; removed only once the changes reach UAT
+  (`cabio-db-and-scripting`, "Scripts"; origin in `docs/Process-Rules-History.md`).
+  Second time a needed script was lost with a scratchpad (Basheer).
+- **Plan approved (Basheer, 27 Nov):** D3a (load order) plus D3c (if the
+  sheet has no costs, Haroon types each product's cost once on the Product
+  Catalog; the first cost fills that product's old Won lines — read
+  `product/service.py:190–196`), D3d (a later cost sheet fills empty old Won
+  lines the same way) and the D8 addition for Haroon.
+- **Message from Build & Test (20:00):** fix the start-up files `B`, `BT`,
+  `PC` — the `MSYS_NO_PATHCONV=1` line added here at 14:20 was inherited by
+  every command, so the commit guard `check-api-types.sh` could not find
+  `generate-types.js` and refused `dc9c5d8`'s first commit. My miss: I tested
+  only that the start-up note showed. Basheer: yes, now. Fix: the setting
+  removed, the command written `"//plan-and-chore"` (`//build`,
+  `//build-and-test`); Build & Test's `{ … exit }` wrapper kept. Tested with a
+  shell stand-in handing over to Python (the real `claude` is an npm shell
+  shim), setting off: `/x` → `C:/Program Files/Git/x`; `//x` → `/x`;
+  `//x restarted` → `/x restarted`. `bash -n` OK on all three. Running
+  sessions keep the setting until restarted (commit with
+  `env -u MSYS_NO_PATHCONV`). Still to check: the start-up note shows on the
+  next real start. Reply sent to Build & Test's mailbox (Basheer yes).
+- **Retro (evening part; the morning retro, 2 corrections, is above):
+  Corrections from Basheer: 4** — (1) the price load script lost with a
+  scratchpad, the second time (P112, Seen 2); (2) "D3a — it is not clear,
+  please elaborate"; (3) the plan had no case for a sheet without costs
+  ("There is high probability that Haroon's sheet … will not have costs");
+  (4) the start-up file setting I added broke the commit check, reported
+  through Build & Test (P113, new).
+
 ## 27 Nov 2026 — Build & Test: Margin Report D25–D27
 
 - Basheer took the recommendation on all three open questions: Quantity by
