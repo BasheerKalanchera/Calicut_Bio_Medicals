@@ -129,13 +129,6 @@ date (Basheer, 2026-10-14).
   merge tool, Admin approval to pass the warning.
 - **Close** when the plan's parts are on UAT and the pairs are resolved.
 
-### Name in app header: kept for good — tidy its "Temporary" code comments (Basheer, 2026-11-07; kept 2026-11-27)
-
-- **What:** the signed-in person's name in the top header, beside Sign Out, at every window size, so it's clear whose window is whose (`docs/Target-Plan-Training-Implementation-Plan.md`). The side menu's name stays. Built 7 Nov (`2ac7f25`), on Dev; left out of the 10 Nov UAT move on purpose (UAT move plan D1).
-- **Kept (Basheer, 2026-11-27):** no longer temporary; it goes to UAT with the next full move (29 Nov). Sessions 2a and 2b move to the second half of December (Cabio's sales team is busy with the year-end sales push).
-- **Left to do (Build & Test):** the two code comments in `DemoApp.tsx` still say "Temporary, training only" and point here; reword them (small-fixes batch, no change to the screen).
-- **Close** when those comments are reworded.
-
 ### Similar-hospital warning: also mention same-name hospitals in other zones — not started, needs Haroon (2026-10-25)
 
 - **Found (Dev role check, 2026-10-25):** Rudrappa (Bangalore) added
@@ -1402,8 +1395,8 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   proposed data model, and open questions for Haroon/Latheef Bhai:
   `docs/Discussion-Pricing-Discount-Authority-2026-09.md`. **Parked for
   Phase 2 (Basheer, 2026-10-16)** — not a signed requirement; the paper
-  supersedes this entry's framing. Product cost (BR-CAT-04) is asked
-  separately (Waiting on people, above). Now also tracked in `docs/Signed-Requirements-
+  supersedes this entry's framing. Product cost (BR-CAT-04) is built
+  separately (on Dev). Now also tracked in `docs/Signed-Requirements-
   to-PRD-Traceability.md`'s "Pending — proposed, not yet built" list
   (added 2026-09-17), alongside the Lead Follow-up Comments paper above.
 - **Order-stage deals closing with zero Activity logged — candidate soft-
@@ -1740,7 +1733,8 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
      until a cost field exists. **Resolved 2026-09-14** — Haroon confirmed cost can be
      added, visible strictly to Admin/GM (`Business-Rules.md`'s BR-CAT-04), with Margin
      itself carrying the same restriction; still not built, so Margin stays out of this
-     tile's scope until then. (2) PRD grouping calls for Product/**Brand**/OEM/SBU, but
+     tile's scope until then. (Margin Report built, E2E done on Dev 27 Nov; the tile
+     still has no margin.) (2) PRD grouping calls for Product/**Brand**/OEM/SBU, but
      the schema has no dedicated Brand field — only `product.oem_name` and
      `product.category_name` — so Brand grouping is dropped too pending a decision on
      whether `category_name` is meant to serve as Brand or a real field is needed.

@@ -1,8 +1,10 @@
 # Margin Report — Implementation Plan
 
-**Status:** Approved, 2026-11-24 (Basheer). Built on Dev, E2E pending:
+**Status:** Approved, 2026-11-24 (Basheer). Built and E2E done on Dev,
+2026-11-27 (56 of 56 steps Pass); not yet on UAT:
 `18ae6c3`, `0084a92`, `595241e`, `36a931a`, `d3baaa6`, `2cb5a0b`, review
-fixes `fb31c08`, E2E changes (D19–D21) `1852540`.
+fixes `fb31c08`, E2E changes (D19–D21) `1852540`, (D22–D25) `7469ece`, (D27)
+`dc9c5d8`.
 **Traceability rows:** 4.3 Revenue per product/brand analytics (Margin
 part); 11.1 Core reports: sales, pipeline, product qty/price/margin (the
 Margin Report).
@@ -175,6 +177,45 @@ D8–D10 and section 4; `Business-Rules.md` BR-CAT-04.
     fit one line at the same text size. If larger figures do not fit, Margin
     drops to a second line.
   - The laptop Total row keeps both. Changes D8 (phone), D19 and D20.
+- D22. Tablet and laptop show the same totals card as the phone, above the
+  rows and held in place while they scroll; the table's Total row is gone —
+  Basheer, 2026-11-27 (during the E2E):
+  - There the card also shows Margin %; it has no "Total" word and no
+    Quantity, as on a phone.
+  - The column headings scroll away with the rows (choice (a), over (b)
+    "stay while the rows are on screen"). Why: held headings are pushed up
+    and cut off once the table ends, with the no-cost list below it (seen on
+    Dev, 27 Nov, This Quarter).
+  - Changes D8 (totals row), D19 (laptop Total row under the headings) and
+    D21 (laptop Total row).
+- D23. The totals card says "Total" and shows Margin % at every width —
+  Basheer, 2026-11-27 (during the E2E):
+  - Tablet and laptop: one line, "Total" at the left, then Sold for, Cost,
+    Margin, Margin %.
+  - Phone: two lines — "Total", Sold for, Cost; below them Margin under Sold
+    for and Margin % under Cost, labels and figures lined up.
+  - Changes D21 (phone: one line, no "Total", no %) and D22 (no "Total").
+- D24. Tablet and laptop have the phone's one-line header — Basheer,
+  2026-11-27 (during the E2E):
+  - "Margin Report" on one line with the Period and Group by boxes, no white
+    title band.
+  - One title size at every width, 17 px — the largest that fits one line on
+    a 390 px phone (measured 27 Nov; 22 px does not). 360 and 375 px phones
+    already wrapped at 16 px.
+  - The closed Period box shows the dates, with no separate date text; both
+    boxes have the phone's width and text size.
+  - Changes D19 (phone only until now). Other reports keep their header.
+- D25. Quantity shows only when grouped by Product — Basheer, 2026-11-27
+  (after the E2E):
+  - Brand, SBU, Zone and Rep have no Quantity column or card line, because
+    one row adds different machines together. Changes D8.
+- D26. A click (on a row, or on a product in the no-cost list) opens every
+  Won Opportunity for it in the period, with or without a saved cost, so the
+  list can hold more Opportunities than the figures count; accepted, no new
+  Pipeline filter — Basheer, 2026-11-27. Adds to D10 and D20.
+- D27. The product-change Note (D13c) writes amounts as the screens do,
+  "₹12.00L" with no space; Notes already saved keep the space —
+  Basheer, 2026-11-27.
 
 ## Figures and sources
 
@@ -223,11 +264,12 @@ Nobody else sees this screen; reps and managers never see cost or margin.
 
 ### On a phone
 
-Each row is a block: name on top, then Quantity, then Sold for and Cost
-side by side, then Margin and Margin % side by side (Basheer, 2026-11-26,
-over one figure per line). Above the rows, held in place while they scroll:
+Each row is a block: name on top, then Quantity (grouped by Product only,
+D25), then Sold for and Cost side by side, then Margin and Margin % side by
+side (Basheer, 2026-11-26, over one figure per line). Above the rows, held in
+place while they scroll:
 the title on one line with the period and group-by boxes (wrapping only on a
-very narrow phone), then the one-line totals card (D19, D21).
+very narrow phone), then the two-line totals card (D19, D23).
 
 ## 2. Build order
 

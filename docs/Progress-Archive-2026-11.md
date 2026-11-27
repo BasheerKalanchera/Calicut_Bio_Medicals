@@ -2424,6 +2424,9 @@ edited in code and nothing was written to UAT.
   in seeing one's name on the screen header?" (I recommended leaving it off only
   on an old decision, with no reason given). No live data or UAT touched; no
   tracker change.
+- **Retro addendum (Build & Test, 27 Nov; 2 h 35 min): no further corrections.**
+  Docs batch `5cad4f2` pushed; unused hotfix plan and the 27 Nov screenshot
+  deleted (Basheer yes).
 
 ## 27 Nov 2026 — Plan & Chore: UAT backup; weekly Harness review (Option B) in progress
 
@@ -2442,3 +2445,120 @@ edited in code and nothing was written to UAT.
 - **Basheer's answers, 27 Nov:** he sees the status line; the header name (`2ac7f25`) is kept for good and goes to UAT with the next move (Backlog entry reworded; training plan decision changed); Sessions 2a and 2b in the second half of December (year-end sales push).
 - First mailbox message written (Basheer yes, 27 Nov): to Build & Test, his header-name and Sessions 2a/2b answers and the Backlog code-comment task; the UAT move plan stays with Plan & Chore. Reviews line added to `docs/Process-Improvements.md` (ninth review).
 - **Retro (Plan & Chore, 27 Nov, after the refresh): corrections from Basheer: 2** (counted from his typed messages). (1) "You said 14 files to be staged. But I am seeing 18 files staged. What is going on?" — the commit proposal's heading said 14 files while its own list named 18; the number was written without counting (reply-checklist rule 1). (2) The same proposal said 8 archive lines, 7 were staged: the item 6 line had already gone into Build & Test's `5cad4f2` (shared archive), and I counted it again without checking the last commits (CLAUDE.md "Parallel sessions"). Both caught before the commit; no live data touched. Possible check (tracker, proposal): the commit proposal's file and line counts are taken from `git diff --cached --stat` after staging, not written by hand.
+
+## 27 Nov 2026 — Build & Test: Margin Report E2E, steps 13–25
+
+- Steps 13–25 (incl. 21a, 21b) Pass on Dev, run by Basheer.
+- Step 25 note (Basheer): "I had to do a hard refresh to see this - The history
+  log shows the E2 line as added. - in the Audit log." From the code: the Audit
+  Log screen stays loaded in the background and does not re-read its list when
+  opened again (`DemoApp.tsx` ~line 840; `AuditLogScreen.tsx` `useQuery`, nothing
+  else refreshes "audit-log"). Not caused by the Margin Report build. A fix was
+  proposed and then withdrawn after Basheer asked whether it is needed ("How many
+  people we change something and go to the Audit log in the same session to check
+  it?"). Not changed, no Backlog entry; reloading the page shows the entry.
+- Steps 25a–27, 34 and 35 Pass. Step 36 Fail (laptop and tablet, Margin Report):
+  on scrolling, the headings and Total row move up and the top of the heading row
+  is cut off. From the code: the card's top inner spacing (`SectionCard` p: 2,
+  `ReportingUI.tsx`) scrolls away before the held heading block sticks
+  (`TableOrCards.tsx` pinned head, top: 0). The cut-off look is not yet confirmed
+  in a browser. 34–36 were run before the Admin steps (Haroon already signed in;
+  36 needs E1 with no cost).
+- Step 36 fix made on Dev, not committed (Basheer yes): on laptop and tablet the
+  Margin table card has no top space and the heading row carries it (`SectionCard`
+  `flushTop`, `TableOrCards` pinned head, `MarginReportScreen`). tsc clean, lint 0
+  errors; reviewed by re-reading; re-check by eye pending.
+- H1 Pass (Claude in the browser, as Haroon, read-only).
+- Step 36 re-check **Fail** (Basheer): same movement. Claude measured in the browser
+  (Admin, 873×459, read-only): the first diagnosis was wrong. Pinned headings can
+  only stay while their own table is on screen; with 3 rows, the no-cost list and
+  trade-in line below make the area scroll 169px, the table ends, and the headings
+  are pushed 28px above the scroll area. Options put to Basheer; no new change yet.
+- Message from Plan & Chore (27 Nov): top-bar name `2ac7f25` kept, goes to UAT 29
+  Nov; reword the two "Temporary, training only" notes in `DemoApp.tsx`. Basheer:
+  do it after the Margin Report E2E.
+- Step 36, Basheer's own suggestion approved (plan D22): the phone's totals card on
+  tablet and laptop too, with Margin %; Total row removed; column headings scroll
+  with the rows. Built, not committed (`MarginReportScreen.tsx`,
+  `TableOrCards.tsx` back to before `1852540`, first fix undone). tsc clean, lint 0
+  errors. `/code-review low`: one point, that headings now scroll away — what D22
+  chose; no change. Re-run of step 36 pending.
+- Basheer: step 36 scrolling works on D22. Asked for "Total" in the box and two
+  lines on the phone, with their own layout (plan D23). Built, not committed;
+  tsc clean, lint 0 errors. Re-run of step 36 pending.
+- Basheer: the phone's one-line header on tablet and laptop too, title size there
+  unchanged (plan D24). Built, not committed; tsc clean, lint 0 errors. Step 36
+  re-run now covers D23 and D24.
+- Basheer then asked for one title size on all widths (24 px, else 22). Measured
+  in the browser (Admin, read-only), Period "Oct–Dec 2026": at 390 wide the title
+  fits one line up to 17 px (22 px needs 151 px, 118 free); at 360 and 375 it
+  already wraps at today's 16 px; at 412 it fits up to 20 px (calculated). Choice
+  put to Basheer; no code change.
+- Basheer chose 17 px at every width. Built as theme size `screenTitle`
+  (standards: no typed font size in a screen), not committed; tsc clean, lint 0
+  errors; reviewed by re-reading (size only). Step 36 re-run pending.
+- Step 36 **Pass** (Basheer, D22–D24 layout). 44 of 54 run, all Pass.
+- Step 28 **Pass** (Basheer, Admin). 45 of 54 run, all Pass; left: 28a–28c,
+  29–33, H2.
+
+## 27 Nov 2026 — Build & Test: retro (Margin Report E2E, steps 13–36)
+
+**Corrections from Basheer this session: 4**
+
+- "Is this really needed" — I proposed an Audit Log fix of little value.
+- "Nope the fix is not working" — I diagnosed step 36 from the code without
+  looking at the screen, and the fix failed.
+- "Why not show the same total box" — the simpler answer to step 36 came from
+  Basheer, not from my options.
+- "give me 28 once again" — I pointed to step 28 more than once and had to be
+  asked for it in full.
+
+No guard or tracker line: nothing touched live data, UAT or lost work.
+
+## 27 Nov 2026 — Build & Test: Margin Report E2E complete
+
+- Steps 28a, 28b, 28c, 29–33 **Pass** (Basheer). H2 **Pass** (Claude in the
+  browser as Fahad: 403, "Only the General Manager and Admin can see the Margin
+  Report."). **E2E complete: 54 of 54 run, all Pass** (counted from the plan).
+- Dev test data: SonoScape E1 now has a catalog cost of ₹3.50 L (first saved as
+  ₹4.00 L, which past sales keep).
+- Review gap: D22 had `/code-review low`; D23, D24 and the 17 px title size were
+  built after it and checked only by type check, lint and re-reading, and later
+  steps ran without a further review. To be run before the `fix:` commit.
+- Review run after the E2E (`/code-review medium`, uncommitted changes): no
+  correctness bug; two minor points (totals card may sit a scrollbar's width past
+  the table on a laptop, not seen on screen; new title size applied through `sx`
+  rather than `variant`, Frontend standards §6.11). Checks: pytest 1788 passed, 10
+  skipped; ruff clean; tsc clean; lint 0 errors, 134 warnings.
+- `DemoApp.tsx` header-name comments reworded; Backlog "Name in app header"
+  removed (closed) and the training plan's pointer to it dropped.
+- Basheer on the two points: the totals box does stick out a bit past the table on
+  the laptop and is fine as it is (no change). Title now uses `variant="screenTitle"`;
+  tsc clean, lint 0 errors; Basheer's look check **Pass** (27 Nov).
+
+## 27 Nov 2026 — Build & Test: Margin Report D25–D27
+
+- Basheer took the recommendation on all three open questions: Quantity by
+  Product only (D25); a click may list more Opportunities than the figures
+  count (D26, nothing built); product-change Note writes "₹12.00L" (D27).
+- Built D25 and D27. `/code-review medium` on them: no correctness bugs; three
+  notes — test plan wording (fixed), Frontend standards 6.1 exception for D22
+  (added), theme and `TableOrCards.tsx` to be committed with the screen.
+- Checks: pytest 1788 passed, 10 skipped, 1 warning; ruff passed; `tsc -b` exit
+  0; lint 0 errors, 134 warnings; MUI standard and Tailwind checks pass.
+- No new Note saved on Dev to check D27 (Activities can't be deleted); the
+  automated test covers it. E2E steps 37–38 added for D25.
+- E2E steps 37 and 38 Pass (Basheer, 27 Nov): Margin Report E2E 56 of 56 Pass
+  (counted from the plan by script; set-up step P0 is not to be run).
+- Shipped: `7469ece` (screen, D22–D25, header-name comments) and `dc9c5d8`
+  (Note wording, D27), pushed 27 Nov.
+- The second commit was first refused: "Cannot find module 'C:\c\Users\…\
+  generate-types.js'". Cause (checked): the session had `MSYS_NO_PATHCONV=1`,
+  exported by `b`, `bt` and `pc`, so the api.ts guard handed Node a Git Bash path.
+  Re-run with `env -u MSYS_NO_PATHCONV`; the guard ran and passed.
+- Post-commit paperwork (Basheer yes): Traceability 4.3 and 11.1 → Done, the old
+  "Phase 1 or Phase 2" question dropped from 11.1; scorecard regenerated, `--check`
+  OK (40 Done, 7 Partial, 2 Not started). Plan Status, E2E "Built:" lines,
+  Business-Rules, the rule matrix (BR-CAT-04) and two Backlog lines updated.
+- Start-up files: Basheer asked that Plan & Chore fix them; full analysis sent to
+  its mailbox, 27 Nov 20:00.

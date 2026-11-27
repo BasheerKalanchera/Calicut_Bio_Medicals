@@ -194,7 +194,9 @@ pickers fixed at the top; only the content below scrolls. Reference:
 - Content `Box`: `flex: 1`, `overflowY: "auto"`, `minHeight: 0` (without
   `minHeight: 0` the flex child grows instead of scrolling).
 - A long table inside the content box also gets `<Table stickyHeader>` so
-  its column headings stay visible.
+  its column headings stay visible. Exception: the Margin Report's headings
+  scroll with the rows, because a second list sits below the table
+  (`docs/Margin-Report-Implementation-Plan.md` D22).
 - Never put `overflow: "auto"` on the outer `Box` — the filters then scroll
   away with the list (Rate Hospitals, Target & Coverage Planning and Brand
   Target Tracking all shipped this way; fixed 2026-09-30).

@@ -2,11 +2,14 @@
 # Margin Report — Manual E2E Test Plan
 
 **Covers:** `docs/Margin-Report-Implementation-Plan.md` (Approved 24 Nov 2026, D1–D13;
-D13a–D16, including D13f, added 25 Nov; D17–D21 added 26 Nov; D20 drops D17).
+D13a–D16, including D13f, added 25 Nov; D17–D21 added 26 Nov; D20 drops D17; D22,
+added 27 Nov, replaces the laptop Total row with the totals card; D23, 27 Nov, the
+card's layout; D24, 27 Nov, one-line header at every width; D25–D27, 27 Nov,
+Quantity by Product only, the longer click list accepted, Note amounts "₹12.00L").
 **Built:** all steps pushed (handed to Build & Test 24 Nov 2026, Basheer): saved cost
 `18ae6c3`, first-cost fill `0084a92`, Won/Lost products lock `595241e` and `36a931a`,
 server figures `d3baaa6`, screen `2cb5a0b`, pre-E2E review fixes `fb31c08`, D19–D21
-changes made during the E2E `1852540`.
+changes made during the E2E `1852540`, D22–D25 `7469ece`, D27 `dc9c5d8`.
 **Where:** Dev only. Nothing here runs on UAT; the UAT one-time cost fill (D12) waits for the price sheet there.
 
 **Written ahead of the build (Plan & Chore, 24 Nov 2026).** Build & Test corrected the
@@ -202,59 +205,63 @@ costs of that day: E2 ₹8.00 L, S50 Elite ₹25.00 L.
     Create. Then Edit → status Won → tick "I confirm full payment has been received *" →
     Save → "Why this change?": fill "Why the change?", leave the follow-up empty → Save.
     Basheer clicks, Claude watches. **Expected:** Won saves; value ₹27L; closed date
-    today, shown as before (plan section 3). —
+    today, shown as before (plan section 3). — Pass (27 Nov 2026, Basheer)
 14. [Simple] On "zz E2E Margin – win" (Baby Memorial Hospital) → Products tab.
-    **Expected:** no Edit button (D13). —
+    **Expected:** no Edit button (D13). — Pass (27 Nov 2026, Basheer)
 15. [Simple] Open Lost "new lead" (aster medicity) → Products tab. **Expected:** no Edit
-    button. —
-16. [Simple] Open the Reports menu. **Expected:** no "Margin Report". —
+    button. — Pass (27 Nov 2026, Basheer)
+16. [Simple] Open the Reports menu. **Expected:** no "Margin Report". — Pass
+    (27 Nov 2026, Basheer)
 
 ## C — Haroon Sidheeq: cost saved on the Won day, and a correction
 
 17. [Simple] Product Catalog → SonoScape S50 Elite → Edit → "Cost" 22.00 → "Save
-    Changes". Basheer clicks, Claude watches. **Expected:** saved. —
+    Changes". Basheer clicks, Claude watches. **Expected:** saved. — Pass (27 Nov
+    2026, Basheer)
 18. [Complex: several values] Margin Report, This Month, by Product. **Expected:** S50
     Elite — Quantity 1, Sold for ₹29.00L, Cost ₹25.00L (saved on the Won day, not
     today's ₹22.00L), Margin ₹4.00L, 13.8% (D4); no "cost filled in later" mark on
-    it. —
+    it. — Pass (27 Nov 2026, Basheer)
 19. [Simple] Read the line below the table. **Expected:** "Trade-ins: ₹2.00L — not in
-    the margin" (D6). —
+    the margin" (D6). — Pass (27 Nov 2026, Basheer)
 20. [Complex: several values] This Quarter, by Product. **Expected:** S50 Elite —
     Quantity 2, Sold for ₹58.00L, Cost ₹50.00L, Margin ₹8.00L, 13.8% — the older Won
     keeps its ₹25.00L too; "cost filled in later" shows under it (the older sale). —
+    Pass (27 Nov 2026, Basheer)
 21. [Simple] "zz E2E Margin – win" (Baby Memorial Hospital) → Products tab.
     **Expected:** Edit shown ("+ Add" appears only on an Opportunity with no
-    products). —
+    products). — Pass (27 Nov 2026, Basheer)
 21a. [Simple] Edit → Save without changing anything. **Expected:** no pop-up, nothing
-    saved, no new note on the Activity tab (D13b). —
+    saved, no new note on the Activity tab (D13b). — Pass (27 Nov 2026, Basheer)
 21b. [Complex: saves to Dev] "zz E2E Margin – win" (Baby Memorial Hospital) →
     Activity tab → + Log → Type "Call" → "Next Action *" tab: type "zz E2E – Haroon
     follow-up"; leave the due date (tomorrow) and "Assign Next Action To" ("Me
     (default)") as they are → Log. Basheer clicks, Claude watches. **Expected:** saved;
     the Next Actions tab shows it open, assigned to Haroon (steps 23 and 25 need it,
-    D13d). —
+    D13d). — Pass (27 Nov 2026, Basheer)
 22. [Simple] Products tab → Edit → "Add Product": SonoScape E2, Qty 1, Price ₹L 12 →
     "+ Add Product" → Save; then Save in the pop-up with the box empty. **Expected:**
     the "Why this change?" pop-up opens with one box, "Who asked for this change, and
     why? *", no next-action questions (D13c); the empty Save shows "Say who asked for
-    this change, and why" and nothing is saved. —
+    this change, and why" and nothing is saved. — Pass (27 Nov 2026, Basheer)
 23. [Complex: saves to Dev] Type the reason "Fahad: PO shows E2 added" → Save. Basheer
     clicks, Claude watches. **Expected:** saved; both lines shown; Opportunity value
     ₹39L. Not refused even though Haroon has an open next action of their own on this
-    Opportunity (D13d; set up in step 21b). —
+    Opportunity (D13d; set up in step 21b). — Pass (27 Nov 2026, Basheer)
 24. [Complex: several values] Margin Report, This Month, by Product. **Expected:** S50
     Elite still Cost ₹25.00L (kept, D13); E2 — Quantity 1, ₹12.00L, Cost ₹8.00L
-    (today's catalog cost), Margin ₹4.00L, 33.3%. —
+    (today's catalog cost), Margin ₹4.00L, 33.3%. — Pass (27 Nov 2026, Basheer)
 25. [Simple] "zz E2E Margin – win" (Baby Memorial Hospital) → Activity tab.
     **Expected:** one new Note by Haroon reading "Products changed on this Won
     Opportunity." / "Reason: Fahad: PO shows E2 added" / "- Added: SonoScape E2
     Portable USG Machine x 1 at ₹12.00 L each" (D13a, D13c); Haroon's own next action
     still open and no new next action (D13d). The history log shows the E2 line
-    added. —
+    added. — Pass (27 Nov 2026, Basheer; the Audit Log showed the line only after a
+    hard refresh). Notes saved after D27 write "₹12.00L"; this run was before it.
 25a. [Simple] Fahad's Active "Test one more direct Opportunity" (EMS Hospital) →
     Edit → change the stage → Save. **Expected:** the usual "Why this change?" pop-up
     with its next-action questions, unchanged by the new mode. Cancel; don't save
-    (D13e, pop-up re-test). —
+    (D13e, pop-up re-test). — Pass (27 Nov 2026, Basheer)
 25b. [Complex: saves to Dev] "zz E2E Margin – win" (Baby Memorial Hospital) → Products
     tab → Edit → remove the SonoScape E2 line with its × → under "Add Product" pick
     SonoScape S70 USG Machine, Qty 1, Price ₹L 38 → "+ Add Product" → Save → reason
@@ -264,87 +271,110 @@ costs of that day: E2 ₹8.00 L, S50 Elite ₹25.00 L.
     Activity tab: one new Note
     "Products changed on this Won Opportunity." / "Reason: Fahad: PO shows S70, not E2" /
     "- Added: SonoScape S70 USG Machine x 1 at ₹38.00 L each" / "- Removed: SonoScape E2
-    Portable USG Machine x 1". —
+    Portable USG Machine x 1". — Pass (27 Nov 2026, Basheer). Notes saved after D27
+    write "₹38.00L"; this run was before it.
 25c. [Complex: several values] Margin Report, This Month, by Product. **Expected:** no E2
     row; S70 — Quantity 1, ₹38.00L, Cost ₹24.00L (the catalog cost on the day of the
     swap, not E2's ₹8.00L) (D13f), Margin ₹14.00L, 36.8%, no "cost filled in later"
-    mark; S50 Elite unchanged. —
+    mark; S50 Elite unchanged. — Pass (27 Nov 2026, Basheer)
 25d. [Complex: multi-step] "zz E2E Margin – win" (Baby Memorial Hospital) → Products
     tab → Edit → remove the SonoScape S50 Elite line with its × → add it again under
     "Add Product": Qty 1, Price ₹L 30, Disc ₹L 1 → "+ Add Product" → Save.
     **Expected:** no pop-up, nothing saved, no new Note on the Activity tab (D13g,
-    D13b). —
+    D13b). — Pass (27 Nov 2026, Basheer)
 25e. [Complex: saves to Dev] Same tab (S50 Elite catalog cost still ₹22.00L) → Edit →
     remove S50 Elite → add it again at Qty 1, Price ₹L 31, Disc ₹L 1 → Save → reason
     "Fahad: PO price is 31" → Save. Basheer clicks, Claude watches. **Expected:**
     saved; Opportunity value ₹66L; one new Note with a "Changed" line for the S50
     Elite price, nothing Added or Removed. Margin Report, This Month, by Product: S50
     Elite Sold for ₹30.00L, Cost ₹25.00L (kept, not ₹22.00L), Margin ₹5.00L, 16.7%
-    (D13g). —
+    (D13g). — Pass (27 Nov 2026, Basheer)
 25f. [Complex: saves to Dev] Same again at Price ₹L 30 → reason "Fahad: price back to
     30" → Save. Basheer clicks, Claude watches. **Expected:** saved; Opportunity value
     ₹65L; S50 Elite Sold for ₹29.00L, Cost ₹25.00L, Margin ₹4.00L, 13.8%, so the
-    later totals hold. —
+    later totals hold. — Pass (27 Nov 2026, Basheer)
 26. [Simple] Lost "new lead" (aster medicity) → Products tab. **Expected:** Edit shown
-    for Haroon. Don't save. —
+    for Haroon. Don't save. — Pass (27 Nov 2026, Basheer)
 27. [Simple] Product Catalog → S50 Elite → Edit → "Cost" back to 25.00 → "Save
-    Changes". **Expected:** saved (Dev tidy). —
+    Changes". **Expected:** saved (Dev tidy). — Pass (27 Nov 2026, Basheer)
 
 ## D — Abdul Latheef P (Admin)
 
 28. [Simple] Reports → Margin Report, This Quarter. **Expected:** menu item shown;
-    Total Sold for ₹115.00L, Cost ₹98.00L, Margin ₹17.00L, 14.8%; the no-cost list
-    shows SonoScape E1, 1, ₹5.00L (D20). —
+    the totals card reads Sold for ₹115.00L, Cost ₹98.00L, Margin ₹17.00L, Margin %
+    14.8% (D22); the no-cost list
+    shows SonoScape E1, 1, ₹5.00L (D20). — Pass (27 Nov 2026, Basheer).
 28a. [Complex: saves to Dev] Product Catalog → SonoScape E1 (no cost yet) → Edit →
     "Cost" 4.00 → "Save Changes". Basheer clicks, Claude watches. **Expected:** saved
-    (first cost, D16). —
+    (first cost, D16). — Pass (27 Nov 2026, Basheer)
 28b. [Complex: several values] Margin Report, This Quarter, by Product. **Expected:** E1
     now has a row — Quantity 1, Sold for ₹5.00L, Cost ₹4.00L, Margin ₹1.00L, 20.0%,
-    marked "cost filled in later"; the no-cost list is gone; Total Sold for ₹120.00L,
-    Cost ₹102.00L, Margin ₹18.00L, 15.0% (D16, D20). The S50 Elite, E2 and S70 rows
-    unchanged. —
+    marked "cost filled in later"; the no-cost list is gone; totals card Sold for
+    ₹120.00L, Cost ₹102.00L, Margin ₹18.00L, Margin % 15.0% (D16, D20). The S50 Elite, E2 and S70 rows
+    unchanged. — Pass (27 Nov 2026, Basheer)
 28c. [Complex: saves to Dev] Product Catalog → E1 → Edit → "Cost" 3.50 → "Save
     Changes", then Margin Report. **Expected:** E1 still at ₹4.00L a unit — changing an
     existing cost touches no past sale (D16, D4). E1 keeps a Dev cost afterwards (test
-    value). —
+    value). — Pass (27 Nov 2026, Basheer)
 
 ## E — Fahad (Sales Staff, Imaging): hide-checks
 
-29. [Simple] Open the Reports menu. **Expected:** no "Margin Report". —
+29. [Simple] Open the Reports menu. **Expected:** no "Margin Report". — Pass (27 Nov 2026, Basheer)
 30. [Simple] His Won "Test new fastrack opportunity from Project 360" (Aster MIMS
-    Calicut) → Products tab. **Expected:** no Edit button. —
+    Calicut) → Products tab. **Expected:** no Edit button. — Pass (27 Nov 2026, Basheer)
 31. [Simple] His open "Test one more direct Opportunity" (EMS Hospital) → Products tab →
-    Edit. **Expected:** the edit form opens as before; Cancel, don't save. —
+    Edit. **Expected:** the edit form opens as before; Cancel, don't save. — Pass (27 Nov 2026, Basheer)
 
 ## F — Fazal (Area Manager) and Marketing Test User
 
-32. [Simple] As Fazal, open the Reports menu. **Expected:** no "Margin Report". —
-33. [Simple] As Marketing Test User, open the menu. **Expected:** no "Margin Report". —
+32. [Simple] As Fazal, open the Reports menu. **Expected:** no "Margin Report". — Pass (27 Nov 2026, Basheer)
+33. [Simple] As Marketing Test User, open the menu. **Expected:** no "Margin Report". — Pass (27 Nov 2026, Basheer)
 
 ## H — Claude in the browser (only what the screen doesn't show)
 
 - H1. [Complex: Claude — reads the server reply] As Haroon, open "zz E2E Margin – win"
   (Baby Memorial Hospital); read the Opportunity reply. **Expected:** no cost field
-  anywhere in it (BR-CAT-04). —
+  anywhere in it (BR-CAT-04). — Pass (27 Nov 2026, Claude in the browser: 7 replies read — the
+  Opportunity, its products, splits, stakeholders, next actions, activities and
+  can-edit; no cost or margin field in any)
 - H2. [Complex: Claude — reads the server reply] As Fahad, ask the server for the
-  margin report directly. **Expected:** refused (403) (D9). —
+  margin report directly. **Expected:** refused (403) (D9). — Pass (27 Nov 2026,
+  Claude in the browser, signed in as Fahad: 403, "Only the General Manager and Admin
+  can see the Margin Report.")
 
 ## G — Phone, tablet, laptop
 
 34. [Simple] As Haroon, Sales Report → "Period" box: choose This Quarter, This Month,
     All Time. **Expected:** beside the box "Oct–Dec 2026", "Nov 2026", "All time";
-    figures load for each; the screen looks as before. —
+    figures load for each; the screen looks as before. — Pass (27 Nov 2026, Basheer)
 35. [Complex: phone layout] Reason box on a Won Opportunity's Products tab (as Haroon)
-    at 390, 768, 1280 px. **Expected:** box and Save fit; nothing runs past the card. —
+    at 390, 768, 1280 px. **Expected:** box and Save fit; nothing runs past the card. — Pass (27 Nov 2026, Basheer)
 36. [Complex: phone layout] Margin Report at 390, 768, 1280 px, every group-by, the
     no-cost and trade-in lines; at each width make the window short enough to scroll.
     **Expected:** at 390: "Margin Report" on one line with the Period and Group by boxes,
     the Period box showing "Oct–Dec 2026" ("Nov 2026", "All time" when changed); below
-    it one totals card of one line — "Sold for …", "Cost …", "Margin …", with no
-    "Total" word, no % and no Quantity (D21); each row a block — name on top, then
-    Quantity, then Sold for and Cost side by side, then Margin and Margin % side by
-    side; each product in the no-cost list a block with an arrow. At 768 and 1280: title
-    band, date beside the boxes, Total row under the column headings, no Quantity in it.
-    At every width the title, boxes and totals (and on a laptop the headings) stay put
-    while only the rows scroll; nothing runs past the card (D19–D21, plan "On a
-    phone"). —
+    it one totals card of two lines — "Total", "Sold for …", "Cost …", and below them
+    "Margin …" under Sold for and "Margin % …" under Cost, labels and figures lined
+    up, no Quantity (D23); each row a block — name on top, then
+    Quantity (by Product only since D25), then Sold for and Cost side by side, then Margin and Margin % side by
+    side; each product in the no-cost list a block with an arrow. At 768 and 1280:
+    "Margin Report" (the same size as at 390, 17 px) on one line with the two boxes, no white
+    title band, no date text beside the boxes, the closed Period box showing the dates
+    as at 390 (D24); below them the totals card in one line — "Total",
+    "Sold for …", "Cost …", "Margin …", "Margin % …", no Quantity — and no Total row
+    in the table (D22, D23). At every width the title, boxes and totals card stay put while
+    everything below scrolls, the column headings with it (D22); nothing runs past the
+    card (D19–D24, plan "On a phone"). — Fail (27 Nov 2026, Basheer, before D22): at
+    768 and 1280, on scrolling the rows, the column headings and Total row move up a
+    bit and the top of the heading row is cut off. All else as expected. Failed again
+    after a first fix. On the D22 layout the scrolling works (27 Nov, Basheer); to be
+    re-run on the D23 card and D24 header. Re-run: Pass (27 Nov 2026, Basheer, D22–D24
+    layout).
+37. [Complex: several values] As Haroon, on a laptop: Margin Report, This Quarter.
+    Choose Group by Product, then Brand, SBU, Zone, Rep. **Expected:** by Product the
+    table has a "Quantity" column; under the other four it has none, and the figures
+    still sit under "Sold for", "Cost", "Margin" and "Margin %" (D25). — Pass
+    (27 Nov 2026, Basheer)
+38. [Complex: phone layout] The same at 390, 768 and 1280 px, every Group by choice.
+    **Expected:** by Product each row shows Quantity; under the other four no row shows
+    it; nothing runs past the card (D25). — Pass (27 Nov 2026, Basheer)

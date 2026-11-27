@@ -19,34 +19,26 @@ session edits this note._
   **Decided (Basheer, 27 Nov):** cut-off Saturday 6 pm, a report goes only if all
   its steps pass (Sales Loss only if Margin goes: `0069` follows `0068`); Plan &
   Chore writes the move plan (Basheer pastes the request there).
-  **Open:** header name `2ac7f25` on UAT or not (he asked what is wrong with it).
+  Header name `2ac7f25` is kept and goes to UAT (Basheer, 27 Nov; Backlog).
 - Move plan must cover: price sheet load before `0068` (Margin D12); load script
   was only in an old scratchpad (`dev_price_load.py`); sheet has Cost blank.
 - Order: Margin E2E, then merge `worktree-build` (conflict in the progress
   archive only, dry run 27 Nov), Basheer applies `0069` on Dev, SLR E2E (37 steps).
 
-## NEXT — Margin Report E2E, resume at step 13
-**First:** Basheer restarts the Dev backend. 37 steps left, due Saturday 6 pm.
-Plan `docs/Margin-Report-Implementation-Plan.md` (Approved, D1–D21; build order
-complete). E2E plan `docs/Margin-Report-Manual-E2E-Test-Plan.md`.
-- **Pushed:** D19–D21 changes `1852540` (26 Nov; pytest 1788 passed / 10
-  skipped, ruff, tsc clean, lint 0 errors). Earlier build commits: the E2E
-  plan's "Built:" lines.
-- **E2E:** section A done — P1–P4 and steps 1–12 (incl. 11a) Pass, 17 of 54.
-  **Next: step 13** (login Basheer K, saves to Dev: Basheer clicks, Claude
-  watches). Confirm the Dev backend is current before starting.
-- **First seen at E2E:** the Won/Lost products screens (steps 21–26, 30–31, 35;
-  also re-read the other two pop-up modes in `CloseReminderModal.tsx`) and the
-  Dev cost copy on a newly Won Opportunity. Phone header and one-line totals
-  card: check by eye at step 36 (may wrap; review estimate, not measured).
-- **Open questions to Basheer:** (1) rows' Quantity — proposed keep in Product
-  view only; (2) accept that a click may list more Opportunities than the
-  figures count (rows and no-cost list), then add to D20.
-- **Small-fixes batch:** Activity Note writes "₹12.00 L", screens "₹12.00L"
-  (proposed, not answered).
-- **After the E2E:** post-commit checklist (Backlog entry, Traceability row
-  11.1, scorecard).
-- Margin plan, E2E plan and archive sections pushed in `fe8038a` (26 Nov).
+## NEXT — Margin Report post-commit paperwork, then Sales Loss Report
+Margin Report: E2E 56 of 56 Pass (27 Nov); `7469ece` (D22–D25) and `dc9c5d8`
+(D27) pushed. Qualifies for Sunday's UAT move.
+- Post-commit documents updated 27 Nov (check git log for the docs commit): 4.3 and 11.1 Done,
+  scorecard 40 of 49, `--check` OK. **Waiting on Basheer's yes:** republish the
+  two client scorecard pages.
+- **Then:** docs batch (own yes; includes the earlier date-picker retro
+  addendum), merge `worktree-build`, `0069` on Dev, SLR E2E. Due Saturday 6 pm.
+  Plan & Chore's move plan: `docs/UAT-Promotion-2026-11-29-Plan.md` (read it,
+  don't edit).
+- **Open:** sessions started by `b`/`bt`/`pc` inherit `MSYS_NO_PATHCONV=1`, so
+  the api.ts commit guard fails on backend commits; worked round with
+  `env -u MSYS_NO_PATHCONV git commit`. Sent to Plan & Chore to fix (Basheer,
+  27 Nov); until this session restarts, keep using the work-round.
 - Leave `scripts/uat_case_study_scan.py` and the Plan & Chore note alone.
 
 **Other open:** (a) plan D11 wording (Plan & Chore's batch; the rolled-back test was
