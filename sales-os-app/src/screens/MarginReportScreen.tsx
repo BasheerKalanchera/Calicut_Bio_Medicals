@@ -47,12 +47,11 @@ function lossColour(value: string | null) {
   return value !== null && Number(value) < 0 ? { color: "error.main" } : {};
 }
 
-// The total row passes no quantity: units of different machines don't add up
-// to anything useful (D20).
+// Quantity is given only when grouped by Product (D25).
 function FigureCells({ figures, quantity }: { figures: MarginFigures; quantity?: number }) {
   return (
     <>
-      <TocCell label="Quantity" align="right">{quantity}</TocCell>
+      {quantity !== undefined && <TocCell label="Quantity" align="right">{quantity}</TocCell>}
       <TocPair>
         <TocCell label="Sold for" align="right">{formatLakhsExact(figures.sold_for_lakhs)}</TocCell>
         <TocCell label="Cost" align="right">{formatLakhsExact(figures.cost_lakhs)}</TocCell>
@@ -65,27 +64,28 @@ function FigureCells({ figures, quantity }: { figures: MarginFigures; quantity?:
   );
 }
 
-function TotalsFigure({ label, children }: { label: string; children: React.ReactNode }) {
+// Label on the left, figure on the right, so a phone's two lines align.
+function TotalsFigure({ label, column, children }: { label: string; column?: number; children: React.ReactNode }) {
   return (
-    <Box>
-      <Box component="span" sx={{ color: "text.secondary", fontWeight: 400 }}>{label} </Box>
-      {children}
+    <Box sx={{ gridColumn: column, display: "flex", flexWrap: "wrap", justifyContent: "space-between", columnGap: 0.5 }}>
+      <Box component="span" sx={{ color: "text.secondary", fontWeight: 400 }}>{label}</Box>
+      <Box component="span" sx={{ ml: "auto" }}>{children}</Box>
     </Box>
   );
 }
 
-// The totals on a phone, held above the rows in one line, with no title and no
-// margin % so that the three figures fit (D21). Margin drops to a second line
-// rather than being cut off.
-function PhoneTotals({ figures }: { figures: MarginFigures }) {
+// The totals, held above the rows (D22, D23): one line on a tablet or laptop;
+// on a phone two, with Margin under Sold for and Margin % under Cost. No
+// quantity: units of different machines don't add up to anything useful (D20).
+// A figure drops below its label rather than being cut off.
+function TotalsCard({ figures, phone }: { figures: MarginFigures; phone: boolean }) {
   return (
     <Card variant="outlined" sx={{ mx: 2, mb: 1.5, flexShrink: 0, bgcolor: "gray.50" }}>
       <CardContent
         sx={{
           p: 1.5,
           "&:last-child": { pb: 1.5 },
-          display: "flex",
-          flexWrap: "wrap",
+          ...(phone ? { display: "grid", gridTemplateColumns: "auto auto auto" } : { display: "flex", flexWrap: "wrap" }),
           justifyContent: "space-between",
           columnGap: 1,
           rowGap: 0.5,
@@ -94,11 +94,18 @@ function PhoneTotals({ figures }: { figures: MarginFigures }) {
           whiteSpace: "nowrap",
         }}
       >
+        <Box>Total</Box>
         <TotalsFigure label="Sold for">{formatLakhsExact(figures.sold_for_lakhs)}</TotalsFigure>
         <TotalsFigure label="Cost">{formatLakhsExact(figures.cost_lakhs)}</TotalsFigure>
-        <TotalsFigure label="Margin">
+        {/* The second line starts under Sold for, leaving "Total" alone. */}
+        <TotalsFigure label="Margin" column={phone ? 2 : undefined}>
           <Box component="span" sx={lossColour(figures.margin_lakhs)}>
             {formatLakhsExact(figures.margin_lakhs)}
+          </Box>
+        </TotalsFigure>
+        <TotalsFigure label="Margin %">
+          <Box component="span" sx={lossColour(figures.margin_percent)}>
+            {percent(figures.margin_percent)}
           </Box>
         </TotalsFigure>
       </CardContent>
@@ -140,6 +147,9 @@ export default function MarginReportScreen({
   const tradeIn = Number(report?.trade_in_lakhs ?? 0);
   const groupLabel = GROUP_BY_OPTIONS.find((o) => o.value === groupBy)?.label;
   const periodLabel = REPORT_PERIOD_OPTIONS.find((o) => o.value === period)?.label;
+  // A brand, SBU, zone or rep row adds different machines together, so only
+  // a product row shows how many (D25).
+  const showQuantity = groupBy === "product";
 
   // The drilled list carries Won and the same closed dates. It holds every
   // such Opportunity for the row, with or without a saved cost (D20).
@@ -157,34 +167,21 @@ export default function MarginReportScreen({
 
   return (
     <Box sx={{ flex: 1, overflow: "hidden", bgcolor: "background.default", display: "flex", flexDirection: "column" }}>
-      {/* The title has its own band here; on a phone it shares the boxes'
-          line (D19). */}
-      {!phone && (
-        <Box sx={{ px: 2, py: 1.5, bgcolor: "background.paper", borderBottom: 1, borderColor: "gray.100", flexShrink: 0 }}>
-          <Typography component="h2" sx={{ typography: "h5", fontWeight: 800, color: "gray.800", letterSpacing: "-0.025em" }}>
-            Margin Report
-          </Typography>
-        </Box>
-      )}
-
-      {/* The two boxes and the totals stay put; the rows below scroll (§6.1). */}
+      {/* The title shares the boxes' line (D19, D24). They and the totals
+          stay put; the rows below scroll (§6.1). */}
       <Box sx={{ px: 2, pt: { xs: 1.5, sm: 2 }, pb: 1.5, flexShrink: 0, display: "flex", justifyContent: "flex-end", alignItems: "center", flexWrap: "wrap", gap: { xs: 0.75, sm: 1 } }}>
-        {phone ? (
-          <Typography component="h2" sx={{ typography: "body1", fontWeight: 800, color: "gray.800", letterSpacing: "-0.025em", mr: "auto" }}>
-            Margin Report
-          </Typography>
-        ) : (
-          <Typography variant="caption" color="text.secondary">{reportPeriodDates(period)}</Typography>
-        )}
-        {/* On a phone the closed box shows the dates themselves. */}
+        <Typography variant="screenTitle" sx={{ fontWeight: 800, color: "gray.800", letterSpacing: "-0.025em", mr: "auto" }}>
+          Margin Report
+        </Typography>
+        {/* The closed box shows the dates themselves. */}
         <TextField
           select
           size="small"
           label="Period"
           value={period}
           onChange={(e) => setPeriod(e.target.value as ReportPeriod)}
-          slotProps={phone ? { input: { sx: { typography: "body2" } }, select: { renderValue: () => reportPeriodDates(period) } } : undefined}
-          sx={{ minWidth: { xs: 128, sm: 140 } }}
+          slotProps={{ input: { sx: { typography: "body2" } }, select: { renderValue: () => reportPeriodDates(period) } }}
+          sx={{ minWidth: 128 }}
         >
           {REPORT_PERIOD_OPTIONS.map((o) => (
             <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
@@ -196,8 +193,8 @@ export default function MarginReportScreen({
           label="Group by"
           value={groupBy}
           onChange={(e) => setGroupBy(e.target.value as MarginGroupBy)}
-          slotProps={phone ? { input: { sx: { typography: "body2" } } } : undefined}
-          sx={{ minWidth: { xs: 96, sm: 110 } }}
+          slotProps={{ input: { sx: { typography: "body2" } } }}
+          sx={{ minWidth: 96 }}
         >
           {GROUP_BY_OPTIONS.map((o) => (
             <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
@@ -205,7 +202,7 @@ export default function MarginReportScreen({
         </TextField>
       </Box>
 
-      {phone && report && rows.length > 0 && <PhoneTotals figures={report.totals} />}
+      {report && rows.length > 0 && <TotalsCard figures={report.totals} phone={phone} />}
 
       <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", px: 2, pb: 2, display: "flex", flexDirection: "column", gap: 1.5, "& > *": { flexShrink: 0 } }}>
         <LoadingOrEmpty
@@ -220,23 +217,15 @@ export default function MarginReportScreen({
         {report && rows.length > 0 && (
           <SectionCard title="Margin" hideHeader>
             <TableOrCards
-              stickyHeader
               columns={[
                 { label: groupLabel },
-                { label: "Quantity", align: "right" },
+                ...(showQuantity ? [{ label: "Quantity", align: "right" as const }] : []),
                 { label: "Sold for", align: "right" },
                 { label: "Cost", align: "right" },
                 { label: "Margin", align: "right" },
                 { label: "Margin %", align: "right" },
                 { toggle: true },
               ]}
-              pinned={
-                <TocRow total shaded>
-                  <TocCell title>Total</TocCell>
-                  <FigureCells figures={report.totals} />
-                  <TocCell />
-                </TocRow>
-              }
             >
               {rows.map((row) => {
                 const open = wonStatusId ? () => openRow(row) : undefined;
@@ -248,7 +237,7 @@ export default function MarginReportScreen({
                         <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>cost filled in later</Typography>
                       )}
                     </TocCell>
-                    <FigureCells figures={row} quantity={row.quantity} />
+                    <FigureCells figures={row} quantity={showQuantity ? row.quantity : undefined} />
                     <TocCell action align="right">
                       {open && <ChevronRightIcon fontSize="small" sx={{ color: "gray.400" }} />}
                     </TocCell>

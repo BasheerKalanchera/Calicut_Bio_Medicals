@@ -139,7 +139,7 @@ export default function DemoApp() {
   const { userProfile, signOut } = useAuth();
   const queryClient = useQueryClient();
   const isMarketingUser = (userProfile as { role_name?: string } | null)?.role_name === MARKETING_ROLE;
-  // Temporary, training only (see the header comment below).
+  // The signed-in person's name, shown in the top header.
   const headerName = (userProfile as { display_name?: string } | null)?.display_name;
   // Lazy initializer -- AuthGate only mounts DemoApp once auth has resolved,
   // so userProfile is already populated at first render here; reading it
@@ -632,8 +632,8 @@ export default function DemoApp() {
                 <Box component="span" sx={{ typography: "body1", fontWeight: 900 }}>?</Box>
               </IconButton>
             )}
-            {/* Temporary, for training only: see docs/Backlog.md "Temporary: name
-                in app header for training". Name only, shown at every width. */}
+            {/* Name only, shown at every width, so it is clear whose window is
+                whose. */}
             {headerName && (
               <Typography
                 noWrap

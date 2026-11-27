@@ -17,14 +17,16 @@ declare module '@mui/material/styles' {
   }
   interface TypographyVariants {
     body3: CSSProperties; caption2: CSSProperties; tiny: CSSProperties; micro: CSSProperties; lead: CSSProperties;
+    screenTitle: CSSProperties;
   }
   interface TypographyVariantsOptions {
     body3?: CSSProperties; caption2?: CSSProperties; tiny?: CSSProperties; micro?: CSSProperties; lead?: CSSProperties;
+    screenTitle?: CSSProperties;
   }
 }
 declare module '@mui/material/Typography' {
   interface TypographyPropsVariantOverrides {
-    body3: true; caption2: true; tiny: true; micro: true; lead: true;
+    body3: true; caption2: true; tiny: true; micro: true; lead: true; screenTitle: true;
   }
 }
 
@@ -49,11 +51,14 @@ const theme = createTheme({
     caption2: { fontSize: '0.6875rem' },
     tiny: { fontSize: '0.625rem' },
     micro: { fontSize: '0.5625rem' },
+    // A screen title sharing its line with filters: the largest size at which
+    // "Margin Report" and two boxes fit a 390 px phone (Margin plan D24).
+    screenTitle: { fontSize: '1.0625rem' },
   },
   components: {
     MuiTypography: {
       defaultProps: {
-        variantMapping: { lead: 'p', body3: 'p', caption2: 'span', tiny: 'span', micro: 'span' },
+        variantMapping: { lead: 'p', body3: 'p', caption2: 'span', tiny: 'span', micro: 'span', screenTitle: 'h2' },
       },
     },
     // Restores the app-wide light-gray input fill (Tailwind bg-gray-50 / #f9fafb)
