@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, Box, Button, Checkbox, FormControlLabel, MenuItem, TextField, Typography } from "@mui/material";
-import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import { MobileDateTimePicker } from "@mui/x-date-pickers/MobileDateTimePicker";
 import dayjs from "dayjs";
 import FormModal from "./FormModal";
 import QuickLeadModal from "./QuickLeadModal";
@@ -10,6 +10,7 @@ import { listUsers } from "../services/masterData";
 import { getOpportunity } from "../services/opportunities";
 import { useAuth } from "../contexts/AuthContext";
 import { SilentModalError } from "../lib/formErrors";
+import { DATE_TIME_TOOLBAR } from "../utils/datePicker";
 import type { ActivityType, ReminderResponse } from "../types/api-aliases";
 
 interface Props {
@@ -696,11 +697,11 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
                   <MenuItem key={t.value} value={t.value}>{t.label}</MenuItem>
                 ))}
               </TextField>
-              <DateTimePicker
+              <MobileDateTimePicker
                 label="Date & Time *"
                 value={activityDate ? dayjs(activityDate) : null}
                 onChange={(newValue) => setActivityDate(newValue ? newValue.toISOString() : "")}
-                slotProps={{ textField: { fullWidth: true, size: "small" } }}
+                slotProps={{ textField: { fullWidth: true, size: "small" }, toolbar: DATE_TIME_TOOLBAR }}
               />
               <TextField
                 label={firstActivity ? "What happened? *" : stageChange ? "Why the change? *" : "What was done? *"}
@@ -758,11 +759,11 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
                     size="small"
                     placeholder="e.g. Send the quote they asked for"
                   />
-                  <DateTimePicker
+                  <MobileDateTimePicker
                     label={followUpRequired ? "Due Date *" : "Due Date"}
                     value={nextActionDueDate ? dayjs(nextActionDueDate) : null}
                     onChange={(newValue) => setNextActionDueDate(newValue ? newValue.toISOString() : "")}
-                    slotProps={{ textField: { fullWidth: true, size: "small" } }}
+                    slotProps={{ textField: { fullWidth: true, size: "small" }, toolbar: DATE_TIME_TOOLBAR }}
                   />
                   <TextField
                     select

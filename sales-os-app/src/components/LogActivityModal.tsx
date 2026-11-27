@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, Autocomplete, Box, Button, Checkbox, FormControlLabel, MenuItem, TextField, Typography } from "@mui/material";
-import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import { MobileDateTimePicker } from "@mui/x-date-pickers/MobileDateTimePicker";
 import dayjs from "dayjs";
 import FormModal from "./FormModal";
 import CloseReminderModal from "./CloseReminderModal";
 import { logActivity, listAccountOpportunitiesLookup, listAccountReminders, listOpportunityReminders } from "../services/activities";
 import { listAccounts, listOpportunities } from "../services/accounts";
 import { SilentModalError } from "../lib/formErrors";
+import { DATE_TIME_TOOLBAR } from "../utils/datePicker";
 import { listUsers } from "../services/masterData";
 import useDebouncedValue from "../hooks/useDebouncedValue";
 import { useAuth } from "../contexts/AuthContext";
@@ -408,11 +409,11 @@ export default function LogActivityModal({
               ))}
             </TextField>
             {!mustClose && (
-              <DateTimePicker
+              <MobileDateTimePicker
                 label="Date & Time *"
                 value={activityDate ? dayjs(activityDate) : null}
                 onChange={(newValue) => setActivityDate(newValue ? newValue.toISOString() : "")}
-                slotProps={{ textField: { fullWidth: true, size: "small" } }}
+                slotProps={{ textField: { fullWidth: true, size: "small" }, toolbar: DATE_TIME_TOOLBAR }}
               />
             )}
             <TextField
@@ -560,11 +561,11 @@ export default function LogActivityModal({
               size="small"
               placeholder="e.g. Call to confirm demo date"
             />
-            <DateTimePicker
+            <MobileDateTimePicker
               label="Next Action Due Date *"
               value={nextActionDueDate ? dayjs(nextActionDueDate) : null}
               onChange={(newValue) => setNextActionDueDate(newValue ? newValue.toISOString() : "")}
-              slotProps={{ textField: { fullWidth: true, size: "small" } }}
+              slotProps={{ textField: { fullWidth: true, size: "small" }, toolbar: DATE_TIME_TOOLBAR }}
             />
             <TextField
               select
