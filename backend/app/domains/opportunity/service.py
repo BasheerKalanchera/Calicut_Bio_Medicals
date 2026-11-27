@@ -92,7 +92,7 @@ class _LineSnapshot:
 
 
 def _money(value: Decimal) -> str:
-    return f"₹{Decimal(value):.2f} L"
+    return f"₹{Decimal(value):.2f}L"
 
 
 def _match_readded_lines(

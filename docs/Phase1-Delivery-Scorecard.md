@@ -5,15 +5,15 @@
 
 ## Summary
 
-Of **49** signed requirements: **38 done, 9 partly done, 2 not started** — plus **19 additional features built beyond the signed contract**: some requested by the Cabio leadership team for immediate business needs, others added by our team to make the system safer and easier to use (see "Commitment beyond contract" at the end). **3 more have been requested by Cabio leadership and are pending to build** (see "Requested" below that), and **1 more has been proposed but not yet decided** (see "Pending").
+Of **49** signed requirements: **40 done, 7 partly done, 2 not started** — plus **19 additional features built beyond the signed contract**: some requested by the Cabio leadership team for immediate business needs, others added by our team to make the system safer and easier to use (see "Commitment beyond contract" at the end). **3 more have been requested by Cabio leadership and are pending to build** (see "Requested" below that), and **1 more has been proposed but not yet decided** (see "Pending").
 
 | Done | Partly done | Not started | Commitment beyond contract |
 | :---: | :---: | :---: | :---: |
-| 38 | 9 | 2 | 19 |
+| 40 | 7 | 2 | 19 |
 
 **Real progress, two honest ways to read it:**
-- **Strictly done:** 38 of 49 = **77.6%**
-- **Counting partly-done items as half-credit** (the fairer "real progress" number, since 9 items aren't zero — they're mid-flight): (38 + 9×0.5) ÷ 49 = **86.7%**
+- **Strictly done:** 40 of 49 = **81.6%**
+- **Counting partly-done items as half-credit** (the fairer "real progress" number, since 7 items aren't zero — they're mid-flight): (40 + 7×0.5) ÷ 49 = **88.8%**
 
 **Closed (optional, not in Phase 1):** Account Manager role per customer
 
@@ -83,9 +83,9 @@ Where leadership and managers see how the business is doing.
 | :---: | :--- | :--- | :--- | :--- | :--- |
 | 29 | 2.5 | Weighted/unweighted forecasting by month/quarter/product; <3x-target low-pipeline alert | 5.1 Forecasting + 5.2 Pipeline Coverage Monitoring | Partial | Forecasting broken down by product is live today. Forecasting by month/quarter, and an early-warning alert for a thin pipeline, are no longer blocked on Target Management but still not built. |
 | 30 | 3.2 | Real-time actual-vs-target via role-specific dashboards | 5.3/5.4/5.5 Salesperson/Manager/GM Dashboard | Done | Role-based dashboards are live today. Target vs Actuals on the Insights Dashboard shows each person's target, plan, PO received and Won, rolling up to team, SBU and company for leadership, with a Quarter view and a Year view. |
-| 31 | 4.3 | Revenue per product/brand analytics | Appendix A.1 Reporting Principles (also 5.6 Core Reports) | Partial | Revenue and brand-level reporting is live today. Margin reporting (cost versus price) is approved and scheduled, restricted to senior roles only. |
+| 31 | 4.3 | Revenue per product/brand analytics | Appendix A.1 Reporting Principles (also 5.6 Core Reports) | Done | Revenue, quantity and price by product and brand are available, and a Margin Report (cost versus price) is built and tested, for the General Manager and Admin only. |
 | 32 | 6.1 | Demo-to-sale conversion report | 4.2 Demo Management | Not started |  |
-| 33 | 11.1 | Core reports: sales, pipeline, product qty/price/margin | 5.6 Core Reports | Partial | Sales, Pipeline, and Product Performance reports are all live today. The Margin report (cost versus price) is approved and scheduled, restricted to senior roles only. |
+| 33 | 11.1 | Core reports: sales, pipeline, product qty/price/margin | 5.6 Core Reports | Done | Sales, Pipeline and Product Performance reports are available, and the Margin Report is built and tested, for the General Manager and Admin only. |
 | 34 | 11.1 | Exception report: zero lead activity over 3 months | 5.7 Exception Reports | Done | Live as Customer with No Activity: hospitals and dealers with no visit, call, meeting or email in the last 90 days, or never contacted, with Rep and Zone pickers. Each person sees the customers in their own zones and team. |
 | 35 | 11.1 | Phase 1 analytics: conversion, pipeline aging, salesperson performance | Appendix A.1 Reporting Principles | Partial | Conversion figures are available today; pipeline-aging analysis (how long deals linger at each stage over time) is deferred to a later phase. |
 | 36 | 1.4 | Competitive Loss Report | Appendix A.3.5 Competitive Loss Report (also 5.5 GM Dashboard) | Not started |  |

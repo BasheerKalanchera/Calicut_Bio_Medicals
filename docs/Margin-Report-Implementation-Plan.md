@@ -1,6 +1,10 @@
 # Margin Report — Implementation Plan
 
-**Status:** Approved, 2026-11-24 (Basheer).
+**Status:** Approved, 2026-11-24 (Basheer). Built and E2E done on Dev,
+2026-11-27 (56 of 56 steps Pass); not yet on UAT:
+`18ae6c3`, `0084a92`, `595241e`, `36a931a`, `d3baaa6`, `2cb5a0b`, review
+fixes `fb31c08`, E2E changes (D19–D21) `1852540`, (D22–D25) `7469ece`, (D27)
+`dc9c5d8`.
 **Traceability rows:** 4.3 Revenue per product/brand analytics (Margin
 part); 11.1 Core reports: sales, pipeline, product qty/price/margin (the
 Margin Report).
@@ -90,6 +94,11 @@ D8–D10 and section 4; `Business-Rules.md` BR-CAT-04.
     with no catalog cost leaves the line empty (D5 applies, and D16 fills
     it at that product's first cost). Built in B1 (`595241e`) as Claude's
     choice; agreed — Basheer, 2026-11-25.
+  - D13g. A product removed from a Won or Lost Opportunity and added
+    again before Save is the same line: on a Won one it keeps the cost
+    saved on the day of the Won, not the day's catalog cost; the Note
+    lists only what differs, and nothing at all is saved when nothing
+    does (D13b) — Basheer, 2026-11-26 (pre-E2E review).
   - Related gap, not in this plan: other Won/Lost edits (Overview value,
     PO, owner, dates; Stakeholders; Documents) need no reason and only
     Splits are locked — Backlog "Won/Lost Opportunity: lock Overview and
@@ -121,6 +130,92 @@ D8–D10 and section 4; `Business-Rules.md` BR-CAT-04.
   to this report: "Margin is shown only in the Margin Report, which is
   Admin/GM-only too. The Product Performance report shows no margin." —
   Basheer, 2026-11-24
+- D17. A product with no saved cost also gets its own row in the report:
+  Quantity and Sold for shown, "—" for Cost, Margin and Margin %. It stays
+  in the D15 list as well. Why: the totals count its Sold for (D5), so
+  without the row the Product view adds up to less than the totals row
+  (Dev, 2026-11-26, This Quarter: E2 ₹19.00 L + S50 Elite ₹29.00 L =
+  ₹48.00 L against a total of ₹53.00 L, the difference being E1) —
+  Basheer, 2026-11-26 (option B, over A "only in the list").
+- D18. A loss is shown with a minus sign and in red, on Margin and
+  Margin %, in rows and in the totals (example: −₹5.00 L and −26.3%, Dev,
+  2026-11-26, SonoScape E2) — Basheer, 2026-11-26.
+- D19. Screen layout, changed during the E2E — Basheer, 2026-11-26:
+  - Phone: the title sits on one line with the Period and Group by boxes,
+    and the closed Period box shows the dates ("Oct–Dec 2026", "Nov 2026",
+    "All time"); its list still offers This Month / This Quarter / All Time.
+  - Phone: the totals are one card of two lines — Sold for and Cost, then
+    Quantity (under Sold for) and Margin with its % (under Cost).
+  - The totals stay in place while the rows scroll: the card on a phone,
+    the Total row under the column headings on a laptop.
+  - Group by Product: the D15 list is not shown; the product's own row says
+    "No cost on 1 sale (₹5.00L), not in the margin" under its name (made-up
+    example). Brand, SBU, Zone and Rep keep the list, the only place there
+    that names the products missing a cost (changes D15 and D17).
+    The list rule here and the card's Quantity are changed by D20.
+- D20. Sales with no saved cost are kept out of the main table and shown
+  only in the no-cost list — Basheer, 2026-11-26 (during the E2E):
+  - The rows and totals, in all five groupings, count only product lines
+    with a saved cost. Why: D5 as built put a no-cost sale in Sold for but
+    not in Cost or Margin, so the total looked wrong (Dev, 2026-11-26, This
+    Quarter: ₹53.00 L − ₹49.00 L against a margin of −₹1.00 L; now
+    ₹48.00 L). A product, brand, SBU, zone or rep with only no-cost sales
+    has no row.
+  - The list "No cost entered — not in the margin" shows in every grouping,
+    Product included, and a click on a product there opens the Pipeline list
+    of the period's Won Opportunities with that product. The line under the
+    product's name (D19) goes.
+  - The total has no Quantity (phone card and laptop Total row), because it
+    adds different machines together. The phone card's second line is Margin
+    with its % (changed by D21).
+  - Changes D5 ("Sold-for totals still include them"), D8, D17 (dropped) and
+    D19; D14 is covered, since every Sold for in the table now has a cost.
+
+- D21. On a phone the totals card is one line — Sold for, Cost, Margin —
+  Basheer, 2026-11-26 (choice A, during the E2E):
+  - The card has no "Total" word and no margin %, so that the three figures
+    fit one line at the same text size. If larger figures do not fit, Margin
+    drops to a second line.
+  - The laptop Total row keeps both. Changes D8 (phone), D19 and D20.
+- D22. Tablet and laptop show the same totals card as the phone, above the
+  rows and held in place while they scroll; the table's Total row is gone —
+  Basheer, 2026-11-27 (during the E2E):
+  - There the card also shows Margin %; it has no "Total" word and no
+    Quantity, as on a phone.
+  - The column headings scroll away with the rows (choice (a), over (b)
+    "stay while the rows are on screen"). Why: held headings are pushed up
+    and cut off once the table ends, with the no-cost list below it (seen on
+    Dev, 27 Nov, This Quarter).
+  - Changes D8 (totals row), D19 (laptop Total row under the headings) and
+    D21 (laptop Total row).
+- D23. The totals card says "Total" and shows Margin % at every width —
+  Basheer, 2026-11-27 (during the E2E):
+  - Tablet and laptop: one line, "Total" at the left, then Sold for, Cost,
+    Margin, Margin %.
+  - Phone: two lines — "Total", Sold for, Cost; below them Margin under Sold
+    for and Margin % under Cost, labels and figures lined up.
+  - Changes D21 (phone: one line, no "Total", no %) and D22 (no "Total").
+- D24. Tablet and laptop have the phone's one-line header — Basheer,
+  2026-11-27 (during the E2E):
+  - "Margin Report" on one line with the Period and Group by boxes, no white
+    title band.
+  - One title size at every width, 17 px — the largest that fits one line on
+    a 390 px phone (measured 27 Nov; 22 px does not). 360 and 375 px phones
+    already wrapped at 16 px.
+  - The closed Period box shows the dates, with no separate date text; both
+    boxes have the phone's width and text size.
+  - Changes D19 (phone only until now). Other reports keep their header.
+- D25. Quantity shows only when grouped by Product — Basheer, 2026-11-27
+  (after the E2E):
+  - Brand, SBU, Zone and Rep have no Quantity column or card line, because
+    one row adds different machines together. Changes D8.
+- D26. A click (on a row, or on a product in the no-cost list) opens every
+  Won Opportunity for it in the period, with or without a saved cost, so the
+  list can hold more Opportunities than the figures count; accepted, no new
+  Pipeline filter — Basheer, 2026-11-27. Adds to D10 and D20.
+- D27. The product-change Note (D13c) writes amounts as the screens do,
+  "₹12.00L" with no space; Notes already saved keep the space —
+  Basheer, 2026-11-27.
 
 ## Figures and sources
 
@@ -158,19 +253,23 @@ The cost is saved on each product line on the day the Opportunity is
 marked Won, so when Cabio's buy price changes later, past margins stay as
 they were.
 
-Products with no cost in the catalog can't have a margin; the report lists
-them (product, number of sales, value sold) and leaves them out of the
-margin rather than counting them as zero cost. When the GM enters a
-product's first cost, its Won sales without a cost pick it up, marked
+Products with no cost in the catalog can't have a margin; their sales are
+left out of the table and its totals, rather than counted as zero cost, and
+named in a list below it (product, number of sales, value sold), where a
+click opens the Opportunities. When the GM enters a product's first cost,
+its Won sales without a cost pick it up and move into the table, marked
 "cost filled in later". Trade-ins are shown on a separate line.
 
 Nobody else sees this screen; reps and managers never see cost or margin.
 
 ### On a phone
 
-Each row is a block: name on top, then Sold for, Cost, Margin and Margin %
-on two short lines. The totals block sits above the rows; period and
-group-by boxes stack above that, as on the Sales Report.
+Each row is a block: name on top, then Quantity (grouped by Product only,
+D25), then Sold for and Cost side by side, then Margin and Margin % side by
+side (Basheer, 2026-11-26, over one figure per line). Above the rows, held in
+place while they scroll:
+the title on one line with the period and group-by boxes (wrapping only on a
+very narrow phone), then the two-line totals card (D19, D23).
 
 ## 2. Build order
 
@@ -246,10 +345,17 @@ Sales Report row click still opens the right list).
   added to any Opportunity schema. `ProductsTab` gets status and role to
   hide Edit; `CloseReminderModal` gets a reason-only mode (next to
   `stageChange` / `firstActivity`) opened from its Save.
+  After the pre-E2E review (2026-11-26): on a Won/Lost change
+  `replace_items` also sets `indicative_value` in the same transaction
+  (the screen sends its own value PATCH only for open ones); an id-less
+  line matching a removed line's product and type reuses its id (D13g);
+  a Buyback → Product type change is stamped too; price and discount are
+  rounded to 2 places on the way in.
 - `backend/app/domains/reporting/`: `margin_summary` in repository and
   service (Won only, `closed_at` in period, PRODUCT lines using
-  `opportunity_item.cost_at_won_lakhs`; lines with NULL cost counted separately; BUYBACK
-  total separately); `MarginGroupBy`, `MarginSummaryRow`,
+  `opportunity_item.cost_at_won_lakhs`; rows and totals take only lines
+  with a saved cost, D20; lines with NULL cost listed by
+  `margin_missing_cost`; BUYBACK total separately); `MarginGroupBy`, `MarginSummaryRow`,
   `MarginSummaryResponse` in schemas; `GET /reporting/margin-summary` in
   router, 403 for roles other than GM/Admin.
 - Tests: `tests/domains/reporting/test_margin_summary.py` — every role,

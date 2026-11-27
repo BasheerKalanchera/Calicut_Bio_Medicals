@@ -2289,6 +2289,12 @@ edited in code and nothing was written to UAT.
 - **No `?` help page for the report in this build:** none of the reports has one; report help is written in Plan & Chore (help catch-up plan). Plan & Chore to add this screen to its list.
 - **No E2E step for the trade-in-only value:** the automated test `test_only_trade_in_lines_gives_no_value` covers it.
 
+## 26 Nov 2026 — Build & Test: Margin Report steps 2 and 3 pushed
+
+- **Shipped:** step 2, server margin figures (`GET /reporting/margin-summary`, GM/Admin only, `d3baaa6`; pytest 1778 passed / 10 skipped, ruff clean, run read-only on Dev), and step 3, the Margin Report screen with its Reports menu item (`2cb5a0b`; `tsc` clean, lint 0 errors). Both checkpoints, partial: build order complete, pre-E2E review and E2E pending, screen not yet seen in a browser.
+- **Decided (Basheer, 26 Nov):** D17 (a product with no cost gets its own row), D18 (a loss shows a minus sign, in red), phone layout B (two figures on a line: Sold for with Cost, Margin with Margin %).
+- **E2E plan:** figures reworked with Plan & Chore's review points, product-swap steps 25b/25c and step 21b added.
+
 ## 26 Nov 2026 — Plan & Chore: late retro for the morning session
 
 - **Retro, 26 Nov (Plan & Chore, morning session 06:07–08:46 IST; written late at the start of the next session — the morning session ended without it, and Basheer pointed out the retro belongs before a restart). Corrections from Basheer: 6** (counted from his 24 typed messages in the transcript). (1) "What was the issue in the present version of the product catalog…" — my one-line offer of a probe-sets paper didn't say what problem it would solve. (2) "go straight to UAT." — I had proposed a Dev practice run first. (3) "Not in .md format… share with them in WhatsApp." — leadership sheet made in a format he can't send. (4) He replaced my sheet's "What we need from you" paragraph with his own wording (list is from the UAT scan; the real list comes from Cabio's POs and invoices). (5) "Please remove docs/Discussion-USG-Probe-Sets-2026-11.md from your commit… sensitive client data for Cabio." — UAT-derived client data saved inside the project and staged; stopped before the commit ran, nothing pushed. (6) "Is it really time for a session refresh?" — I wound the session down without a reason, retro left undone. Judgement call, not counted: "Is it time for docs batch commit already?". Tracker: (5) touched UAT data → new P110 (open, proposal). No other slip touched live data or could be stopped by a guard.
@@ -2298,6 +2304,16 @@ edited in code and nothing was written to UAT.
 - **Case-study scan re-run on UAT (Basheer yes, 26 Nov; one read-only transaction, Admin context checked at start and end, rolled back; UAT alembic 0065).** Script copied into `scripts/uat_case_study_scan.py` (Basheer yes) with today's date, a "new since 19 Nov" mark per trace, and the looser good-example test (one habit gap allowed, a passed closing date ignored). Of 245 non-Lost Opportunities (3 created since 19 Nov), all vs 19 Nov: closing date passed 37 (36), Won without full payment confirmed 39 (39), stage skipped or Won in the same save 32 (30), possible duplicates 14 (14). New since 19 Nov: 2 stage skips, 1 closing date passed, 1 payment talk before Payment Pending, 1 newly silent 30+ days; none of the old cases cleared. 12 good-example candidates, but the test counts repeats of one habit as one gap, so the Case A Opportunity itself got in; 2 have only a passed closing date. Output (names client data) in this session's scratchpad only.
 - **Two good-example timelines read (UAT, Basheer yes, 26 Nov; read-only, Admin context checked, rolled back).** Both Fahad's, both at Negotiation 70 %. Candidate 1 (S50 Elite + E2, 15 activities 9 Sep–24 Nov): visits every 1–2 weeks, typed in the same day, every visit closes with a next action, four people at the customer met; but the stage is ahead of the facts (notes say the MD has not yet called them in for negotiation), the closing date (30 Sep) was never updated, no stakeholders recorded, two thin call notes on 9 Oct (of three calls that day). Case C (good example) drafted for the Area Managers' WhatsApp group, same style as Cases A and B; kept in the session scratchpad.
 - **Weekly-check figures table drafted** (Basheer asked, 26 Nov): the 19 Nov manager weekly-check message gets a 19 Nov → 26 Nov table from the two scans, to replace its "Why this matters" paragraph. Only one count fell (model in the name not on the product lines, 9 → 8; fixed or marked Lost, not checked); the two new stage skips are Order → Payment Pending and Lead → Negotiation. Message still to be sent. Candidate 2 (P40 Elite, 14 activities 26 Oct–23 Nov): frequent and team-logged, but the demo dates on the record (12–14 Oct) don't match the notes (demo still being planned for late Nov), closing date 17 Oct, one next action overdue and still open. Recommendation to Basheer: candidate 1 as the good example with kind tips; not candidate 2. Names and output kept in the session scratchpad (client data).
+
+## 26 Nov 2026 — Build & Test: Margin Report pre-E2E review fixes pushed
+
+- **Review (high) of the Margin Report commits: 6 points, found by reading the code, none reproduced; all fixed in `fb31c08`** (Basheer: "fix all 6"). (1) Won/Lost products save and the Opportunity Value update were two calls; now one transaction. (2) Removing a product and adding it again before Save would likely have broken the one-line-per-product rule; now the same line is updated, and a Won line keeps its saved cost (D13g, Basheer). (3) A description-only change was reported saved but dropped. (4) A Buyback line turned into a Product line got no cost. (5) A third decimal counted as a change and could write a Note showing no difference. (6) A stray space. (3) and (4) are reachable only through the API.
+- Same commit: the Sales Report uses the shared period helpers (Basheer's yes; no visible change expected).
+- pytest 1789 passed / 10 skipped, ruff and tsc clean, lint 0 errors. Not yet seen in a browser or saved against the Dev database; E2E pending.
+
+## 26 Nov 2026 — Build & Test: end-of-session retro
+
+- **Retro, 26 Nov (Build & Test; 2 h 42 min worked at the checkpoint). Corrections from Basheer: 2** (counted from the 19 typed messages in the transcript). (1) "What is this? Please explain" — I listed the open items too tersely to follow. (2) "Please elaborate this" — my note on the phone layout change was not clear; I had also wrongly said the screen standards forbade two figures on a line. Not counted: the "pressed No" re-run (an accidental click) and the E1 question (raised on Plan & Chore's review). No slip touched live data or could be stopped by a guard; no tracker change.
 
 ## 26 Nov 2026 — Plan & Chore: possible duplicates read
 
@@ -2312,3 +2328,324 @@ edited in code and nothing was written to UAT.
 ## 26 Nov 2026 — Build (parallel): end-of-session retro
 
 - **Retro, 26 Nov (Build session, from 15:59 IST). Corrections from Basheer: 0** (counted from the session's typed messages). Done: documents batch `07c1bdb`; `main` brought into the build branch `f3d6e19` (one clash, in this log, both sides kept); both pushed; pytest 1818 passed / 10 skipped. My own slips, not corrections: guard rails refused some commands, redone another way; one refusal also skipped the staging of two files, noticed before the commit. No tracker line. The earlier Build work the same day (commits 13:01–15:52 IST) has no retro found in this log.
+
+## 26 Nov 2026 — Build & Test: Margin Report screen changes during E2E (D19)
+
+- **Basheer, from the phone view mid-E2E:** header on one line, a two-line totals card, totals held still while rows scroll, and no separate no-cost list when grouped by Product (plan D19). Also step 28c's test cost ₹4.50L → ₹3.50L (a cost above E1's CEO's lowest ₹4.25L is refused). Code uncommitted; tsc clean, lint 0 errors; not seen in a browser.
+- **Review (medium) of that code: 2 points, found by reading the code, both checked against it; not yet fixed.** (1) On laptop/tablet the held Total row's cells become heading cells, so it loses its bold figures and the line above it. (2) On a phone the title and boxes sit 4 px further in on the left and further out on the right than the cards below.
+- Both review points fixed (Basheer: "Fix both"); tsc clean, lint 0 errors; not seen in a browser.
+- Basheer then asked why the totals include E1's price ("the total appears wrong") and what the total quantity is for. Read from the code: E1 is not in the margin, but its ₹5.00L is in total Sold for (D5, as built), so ₹53.00L − ₹49.00L does not give −₹1.00L. Two changes proposed, awaiting Basheer.
+
+## 26 Nov 2026 — Build & Test: Margin Report, no-cost sales taken out of the table (D20)
+
+- Basheer: "We can go back to the earlier decision of keeping the Opportunities
+  without cost into a separate section." Also removed the total Quantity and
+  asked for the no-cost list to be clickable. Recorded as D20.
+- Built: rows and totals count only lines with a saved cost (server filter);
+  the list shows in all five groupings and opens the Pipeline list; the line
+  under a product's name (D19) removed. E2E expected figures reworked by
+  script; step 11a added.
+- Checks: pytest 1788 passed / 10 skipped; ruff clean; tsc clean; lint 0
+  errors, 134 warnings. Not seen in a browser.
+- Code review (medium) of the uncommitted D19 and D20 changes: no bug to fix.
+  Two minor points, both put to Basheer: a click can open more Opportunities
+  than the clicked figures count (the Pipeline filter ignores saved cost); the
+  one-line phone header may wrap at 360–390 px (estimate, not measured).
+- D21 (Basheer, choice A): phone totals card in one line (Sold for, Cost,
+  Margin), no "Total" word or margin %. His wording with both needed about
+  381 px against about 332 px on a 390 px phone (measured by script in the
+  Windows font). Checks: tsc clean, lint 0 errors; reviewed by re-reading the
+  change; not yet seen in a browser.
+- **Shipped:** D19–D21 as `1852540`, pushed 26 Nov. E2E section A (P1–P4,
+  steps 1–12 incl. 11a) passed on Dev, run by Basheer; 17 of 54. Feature not
+  finished: Traceability and scorecard unchanged.
+
+## 2026-11-26 — Build & Test retro (Margin Report E2E session)
+
+**Corrections from Basheer this session: 3**
+- Read "move the Margin figure to the total row" as a swap of rows; he had to
+  say "all 3 on the same line".
+- My D19 suggestion (hide the no-cost list by Product) left E1 counted and the
+  total looking wrong; he went back to the separate list (D20).
+- I listed "that section has no row click" as an effect without proposing the
+  fix; he asked "Why not make it that card also clickable?"
+
+## 26 Nov 2026 — Build & Test: date picker on short laptop screens
+
+- Basheer parked the Margin Report E2E at step 13 to fix the Backlog entry
+  (Haroon's report). Below a set screen-area height, the four date-and-time boxes
+  in Close Next Action and Log Activity now open in the centre.
+- Review (medium) found the proposed 760px too low: the attached box (about
+  390px, estimate) only flips above or below its field. Raised to 820px
+  (Basheer). Also noted: centred box may scroll on very short screens; crossing
+  the cut-off with a box open closes it; older code may keep the previous date
+  when an impossible date is typed (from reading code, not reproduced).
+- Checks: pytest 1788 passed / 10 skipped, ruff and tsc clean, lint 0 errors.
+  Not yet seen in a browser; not committed.
+- E2E: Basheer could not see any difference — Chrome on that laptop reports a
+  touch screen and no mouse (Windows does see the Bluetooth mouse), so old and
+  new both centre the box. With a temporary switch ignoring the mouse check he
+  reproduced the cut-off, then saw the centred box (step 2 Pass). Finding: on a
+  short window the centred box must be scrolled to reach Cancel and Next.
+- Fix (Basheer: yes, by height only, any device): the box's large date-and-time
+  header is hidden below 660px screen height (estimate). Reviewed: in the
+  centred box AM/PM is also a column in the clock tab (library code), so it stays
+  selectable. tsc clean, lint 0 errors on the three files. Step 2 to be re-run.
+- Steps 1–4 Pass after the header change (6 of 10 with P1–P2). Next: step 6
+  with the temporary switch still in the code, remove the switch, then 5, 7, 8.
+  Not committed.
+- **Retro, 26 Nov (Build & Test, date picker on short screens). Corrections
+  from Basheer this session: 3**, counted from his 17 typed messages in the
+  transcript: (1) "Didn't quite understand the diff between 760 & 820?" —
+  unclear explanation; (2) "I am unable to replicate… Show me." — before/after
+  steps given without checking how his browser reports the laptop; (3) "I
+  already use a mouse on this laptop using bluetooth mode?" — I suggested
+  plugging in a mouse without asking whether he used one. Not counted: "Which
+  all date pickers are impacted?" (I had said two windows; four — corrected);
+  "only for shrunk laptop windows right?" (clarifying); the scrolling problem
+  (E2E result, though the review had flagged it before he tested). No live data
+  or UAT touched; no guard could stop these; no tracker change.
+
+## 27 Nov 2026 — Build & Test: date box centred on every device
+
+- Step 6 passed (Basheer, temporary switch on).
+- Basheer asked why not centre the box everywhere; agreed (Basheer, 27 Nov).
+  The 820px height rule, the mouse check and the temporary switch are removed;
+  the four date-and-time boxes use `MobileDateTimePicker`. Cost accepted: one
+  extra click (date, then time) on large laptop screens.
+- Diff reviewed; pytest 1788 passed / 10 skipped, ruff and tsc clean, lint
+  0 errors, 134 warnings. Not committed; E2E steps 1a, 6a, 5, 7, 8 to run.
+- Same day, during step 8: the large date-and-time header is now hidden on every
+  screen, replacing the 660px rule (Basheer, 27 Nov; its mixed text sizes looked
+  uneven: the library's default sizes). Step 6b added.
+- Steps 6b and 8 passed (Basheer): date picker E2E complete, 13 of 13.
+- Committed and pushed as `ba67000` (Basheer yes). Backlog entry removed; the
+  photo is now linked from the E2E plan. Not on UAT yet; route (hotfix or next
+  full move) not decided. No signed requirement involved.
+- UAT route (Basheer, 27 Nov): a full move on Sunday 29 Nov early morning
+  replaces the proposed date picker hotfix. Margin Report and Sales Loss Report
+  go only if every E2E step passes by Saturday 28 Nov 6 pm (Sales Loss only with
+  Margin: migration `0069` follows `0068`). Plan & Chore writes the move plan;
+  message given to Basheer to paste there. Open: the training-only header name on
+  UAT (Claude now recommends keeping it).
+- **Retro (Build & Test, 27 Nov; 2 h 32 min worked, written at the refresh).
+  Corrections from Basheer this session: 4** (counted from the 25 typed messages
+  in the transcript): "Why to change it now? It is working fine right?"; "I didn't
+  understand. Why are we going back to mouse check?"; "Why not make it centered on
+  the devices as standard" (the simpler design I had not offered); "what is wrong
+  in seeing one's name on the screen header?" (I recommended leaving it off only
+  on an old decision, with no reason given). No live data or UAT touched; no
+  tracker change.
+- **Retro addendum (Build & Test, 27 Nov; 2 h 35 min): no further corrections.**
+  Docs batch `5cad4f2` pushed; unused hotfix plan and the 27 Nov screenshot
+  deleted (Basheer yes).
+
+## 27 Nov 2026 — Plan & Chore: UAT backup; weekly Harness review (Option B) in progress
+
+- UAT backup `cabio_uat_2026-11-27_0649.dump` (537 TOC entries; pruned 11-12); Drive copy done (Basheer).
+- Harness review, counted from the retros: 121 corrections in 40 sessions 18–26 Nov (3.0 a session) vs 57 in 20 sessions 10–17 Nov (2.9). Hand-sorted (estimate): about half unclear first explanations; about 12 answers from memory, not the screen, code or sheet; about 8 over-design; retro after the docs batch or refresh 3 times (20, 23, 26 Nov); E2E steps not grouped by login (2 in retros, 4 reminders in transcripts). No retro found for Build & Test 21 Nov. Watch list empty.
+- Basheer's decisions: the retro goes into the session clock's refresh message (not a commit check); a wording hook covers sessions that end without the clock ("wind up", "refresh", "docs batch") and the addendum after a clock retro; `/test` retired (used once since 17 Oct); `cabio-e2e-testing` shortened and split into writing / running; two new skills — session hand-offs (A: each note shown to Basheer first, archived once answered) and messages for the Cabio team (B); status line showing time worked and start time. Exact text to be shown before any edit.
+- Permissions (Basheer yes): 7 read-only rules added to `.claude/settings.json` (type check, lint, three browser read tools), from a scan of the 50 latest transcripts; Python, pytest and `ruff check *` left out (can run code or change files). Removed from the git-ignored `.claude/settings.local.json`: pre-approval of `git commit`, `git push`, any one-line Python and `pip install`, so those now pause for "Allow?" again.
+- **Retro (Plan & Chore, 27 Nov; written when Basheer asked "Is it time for session refresh?" — the new end-of-session reminder's first real firing). Corrections from Basheer this session: 5** (counted from his 15 typed messages; the early part from the context summary, so ±1): (1) "why not add Retro to session refresh recommendation itself … Checking during docs batch commit is reactive right?" — my proposed guard only caught the miss afterwards; (2) "Please elaborate" — my cases 2 and 3 explanation was unclear; (3) "So what is the solution for Cases 2 and 3?" — I described the gap without proposing a fix; (4) "Please explain" — the risky-permissions note used code words; (5) screenshot paste suggested without checking his set-up (CLI in the AntiGravity terminal). Not counted: his question about Build & Test's files showing here. No tracker line: none guard-stoppable; no live data or UAT touched (UAT backup read-only with his yes).
+- **Harness review item 2 — `/test` retired (Basheer yes, 27 Nov).** Used once since 17 Oct (counted from transcripts); both E2Es its note listed were run by Build & Test (Next-Action rules 42 steps passed, Annual Target Planning 95, per their test plans). Deleted `.claude/skills/test/SKILL.md` and `.claude/session-handover-test.md` (git keeps both). Three sessions now in CLAUDE.md "Starting a session" and the plan-and-chore, build-and-test and build skills (`/build`'s E2E goes to Build & Test). Hooks: `reply-checklist.sh` and `session-start.sh` no longer show or size-check a Test note; `handover_after_commit.py` no longer names it. `.claude/tools/last_session.py` keeps its harmless "test" option. Checked: both shell hooks parse; `/test` now shows no note; `/plan-and-chore` and an after-summary start still show the right note; unknown session shows all three.
+- **Retro addendum (Plan & Chore, 27 Nov, at the session refresh): no further corrections from Basheer** since the retro above (item 2, `/test` retired, approved and built as shown).
+- **Harness review item 3 — `cabio-e2e-testing` shortened and split (Basheer yes, 27 Nov).** 119 → 87 lines (counted). Three parts: pre-E2E review, writing a test plan, running an E2E. No rule dropped or added; repeats merged (phone-layout look said three times, "Basheer runs most steps" twice, live-data checks split across parts). Opening line names what `test_plan_guard.py` already refuses. Moved: the hide-check re-run to the running part; "start from the template" stated in the writing part. Skill name and description unchanged, so CLAUDE.md and the skills that point to it need no edit.
+- **Harness review item 6 — status line (Basheer yes, 27 Nov; done before item 4 at his request).** Basheer asked why the session clock doesn't show on each reply: by design it speaks only when a refresh is due (from message 25, every 5, over 2 h; or after a push), and only to Claude. New `.claude/hooks/status_line.py` shows "⏱ H h M min worked · started HH:MM (IST) · N messages", adding "· refresh due" over 2 h; it reuses `session_clock.py`'s counting, so the line and the refresh advice agree. Wired as `statusLine` in `.claude/settings.json` (all three sessions). 3 new tests, 20 of 20 pass. Checked on this session's transcript: "0 h 21 min worked · started 11:14 · 6 messages".
+- **Found while designing item 4: the start-up note never showed (Basheer yes to fix, 27 Nov).** Git Bash turns the `PC`/`BT`/`B` shortcuts' "/plan-and-chore" into "C:/Program Files/Git/plan-and-chore"; all 12 sessions checked (26–27 Nov, first messages counted) started that way, so `reply-checklist.sh` never matched and each session read its note by hand. Fixed: `export MSYS_NO_PATHCONV=1` in the three shortcuts (git-excluded, checked: the command now arrives unchanged); `reply-checklist.sh` strips the "C:/Program Files/Git/" prefix and the space after `"prompt":` before matching (checked with 6 inputs, incl. "hello /plan-and-chore" silent).
+- **Harness review item 4 — messages between sessions (Basheer yes, 27 Nov).** Replaces "Paste this into …" (today's UAT move request from Build & Test was the latest). New `.claude/hooks/inbox.py` (UserPromptSubmit): finds the session from the first typed message (both forms above), shows Claude `<main folder>/.claude/inbox/to-<session>.md` while it holds anything; `/build`'s worktree uses the main folder's mailboxes. New `session-messages` skill (sending: shown to Basheer first, written on his yes; receiving: open the reply with it, ask now or later, archive line, empty the file). The three session skills point to it instead of "goes to Basheer". `.claude/inbox/` git-ignored. 8 new tests in `test_inbox.py` OK; clock tests 20 OK; live check on this session with a made-up message, deleted after.
+- **Harness review item 5 — messages for the Cabio team (Basheer yes, 27 Nov).** New `team-messages` skill (37 lines), from the 13 Nov and 26 Nov corrections: ready to paste into WhatsApp or a one-page PDF, never .md; every Opportunity the reader owns checked in; numbered questions; client data only in the scratchpad (P110); full text shown first, Basheer's wording wins, he sends it, one archive line after. Plan & Chore skill points to it.
+- **Basheer's answers, 27 Nov:** he sees the status line; the header name (`2ac7f25`) is kept for good and goes to UAT with the next move (Backlog entry reworded; training plan decision changed); Sessions 2a and 2b in the second half of December (year-end sales push).
+- First mailbox message written (Basheer yes, 27 Nov): to Build & Test, his header-name and Sessions 2a/2b answers and the Backlog code-comment task; the UAT move plan stays with Plan & Chore. Reviews line added to `docs/Process-Improvements.md` (ninth review).
+- **Retro (Plan & Chore, 27 Nov, after the refresh): corrections from Basheer: 2** (counted from his typed messages). (1) "You said 14 files to be staged. But I am seeing 18 files staged. What is going on?" — the commit proposal's heading said 14 files while its own list named 18; the number was written without counting (reply-checklist rule 1). (2) The same proposal said 8 archive lines, 7 were staged: the item 6 line had already gone into Build & Test's `5cad4f2` (shared archive), and I counted it again without checking the last commits (CLAUDE.md "Parallel sessions"). Both caught before the commit; no live data touched. Possible check (tracker, proposal): the commit proposal's file and line counts are taken from `git diff --cached --stat` after staging, not written by hand.
+
+## 27 Nov 2026 — Build & Test: Margin Report E2E, steps 13–25
+
+- Steps 13–25 (incl. 21a, 21b) Pass on Dev, run by Basheer.
+- Step 25 note (Basheer): "I had to do a hard refresh to see this - The history
+  log shows the E2 line as added. - in the Audit log." From the code: the Audit
+  Log screen stays loaded in the background and does not re-read its list when
+  opened again (`DemoApp.tsx` ~line 840; `AuditLogScreen.tsx` `useQuery`, nothing
+  else refreshes "audit-log"). Not caused by the Margin Report build. A fix was
+  proposed and then withdrawn after Basheer asked whether it is needed ("How many
+  people we change something and go to the Audit log in the same session to check
+  it?"). Not changed, no Backlog entry; reloading the page shows the entry.
+- Steps 25a–27, 34 and 35 Pass. Step 36 Fail (laptop and tablet, Margin Report):
+  on scrolling, the headings and Total row move up and the top of the heading row
+  is cut off. From the code: the card's top inner spacing (`SectionCard` p: 2,
+  `ReportingUI.tsx`) scrolls away before the held heading block sticks
+  (`TableOrCards.tsx` pinned head, top: 0). The cut-off look is not yet confirmed
+  in a browser. 34–36 were run before the Admin steps (Haroon already signed in;
+  36 needs E1 with no cost).
+- Step 36 fix made on Dev, not committed (Basheer yes): on laptop and tablet the
+  Margin table card has no top space and the heading row carries it (`SectionCard`
+  `flushTop`, `TableOrCards` pinned head, `MarginReportScreen`). tsc clean, lint 0
+  errors; reviewed by re-reading; re-check by eye pending.
+- H1 Pass (Claude in the browser, as Haroon, read-only).
+- Step 36 re-check **Fail** (Basheer): same movement. Claude measured in the browser
+  (Admin, 873×459, read-only): the first diagnosis was wrong. Pinned headings can
+  only stay while their own table is on screen; with 3 rows, the no-cost list and
+  trade-in line below make the area scroll 169px, the table ends, and the headings
+  are pushed 28px above the scroll area. Options put to Basheer; no new change yet.
+- Message from Plan & Chore (27 Nov): top-bar name `2ac7f25` kept, goes to UAT 29
+  Nov; reword the two "Temporary, training only" notes in `DemoApp.tsx`. Basheer:
+  do it after the Margin Report E2E.
+- Step 36, Basheer's own suggestion approved (plan D22): the phone's totals card on
+  tablet and laptop too, with Margin %; Total row removed; column headings scroll
+  with the rows. Built, not committed (`MarginReportScreen.tsx`,
+  `TableOrCards.tsx` back to before `1852540`, first fix undone). tsc clean, lint 0
+  errors. `/code-review low`: one point, that headings now scroll away — what D22
+  chose; no change. Re-run of step 36 pending.
+- Basheer: step 36 scrolling works on D22. Asked for "Total" in the box and two
+  lines on the phone, with their own layout (plan D23). Built, not committed;
+  tsc clean, lint 0 errors. Re-run of step 36 pending.
+- Basheer: the phone's one-line header on tablet and laptop too, title size there
+  unchanged (plan D24). Built, not committed; tsc clean, lint 0 errors. Step 36
+  re-run now covers D23 and D24.
+- Basheer then asked for one title size on all widths (24 px, else 22). Measured
+  in the browser (Admin, read-only), Period "Oct–Dec 2026": at 390 wide the title
+  fits one line up to 17 px (22 px needs 151 px, 118 free); at 360 and 375 it
+  already wraps at today's 16 px; at 412 it fits up to 20 px (calculated). Choice
+  put to Basheer; no code change.
+- Basheer chose 17 px at every width. Built as theme size `screenTitle`
+  (standards: no typed font size in a screen), not committed; tsc clean, lint 0
+  errors; reviewed by re-reading (size only). Step 36 re-run pending.
+- Step 36 **Pass** (Basheer, D22–D24 layout). 44 of 54 run, all Pass.
+- Step 28 **Pass** (Basheer, Admin). 45 of 54 run, all Pass; left: 28a–28c,
+  29–33, H2.
+
+## 27 Nov 2026 — Build & Test: retro (Margin Report E2E, steps 13–36)
+
+**Corrections from Basheer this session: 4**
+
+- "Is this really needed" — I proposed an Audit Log fix of little value.
+- "Nope the fix is not working" — I diagnosed step 36 from the code without
+  looking at the screen, and the fix failed.
+- "Why not show the same total box" — the simpler answer to step 36 came from
+  Basheer, not from my options.
+- "give me 28 once again" — I pointed to step 28 more than once and had to be
+  asked for it in full.
+
+No guard or tracker line: nothing touched live data, UAT or lost work.
+
+## 27 Nov 2026 — Build & Test: Margin Report E2E complete
+
+- Steps 28a, 28b, 28c, 29–33 **Pass** (Basheer). H2 **Pass** (Claude in the
+  browser as Fahad: 403, "Only the General Manager and Admin can see the Margin
+  Report."). **E2E complete: 54 of 54 run, all Pass** (counted from the plan).
+- Dev test data: SonoScape E1 now has a catalog cost of ₹3.50 L (first saved as
+  ₹4.00 L, which past sales keep).
+- Review gap: D22 had `/code-review low`; D23, D24 and the 17 px title size were
+  built after it and checked only by type check, lint and re-reading, and later
+  steps ran without a further review. To be run before the `fix:` commit.
+- Review run after the E2E (`/code-review medium`, uncommitted changes): no
+  correctness bug; two minor points (totals card may sit a scrollbar's width past
+  the table on a laptop, not seen on screen; new title size applied through `sx`
+  rather than `variant`, Frontend standards §6.11). Checks: pytest 1788 passed, 10
+  skipped; ruff clean; tsc clean; lint 0 errors, 134 warnings.
+- `DemoApp.tsx` header-name comments reworded; Backlog "Name in app header"
+  removed (closed) and the training plan's pointer to it dropped.
+- Basheer on the two points: the totals box does stick out a bit past the table on
+  the laptop and is fine as it is (no change). Title now uses `variant="screenTitle"`;
+  tsc clean, lint 0 errors; Basheer's look check **Pass** (27 Nov).
+
+## 27 Nov 2026 — Plan & Chore (evening): session clock idle limit 30 → 10 minutes; UAT move plan decisions
+
+- **Session clock (Basheer, 27 Nov):** the clock counted every gap under 30
+  minutes as worked time, so time Basheer spent in Build & Test counted in Plan &
+  Chore too (status line showed 46 min, 15:56–16:43, for about 10 minutes of his
+  typing). `IDLE` in `.claude/hooks/session_clock.py` is now 10 minutes. The
+  status-line docstring and `cabio-post-commit` say the same. Tests: the helper's
+  sample replies now 5 minutes apart (10 was exactly the new limit) and the
+  idle-gap test rebuilt around 10 minutes; 20 passed.
+- **`PC` exit error** (Basheer saw it on exit): bash reads a running script from
+  its saved place; the launch scripts were rewritten at 14:20 while the session
+  ran, so on exit it resumed mid-comment. Harmless; `exec` fix offered, not
+  answered.
+- **UAT move plan, 29 Nov:** decisions D1–D10 shown in chat, not yet saved.
+  Found: Margin's commits (`18ae6c3`…`1852540`) sit before the date fix
+  `ba67000` on `main`, so "without Margin" means `3c91f94` plus a copy of
+  `ba67000` (trial merge clean, `git merge-tree`). The price load script
+  `dev_price_load.py` was not found on this computer.
+- **Plan written:** `docs/UAT-Promotion-2026-11-29-Plan.md` (Draft). Basheer
+  answered D0–D10 except D3a (load order; he asked for it to be explained).
+  Margin goes, no fallback (D1); Sales Loss only if its E2E is complete by Sat
+  6 pm (D2); Build & Test finishes the Margin fixes before the join today, no
+  message (D2a); Haroon's revised sheet (new product variations, with cost) by
+  Sat afternoon, else the current one (D3, D3b); Sunday's daily backup is the
+  rollback point if nothing was saved after it (D7).
+- **New scripting rule (Basheer's wording, 27 Nov):** a Dev load script for an
+  approved plan that must also run on UAT goes into `scripts/` and is committed
+  the same day; removed only once the changes reach UAT
+  (`cabio-db-and-scripting`, "Scripts"; origin in `docs/Process-Rules-History.md`).
+  Second time a needed script was lost with a scratchpad (Basheer).
+- **Plan approved (Basheer, 27 Nov):** D3a (load order) plus D3c (if the
+  sheet has no costs, Haroon types each product's cost once on the Product
+  Catalog; the first cost fills that product's old Won lines — read
+  `product/service.py:190–196`), D3d (a later cost sheet fills empty old Won
+  lines the same way) and the D8 addition for Haroon.
+- **Message from Build & Test (20:00):** fix the start-up files `B`, `BT`,
+  `PC` — the `MSYS_NO_PATHCONV=1` line added here at 14:20 was inherited by
+  every command, so the commit guard `check-api-types.sh` could not find
+  `generate-types.js` and refused `dc9c5d8`'s first commit. My miss: I tested
+  only that the start-up note showed. Basheer: yes, now. Fix: the setting
+  removed, the command written `"//plan-and-chore"` (`//build`,
+  `//build-and-test`); Build & Test's `{ … exit }` wrapper kept. Tested with a
+  shell stand-in handing over to Python (the real `claude` is an npm shell
+  shim), setting off: `/x` → `C:/Program Files/Git/x`; `//x` → `/x`;
+  `//x restarted` → `/x restarted`. `bash -n` OK on all three. Running
+  sessions keep the setting until restarted (commit with
+  `env -u MSYS_NO_PATHCONV`). Still to check: the start-up note shows on the
+  next real start. Reply sent to Build & Test's mailbox (Basheer yes).
+- **Retro (evening part; the morning retro, 2 corrections, is above):
+  Corrections from Basheer: 4** — (1) the price load script lost with a
+  scratchpad, the second time (P112, Seen 2); (2) "D3a — it is not clear,
+  please elaborate"; (3) the plan had no case for a sheet without costs
+  ("There is high probability that Haroon's sheet … will not have costs");
+  (4) the start-up file setting I added broke the commit check, reported
+  through Build & Test (P113, new).
+
+## 27 Nov 2026 — Build & Test: Margin Report D25–D27
+
+- Basheer took the recommendation on all three open questions: Quantity by
+  Product only (D25); a click may list more Opportunities than the figures
+  count (D26, nothing built); product-change Note writes "₹12.00L" (D27).
+- Built D25 and D27. `/code-review medium` on them: no correctness bugs; three
+  notes — test plan wording (fixed), Frontend standards 6.1 exception for D22
+  (added), theme and `TableOrCards.tsx` to be committed with the screen.
+- Checks: pytest 1788 passed, 10 skipped, 1 warning; ruff passed; `tsc -b` exit
+  0; lint 0 errors, 134 warnings; MUI standard and Tailwind checks pass.
+- No new Note saved on Dev to check D27 (Activities can't be deleted); the
+  automated test covers it. E2E steps 37–38 added for D25.
+- E2E steps 37 and 38 Pass (Basheer, 27 Nov): Margin Report E2E 56 of 56 Pass
+  (counted from the plan by script; set-up step P0 is not to be run).
+- Shipped: `7469ece` (screen, D22–D25, header-name comments) and `dc9c5d8`
+  (Note wording, D27), pushed 27 Nov.
+- The second commit was first refused: "Cannot find module 'C:\c\Users\…\
+  generate-types.js'". Cause (checked): the session had `MSYS_NO_PATHCONV=1`,
+  exported by `b`, `bt` and `pc`, so the api.ts guard handed Node a Git Bash path.
+  Re-run with `env -u MSYS_NO_PATHCONV`; the guard ran and passed.
+- Post-commit paperwork (Basheer yes): Traceability 4.3 and 11.1 → Done, the old
+  "Phase 1 or Phase 2" question dropped from 11.1; scorecard regenerated, `--check`
+  OK (40 Done, 7 Partial, 2 Not started). Plan Status, E2E "Built:" lines,
+  Business-Rules, the rule matrix (BR-CAT-04) and two Backlog lines updated.
+- Start-up files: Basheer asked that Plan & Chore fix them; full analysis sent to
+  its mailbox, 27 Nov 20:00.
+- Client scorecard pages republished (Basheer yes, 27 Nov), after the diff against the live pages was shown: 38/9/3 of 50 → 40/7/2 of 49, strict 76.0% → 81.6%, weighted 85.0% → 88.8%. Also carries the 24 Nov closing of the optional Account Manager row (not published then; today's yes covers it). The first table shown to him had the old figures from the saved repo copies; corrected before publishing.
+
+## 27 Nov 2026 — Build & Test retro (Margin Report E2E, push, scorecard publish)
+
+**Corrections from Basheer this session: 5** —
+- "What do you mean by 'I saved each as a new file and moved it over the old one'" (unclear explanation).
+- "What was the change made?" (asked him to check a change without saying what it was).
+- "Give me all 3 open questions" (I offered them one at a time).
+- "Please explain this" (the start-up file problem and who added the setting).
+- "Which is better? You doing the merge or B session?" (I offered to merge; the written rule gives the merge to the Build session).
+
+No guard or tracker line: nothing touched live data, UAT or lost work.
+
+Addendum, 20:24: no further corrections. Merge message sent to the Build session (Basheer yes).
+
+## 27 Nov 2026 — Build (parallel): merge request from Build & Test
+
+- **Message (Build & Test, 27 Nov 20:24):** merge `worktree-build` (Sales Loss Report) into `main`; Margin Report E2E finished and pushed; cut-off Saturday 28 Nov, 6 pm. **Basheer: proceed** (27 Nov).
+- `main` brought into the branch up to `94772b5`: one clash, in this log, both sides kept. `api.ts` rebuilt, no change. pytest 1818 passed / 10 skipped; ruff and tsc pass; lint 0 errors.

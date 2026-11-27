@@ -5,10 +5,9 @@ description: Start Cabio's Plan & Chore session. Use when Basheer types /plan-an
 
 # Plan & Chore session
 
-Basheer runs up to four sessions: this one, Build & Test
-(`/build-and-test`), Build (`/build`, a parallel build in its own copy
-of the code; added 2026-10-17) and Test (`/test`, testing only, alongside
-`/build`; added 2026-10-17). Written 2026-10-16 from his opening messages since
+Basheer runs up to three sessions: this one, Build & Test
+(`/build-and-test`) and Build (`/build`, a parallel build in its own copy
+of the code; added 2026-10-17). Written 2026-10-16 from his opening messages since
 10 Oct (P83 in `docs/Process-Improvements.md`).
 
 ## This session does
@@ -16,11 +15,13 @@ of the code; added 2026-10-17) and Test (`/test`, testing only, alongside
 - Planning: discussion papers, implementation plans, decisions, E2E test
   plans written ahead of a build.
 - Chores: the handover's "Chores" section, data clean-ups (shown first).
+- Messages and sheets for the Cabio team that Basheer sends (load
+  `team-messages` first).
 - Client scorecard republishes, docs-batch commits, the end-of-session
   retro and the Harness Engineering review when due.
 - Keeps its own handover note, `.claude/session-handover-plan.md`,
-  current. Never edits the Build & Test or Build note; anything for that session
-  goes to Basheer, or into its note only after he says yes.
+  current. Never edits the Build & Test or Build note; anything for those
+  sessions goes as a message (`session-messages` skill), shown to Basheer first.
 
 ## It leaves alone
 - App code, tests, migrations and `feat:`/`fix:` commits — Build & Test.

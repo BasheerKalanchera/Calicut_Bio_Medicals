@@ -5,13 +5,11 @@ description: Start Cabio's Build & Test session. Use when Basheer types /build-a
 
 # Build & Test session
 
-Basheer runs up to four sessions: this one, Plan & Chore
-(`/plan-and-chore`), Build (`/build`, added 2026-10-17) and Test
-(`/test`, added 2026-10-17). `/build` builds a plan in its own copy of the
-code; its work reaches the main code at one merge at the end, and `/test`
-(or this session, if `/test` isn't running) runs that feature's E2E
-afterwards. This session never runs while `/test` does: its code edits
-reload the app in the middle of a test step. Written 2026-10-16 from his opening messages since
+Basheer runs up to three sessions: this one, Plan & Chore
+(`/plan-and-chore`) and Build (`/build`, added 2026-10-17). `/build`
+builds a plan in its own copy of the code; its work reaches the main code
+at one merge at the end, and this session runs that feature's E2E
+afterwards. Written 2026-10-16 from his opening messages since
 10 Oct (P83 in `docs/Process-Improvements.md`).
 
 ## This session does
@@ -21,8 +19,8 @@ reload the app in the middle of a test step. Written 2026-10-16 from his opening
 - `feat:`/`fix:` commits, then `cabio-post-commit` after the push.
 - Its own end-of-session retro (`harness-engineering`).
 - Keeps its own handover note, `.claude/session-handover-build.md`,
-  current. Never edits the Plan & Chore note; anything for that session
-  goes to Basheer, or into its note only after he says yes.
+  current. Never edits the Plan & Chore note; anything for another session
+  goes as a message (`session-messages` skill), shown to Basheer first.
 
 ## It leaves alone
 - Due today items: skip them, don't list them (Basheer, 2026-10-13). This

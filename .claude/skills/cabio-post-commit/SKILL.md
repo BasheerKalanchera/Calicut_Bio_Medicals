@@ -13,11 +13,11 @@ Moved here word for word from CLAUDE.md on 2026-10-08
 The session clock (`.claude/hooks/session_clock.py`) decides when this is due and gives the figures; never call it on a guess. *(2026-11-04)*
 - On Basheer's message: from message 25, every 5 messages, if time worked is over 2 hours.
 - After a successful `git push`: if time worked is over 2 hours, however few messages there have been.
-- Time worked leaves out gaps of 30 minutes or more.
+- Time worked leaves out gaps of 10 minutes or more.
 
 When the clock says it's due:
 1. Claude finishes the current step and does NOT start the next task, unless Basheer says to carry on.
-2. Ensure this session's handover note (`.claude/session-handover-plan.md` or `-build.md`) has the exact next step recorded.
+2. Write this session's end-of-session retro (`harness-engineering`; an addendum if one is already written), and make sure this session's handover note has the exact next step recorded. *(2026-11-27)*
 3. Prompt Basheer:
    > "🔄 **Clean Transition Point Reached:** The handover note is saved. To reset context to a clean slate, please type `/exit` now."  *(2026-10-03)*
 

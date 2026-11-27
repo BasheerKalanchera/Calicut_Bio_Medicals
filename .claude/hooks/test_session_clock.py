@@ -32,9 +32,9 @@ def reply(minutes):
 
 
 def session(messages, worked):
-    """`messages` typed messages, then replies every 10 minutes up to `worked`."""
+    """`messages` typed messages, then replies every 5 minutes up to `worked`."""
     entries = [typed(i, f"message {i + 1}") for i in range(messages)]
-    entries += [reply(m) for m in range(messages, worked + 1, 10)]
+    entries += [reply(m) for m in range(messages, worked + 1, 5)]
     entries.append(reply(worked))
     return entries
 
@@ -60,9 +60,9 @@ class Base(unittest.TestCase):
 
 class Facts(Base):
     def test_idle_gaps_are_left_out(self):
-        self.write([typed(0, "a"), reply(20), reply(49), typed(79, "b"), reply(89), typed(389, "c")])
+        self.write([typed(0, "a"), reply(5), reply(14), typed(24, "b"), reply(30), typed(330, "c")])
         minutes, count, last = session_facts(self.path)
-        self.assertEqual(minutes, 49 + 10)  # 30 and 300 minute gaps dropped
+        self.assertEqual(minutes, 14 + 6)  # 10 and 300 minute gaps dropped (IDLE = 10)
         self.assertEqual((count, last), (3, "c"))
 
     def test_only_typed_messages_count(self):
@@ -133,9 +133,63 @@ class Hook(Base):
         self.assertEqual(self.push(response="error: failed to push some refs"), "")
         self.assertEqual(self.push(command="git status"), "")
 
+    def test_refresh_message_includes_retro_step(self):
+        self.write(session(25, 130))
+        self.assertIn("end-of-session retro", self.message("message 25"))
+
+    def test_end_wording_without_retro_asks_for_retro(self):
+        self.write(session(4, 30))
+        self.assertIn("write this session's end-of-session retro", self.message("Ok, let's wind up"))
+        self.assertIn("write this session's end-of-session retro", self.message("Is it time for docs batch commit?"))
+
+    def test_end_wording_after_retro_asks_for_addendum(self):
+        archive = "docs/Progress-Archive-2026-01.md"
+        edit = {"type": "tool_use", "name": "Edit", "input": {
+            "file_path": archive, "old_string": "x", "new_string": "- **Retro. Corrections from Basheer: 2**"}}
+        self.write(session(4, 30) + [{"type": "assistant", "timestamp": at(31), "message": {"content": [edit]}}])
+        self.assertIn("add a short addendum", self.message("time for a session refresh?"))
+
+    def test_search_for_retro_lines_is_not_a_retro(self):
+        grep = {"type": "tool_use", "name": "Bash", "input": {
+            "command": "grep -n 'Corrections from Basheer' docs/Progress-Archive-2026-01.md"}}
+        self.write(session(4, 30) + [{"type": "assistant", "timestamp": at(31), "message": {"content": [grep]}}])
+        self.assertIn("write this session's end-of-session retro", self.message("let's wrap up"))
+
+    def test_other_refresh_wording_is_silent(self):
+        self.write(session(4, 30))
+        self.assertEqual(self.message("Refresh the E2E plan with the latest Dev data"), "")
+
     def test_bad_input_is_silent(self):
         self.assertEqual(self.run_hook(hook_event_name="UserPromptSubmit", transcript_path="missing.jsonl"), "")
         self.assertEqual(self.run_hook(hook_event_name="SessionStart"), "")
+
+
+class StatusLine(Base):
+    """status_line.py (Harness review item 6, 2026-11-27)."""
+
+    def run_line(self, payload):
+        script = os.path.join(HERE, "status_line.py")
+        return subprocess.run(
+            [sys.executable, "-I", "-X", "utf8", script],
+            input=payload, capture_output=True, text=True, encoding="utf-8", check=True,
+        ).stdout.strip()
+
+    def test_under_two_hours(self):
+        self.write(session(messages=3, worked=70))
+        # START is 09:00 UTC = 14:30 IST
+        self.assertEqual(self.run_line(json.dumps({"transcript_path": self.path})),
+                         "⏱ 1 h 10 min worked · started 14:30 · 3 messages")
+
+    def test_over_two_hours_says_refresh_due(self):
+        self.write(session(messages=30, worked=130))
+        self.assertTrue(self.run_line(json.dumps({"transcript_path": self.path})).endswith(
+            "2 h 10 min worked · started 14:30 · 30 messages · refresh due"))
+
+    def test_missing_or_empty_transcript_is_blank(self):
+        self.assertEqual(self.run_line(json.dumps({"transcript_path": self.path})), "")
+        self.write([])
+        self.assertEqual(self.run_line(json.dumps({"transcript_path": self.path})), "")
+        self.assertEqual(self.run_line("not json"), "")
 
 
 if __name__ == "__main__":

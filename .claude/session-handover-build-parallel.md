@@ -19,13 +19,20 @@ the build branch, and reaches `main` at the merge (Basheer, 2026-10-17)._
 - `main` brought into the branch 26 Nov, `f3d6e19` (up to `1852540`),
   pushed. On that: pytest 1818 passed / 10 skipped (main's Margin fix
   removed one test net); ruff, tsc pass; lint 0 errors.
-- **Next:** merge into `main`, only on Basheer's go, after the E2E now
-  running is done. First: `git log HEAD..main` (bring in anything new,
-  re-test) and check the main folder holds no uncommitted edits to this
-  build's files.
+- **27 Nov, evening:** Margin Report E2E finished and pushed; Build & Test
+  asked for the merge (mailbox, 20:24), Basheer: proceed. `main` brought in
+  again up to `94772b5` (one clash, progress archive, both sides kept);
+  `api.ts` rebuilt, unchanged; pytest 1818 passed / 10 skipped; ruff, tsc
+  pass; lint 0 errors.
+- **Next:** commit that on the branch and push, then merge into `main` and
+  push (each shown to Basheer first). Don't stage, stash or discard other
+  sessions' work in the main folder.
+- E2E cut-off Saturday 28 Nov, 6 pm; UAT move Sunday 29 Nov.
 - **After the merge:** Basheer applies 0069 on Dev at once (command in
-  `cabio-db-and-scripting`); regenerate `docs/Physical-Schema.sql`;
-  `cabio-post-commit`. E2E:
+  `cabio-db-and-scripting`; the app loads the new column with every
+  Opportunity); send Build & Test the merge commit once applied; regenerate
+  `docs/Physical-Schema.sql`; `cabio-post-commit`. No UAT connection, and
+  Build & Test runs the E2E:
   `docs/Sales-Loss-Report-Manual-E2E-Test-Plan.md` (33 steps, none run).
   Traceability only after it passes.
 - Tests: main's interpreter from the worktree `backend/`; frontend

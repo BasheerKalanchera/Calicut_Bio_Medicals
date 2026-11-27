@@ -11,3 +11,6 @@ htmlcov/
 # Python cache files (any folder)
 __pycache__/
 *.pyc
+
+# Session mailboxes (session-messages skill): short-lived, recorded in Progress-Archive
+.claude/inbox/

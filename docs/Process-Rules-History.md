@@ -290,3 +290,6 @@ The backstory below is copied verbatim from each memory note's **Why:**.
 
 - **Rule:** Commit order of a build — build, then the pre-E2E review and its fixes, then one docs batch for the whole build (`build` skill, `cabio-e2e-testing` skill, CLAUDE.md "Batch docs-only commits").
   **Why:** 2026-10-31 — Tabs step 1 and Simpler Table steps 1–2 got a docs batch (`2c440ec`) before the review; the review then produced fix `03ac0ea`, which needed the plans, E2E plans, archive and handover touched again. Basheer agreed the docs should wait for the review.
+
+- **Rule:** Scripts — a script used to load data in Dev for an approved plan, that needs to run in UAT too, is saved in `scripts/` and committed the same day, never left in the scratchpad; removed only once the changes reach UAT (`cabio-db-and-scripting` skill, "Scripts").
+  **Why:** 2026-11-27 — the price load script `dev_price_load.py` (Pricing plan step 4, run on Dev 23 Nov) lived only in a session scratchpad and was gone when the UAT move needed it; Basheer: "This is the second time you are removing a script that we needed for later use." Wording is his.

@@ -80,6 +80,10 @@ on Dev, before any other work:
 - Throwaway scripts (one-off data matching, migration generators) go in the
   session scratchpad directory — never inside the repo (e.g. `.claude/scratch/`).
   Check the path before the first write. *(2026-09-21)*
+- Exception: a script that was used to load data in Dev, for an approved
+  plan, that needs to be run in UAT, is saved into the `scripts/` folder and
+  committed the same day. It is not left in the scratchpad. It is removed only
+  once the changes reach UAT. *(2026-11-27)*
 - PowerShell 5.1: when capturing a native command's output with `2>&1` into a
   variable under `$ErrorActionPreference = "Stop"`, the first stderr line aborts
   the script before its own error checks run. Toggle to `"Continue"` around that

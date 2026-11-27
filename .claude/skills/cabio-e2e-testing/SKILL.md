@@ -3,117 +3,85 @@ name: cabio-e2e-testing
 description: Cabio Sales OS checklist for the pre-E2E code review, writing or changing a manual E2E test plan, and running any manual E2E step (Claude in the browser or Basheer-run). Load once a feature or fix is built and before its manual E2E, before writing or editing a test plan, and before any E2E step.
 ---
 
-# Cabio — pre-E2E review and manual E2E testing
+# Cabio — pre-E2E review, writing a test plan, running an E2E
 
-Origins of each rule: `docs/Process-Rules-History.md` (grep the date tag).
-Moved here word for word from CLAUDE.md on 2026-10-08
-(`docs/Harness-Engineering-Implementation-Plan.md`).
+Three parts; read the one for the job in hand. Rule origins:
+`docs/Process-Rules-History.md` (grep the date tag). The save-time guard
+`test_plan_guard.py` already refuses a plan without the template, the
+live-data section, a Simple/Complex tag on each step, or a phone-layout step.
 
-## Pre-E2E code review
-- Before manual E2E on a feature, run `/code-review` (medium by default; high for
-  RLS/migration/approval-workflow-heavy features) on its commits and fix findings
-  first. *(2026-09-17)*
-- Applies however small or pattern-mirroring the change — follow the full sequence
-  (code-review → written E2E plan → test → commit → checklist) by default, without
-  being asked. *(2026-09-22)*
-- If feature or fix code lands after the pre-E2E review, including
-  mid-E2E, review those changes before the next E2E step. The small-fixes
-  batch is exempt. *(2026-10-28)*
-- The build's docs batch comes after this review and its fixes, not before.
-  The "Built:" lines in the E2E plan name the fix commits too. *(2026-10-31)*
-- If correctness depends on a DB trigger, generated column, or other server-side
-  write the ORM doesn't re-read, add "did a real save actually complete" as an
-  explicit review item — static review can't see a stale in-memory object.
-  *(2026-09-22)*
-- If the feature has migrations, confirm before E2E starts: Dev's `alembic current`
-  = head, and `docs/Physical-Schema.sql` has been regenerated since the last one.
-  *(2026-09-23)*
-- Before manual E2E, run pytest, ruff, tsc and lint and report plainly, noting
-  any failures that already existed. *(2026-07-03)*
-- Phone, tablet and laptop look: no browser check before handover (saves
-  usage credits). Basheer looks at every screen, card and pop-up the build
-  adds or changes at 390, 768 and 1280 px in the E2E's
-  `[Complex: phone layout]` step, every row, arrow and tab opened, told
-  exactly what to open. Claude measures in the browser (any element inside
-  a card whose `scrollWidth > clientWidth` runs past it) only when Basheer
-  sees something off or can't tell. Before handover, read the code for
-  phone risks instead: tables through `TableOrCards`, no fixed widths
-  wider than a phone. *(2026-10-25, 2026-10-29)*
-- For every screen and pop-up the change adds or touches, check the MUI
-  standard rules the automatic check can't (Frontend standards §6.11),
-  across the whole file, not just the changed lines (MUI plan D10): a
-  pop-up with fields uses `FormModal`, a plain `Dialog` only for a short
-  confirmation, message or list (rule 3); every table goes through
-  `TableOrCards`, with no hand-built phone version beside the laptop one
-  (`display: { xs: "block", sm: "none" }`) (rule 2); each filter has its
-  name above it and "All …" inside, each search box a 🔍 and an ✕ once
-  typed in (rule 7); its 390, 768 and 1280 px look (rule 1) is Basheer's
-  phone layout step at E2E (above). A miss is a review finding, fixed
-  before handover.
-  *(2026-10-26; tables and widths wording from Build & Test's review)*
-- Suggest `/ultrareview` only for higher-risk changes (security, untested hotfix,
-  large unreviewed change), not routine commits. *(2026-09-15)*
+## 1. Pre-E2E code review (after the build, before the first step)
+- Run `/code-review` on the feature's commits (medium; high for RLS,
+  migration or approval-workflow-heavy work) and fix findings first, however
+  small the change. Order: review → E2E plan → test → commit → checklist.
+  *(2026-09-17, 2026-09-22)*
+- Code that lands after the review, mid-E2E included, is reviewed before the
+  next step; the small-fixes batch is exempt. The build's docs batch comes
+  after the review and its fixes; the plan's "Built:" lines name the fix
+  commits. *(2026-10-28, 2026-10-31)*
+- If correctness depends on a DB trigger, generated column or other
+  server-side write the ORM doesn't re-read, add "did a real save complete"
+  as a review item. *(2026-09-22)*
+- Migrations: Dev's `alembic current` = head and `docs/Physical-Schema.sql`
+  regenerated since. *(2026-09-23)*
+- Run pytest, ruff, tsc and lint; report plainly, noting failures that
+  already existed. *(2026-07-03)*
+- Phone risks, from the code (no browser check before handover): tables
+  through `TableOrCards`, no fixed width wider than a phone. *(2026-10-25)*
+- MUI rules the automatic check can't see (Frontend standards §6.11), across
+  each touched file, not just changed lines: pop-ups with fields use
+  `FormModal`, a plain `Dialog` only for a short confirmation or list
+  (rule 3); every table through `TableOrCards`, no hand-built phone copy
+  (rule 2); each filter named above it with "All …" inside, each search box
+  a 🔍 and an ✕ once typed in (rule 7). A miss is fixed before handover.
+  *(2026-10-26)*
+- Suggest `/ultrareview` only for high-risk changes (security, untested
+  hotfix, large unreviewed change). *(2026-09-15)*
 
-## Manual E2E testing
-- Before each test case, check the plan's assumed role relationship matches the
-  record actually under test, not just the plan's original setup. *(2026-09-18)*
-- Tag every step Simple or Complex before running the plan. **Simple** = one
-  click/type/verify-a-value with an unambiguous pass — Basheer runs these, told
-  exactly what to do and check, and reports back. **Complex** = precise targeting
-  after a layout shift, multi-step/branching, cross-screen/cross-role, or a genuine
-  visual check. Nothing is skipped; every step is recorded. *(2026-09-23)*
-- **Browser checks only for very complex steps** (saves usage credits).
-  Basheer runs Simple steps and most Complex ones too — phone/tablet/laptop
-  looks, multi-step flows, tab and button clicks — given exact steps and
-  what to check. Claude drives the browser only when a step can't be judged
-  by eye or described plainly: measuring whether something runs past its
-  card, reading a value the screen doesn't show, or a long cross-screen
-  sequence where one wrong click spoils the result. *(2026-10-29)* Before each browser action, say which step it is
-  and why it needs Claude; anything else goes to Basheer. *(2026-10-06)* Check
-  with Basheer before starting browser checks of the screens for any E2E
-  test plan. *(2026-10-08)*
-- Screenshot only at meaningful checkpoints; use `get_page_text`/`find` to confirm
-  a value when a visual check isn't the point. Prefer `find` element refs over
-  screenshot coordinates for clicks, especially after a layout shift.
-- Record Pass/Fail in the test plan doc the moment each step completes.
-  *(2026-09-22)*
-- During a manual E2E run, every reply's closing status line gives the
-  steps passed out of the total and the percentage complete, counted from
-  the test plan — e.g. "Test run: 42 of 65 (65 %)". *(2026-10-24)*
-- Flag the hot-reload risk before editing frontend files while a test browser
-  session is open — it can silently reset the logged-in user. *(2026-09-22)*
-- Before the first step of any manual E2E run, have the Dev backend restarted
-  (or confirm it restarted after the feature's last backend change) — its
-  auto-reload can silently stop, leaving the screen on old code. *(2026-09-27)*
-- When writing a test plan, check its assumed data read-only against the live
-  records — existing splits/values, and who each picker actually offers (owner,
-  split, assignee) — not just role relationships. *(2026-09-24)*
-- When writing a test plan, take button labels, messages and the order of
-  checks from the code, not the design doc. *(2026-09-30)*
-- **Group steps by login.** When writing a test plan, put every step done as
-  the same person together; switch login only when the next step needs
-  someone else. A step whose result is the same for any login (e.g. wording
-  every role sees) runs "as whoever is logged in" and says so; name a person
-  only when the result depends on who it is. To regroup a plan already under
-  way, keep the numbers of steps already run and add the new order as a
-  separate list or letter suffixes (17b), so recorded results stay matched.
-  During a run, offer the next step for the login already open before one
-  that needs a switch. *(2026-11-18)*
-- Wherever a test plan step names an Opportunity, put its hospital beside it
-  in brackets, every time — e.g. "usg m/c" (aster medicity). For an
-  Opportunity the test creates, fix the hospital in the plan, never "any
-  hospital". The same Opportunity name can appear under two hospitals in a
-  filtered pipeline; the hospital makes the right row easy to pick.
-  *(2026-10-17)*
-- A test plan for any permission or visibility feature must include a
-  hide-check case — a real person who must NOT see a given row, picked from
-  live data — and re-run the scope check just before E2E, not only when the
-  plan was written. *(2026-10-04)*
-- Steps that save to the shared Dev DB: plan them as "Basheer clicks, Claude
-  watches" from the start (the auto-mode classifier blocks Claude's own writes).
-  Confirm each save by reading the record back through the app in the
-  tester's session — don't rely on the request recorder, which loses data on
-  page load and sign-in. *(2026-09-24, 2026-09-30)*
-- **Testing narration:** during manual/E2E testing, log bugs found/fixed and
-  notable findings to Progress-Archive promptly — a brief note, unprompted, but
-  not routine back-and-forth.
+## 2. Writing or changing a test plan
+- Start from `docs/templates/Manual-E2E-Test-Plan-Template.md`.
+- Check the assumed data read-only against live records: role
+  relationships, existing splits and values, who each picker offers (owner,
+  split, assignee). *(2026-09-24)*
+- Button labels, messages and the order of checks come from the code, not
+  the design doc. *(2026-09-30)*
+- Tag each step **Simple** (one click, type or value check, clear pass) or
+  **Complex: <reason>** (multi-step, cross-screen or cross-role, a visual
+  check). Nothing is skipped. *(2026-09-23)*
+- **Group steps by login**: all steps for one person together; a step whose
+  result is the same for anyone runs "as whoever is logged in". Regrouping a
+  plan under way keeps the numbers already run (letter suffixes, 17b).
+  *(2026-11-18)*
+- Every Opportunity named has its hospital in brackets — "usg m/c" (aster
+  medicity); one the test creates gets a fixed hospital. *(2026-10-17)*
+- A `[Complex: phone layout]` step per screen, card or pop-up added or
+  changed: Basheer checks 390, 768 and 1280 px, every row, arrow and tab
+  opened, told exactly what to open. *(2026-10-25, 2026-10-29)*
+- Permission or visibility features: a hide-check case — a real person who
+  must NOT see a row, picked from live data. *(2026-10-04)*
+- Saves to the shared Dev DB are planned as "Basheer clicks, Claude watches"
+  and confirmed by reading the record back in the app, not the request
+  recorder. *(2026-09-24, 2026-09-30)*
+
+## 3. Running an E2E
+- Before step 1: Dev backend restarted since the last backend change (its
+  auto-reload can silently stop); re-run any hide-check scope check.
+  *(2026-09-27, 2026-10-04)*
+- Before each step, check the plan's role relationship still matches the
+  record under test. *(2026-09-18)* Offer the next step for the login
+  already open before one that needs a switch. *(2026-11-18)*
+- **Basheer runs the steps** — Simple and most Complex — told exactly what
+  to do and check. Claude drives the browser only when a step can't be
+  judged by eye: measuring overflow (`scrollWidth > clientWidth` inside a
+  card), a value the screen doesn't show, or a long sequence where one wrong
+  click spoils it. Ask Basheer before starting any browser checks, and
+  before each browser action say which step and why. *(2026-10-06,
+  2026-10-08, 2026-10-29)*
+- In the browser: screenshots only at checkpoints; `get_page_text`/`find`
+  to confirm a value; `find` refs over coordinates after a layout shift.
+- Flag the hot-reload risk before editing frontend files while a test
+  browser is open — it can reset the logged-in user. *(2026-09-22)*
+- Record Pass/Fail in the plan the moment each step completes; log bugs and
+  notable findings to Progress-Archive briefly, unprompted. *(2026-09-22)*
+- Every reply ends "Test run: N of M (P %)", counted from the plan.
+  *(2026-10-24)*

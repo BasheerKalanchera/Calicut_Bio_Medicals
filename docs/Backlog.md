@@ -129,12 +129,6 @@ date (Basheer, 2026-10-14).
   merge tool, Admin approval to pass the warning.
 - **Close** when the plan's parts are on UAT and the pairs are resolved.
 
-### Temporary: name in app header for training — remove after Sessions 2a and 2b, before the second UAT move (Basheer, 2026-11-07)
-
-- **What:** the signed-in person's name in the top header, beside Sign Out, at every window size, so it's clear whose window is whose during the training sessions (`docs/Target-Plan-Training-Implementation-Plan.md`). The side menu's name stays. Built 7 Nov (`2ac7f25`), on Dev; left out of the 10 Nov UAT move on purpose (UAT move plan D1).
-- **Remove:** after Sessions 2a and 2b, before the second UAT move, so it never reaches UAT or Session 3. Undo its own commit, and remove the code comment pointing here.
-- **Close** when it's removed from `main`.
-
 ### Similar-hospital warning: also mention same-name hospitals in other zones — not started, needs Haroon (2026-10-25)
 
 - **Found (Dev role check, 2026-10-25):** Rudrappa (Bangalore) added
@@ -429,14 +423,6 @@ steps 1–3. Pick up when prices are in real use.
   which role sees which levels, on the server and in the screens' wording).
   Fold into one list per side when a fourth role (an own SBU Manager level,
   plan D3) is added.
-
-### Date picker cut off on short laptop screens (Close Next Action, Log Activity) — not started, for Build & Test (Haroon, reported via Basheer, 2026-11-26)
-
-- **Screen:** Close Next Action window, Follow-up tab, Due Date box (Haroon's laptop photo, 26 Nov: [docs/screenshots/2026-11-26-date-picker-cut-off.jpeg](screenshots/2026-11-26-date-picker-cut-off.jpeg)). The same can happen to the Date & Time box on the Details tab and to both date boxes in the Log Activity window.
-- **What happens:** the calendar-and-clock box opens below the field. On a short laptop screen there's no room below or above it, so it runs into the Windows taskbar and the month shows only up to the 21st; the later dates can't be picked. Display only — nothing wrong is saved.
-- **Proposed fix (Basheer to approve when picked up):** on short screens, open the date picker as its own box in the centre of the screen so the whole month and the time always fit; tall screens unchanged. All four date boxes in the two windows.
-- **Technical:** plain MUI `DateTimePicker`s (`@mui/x-date-pickers` 9.7) at `sales-os-app/src/components/CloseReminderModal.tsx:699` and `:761`, and the two in `LogActivityModal.tsx`; no picker or popper theme override. The desktop Popper (calendar + hour/minute/AM-PM columns, about 330px tall) has nowhere to flip. Fix: `desktopModeMediaQuery="@media (pointer: fine) and (min-height: 760px)"` on the four pickers, ideally one shared constant; 760px is an estimate to tune. Alternative (`slotProps.popper` placement) still fails when neither side fits.
-- **Check:** E2E on a short laptop screen (or a browser window under 760px tall) for both windows.
 
 ### Won/Lost Opportunity: lock Overview and other edits too? — not started, undecided (Basheer, 2026-11-25)
 
@@ -1432,8 +1418,8 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   proposed data model, and open questions for Haroon/Latheef Bhai:
   `docs/Discussion-Pricing-Discount-Authority-2026-09.md`. **Parked for
   Phase 2 (Basheer, 2026-10-16)** — not a signed requirement; the paper
-  supersedes this entry's framing. Product cost (BR-CAT-04) is asked
-  separately (Waiting on people, above). Now also tracked in `docs/Signed-Requirements-
+  supersedes this entry's framing. Product cost (BR-CAT-04) is built
+  separately (on Dev). Now also tracked in `docs/Signed-Requirements-
   to-PRD-Traceability.md`'s "Pending — proposed, not yet built" list
   (added 2026-09-17), alongside the Lead Follow-up Comments paper above.
 - **Order-stage deals closing with zero Activity logged — candidate soft-
@@ -1770,7 +1756,8 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
      until a cost field exists. **Resolved 2026-09-14** — Haroon confirmed cost can be
      added, visible strictly to Admin/GM (`Business-Rules.md`'s BR-CAT-04), with Margin
      itself carrying the same restriction; still not built, so Margin stays out of this
-     tile's scope until then. (2) PRD grouping calls for Product/**Brand**/OEM/SBU, but
+     tile's scope until then. (Margin Report built, E2E done on Dev 27 Nov; the tile
+     still has no margin.) (2) PRD grouping calls for Product/**Brand**/OEM/SBU, but
      the schema has no dedicated Brand field — only `product.oem_name` and
      `product.category_name` — so Brand grouping is dropped too pending a decision on
      whether `category_name` is meant to serve as Brand or a real field is needed.
