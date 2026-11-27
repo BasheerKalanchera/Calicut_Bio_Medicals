@@ -129,11 +129,12 @@ date (Basheer, 2026-10-14).
   merge tool, Admin approval to pass the warning.
 - **Close** when the plan's parts are on UAT and the pairs are resolved.
 
-### Temporary: name in app header for training — remove after Sessions 2a and 2b, before the second UAT move (Basheer, 2026-11-07)
+### Name in app header: kept for good — tidy its "Temporary" code comments (Basheer, 2026-11-07; kept 2026-11-27)
 
-- **What:** the signed-in person's name in the top header, beside Sign Out, at every window size, so it's clear whose window is whose during the training sessions (`docs/Target-Plan-Training-Implementation-Plan.md`). The side menu's name stays. Built 7 Nov (`2ac7f25`), on Dev; left out of the 10 Nov UAT move on purpose (UAT move plan D1).
-- **Remove:** after Sessions 2a and 2b, before the second UAT move, so it never reaches UAT or Session 3. Undo its own commit, and remove the code comment pointing here.
-- **Close** when it's removed from `main`.
+- **What:** the signed-in person's name in the top header, beside Sign Out, at every window size, so it's clear whose window is whose (`docs/Target-Plan-Training-Implementation-Plan.md`). The side menu's name stays. Built 7 Nov (`2ac7f25`), on Dev; left out of the 10 Nov UAT move on purpose (UAT move plan D1).
+- **Kept (Basheer, 2026-11-27):** no longer temporary; it goes to UAT with the next full move (29 Nov). Sessions 2a and 2b move to the second half of December (Cabio's sales team is busy with the year-end sales push).
+- **Left to do (Build & Test):** the two code comments in `DemoApp.tsx` still say "Temporary, training only" and point here; reword them (small-fixes batch, no change to the screen).
+- **Close** when those comments are reworded.
 
 ### Similar-hospital warning: also mention same-name hospitals in other zones — not started, needs Haroon (2026-10-25)
 

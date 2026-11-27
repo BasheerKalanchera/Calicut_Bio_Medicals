@@ -15,9 +15,13 @@ D=${CLAUDE_PROJECT_DIR:-.}/.claude
 M=$(git -C "${CLAUDE_PROJECT_DIR:-.}" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)/../.claude
 N=$M/worktrees/build/.claude/session-handover-build-parallel.md
 [ -f "$N" ] || N=$M/session-handover-build-parallel.md
-case "$(cat)" in
-  *'"prompt":"/plan-and-chore'*|*'"prompt": "/plan-and-chore'*) echo; cat "$D/session-handover-plan.md" ;;
-  *'"prompt":"/build-and-test'*|*'"prompt": "/build-and-test'*) echo; cat "$D/session-handover-build.md" ;;
-  *'"prompt":"/build"'*|*'"prompt": "/build"'*|*'"prompt":"/build '*|*'"prompt": "/build '*) echo; cat "$N" ;;
+# Git Bash used to turn "/plan-and-chore" into "C:/Program Files/Git/plan-and-chore"
+# (every PC/BT/B start until 27 Nov 2026), so the note never showed: strip that
+# prefix and the space after "prompt": before matching.
+IN=$(cat | sed -e 's|"prompt": *"[A-Za-z]:/Program Files/Git/|"prompt":"/|' -e 's|"prompt": *"|"prompt":"|')
+case "$IN" in
+  *'"prompt":"/plan-and-chore'*) echo; cat "$D/session-handover-plan.md" ;;
+  *'"prompt":"/build-and-test'*) echo; cat "$D/session-handover-build.md" ;;
+  *'"prompt":"/build"'*|*'"prompt":"/build '*) echo; cat "$N" ;;
 esac
 exit 0

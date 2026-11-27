@@ -50,7 +50,8 @@ of the build**, after Build & Test's E2E is done and Basheer says go
 - Its own end-of-session retro (`harness-engineering`), on the branch.
 - Keeps its own handover note, `.claude/session-handover-build-parallel.md`
   in the worktree, current; the hooks show it from there. Never edits the
-  other two notes; anything for those sessions goes to Basheer.
+  other two notes; anything for those sessions goes as a message
+  (`session-messages` skill), shown to Basheer first.
 
 ## It leaves alone
 - Code, config and migrations in the main folder; starting, stopping or

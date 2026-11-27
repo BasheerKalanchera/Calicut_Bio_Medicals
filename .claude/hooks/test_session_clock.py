@@ -164,5 +164,33 @@ class Hook(Base):
         self.assertEqual(self.run_hook(hook_event_name="SessionStart"), "")
 
 
+class StatusLine(Base):
+    """status_line.py (Harness review item 6, 2026-11-27)."""
+
+    def run_line(self, payload):
+        script = os.path.join(HERE, "status_line.py")
+        return subprocess.run(
+            [sys.executable, "-I", "-X", "utf8", script],
+            input=payload, capture_output=True, text=True, encoding="utf-8", check=True,
+        ).stdout.strip()
+
+    def test_under_two_hours(self):
+        self.write(session(messages=3, worked=70))
+        # START is 09:00 UTC = 14:30 IST
+        self.assertEqual(self.run_line(json.dumps({"transcript_path": self.path})),
+                         "⏱ 1 h 10 min worked · started 14:30 · 3 messages")
+
+    def test_over_two_hours_says_refresh_due(self):
+        self.write(session(messages=30, worked=130))
+        self.assertTrue(self.run_line(json.dumps({"transcript_path": self.path})).endswith(
+            "2 h 10 min worked · started 14:30 · 30 messages · refresh due"))
+
+    def test_missing_or_empty_transcript_is_blank(self):
+        self.assertEqual(self.run_line(json.dumps({"transcript_path": self.path})), "")
+        self.write([])
+        self.assertEqual(self.run_line(json.dumps({"transcript_path": self.path})), "")
+        self.assertEqual(self.run_line("not json"), "")
+
+
 if __name__ == "__main__":
     unittest.main()

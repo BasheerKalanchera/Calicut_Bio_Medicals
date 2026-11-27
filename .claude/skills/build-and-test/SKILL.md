@@ -19,8 +19,8 @@ afterwards. Written 2026-10-16 from his opening messages since
 - `feat:`/`fix:` commits, then `cabio-post-commit` after the push.
 - Its own end-of-session retro (`harness-engineering`).
 - Keeps its own handover note, `.claude/session-handover-build.md`,
-  current. Never edits the Plan & Chore note; anything for that session
-  goes to Basheer, or into its note only after he says yes.
+  current. Never edits the Plan & Chore note; anything for another session
+  goes as a message (`session-messages` skill), shown to Basheer first.
 
 ## It leaves alone
 - Due today items: skip them, don't list them (Basheer, 2026-10-13). This
