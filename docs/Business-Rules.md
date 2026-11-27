@@ -227,7 +227,8 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 ### BR-OP-03: Lost Status Validation
 * **Rule:** Moving an Opportunity to the Lost status is a guarded transition.
 * **Mandatory Fields:** `loss_reason_id` (Master Data).
-* **Conditional Fields:** `competitor_name` (Free Text) is required **only** when the selected loss reason represents a competitor win. It is optional for all other loss reasons.
+* **Conditional Fields:** `competitor_name` (Free Text) is required **only** when the selected loss reason represents a competitor win. `competitor_product_name` (Free Text — the competitor's product the customer chose) is optional, and belongs to the same loss reason.
+* **Other loss reasons:** saving with any other reason clears both `competitor_name` and `competitor_product_name` (Basheer, 2026-11-26; replaces "optional for all other loss reasons").
 * **Optional Fields:** `loss_notes`
 * **Validation:** Lost opportunities must retain historical stage, value, and contributor information for reporting purposes.
 * **Reference:** ACR — CBR-04.
@@ -915,6 +916,19 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 # 8. Unresolved Logic (Needs Discussion)
 1.  **Split Approval:** Does a cross-SBU split require approval from both SBU managers?
 2.  **Tender Timeline:** If a Project (Tender) bid deadline is missed, does the system automatically mark all linked Opportunities as "Lost"?
+
+---
+
+# 9. Reporting Rules
+
+### BR-REP-01: Sales Loss Report (built 2026-11-26 on the Build branch; manual E2E pending)
+* **Lists:** every Lost Opportunity, with or without a product line.
+* **Who sees what:** as on the other reports — a rep sees their own, an Area Manager their own and their team's, SBU Manager, General Manager and Admin everyone's in their reach.
+* **Period:** by closed date: This Month, This Quarter (shown first) or All Time. A Lost Opportunity with no closed date shows only under All Time.
+* **Value:** the total of its product lines, leaving out trade-ins; with no product line, its indicative value. With neither, or only trade-in lines, "—". A summary adds only the known values, and shows "—" if there are none.
+* **Competitor:** competitor and competing product show only for "Competitor Won". "By Competitor" lists only named competitors and treats differences in capitals and spaces as one name. It shows the most used spelling (on a tie, the one on the newest loss).
+* **Filters:** a zone includes the zones under it. The Owner box also lists deactivated owners.
+* **Reference:** `docs/Sales-Loss-Report-Implementation-Plan.md` (D1–D21).
 
 ---
 

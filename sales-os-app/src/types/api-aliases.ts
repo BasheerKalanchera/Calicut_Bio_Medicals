@@ -69,3 +69,5 @@ export type MarginFigures = components["schemas"]["MarginFigures"];
 export type MarginSummaryRow = components["schemas"]["MarginSummaryRow"];
 export type MarginSummaryResponse = components["schemas"]["MarginSummaryResponse"];
 export type MarginGroupBy = MarginSummaryResponse["group_by"];
+export type SalesLossRow = components["schemas"]["SalesLossRow"];
+export type SalesLossResponse = components["schemas"]["SalesLossResponse"];

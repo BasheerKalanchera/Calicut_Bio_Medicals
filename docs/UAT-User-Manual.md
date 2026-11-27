@@ -60,7 +60,7 @@ If you have next actions due today or overdue, a reminder box appears.
 
 Your menu: Account Management, Opportunity Pipeline, Marketing Lead Queue, Next
 Actions, Insights Dashboard, Target & Coverage Planning, Product Catalog,
-and the six reports.
+and the reports under **REPORTS**.
 
 ### Add a new customer
 1. Account Management → **Customers** → **+ Add** (or **+ Add Customer**
@@ -145,7 +145,8 @@ In **Edit**, change **Status**.
   future. When that date arrives, the Opportunity shows "Reactivation
   Overdue".
 - **Lost** needs a **Loss Reason**; if the reason is "Competitor Won", also
-  **Competitor Name**.
+  **Competitor Name** and, if you know it, **Competing product** (the model
+  the customer chose). Saving with any other reason keeps neither.
 - Won and Lost are final: such an Opportunity can't be reopened. If the
   customer comes back, create a new one.
 
@@ -545,6 +546,13 @@ zone views, a zone's figures include the zones under it.
 - **Sales Report**: **Revenue Won**, **Opportunities Won**, **Win Rate** and **Avg
   Opportunity Size** for **This Month**, **This Quarter** or **All Time**, by
   rep, zone, SBU, product or brand.
+- **Sales Loss Report**: why Opportunities were lost, and to whom. Choose
+  **Period** (by closed date), **SBU**, **Zone**, **Owner** or **Loss
+  Reason**. **By Loss Reason** and **By Competitor** show the number of
+  Opportunities and their value; click a row to show only those under **Lost
+  Opportunities**, and click it again to see all. Click an Opportunity to
+  open it. "—" means there is no value to show. On a phone the choices are
+  behind **Filters**.
 
 ## Administration (Admin and GM)
 
@@ -585,7 +593,8 @@ earlier stages need is filled in.
 ## Statuses
 - **Active**: every new Opportunity starts here.
 - **On Hold**: reason and a future reactivation date.
-- **Lost**: reason; competitor name if a competitor won.
+- **Lost**: reason; competitor name if a competitor won (competing product
+  optional).
 - **Won**: see the table.
 - Won and Lost are final.
 

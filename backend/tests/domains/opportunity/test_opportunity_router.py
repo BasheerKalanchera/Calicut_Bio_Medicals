@@ -43,6 +43,7 @@ def _mock_opportunity(**overrides) -> MagicMock:
         "po_date": None,
         "loss_reason_id": None,
         "competitor_name": None,
+        "competitor_product_name": None,
         "hold_reason_id": None,
         "reactivation_date": None,
         "created_at": now,

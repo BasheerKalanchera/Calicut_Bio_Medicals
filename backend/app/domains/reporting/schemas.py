@@ -207,6 +207,58 @@ class OpportunitiesOnHoldResponse(BaseModel):
     rows: list[OpportunityOnHoldRow]
 
 
+class SalesLossRow(BaseModel):
+    """One Lost Opportunity (docs/Sales-Loss-Report-Implementation-Plan.md)."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    opportunity_id: uuid.UUID
+    opportunity_name: str
+    account_name: str
+    owner_name: str
+    # The stage it was at when lost.
+    stage_name: str
+    loss_reason_id: uuid.UUID | None
+    loss_reason: str | None
+    competitor_name: str | None
+    # The "by Competitor" row this one belongs to (D9); None = no competitor.
+    competitor_key: str | None = None
+    competitor_product_name: str | None
+    # None = no product line and no indicative value (D7).
+    value_lakhs: Decimal | None
+    closed_date: date | None
+
+    # closed_at is a timestamp; the screen shows the IST day.
+    @field_validator("closed_date", mode="before")
+    @classmethod
+    def _to_ist_day(cls, value):
+        if isinstance(value, datetime):
+            return value.astimezone(_IST).date()
+        return value
+
+
+class SalesLossReasonSummary(BaseModel):
+    loss_reason_id: uuid.UUID | None
+    loss_reason: str | None
+    opportunity_count: int
+    # None = none of them has a value.
+    value_lakhs: Decimal | None
+
+
+class SalesLossCompetitorSummary(BaseModel):
+    competitor_key: str
+    competitor_name: str
+    opportunity_count: int
+    value_lakhs: Decimal | None
+
+
+class SalesLossResponse(BaseModel):
+    # Both summaries cover exactly the rows below (D5).
+    by_loss_reason: list[SalesLossReasonSummary]
+    by_competitor: list[SalesLossCompetitorSummary]
+    rows: list[SalesLossRow]
+
+
 SalesGroupBy = Literal["rep", "sbu", "zone", "product", "brand"]
 
 

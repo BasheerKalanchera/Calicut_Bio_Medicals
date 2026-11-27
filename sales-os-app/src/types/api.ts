@@ -1373,6 +1373,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/reporting/sales-loss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Sales Loss Report */
+        get: operations["get_sales_loss_report_api_v1_reporting_sales_loss_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/reporting/no-activity-customers": {
         parameters: {
             query?: never;
@@ -2492,6 +2509,20 @@ export interface components {
              */
             message: string;
             data: components["schemas"]["SalesHeadline"];
+        };
+        /** APIResponse[SalesLossResponse] */
+        APIResponse_SalesLossResponse_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["SalesLossResponse"];
         };
         /** APIResponse[SalesSummaryResponse] */
         APIResponse_SalesSummaryResponse_: {
@@ -4733,6 +4764,8 @@ export interface components {
             loss_notes: string | null;
             /** Competitor Name */
             competitor_name: string | null;
+            /** Competitor Product Name */
+            competitor_product_name: string | null;
             /** Hold Reason Id */
             hold_reason_id: string | null;
             /** Reactivation Date */
@@ -4831,6 +4864,8 @@ export interface components {
             loss_notes?: string | null;
             /** Competitor Name */
             competitor_name?: string | null;
+            /** Competitor Product Name */
+            competitor_product_name?: string | null;
             /** Hold Reason Id */
             hold_reason_id?: string | null;
             /** Reactivation Date */
@@ -5081,6 +5116,8 @@ export interface components {
             loss_reason_id: string | null;
             /** Competitor Name */
             competitor_name: string | null;
+            /** Competitor Product Name */
+            competitor_product_name: string | null;
             /** Hold Reason Id */
             hold_reason_id: string | null;
             /** Reactivation Date */
@@ -5643,6 +5680,70 @@ export interface components {
             win_rate: string;
             /** Avg Opportunity Size Lakhs */
             avg_opportunity_size_lakhs: string;
+        };
+        /** SalesLossCompetitorSummary */
+        SalesLossCompetitorSummary: {
+            /** Competitor Key */
+            competitor_key: string;
+            /** Competitor Name */
+            competitor_name: string;
+            /** Opportunity Count */
+            opportunity_count: number;
+            /** Value Lakhs */
+            value_lakhs: string | null;
+        };
+        /** SalesLossReasonSummary */
+        SalesLossReasonSummary: {
+            /** Loss Reason Id */
+            loss_reason_id: string | null;
+            /** Loss Reason */
+            loss_reason: string | null;
+            /** Opportunity Count */
+            opportunity_count: number;
+            /** Value Lakhs */
+            value_lakhs: string | null;
+        };
+        /** SalesLossResponse */
+        SalesLossResponse: {
+            /** By Loss Reason */
+            by_loss_reason: components["schemas"]["SalesLossReasonSummary"][];
+            /** By Competitor */
+            by_competitor: components["schemas"]["SalesLossCompetitorSummary"][];
+            /** Rows */
+            rows: components["schemas"]["SalesLossRow"][];
+        };
+        /**
+         * SalesLossRow
+         * @description One Lost Opportunity (docs/Sales-Loss-Report-Implementation-Plan.md).
+         */
+        SalesLossRow: {
+            /**
+             * Opportunity Id
+             * Format: uuid
+             */
+            opportunity_id: string;
+            /** Opportunity Name */
+            opportunity_name: string;
+            /** Account Name */
+            account_name: string;
+            /** Owner Name */
+            owner_name: string;
+            /** Stage Name */
+            stage_name: string;
+            /** Loss Reason Id */
+            loss_reason_id: string | null;
+            /** Loss Reason */
+            loss_reason: string | null;
+            /** Competitor Name */
+            competitor_name: string | null;
+            /** Competitor Key */
+            competitor_key?: string | null;
+            /** Competitor Product Name */
+            competitor_product_name: string | null;
+            /** Value Lakhs */
+            value_lakhs: string | null;
+            /** Closed Date */
+            closed_date: string | null;
         };
         /** SalesSummaryResponse */
         SalesSummaryResponse: {
@@ -10479,6 +10580,47 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["APIResponse_OpportunitiesOnHoldResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_sales_loss_report_api_v1_reporting_sales_loss_get: {
+        parameters: {
+            query?: {
+                sbu_id?: string | null;
+                /** @description Includes the zones under it */
+                zone_id?: string | null;
+                user_id?: string | null;
+                loss_reason_id?: string | null;
+                /** @description By closed date */
+                period_start?: string | null;
+                /** @description Inclusive */
+                period_end?: string | null;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_SalesLossResponse_"];
                 };
             };
             /** @description Validation Error */

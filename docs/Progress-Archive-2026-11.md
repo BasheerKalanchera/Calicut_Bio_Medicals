@@ -2281,6 +2281,14 @@ edited in code and nothing was written to UAT.
 - **UAT read-only check for sample probe sets (Basheer approved, 26 Nov; one read-only transaction, Admin context verified, rolled back):** 17 USG catalog products (12 USG Machine + 5 Portable), none with probes in the name, 1 description mentions a set ("P25 elite CV — Only for cardiac"); 92 Opportunities with a USG line (the count also takes in a few EDAN Sonotrax fetal Doppler Opportunities, caught by the word "doppler"), every line a machine only — probes appear only in activity notes (94 matching notes on those Opportunities, 46 elsewhere). Most sets the notes name are 4 standard probes (convex, linear, TV, cardiac), a fetal set with volume probes, or a cardiac set; the same machine is quoted with different probe counts (E2 with 1, 2 and 3). Hospital names and prices left out of the repo (client data, Basheer 26 Nov); working files deleted.
 - **One-page sample list for the Cabio leadership team** (Basheer asked): given to Basheer as a PDF for WhatsApp — 18 sample sets with an "invoice confirms?" column, 4 lone probes, 2 questions (standard kinds per machine; keep every E2 probe count?). The actual list comes from Cabio's analysis of past POs and invoices. Kept out of the repo (client data).
 
+## 26 Nov 2026 — Build (parallel): Sales Loss Report built, reviewed, documents batch
+
+- **Built and pushed to `origin/worktree-build` (not merged):** step 1, migration 0069, server, "Competing product" box and Overview field (`e783951`); step 2, report data (`14789d6`); step 3, screen and menu item (`57c7e38`); D17, D18, D20 (`4d60caa`). Migration 0069 is not applied to Dev, so the report's query has not run on a real database. Not seen in a browser.
+- **Pre-E2E review** (`/code-review` medium + Frontend standards §6.11, no MUI misses). Basheer chose: fix the value of a trade-in-only Opportunity ("—", D21) and a summary pick left behind after a refresh; Backlog entries for Edit on a Won/Lost Opportunity not saving and the Owner box's 100-user limit (`df6b2c1`). pytest 1819 passed / 10 skipped; ruff and tsc pass; lint 0 errors.
+- **Documents batch (Basheer approved the wording, 26 Nov):** BR-REP-01 (new "Reporting Rules" section), BR-OP-03, rule matrix, data model, user manual, one line in the agreed Edit Opportunity help text, plan progress, E2E plan labels and new step 5b (D16; 33 steps).
+- **No `?` help page for the report in this build:** none of the reports has one; report help is written in Plan & Chore (help catch-up plan). Plan & Chore to add this screen to its list.
+- **No E2E step for the trade-in-only value:** the automated test `test_only_trade_in_lines_gives_no_value` covers it.
+
 ## 26 Nov 2026 — Build & Test: Margin Report steps 2 and 3 pushed
 
 - **Shipped:** step 2, server margin figures (`GET /reporting/margin-summary`, GM/Admin only, `d3baaa6`; pytest 1778 passed / 10 skipped, ruff clean, run read-only on Dev), and step 3, the Margin Report screen with its Reports menu item (`2cb5a0b`; `tsc` clean, lint 0 errors). Both checkpoints, partial: build order complete, pre-E2E review and E2E pending, screen not yet seen in a browser.
@@ -2316,6 +2324,10 @@ edited in code and nothing was written to UAT.
 
 - **Retro, 26 Nov (Plan & Chore, afternoon/evening session). Corrections from Basheer: 1** — "You do end of session retro before the session refresh right?" (I had listed the morning session's missing retro as a start-of-session item). Three of my own statements corrected by me before Basheer acted on them (the 9 → 8 count I'd called unchanged; the two new stage skips being different kinds; duplicate pair 4 first called a possible repeat order). No tracker line: none touched live data or lost work.
 - **Retro addendum, 26 Nov (same session, after `33ce392`). Corrections from Basheer: 2** — "How will BT see it?" (I had offered to move Haroon's photo to my scratchpad, where no other session can see it; it went into a new `docs/screenshots` folder instead); "You mean create docs/screenshots folder?" (my "start a screenshots folder" was not clear enough). Session total: 3. No tracker line: neither could be stopped by a tool check, and neither touched live data or lost work.
+
+## 26 Nov 2026 — Build (parallel): end-of-session retro
+
+- **Retro, 26 Nov (Build session, from 15:59 IST). Corrections from Basheer: 0** (counted from the session's typed messages). Done: documents batch `07c1bdb`; `main` brought into the build branch `f3d6e19` (one clash, in this log, both sides kept); both pushed; pytest 1818 passed / 10 skipped. My own slips, not corrections: guard rails refused some commands, redone another way; one refusal also skipped the staging of two files, noticed before the commit. No tracker line. The earlier Build work the same day (commits 13:01–15:52 IST) has no retro found in this log.
 
 ## 26 Nov 2026 — Build & Test: Margin Report screen changes during E2E (D19)
 
@@ -2632,3 +2644,8 @@ No guard or tracker line: nothing touched live data, UAT or lost work.
 No guard or tracker line: nothing touched live data, UAT or lost work.
 
 Addendum, 20:24: no further corrections. Merge message sent to the Build session (Basheer yes).
+
+## 27 Nov 2026 — Build (parallel): merge request from Build & Test
+
+- **Message (Build & Test, 27 Nov 20:24):** merge `worktree-build` (Sales Loss Report) into `main`; Margin Report E2E finished and pushed; cut-off Saturday 28 Nov, 6 pm. **Basheer: proceed** (27 Nov).
+- `main` brought into the branch up to `94772b5`: one clash, in this log, both sides kept. `api.ts` rebuilt, no change. pytest 1818 passed / 10 skipped; ruff and tsc pass; lint 0 errors.

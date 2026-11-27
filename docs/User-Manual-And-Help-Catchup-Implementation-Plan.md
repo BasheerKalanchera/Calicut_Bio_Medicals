@@ -710,7 +710,7 @@ value, dates and who owns it. Open the Opportunity, **Overview** tab →
 - **On Hold** needs a **Hold Reason** and a **Reactivation Date** in the
   future.
 - **Lost** needs a **Loss Reason**; for "Competitor Won", also the
-  **Competitor Name**.
+  **Competitor Name**, and the **Competing product** if you know it.
 - **Won** comes in two saves: first save it at **Payment Pending** (Won
   is greyed out until then), then set Won, tick **I confirm full
   payment has been received**, and add an optional **Payment Note**.

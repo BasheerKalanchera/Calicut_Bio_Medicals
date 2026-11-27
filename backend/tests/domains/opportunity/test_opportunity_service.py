@@ -131,6 +131,7 @@ def _make_opportunity(**overrides) -> MagicMock:
         loss_reason_id=None,
         loss_notes=None,
         competitor_name=None,
+        competitor_product_name=None,
         hold_reason_id=None,
         reactivation_date=None,
         project_id=None,
@@ -1640,6 +1641,49 @@ class TestHighChanceNeedsClosureDate:
                 OPP_ID, _noted(status_id=STATUS_ACTIVE_ID), updated_by=USER_ID
             )
         repo.update.assert_not_called()
+
+
+# ===========================================================================
+# update_opportunity — BR-OP-03 competitor details only with "Competitor Won"
+# ===========================================================================
+
+class TestCompetitorDetails:
+    def _lost(self, reason_code: str):
+        """An already-Lost Opportunity that has a competitor saved."""
+        opp = _make_opportunity(
+            status_id=STATUS_LOST_ID,
+            loss_reason_id=LOSS_REASON_COMPETITOR_ID,
+            competitor_name="Samsung",
+            competitor_product_name="HS40",
+        )
+        repo = _make_repo()
+        repo.get_for_update.return_value = opp
+        repo.get_status.return_value = _make_status("LOST", is_terminal=True)
+        repo.get_loss_reason.return_value = _make_loss_reason(reason_code)
+        return opp, _make_service(repo)
+
+    def _save(self, service, **fields) -> None:
+        service.update_opportunity(OPP_ID, OpportunityUpdate(**fields), updated_by=USER_ID)
+
+    def test_competitor_won_keeps_both(self):
+        opp, service = self._lost("COMPETITOR_WON")
+        self._save(service, competitor_product_name="V7")
+        assert (opp.competitor_name, opp.competitor_product_name) == ("Samsung", "V7")
+
+    def test_competing_product_can_be_emptied(self):
+        opp, service = self._lost("COMPETITOR_WON")
+        self._save(service, competitor_product_name=None)
+        assert (opp.competitor_name, opp.competitor_product_name) == ("Samsung", None)
+
+    def test_changing_to_another_reason_clears_both(self):
+        opp, service = self._lost("PRICE")
+        self._save(service, loss_reason_id=LOSS_REASON_PRICE_ID)
+        assert (opp.competitor_name, opp.competitor_product_name) == (None, None)
+
+    def test_competitor_sent_with_another_reason_is_not_kept(self):
+        opp, service = self._lost("PRICE")
+        self._save(service, competitor_name="Acme", competitor_product_name="V7")
+        assert (opp.competitor_name, opp.competitor_product_name) == (None, None)
 
 
 # ===========================================================================

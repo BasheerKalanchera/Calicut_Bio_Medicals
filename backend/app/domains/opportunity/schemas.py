@@ -354,6 +354,7 @@ class OpportunityUpdate(BaseModel):
     loss_reason_id: uuid.UUID | None = None
     loss_notes: str | None = None
     competitor_name: str | None = Field(None, max_length=255)
+    competitor_product_name: str | None = Field(None, max_length=255)
     hold_reason_id: uuid.UUID | None = None
     reactivation_date: date | None = None
     referred_by_user_id: uuid.UUID | None = None
@@ -409,6 +410,7 @@ class OpportunityResponse(BaseModel):
     loss_reason_id: uuid.UUID | None
     loss_notes: str | None
     competitor_name: str | None
+    competitor_product_name: str | None
     hold_reason_id: uuid.UUID | None
     reactivation_date: date | None
     referred_by_user_id: uuid.UUID | None
@@ -452,6 +454,7 @@ class PipelineOpportunity(BaseModel):
     po_date: date | None
     loss_reason_id: uuid.UUID | None
     competitor_name: str | None
+    competitor_product_name: str | None
     hold_reason_id: uuid.UUID | None
     reactivation_date: date | None
     referred_by_note: str | None

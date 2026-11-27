@@ -478,6 +478,29 @@ with no product line (Won is unaffected, it needs a line); (2) ask for the
 product line when an Opportunity past Lead is marked Lost. (The Sales Loss
 Report shows these six, plan D2.)
 
+### Edit on a Won or Lost Opportunity cannot be saved — not started (2026-11-26)
+
+Opportunity → Overview → Edit shows on a Won or Lost Opportunity, but Save
+is refused ("Cannot change the status of a LOST opportunity", or "WON")
+even when the status is untouched. Found in the Sales Loss Report pre-E2E
+code review; read in code, not tried on screen. Older than that build
+(commit `52ef342`). So a competitor or competing product cannot be added or
+corrected after the loss, and the report's plan D16 clearing cannot be
+reached on screen for an Opportunity already Lost. How: the screen always
+sends `status_id` (`OpportunityDetailScreen.tsx`), the service then
+validates it, and `opportunity/validators.py` refuses a Won/Lost status
+before it checks for "same status". Option offered, not chosen: on a
+"Competitor Won" loss, allow only the competitor name and competing product
+to be added or corrected. BR-OP-09 stands: Won/Lost cannot be reopened, and
+any administrative change to one must be in the audit history.
+
+### Sales Loss Report: Owner box lists only the first 100 users — not started (2026-11-26)
+
+`listUsers` (`services/masterData.ts`) asks for one page of 100, the
+server's maximum, and the report's Owner box is filled from it. Beyond 100
+users some owners cannot be picked; their Lost Opportunities still show with
+"All owners". Dev had 12 active users on 25 Nov (inactive not counted).
+
 ### Block an SBU change while the user owns open Opportunities in another SBU — not started (2026-10-04)
 
 Rule decided: BR-OP-18 (`docs/Business-Rules.md`). Found when Basheer K

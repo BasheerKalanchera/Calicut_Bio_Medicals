@@ -24,6 +24,7 @@ from app.domains.reporting.schemas import (
     RepActivityLevelResponse,
     SalesGroupBy,
     SalesHeadline,
+    SalesLossResponse,
     SalesSummaryResponse,
     StagnantOpportunitiesResponse,
     WeeklyFollowupResponse,
@@ -129,6 +130,26 @@ def get_opportunities_on_hold(
 ) -> APIResponse[OpportunitiesOnHoldResponse]:
     return APIResponse(
         data=service.opportunities_on_hold(current_user, sbu_id=sbu_id, zone_id=zone_id, user_id=user_id)
+    )
+
+
+@router.get("/sales-loss")
+def get_sales_loss_report(
+    sbu_id: uuid.UUID | None = Query(None),
+    zone_id: uuid.UUID | None = Query(None, description="Includes the zones under it"),
+    user_id: uuid.UUID | None = Query(None),
+    loss_reason_id: uuid.UUID | None = Query(None),
+    period_start: date | None = Query(None, description="By closed date"),
+    period_end: date | None = Query(None, description="Inclusive"),
+    current_user: UserProfile = Depends(get_current_user),
+    service: ReportingService = Depends(_get_service),
+) -> APIResponse[SalesLossResponse]:
+    start_dt, end_dt = period_bounds(period_start, period_end)
+    return APIResponse(
+        data=service.sales_loss_report(
+            current_user, sbu_id=sbu_id, zone_id=zone_id, user_id=user_id,
+            loss_reason_id=loss_reason_id, period_start=start_dt, period_end=end_dt,
+        )
     )
 
 
