@@ -23,6 +23,9 @@ At the session's end, write in Progress-Archive:
   `docs/Process-Improvements.md`, or a new P-number if none fits.
   Everything else is just a correction in the count; no tracker line,
   no watch-list line. *(2026-10-21)*
+- Written before the docs batch and before the refresh, never after. The
+  session clock and the per-message hook remind at both; if a retro is
+  already written and work carried on, add an addendum. *(2026-11-27)*
 Show it in chat first only when Basheer asked for the retro.
 
 ## Harness Engineering review (weekly)

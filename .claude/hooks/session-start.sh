@@ -14,8 +14,6 @@ HB=.claude/session-handover-build.md
 MC=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)/../.claude
 HBP=$MC/worktrees/build/.claude/session-handover-build-parallel.md
 [ -f "$HBP" ] || HBP=$MC/session-handover-build-parallel.md
-# Test session (/test, 2026-10-17) runs in the main folder.
-HT=.claude/session-handover-test.md
 OLD=.claude/session-handover.md
 INPUT=$(cat)
 DQ_LOG=/c/Backups/CabioUAT/data_consistency_reports/data_quality_log.txt
@@ -97,9 +95,10 @@ fi
 
 # 3. Handover size alarms. After a context summary ("source":"compact"),
 #    re-show this session's note: the first /plan-and-chore,
-#    /build-and-test, /build or /test in the transcript says which; if none,
+#    /build-and-test or /build in the transcript says which; if none,
 #    show all. On a fresh start nothing is shown yet (the command isn't typed).
-for f in "$HP" "$HB" "$HBP" "$HT"; do
+#    (/test retired 2026-11-27.)
+for f in "$HP" "$HB" "$HBP"; do
   [ -f "$f" ] || continue
   n=$(wc -l < "$f")
   if [ "$n" -gt 75 ]; then
@@ -109,11 +108,10 @@ for f in "$HP" "$HB" "$HBP" "$HT"; do
 done
 case "$INPUT" in *'"source":"compact"'*|*'"source": "compact"'*) ;; *) exit 0 ;; esac
 tp=$(printf '%s' "$INPUT" | sed -n 's/.*"transcript_path": *"\([^"]*\)".*/\1/p' | sed 's#\\\\#/#g')
-kind=$(grep -o -m1 -E 'command-name>/(plan-and-chore|build-and-test|build|test)<' "$tp" 2>/dev/null | head -n 1)
+kind=$(grep -o -m1 -E 'command-name>/(plan-and-chore|build-and-test|build)<' "$tp" 2>/dev/null | head -n 1)
 case "$kind" in
   *plan-and-chore\<) cat "$HP" ;;
   *build-and-test\<) cat "$HB" ;;
   */build\<) cat "$HBP" ;;
-  */test\<) cat "$HT" ;;
-  *) echo "Session type unknown (no /plan-and-chore, /build-and-test, /build or /test found); all four notes follow."; echo; cat "$HP"; echo; cat "$HB"; echo; cat "$HBP"; echo; cat "$HT" ;;
+  *) echo "Session type unknown (no /plan-and-chore, /build-and-test or /build found); all three notes follow."; echo; cat "$HP"; echo; cat "$HB"; echo; cat "$HBP" ;;
 esac

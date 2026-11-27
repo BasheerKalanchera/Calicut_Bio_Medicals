@@ -133,6 +133,32 @@ class Hook(Base):
         self.assertEqual(self.push(response="error: failed to push some refs"), "")
         self.assertEqual(self.push(command="git status"), "")
 
+    def test_refresh_message_includes_retro_step(self):
+        self.write(session(25, 130))
+        self.assertIn("end-of-session retro", self.message("message 25"))
+
+    def test_end_wording_without_retro_asks_for_retro(self):
+        self.write(session(4, 30))
+        self.assertIn("write this session's end-of-session retro", self.message("Ok, let's wind up"))
+        self.assertIn("write this session's end-of-session retro", self.message("Is it time for docs batch commit?"))
+
+    def test_end_wording_after_retro_asks_for_addendum(self):
+        archive = "docs/Progress-Archive-2026-01.md"
+        edit = {"type": "tool_use", "name": "Edit", "input": {
+            "file_path": archive, "old_string": "x", "new_string": "- **Retro. Corrections from Basheer: 2**"}}
+        self.write(session(4, 30) + [{"type": "assistant", "timestamp": at(31), "message": {"content": [edit]}}])
+        self.assertIn("add a short addendum", self.message("time for a session refresh?"))
+
+    def test_search_for_retro_lines_is_not_a_retro(self):
+        grep = {"type": "tool_use", "name": "Bash", "input": {
+            "command": "grep -n 'Corrections from Basheer' docs/Progress-Archive-2026-01.md"}}
+        self.write(session(4, 30) + [{"type": "assistant", "timestamp": at(31), "message": {"content": [grep]}}])
+        self.assertIn("write this session's end-of-session retro", self.message("let's wrap up"))
+
+    def test_other_refresh_wording_is_silent(self):
+        self.write(session(4, 30))
+        self.assertEqual(self.message("Refresh the E2E plan with the latest Dev data"), "")
+
     def test_bad_input_is_silent(self):
         self.assertEqual(self.run_hook(hook_event_name="UserPromptSubmit", transcript_path="missing.jsonl"), "")
         self.assertEqual(self.run_hook(hook_event_name="SessionStart"), "")

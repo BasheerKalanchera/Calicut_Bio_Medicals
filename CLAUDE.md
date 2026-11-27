@@ -52,18 +52,17 @@ code or changing structure. On any conflict, the document wins over this file.
   skill — load it before any of those tasks.
 
 ## Session handoff
-- **Starting a session:** Basheer types `/plan-and-chore`, `/build-and-test`,
-  `/build` or `/test` (add `restarted` after a crash or restart). Each skill
+- **Starting a session:** Basheer types `/plan-and-chore`, `/build-and-test`
+  or `/build` (add `restarted` after a crash or restart). Each skill
   says what that session does and leaves to the others. `/build` builds a
-  plan in its own copy of the code (a git worktree) while `/test` (testing
-  only) or Build & Test is testing, and merges once at the end; `/test` and
-  Build & Test never run at the same time. Each session has its own
+  plan in its own copy of the code (a git worktree) while Build & Test is
+  testing, and merges once at the end. Each session has its own
   handover note — `.claude/session-handover-plan.md`,
-  `.claude/session-handover-build.md`,
-  `.claude/session-handover-build-parallel.md` or
-  `.claude/session-handover-test.md`; the hooks show it when the
-  command is typed and again after a context summary. *(2026-10-16,
-  2026-10-17)*
+  `.claude/session-handover-build.md` or
+  `.claude/session-handover-build-parallel.md`; the hooks show it when the
+  command is typed and again after a context summary. `/test` retired
+  2026-11-27 (used once since 17 Oct). *(2026-10-16, 2026-10-17,
+  2026-11-27)*
 - Each handover note (split from `.claude/session-handover.md` 2026-10-16)
   is a handover note, not a log: the task actively in progress and its
   immediate next step, nothing else. Waiting-on-someone items go to

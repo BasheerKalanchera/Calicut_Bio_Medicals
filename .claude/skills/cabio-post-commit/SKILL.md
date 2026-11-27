@@ -17,7 +17,7 @@ The session clock (`.claude/hooks/session_clock.py`) decides when this is due an
 
 When the clock says it's due:
 1. Claude finishes the current step and does NOT start the next task, unless Basheer says to carry on.
-2. Ensure this session's handover note (`.claude/session-handover-plan.md` or `-build.md`) has the exact next step recorded.
+2. Write this session's end-of-session retro (`harness-engineering`; an addendum if one is already written), and make sure this session's handover note has the exact next step recorded. *(2026-11-27)*
 3. Prompt Basheer:
    > "🔄 **Clean Transition Point Reached:** The handover note is saved. To reset context to a clean slate, please type `/exit` now."  *(2026-10-03)*
 

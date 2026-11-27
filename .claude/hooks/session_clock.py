@@ -34,8 +34,27 @@ HOURS, FIRST_CHECK, EVERY = 2, 25, 5  # Basheer, 2026-11-04
 IDLE = timedelta(minutes=30)
 WHAT_TO_DO = (
     "Open this reply by recommending a refresh, with these figures: finish the current step, "
-    "save this session's handover note, start nothing new, and ask Basheer to type /exit. "
-    "If he says to carry on, carry on."
+    "write this session's end-of-session retro to Progress-Archive (an addendum if one is already "
+    "written this session), save this session's handover note, start nothing new, and ask Basheer "
+    "to type /exit. If he says to carry on, carry on."
+)
+# Retro before the docs batch or refresh (Harness review, Basheer 2026-11-27): the retro
+# came after the docs batch or the refresh on 20, 23 and 26 Nov. These phrases mean the
+# session is ending; a bare "refresh" doesn't count ("refresh the E2E plan").
+END_RE = re.compile(
+    r"wind(?:ing)? up|wrap(?:ping)? up|call it a day|end (?:the|this) session|docs? batch"
+    r"|session refresh|refresh (?:the |this )?session|time for (?:a )?(?:session )?refresh",
+    re.I,
+)
+RETRO_MARK = "corrections from basheer"
+RETRO_FIRST = (
+    "Session retro: Basheer's message points to the end of the session. Before anything else "
+    "in this reply, write this session's end-of-session retro to Progress-Archive "
+    "(harness-engineering skill), so it goes into the docs batch."
+)
+RETRO_ADDENDUM = (
+    "Session retro: a retro is already written this session. Before anything else in this "
+    "reply, add a short addendum with the corrections since it (or \"no further corrections\")."
 )
 
 
@@ -79,6 +98,34 @@ def session_facts(path: str):
     return int(worked.total_seconds() // 60), count, last
 
 
+def retro_written(path: str) -> bool:
+    """True when this session has already written a retro line to Progress-Archive
+    (an Edit/Write to it, or a shell append to it, carrying "Corrections from Basheer")."""
+    with open(path, encoding="utf-8") as fh:
+        for line in fh:
+            if RETRO_MARK not in line.lower():
+                continue  # cheap skip for most lines
+            try:
+                entry = json.loads(line)
+            except ValueError:
+                continue
+            if entry.get("type") != "assistant":
+                continue
+            for block in (entry.get("message") or {}).get("content") or []:
+                if not isinstance(block, dict) or block.get("type") != "tool_use":
+                    continue
+                inp = block.get("input") or {}
+                if block.get("name") in ("Edit", "Write"):
+                    text = str(inp.get("new_string") or inp.get("content") or "")
+                    if "Progress-Archive" in str(inp.get("file_path", "")) and RETRO_MARK in text.lower():
+                        return True
+                elif block.get("name") in ("Bash", "PowerShell"):
+                    cmd = str(inp.get("command", ""))
+                    if "Progress-Archive" in cmd and ">>" in cmd and RETRO_MARK in cmd.lower():
+                        return True
+    return False
+
+
 def over_limit(minutes: int) -> bool:
     return minutes > HOURS * 60
 
@@ -98,10 +145,12 @@ def on_message(data: dict, facts: tuple):
     prompt = str(data.get("prompt") or "").strip()
     if prompt and prompt != last:
         count += 1
-    if not due_on_message(minutes, count):
-        return None
-    return (f"{figures(minutes, count)} -- over the {HOURS}-hour limit. {WHAT_TO_DO} "
-            f"Next check in {EVERY} messages. Never guess these figures.")
+    if due_on_message(minutes, count):
+        return (f"{figures(minutes, count)} -- over the {HOURS}-hour limit. {WHAT_TO_DO} "
+                f"Next check in {EVERY} messages. Never guess these figures.")
+    if END_RE.search(prompt):
+        return RETRO_ADDENDUM if retro_written(data.get("transcript_path") or "") else RETRO_FIRST
+    return None
 
 
 def on_push(data: dict, facts: tuple):
