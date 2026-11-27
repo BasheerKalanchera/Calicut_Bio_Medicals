@@ -12,30 +12,21 @@ session edits this note._
   ahead of a full promotion go by the hotfix-branch route
   (`docs/Deployment-Topology.md` "Fix to UAT ahead of a full promotion").
 
-## NOW (26 Nov) — date picker cut off on short laptop screens
-Backlog entry "Date picker cut off on short laptop screens". Basheer parked the
-Margin Report E2E for this (26 Nov). Fix made, **not committed**:
-`utils/datePicker.ts` (820px), `CloseReminderModal.tsx`, `LogActivityModal.tsx`.
-Reviewed; pytest 1788 / 10 skipped, ruff, tsc clean, lint 0 errors.
-**Next:** E2E `docs/Date-Picker-Short-Screen-Manual-E2E-Test-Plan.md`: 6 of 10
-passed (P1, P2, 1–4). Step 6 with the switch on, then restore it, then 5, 7, 8.
-Then `fix:` commit (needs his yes), Backlog entry closed.
-Session refresh (26 Nov evening): retro written to the archive (3 corrections);
-docs commit proposed, awaiting his yes. Switch still in the code.
-Scrolling finding fixed (Basheer yes): header hidden below 660px screen height
-(`DATE_TIME_TOOLBAR`); diff reviewed, tsc clean, lint 0 errors; not yet seen.
-**TEMPORARY SWITCH IN `utils/datePicker.ts` (Basheer yes, 26 Nov):** "before"
-seen by Basheer (cut off, bug reproduced); now "after" = `(min-height: 820px)`.
-Restore
-`"@media (pointer: fine) and (min-height: 820px)"` and drop the TEMPORARY
-comment before any commit.
-Why the switch: this laptop's Chrome reports touch only even with the mouse, so
-the real code always centres here. Centred box measured 587px tall.
-Review points: centred box may scroll on very short screens (step 5); crossing
-820 while a box is open closes it (accept); older bug, impossible date may keep
-the previous one (step 7, fix separately if seen).
+## UAT move, Sunday 29 Nov early morning (Basheer, 27 Nov)
+- Full move, replacing the date picker hotfix (its uncommitted plan was deleted,
+  Basheer yes, 27 Nov). Includes the date fix `ba67000` (E2E 13 of 13).
+- He wants Margin Report and Sales Loss Report E2E finished by Saturday 28 Nov.
+  **Decided (Basheer, 27 Nov):** cut-off Saturday 6 pm, a report goes only if all
+  its steps pass (Sales Loss only if Margin goes: `0069` follows `0068`); Plan &
+  Chore writes the move plan (Basheer pastes the request there).
+  **Open:** header name `2ac7f25` on UAT or not (he asked what is wrong with it).
+- Move plan must cover: price sheet load before `0068` (Margin D12); load script
+  was only in an old scratchpad (`dev_price_load.py`); sheet has Cost blank.
+- Order: Margin E2E, then merge `worktree-build` (conflict in the progress
+  archive only, dry run 27 Nov), Basheer applies `0069` on Dev, SLR E2E (37 steps).
 
-## PARKED (26 Nov) — Margin Report E2E, resume at step 13
+## NEXT — Margin Report E2E, resume at step 13
+**First:** Basheer restarts the Dev backend. 37 steps left, due Saturday 6 pm.
 Plan `docs/Margin-Report-Implementation-Plan.md` (Approved, D1–D21; build order
 complete). E2E plan `docs/Margin-Report-Manual-E2E-Test-Plan.md`.
 - **Pushed:** D19–D21 changes `1852540` (26 Nov; pytest 1788 passed / 10
@@ -55,9 +46,7 @@ complete). E2E plan `docs/Margin-Report-Manual-E2E-Test-Plan.md`.
   (proposed, not answered).
 - **After the E2E:** post-commit checklist (Backlog entry, Traceability row
   11.1, scorecard).
-- **Docs commit pending** (Basheer, 26 Nov: do it at the end of the next
-  Build & Test session; needs its own approval): this note, the Margin plan,
-  its E2E plan and Build & Test's `docs/Progress-Archive-2026-11.md` sections.
+- Margin plan, E2E plan and archive sections pushed in `fe8038a` (26 Nov).
 - Leave `scripts/uat_case_study_scan.py` and the Plan & Chore note alone.
 
 **Other open:** (a) plan D11 wording (Plan & Chore's batch; the rolled-back test was

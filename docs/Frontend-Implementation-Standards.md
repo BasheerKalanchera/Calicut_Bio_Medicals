@@ -204,6 +204,12 @@ pickers fixed at the top; only the content below scrolls. Reference:
 - Enter key in form modals must not submit the form. Add `onKeyDown` handling at the `<form>` element (see `FormModal.tsx`), not per-input.
 - Modal `onSubmit` must throw to signal failure — `FormModal` catches the error and displays it via MUI `Alert`.
 - Clear all form state fields before opening the modal (not after closing) so re-opening shows a blank form.
+- **Date-and-time boxes open in the centre on every device** (Basheer,
+  2026-11-27): use `MobileDateTimePicker`, not `DateTimePicker`, with
+  `slotProps.toolbar: DATE_TIME_TOOLBAR` (`utils/datePicker.ts`), which hides
+  the large date-and-time header on every screen. The box attached to its
+  field ran under the taskbar on short laptop screens; the header's mixed
+  text sizes looked uneven. Date-only boxes are not covered.
 - **One Opportunity create form (D12, built 2026-10-14).** Every way of
   creating an Opportunity opens `QuickLeadModal.tsx`; no screen keeps its
   own inline create form. Opened from a hospital or project page, it gets

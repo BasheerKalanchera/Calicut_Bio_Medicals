@@ -2394,6 +2394,37 @@ edited in code and nothing was written to UAT.
   (E2E result, though the review had flagged it before he tested). No live data
   or UAT touched; no guard could stop these; no tracker change.
 
+## 27 Nov 2026 — Build & Test: date box centred on every device
+
+- Step 6 passed (Basheer, temporary switch on).
+- Basheer asked why not centre the box everywhere; agreed (Basheer, 27 Nov).
+  The 820px height rule, the mouse check and the temporary switch are removed;
+  the four date-and-time boxes use `MobileDateTimePicker`. Cost accepted: one
+  extra click (date, then time) on large laptop screens.
+- Diff reviewed; pytest 1788 passed / 10 skipped, ruff and tsc clean, lint
+  0 errors, 134 warnings. Not committed; E2E steps 1a, 6a, 5, 7, 8 to run.
+- Same day, during step 8: the large date-and-time header is now hidden on every
+  screen, replacing the 660px rule (Basheer, 27 Nov; its mixed text sizes looked
+  uneven: the library's default sizes). Step 6b added.
+- Steps 6b and 8 passed (Basheer): date picker E2E complete, 13 of 13.
+- Committed and pushed as `ba67000` (Basheer yes). Backlog entry removed; the
+  photo is now linked from the E2E plan. Not on UAT yet; route (hotfix or next
+  full move) not decided. No signed requirement involved.
+- UAT route (Basheer, 27 Nov): a full move on Sunday 29 Nov early morning
+  replaces the proposed date picker hotfix. Margin Report and Sales Loss Report
+  go only if every E2E step passes by Saturday 28 Nov 6 pm (Sales Loss only with
+  Margin: migration `0069` follows `0068`). Plan & Chore writes the move plan;
+  message given to Basheer to paste there. Open: the training-only header name on
+  UAT (Claude now recommends keeping it).
+- **Retro (Build & Test, 27 Nov; 2 h 32 min worked, written at the refresh).
+  Corrections from Basheer this session: 4** (counted from the 25 typed messages
+  in the transcript): "Why to change it now? It is working fine right?"; "I didn't
+  understand. Why are we going back to mouse check?"; "Why not make it centered on
+  the devices as standard" (the simpler design I had not offered); "what is wrong
+  in seeing one's name on the screen header?" (I recommended leaving it off only
+  on an old decision, with no reason given). No live data or UAT touched; no
+  tracker change.
+
 ## 27 Nov 2026 — Plan & Chore: UAT backup; weekly Harness review (Option B) in progress
 
 - UAT backup `cabio_uat_2026-11-27_0649.dump` (537 TOC entries; pruned 11-12); Drive copy done (Basheer).
@@ -2403,3 +2434,4 @@ edited in code and nothing was written to UAT.
 - **Retro (Plan & Chore, 27 Nov; written when Basheer asked "Is it time for session refresh?" — the new end-of-session reminder's first real firing). Corrections from Basheer this session: 5** (counted from his 15 typed messages; the early part from the context summary, so ±1): (1) "why not add Retro to session refresh recommendation itself … Checking during docs batch commit is reactive right?" — my proposed guard only caught the miss afterwards; (2) "Please elaborate" — my cases 2 and 3 explanation was unclear; (3) "So what is the solution for Cases 2 and 3?" — I described the gap without proposing a fix; (4) "Please explain" — the risky-permissions note used code words; (5) screenshot paste suggested without checking his set-up (CLI in the AntiGravity terminal). Not counted: his question about Build & Test's files showing here. No tracker line: none guard-stoppable; no live data or UAT touched (UAT backup read-only with his yes).
 - **Harness review item 2 — `/test` retired (Basheer yes, 27 Nov).** Used once since 17 Oct (counted from transcripts); both E2Es its note listed were run by Build & Test (Next-Action rules 42 steps passed, Annual Target Planning 95, per their test plans). Deleted `.claude/skills/test/SKILL.md` and `.claude/session-handover-test.md` (git keeps both). Three sessions now in CLAUDE.md "Starting a session" and the plan-and-chore, build-and-test and build skills (`/build`'s E2E goes to Build & Test). Hooks: `reply-checklist.sh` and `session-start.sh` no longer show or size-check a Test note; `handover_after_commit.py` no longer names it. `.claude/tools/last_session.py` keeps its harmless "test" option. Checked: both shell hooks parse; `/test` now shows no note; `/plan-and-chore` and an after-summary start still show the right note; unknown session shows all three.
 - **Retro addendum (Plan & Chore, 27 Nov, at the session refresh): no further corrections from Basheer** since the retro above (item 2, `/test` retired, approved and built as shown).
+- **Harness review item 6 — status line (Basheer yes, 27 Nov; done before item 4 at his request).** Basheer asked why the session clock doesn't show on each reply: by design it speaks only when a refresh is due (from message 25, every 5, over 2 h; or after a push), and only to Claude. New `.claude/hooks/status_line.py` shows "⏱ H h M min worked · started HH:MM (IST) · N messages", adding "· refresh due" over 2 h; it reuses `session_clock.py`'s counting, so the line and the refresh advice agree. Wired as `statusLine` in `.claude/settings.json` (all three sessions). 3 new tests, 20 of 20 pass. Checked on this session's transcript: "0 h 21 min worked · started 11:14 · 6 messages".

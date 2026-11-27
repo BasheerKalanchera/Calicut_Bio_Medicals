@@ -1,10 +1,12 @@
 <!-- e2e-template v1: checked on save by .claude/hooks/test_plan_guard.py -->
 # Date Picker on Short Screens — Manual E2E Test Plan
 
-**Covers:** `docs/Backlog.md` "Date picker cut off on short laptop screens" (Haroon,
-26 Nov 2026). Fix approved by Basheer, 26 Nov 2026; cut-off raised from 760 to 820
-pixels after the code review (Basheer, 26 Nov 2026).
-**Built:** not committed yet.
+**Covers:** date picker cut off on short laptop screens, Close Next Action and Log
+Activity windows (Haroon, 26 Nov 2026;
+[photo](screenshots/2026-11-26-date-picker-cut-off.jpeg)). Fix approved by Basheer,
+26 Nov 2026; cut-off raised from 760 to 820 pixels after the code review (Basheer,
+26 Nov 2026); replaced on 27 Nov (see "Design change" below).
+**Built:** `ba67000` (27 Nov 2026).
 **Where:** Dev only. Nothing is saved: close each window without pressing Log,
 Complete or Close next action.
 
@@ -23,16 +25,15 @@ not the design doc.
 
 ## Figures and sources
 
-- 820 pixel cut-off — `sales-os-app/src/utils/datePicker.ts`; estimate from the date
-  library's view height (336 pixels) plus its buttons, twice, plus the field; not
-  measured in a browser (code review, 26 Nov 2026)
-- 660 pixel header cut-off — `sales-os-app/src/utils/datePicker.ts`; estimate from the
-  centred box's height (587 pixels, measured by Claude in Chrome on Dev, 26 Nov 2026)
-  plus its margins
+- 820 pixel cut-off (the first design, used up to step 6; removed 27 Nov 2026) — code
+  review, 26 Nov 2026; an estimate, never measured
+- 660 pixel header cut-off (removed 27 Nov 2026) — an estimate from the centred box's
+  height with its header (587 pixels, measured by Claude in Chrome on Dev,
+  26 Nov 2026) plus its margins
 - 390, 768 and 1280 pixel widths — the project's phone, tablet and laptop widths
   (`cabio-e2e-testing` skill)
 - 1788 passed, 10 skipped, ruff, tsc and lint results — run on this computer,
-  26 Nov 2026
+  26 Nov 2026; run again after the 27 Nov change, same counts, 134 lint warnings
 - Month 02 with day 31 — made-up example of an impossible date
 - Report of the problem — Haroon via Basheer, 26 Nov 2026
 
@@ -41,12 +42,17 @@ all of them. Any login (the result doesn't depend on who it is).
 
 **Phone:** step 8.
 
-**Heights:** "screen area" is the visible part of the browser where the app shows.
-Below 820 pixels the date box opens in the centre; at 820 or more it opens attached
-to its field. Below 660 pixels the centred box also has no large date-and-time
-header at its top (added 26 Nov after the scrolling finding; Basheer approved, by
-height only on any device): it starts at the calendar and clock tabs, and AM/PM is
-chosen in the clock tab.
+**Design change, 27 Nov (Basheer):** the date box now opens in the centre on every
+device and at every screen size. The 820 pixel cut-off, the mouse check and the
+temporary test switch are gone. Steps 1–4 and 6 were run before this change, with
+the switch on; steps 1a and 6a re-check it.
+
+**Header:** since 27 Nov (second change, Basheer, during step 8) the centred box
+has no large date-and-time header on any screen: it starts at the calendar and
+clock tabs, and AM/PM is chosen in the clock tab. Before that it was hidden only
+below a 660 pixel screen height; steps run earlier saw the header on taller screens
+("screen area" is the visible part of the browser where the app shows). Step 6b
+re-checks.
 
 ## Pre-flight
 
@@ -62,6 +68,9 @@ chosen in the clock tab.
    Time". **Expected:** a centred box; the whole month shows; a date and a time can
    be picked and confirmed with OK. Pass (26 Nov, Basheer, temporary switch on, with
    the header change)
+1a. [Simple] Added 27 Nov, after the design change: short window, "Close Next
+   Action" window, "Details" tab, open "Date & Time". **Expected:** as step 1. Pass
+   (27 Nov, Basheer)
 2. [Simple] Same window, "Follow-up" tab, open "Due Date". **Expected:** as step 1.
    Pass (26 Nov, Basheer, with the temporary switch that ignores the mouse check;
    before it, the attached box was cut off). Re-run after the header change: Pass
@@ -74,12 +83,27 @@ chosen in the clock tab.
 5. [Simple] Make the window much shorter (about half the screen) and open one date
    box. **Expected:** OK is visible; report if you have to scroll to reach it. —
    Finding (26 Nov, Basheer, during the short-window steps, temporary switch on):
-   the centred box has to be scrolled to reach Cancel and Next.
+   the centred box has to be scrolled to reach Cancel and Next. Re-run 27 Nov after
+   the header and design changes: Pass (Basheer)
 6. [Simple] Maximise the window on a large or zoomed-out screen (Ctrl and minus)
    and open one date box in each window. **Expected:** attached to its field, as
-   before, nothing cut off. —
+   before, nothing cut off. Pass (27 Nov, Basheer, temporary switch on; replaced by
+   step 6a)
+6a. [Simple] Added 27 Nov: maximise the window and open all four date boxes ("Close
+   Next Action": "Details" and "Follow-up"; "Log Activity": "Details" and "Next
+   Action"). **Expected:** each opens in the centre with its date-and-time header (if
+   the screen area is 660 pixels or taller), nothing cut off; a date and time can be
+   picked and confirmed with OK. Pass (27 Nov, Basheer)
+6b. [Simple] Added 27 Nov, after the header change: maximise the window and open
+   all four date boxes, as in step 6a. **Expected:** no large header; the box starts
+   at the calendar and clock tabs; a date, a time and AM/PM can be picked and
+   confirmed with OK. Pass (27 Nov, Basheer)
 7. [Complex: finds an older problem] In one date box, type a month or day that
    doesn't exist (month 02 with day 31). **Report:** what the field shows and any
-   message. —
+   message. Pass (27 Nov, Basheer): typing in the field doesn't open the centred box,
+   and the field doesn't accept the impossible date
 8. [Complex: phone layout] At 390, 768 and 1280 pixels wide, open one date box in
-   each window. **Expected:** the whole box is on screen and a date can be picked. —
+   each window. **Expected:** the whole box is on screen and a date can be picked.
+   Pass (27 Nov, Basheer, with the header hidden)
+
+**Result:** 13 of 13 passed (27 Nov 2026).
