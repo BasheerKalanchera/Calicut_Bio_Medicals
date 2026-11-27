@@ -2562,3 +2562,17 @@ No guard or tracker line: nothing touched live data, UAT or lost work.
   Business-Rules, the rule matrix (BR-CAT-04) and two Backlog lines updated.
 - Start-up files: Basheer asked that Plan & Chore fix them; full analysis sent to
   its mailbox, 27 Nov 20:00.
+- Client scorecard pages republished (Basheer yes, 27 Nov), after the diff against the live pages was shown: 38/9/3 of 50 → 40/7/2 of 49, strict 76.0% → 81.6%, weighted 85.0% → 88.8%. Also carries the 24 Nov closing of the optional Account Manager row (not published then; today's yes covers it). The first table shown to him had the old figures from the saved repo copies; corrected before publishing.
+
+## 27 Nov 2026 — Build & Test retro (Margin Report E2E, push, scorecard publish)
+
+**Corrections from Basheer this session: 5** —
+- "What do you mean by 'I saved each as a new file and moved it over the old one'" (unclear explanation).
+- "What was the change made?" (asked him to check a change without saying what it was).
+- "Give me all 3 open questions" (I offered them one at a time).
+- "Please explain this" (the start-up file problem and who added the setting).
+- "Which is better? You doing the merge or B session?" (I offered to merge; the written rule gives the merge to the Build session).
+
+No guard or tracker line: nothing touched live data, UAT or lost work.
+
+Addendum, 20:24: no further corrections. Merge message sent to the Build session (Basheer yes).

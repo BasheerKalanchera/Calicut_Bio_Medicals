@@ -19,26 +19,25 @@ session edits this note._
   **Decided (Basheer, 27 Nov):** cut-off Saturday 6 pm, a report goes only if all
   its steps pass (Sales Loss only if Margin goes: `0069` follows `0068`); Plan &
   Chore writes the move plan (Basheer pastes the request there).
-  Header name `2ac7f25` is kept and goes to UAT (Basheer, 27 Nov; Backlog).
+  Header name `2ac7f25` is kept and goes to UAT (Basheer, 27 Nov).
 - Move plan must cover: price sheet load before `0068` (Margin D12); load script
   was only in an old scratchpad (`dev_price_load.py`); sheet has Cost blank.
-- Order: Margin E2E, then merge `worktree-build` (conflict in the progress
-  archive only, dry run 27 Nov), Basheer applies `0069` on Dev, SLR E2E (37 steps).
 
-## NEXT — Margin Report post-commit paperwork, then Sales Loss Report
-Margin Report: E2E 56 of 56 Pass (27 Nov); `7469ece` (D22–D25) and `dc9c5d8`
-(D27) pushed. Qualifies for Sunday's UAT move.
-- Post-commit documents updated 27 Nov (check git log for the docs commit): 4.3 and 11.1 Done,
-  scorecard 40 of 49, `--check` OK. **Waiting on Basheer's yes:** republish the
-  two client scorecard pages.
-- **Then:** docs batch (own yes; includes the earlier date-picker retro
-  addendum), merge `worktree-build`, `0069` on Dev, SLR E2E. Due Saturday 6 pm.
-  Plan & Chore's move plan: `docs/UAT-Promotion-2026-11-29-Plan.md` (read it,
+## NEXT — Sales Loss Report (due Saturday 28 Nov, 6 pm)
+Margin Report is finished and qualifies for Sunday's move (56 of 56; docs batch
+`37eaf93` pushed 27 Nov).
+- **Next:** the Build session merges `worktree-build` (its skill gives it the
+  merge; message sent to it 27 Nov 20:24, Basheer yes). Then
+  Basheer applies `0069` on Dev at once (the new column is loaded with every
+  Opportunity, so those screens fail in between), and this session runs the SLR
+  pre-E2E check and E2E (37 steps).
+- **Before the merge:** `docs/Progress-Archive-2026-11.md` must have nothing
+  uncommitted on `main` (branch changes it): my docs batch, and Plan & Chore's
+  evening section committed by them.
+- Plan & Chore's move plan: `docs/UAT-Promotion-2026-11-29-Plan.md` (read it,
   don't edit).
-- **Open:** sessions started by `b`/`bt`/`pc` inherit `MSYS_NO_PATHCONV=1`, so
-  the api.ts commit guard fails on backend commits; worked round with
-  `env -u MSYS_NO_PATHCONV git commit`. Sent to Plan & Chore to fix (Basheer,
-  27 Nov); until this session restarts, keep using the work-round.
+- `b`/`bt`/`pc` no longer set `MSYS_NO_PATHCONV` (seen in the files, 27 Nov); a
+  session started before that still needs `env -u MSYS_NO_PATHCONV git commit`.
 - Leave `scripts/uat_case_study_scan.py` and the Plan & Chore note alone.
 
 **Other open:** (a) plan D11 wording (Plan & Chore's batch; the rolled-back test was
