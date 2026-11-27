@@ -2687,9 +2687,9 @@ class TestClosedProductSaveReasonAndNote:
         assert note["created_by"] == USER_ID
         text = note["notes"]
         assert "Reason: Hospital changed the order" in text
-        assert "Added: SonoScape S60 x 1 at ₹7.00 L each" in text
+        assert "Added: SonoScape S60 x 1 at ₹7.00L each" in text
         assert "Removed: SonoScape S20 x 2" in text
-        assert "Changed: SonoScape S50 (quantity 1 → 3; price ₹5.00 L → ₹4.50 L)" in text
+        assert "Changed: SonoScape S50 (quantity 1 → 3; price ₹5.00L → ₹4.50L)" in text
         assert "cost" not in text.lower()  # BR-CAT-04: sold prices only
 
     def test_the_note_carries_no_next_action_and_ignores_the_changers_open_one(self):
