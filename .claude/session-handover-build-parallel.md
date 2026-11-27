@@ -24,9 +24,10 @@ the build branch, and reaches `main` at the merge (Basheer, 2026-10-17)._
   again up to `94772b5` (one clash, progress archive, both sides kept);
   `api.ts` rebuilt, unchanged; pytest 1818 passed / 10 skipped; ruff, tsc
   pass; lint 0 errors.
-- **Next:** commit that on the branch and push, then merge into `main` and
-  push (each shown to Basheer first). Don't stage, stash or discard other
-  sessions' work in the main folder.
+- Committed `381e96d`, pushed to `origin/worktree-build`.
+- **Next:** merge into `main` and push, on Basheer's go. Don't stage,
+  stash or discard other sessions' work in the main folder. Empty the
+  mailbox `.claude/inbox/to-build.md` once there (refused from here).
 - E2E cut-off Saturday 28 Nov, 6 pm; UAT move Sunday 29 Nov.
 - **After the merge:** Basheer applies 0069 on Dev at once (command in
   `cabio-db-and-scripting`; the app loads the new column with every
