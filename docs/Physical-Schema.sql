@@ -11,8 +11,8 @@
 -- it is not consumed by Alembic or the application at runtime, and cannot be
 -- used as an `alembic stamp <rev>` checkpoint.
 --
--- Regenerated 2026-11-25 from the Dev database, catching up migration
--- 0068: opportunity_item: cost saved on the day the Opportunity is marked Won
+-- Regenerated 2026-11-27 from the Dev database, catching up migration
+-- 0069: opportunity: the competitor's product on a lost Opportunity
 -- See docs/Backend-Implementation-Standards.md's migration workflow.
 --
 -- Regenerate with: .\scripts\regen_physical_schema.ps1
@@ -22,7 +22,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict agRdHg7YbICEiLSbaLnpXCctdP2DemMC0B2b8bETXSZsDKGozCyUMGIm2XoMoyw
+\restrict gupE8HDXnAExNcMQ6GEn2Bak6O18F4yzOdX7qbNLW6fxWOtVIaSiqa0ErhLAm1G
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.11 (Debian 17.11-1.pgdg13+2)
@@ -774,6 +774,7 @@ CREATE TABLE public.opportunity (
     full_payment_confirmed_by uuid,
     full_payment_note text,
     po_date date,
+    competitor_product_name character varying(255),
     CONSTRAINT ck_opportunity_full_payment_confirmed_pair CHECK (((full_payment_confirmed_at IS NULL) = (full_payment_confirmed_by IS NULL))),
     CONSTRAINT ck_opportunity_gate_override_reason_required CHECK (((gate_override_approver_id IS NULL) OR (gate_override_reason_id IS NOT NULL))),
     CONSTRAINT ck_opportunity_referral_not_both CHECK ((NOT ((referred_by_user_id IS NOT NULL) AND (referred_by_note IS NOT NULL)))),
@@ -4033,5 +4034,5 @@ CREATE POLICY target_plan_write ON public.target_plan FOR INSERT WITH CHECK ((us
 -- PostgreSQL database dump complete
 --
 
-\unrestrict agRdHg7YbICEiLSbaLnpXCctdP2DemMC0B2b8bETXSZsDKGozCyUMGIm2XoMoyw
+\unrestrict gupE8HDXnAExNcMQ6GEn2Bak6O18F4yzOdX7qbNLW6fxWOtVIaSiqa0ErhLAm1G
 

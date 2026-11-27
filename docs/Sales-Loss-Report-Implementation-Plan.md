@@ -3,8 +3,8 @@
 **Status:** Approved 2026-11-25 (Basheer). Built by Build & Test or Build,
 whichever has room (Basheer, 2026-11-25).
 **Progress:** built on the Build branch 26 Nov (`e783951`, `14789d6`,
-`57c7e38`, `4d60caa`), pre-E2E review fixes `df6b2c1`; not merged; migration
-0069 not applied to Dev; manual E2E pending.
+`57c7e38`, `4d60caa`), pre-E2E review fixes `df6b2c1`; merged into `main`
+27 Nov, `c4de312`; migration 0069 applied to Dev 27 Nov; manual E2E pending.
 **Traceability rows:** 1.4 Competitive Loss Report (Not started); 1.4 Lost
 deal intelligence — the missing competing-product field (Partial).
 **Design / discussion:** Backlog "Sales Loss Report — why Cabio loses

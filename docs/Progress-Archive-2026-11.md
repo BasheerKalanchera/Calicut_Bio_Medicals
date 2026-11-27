@@ -2649,3 +2649,11 @@ Addendum, 20:24: no further corrections. Merge message sent to the Build session
 
 - **Message (Build & Test, 27 Nov 20:24):** merge `worktree-build` (Sales Loss Report) into `main`; Margin Report E2E finished and pushed; cut-off Saturday 28 Nov, 6 pm. **Basheer: proceed** (27 Nov).
 - `main` brought into the branch up to `94772b5`: one clash, in this log, both sides kept. `api.ts` rebuilt, no change. pytest 1818 passed / 10 skipped; ruff and tsc pass; lint 0 errors.
+
+## 27 Nov 2026 — Build (parallel): Sales Loss Report merged, 0069 applied to Dev
+
+- Merged into `main` and pushed (Basheer yes): `c4de312`. Plan & Chore's and Build & Test's uncommitted notes left as they were. Built: Lost Opportunity "Competing product", report data, Sales Loss Report screen and Reports menu item (`e783951`, `14789d6`, `57c7e38`, `4d60caa`, review fixes `df6b2c1`).
+- Migration 0069 applied to Dev by Basheer; `alembic current` = `0069 (head)`. `docs/Physical-Schema.sql` regenerated: the one new column, `opportunity.competitor_product_name`.
+- The apply command given to Basheer first ran nothing: this session still had `MSYS_NO_PATHCONV` set from the old start-up shortcut. With `unset MSYS_NO_PATHCONV;` in front it ran.
+- Message sent to Build & Test with the merge commit, 27 Nov 20:44 (Basheer yes). E2E not started; Traceability unchanged until it passes. Scorecard `--check`: OK (40 Done, 7 Partial, 2 Not started).
+- No UAT connection.

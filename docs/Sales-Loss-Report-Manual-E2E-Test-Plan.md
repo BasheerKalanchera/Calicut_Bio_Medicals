@@ -2,7 +2,7 @@
 # Sales Loss Report — Manual E2E Test Plan
 
 **Covers:** `docs/Sales-Loss-Report-Implementation-Plan.md` (Approved 25 Nov 2026, D1–D21, D6a).
-**Built:** `e783951`, `14789d6`, `57c7e38`, `4d60caa`; pre-E2E review fixes `df6b2c1` (26 Nov 2026, Build branch).
+**Built:** `e783951`, `14789d6`, `57c7e38`, `4d60caa`; pre-E2E review fixes `df6b2c1` (26 Nov 2026, Build branch); merged into `main` `c4de312` (27 Nov 2026).
 **Where:** Dev only. Nothing here runs on UAT (D11).
 
 **Written ahead of the build (Plan & Chore, 25 Nov 2026; corrected 26 Nov).** Labels,
