@@ -6,6 +6,7 @@ import FilterListIcon from "@mui/icons-material/FilterList";
 import { LoadingOrEmpty, SectionCard } from "../components/ReportingUI";
 import TableOrCards, { TocCell, TocRow } from "../components/TableOrCards";
 import ZonePicker from "../components/ZonePicker";
+import { useAuth } from "../contexts/AuthContext";
 import useIsPhone from "../hooks/useIsPhone";
 import { listLossReasons, listRepUsers, listSbus, type ZoneSearchResult } from "../services/masterData";
 import { getSalesLossReport } from "../services/reporting";
@@ -207,10 +208,14 @@ export default function SalesLossReportScreen({
     placeholderData: (previous) => previous,
   });
 
+  // Only someone with no SBU of their own (General Manager, Admin) picks one;
+  // the others already see just their own SBU's Opportunities.
+  const { userProfile } = useAuth();
+  const hasOwnSbu = Boolean(userProfile?.sbu);
   const { data: sbus = [] } = useQuery({
     queryKey: ["sbus"],
     queryFn: () => listSbus() as Promise<SbuOption[]>,
-    enabled: isActive,
+    enabled: isActive && !hasOwnSbu,
   });
   // Deactivated owners too (D20): this filters past losses, it assigns no work.
   const { data: reps = [] } = useQuery({
@@ -263,17 +268,20 @@ export default function SalesLossReportScreen({
 
   const filterBoxes = (
     <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 2, pt: 1 }}>
-      <TextField select size="small" label="Period" value={period} onChange={(e) => changeFilter(setPeriod)(e.target.value as ReportPeriod)} sx={filterSx}>
+      {/* The closed box shows the dates themselves, as on the Margin Report. */}
+      <TextField select size="small" label="Period" value={period} onChange={(e) => changeFilter(setPeriod)(e.target.value as ReportPeriod)} slotProps={{ select: { renderValue: () => reportPeriodDates(period) } }} sx={filterSx}>
         {REPORT_PERIOD_OPTIONS.map((o) => (
           <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
         ))}
       </TextField>
-      <TextField select size="small" label="SBU" value={sbuId} onChange={(e) => changeFilter(setSbuId)(e.target.value)} slotProps={emptyMeansAll} sx={filterSx}>
-        <MenuItem value="">All SBUs</MenuItem>
-        {sbus.map((s) => (
-          <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>
-        ))}
-      </TextField>
+      {!hasOwnSbu && (
+        <TextField select size="small" label="SBU" value={sbuId} onChange={(e) => changeFilter(setSbuId)(e.target.value)} slotProps={emptyMeansAll} sx={filterSx}>
+          <MenuItem value="">All SBUs</MenuItem>
+          {sbus.map((s) => (
+            <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>
+          ))}
+        </TextField>
+      )}
       <Box sx={{ ...filterSx, minWidth: 220 }}>
         <ZonePicker label="Zone" placeholder="All Zones" value={zone} onChange={changeFilter(setZone)} />
       </Box>
@@ -317,10 +325,7 @@ export default function SalesLossReportScreen({
             <Collapse in={filtersOpen}>{filterBoxes}</Collapse>
           </>
         ) : (
-          <>
-            {filterBoxes}
-            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>{reportPeriodDates(period)}</Typography>
-          </>
+          filterBoxes
         )}
       </Box>
 
@@ -349,9 +354,9 @@ export default function SalesLossReportScreen({
               {rows.length === 0 ? (
                 <Typography variant="body2" color="text.secondary">No Lost Opportunities for these filters.</Typography>
               ) : (
-                // Nine columns: on a narrower screen the list scrolls sideways
-                // inside its card.
-                <Box sx={{ overflowX: "auto" }}>
+                // Nine columns: closer spacing so they fit the laptop card; on
+                // a narrower screen the list scrolls sideways inside its card.
+                <Box sx={{ overflowX: "auto", "& th, & td": { px: 1 } }}>
                   <LossList rows={rows} onOpen={onSelectOpportunity} />
                 </Box>
               )}
