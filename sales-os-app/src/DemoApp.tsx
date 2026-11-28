@@ -1005,11 +1005,6 @@ export default function DemoApp() {
           </Box>
 
           <Box sx={{ flex: 1, overflow: "hidden", display: view === "salesLossReport" ? "flex" : "none", flexDirection: "column" }}>
-            <Box sx={{ px: 2, py: 1.5, bgcolor: "background.paper", borderBottom: 1, borderColor: "gray.100", flexShrink: 0 }}>
-              <Typography component="h2" sx={{ typography: "h5", fontWeight: 800, color: "gray.800", letterSpacing: "-0.025em" }}>
-                Sales Loss Report
-              </Typography>
-            </Box>
             <SalesLossReportScreen isActive={view === "salesLossReport"} onSelectOpportunity={handleSelectOpportunity} />
           </Box>
 

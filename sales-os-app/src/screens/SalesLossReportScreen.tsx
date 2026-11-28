@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Box, Button, Chip, Collapse, ListSubheader, MenuItem, TextField, Typography } from "@mui/material";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import FilterListIcon from "@mui/icons-material/FilterList";
+import ChipTabs from "../components/ChipTabs";
 import { LoadingOrEmpty, SectionCard } from "../components/ReportingUI";
 import TableOrCards, { TocCell, TocRow } from "../components/TableOrCards";
 import ZonePicker from "../components/ZonePicker";
@@ -28,7 +29,13 @@ import {
 interface SbuOption { id: string; name: string }
 interface LossReasonOption { id: string; reason_name: string }
 
-// The summary row pressed (D5); it narrows the list below.
+type ReportTab = "summary" | "details";
+const TABS: { id: ReportTab; label: string }[] = [
+  { id: "summary", label: "Summary" },
+  { id: "details", label: "Details" },
+];
+
+// The summary row pressed (D5); it narrows the list on the Details tab (D24).
 type RowPick =
 | { by: "reason"; key: string | null; label: string }
   | { by: "competitor"; key: string; label: string };
@@ -46,7 +53,8 @@ function money(value: string | null) {
 
 const NO_REASON = "No reason";
 
-const filterSx = { minWidth: 160, flex: { xs: "1 1 100%", sm: "0 0 auto" } };
+// On a phone the boxes sit two to a line, so they take the width of their cell.
+const filterSx = { minWidth: { xs: 0, sm: 160 } };
 // An empty value shows its "All …" line, with the name above the box (§6.6.1).
 const emptyMeansAll = { select: { displayEmpty: true }, inputLabel: { shrink: true } };
 
@@ -61,14 +69,12 @@ function Summary({
   nameLabel,
   lines,
   emptyText,
-  picked,
   onPick,
 }: {
   title: string;
   nameLabel: string;
   lines: SummaryLine[];
   emptyText: string;
-  picked: RowPick | null;
   onPick: (pick: RowPick) => void;
 }) {
   const phone = useIsPhone();
@@ -86,11 +92,7 @@ function Summary({
           ]}
         >
           {lines.map((line) => (
-            <TocRow
-              key={line.pick.key ?? ""}
-              onClick={() => onPick(line.pick)}
-              shaded={picked?.by === line.pick.by && picked.key === line.pick.key}
-            >
+            <TocRow key={line.pick.key ?? ""} onClick={() => onPick(line.pick)}>
               <TocCell title>{line.pick.label}</TocCell>
               {phone ? (
                 <TocCell>
@@ -182,6 +184,7 @@ export default function SalesLossReportScreen({
   onSelectOpportunity?: (opportunity: { id: string; name: string }) => void;
 }) {
   const phone = useIsPhone();
+  const [tab, setTab] = useState<ReportTab>("summary");
   const [period, setPeriod] = useState<ReportPeriod>("quarter");
   const [sbuId, setSbuId] = useState("");
   const [zone, setZone] = useState<ZoneSearchResult | null>(null);
@@ -239,9 +242,15 @@ export default function SalesLossReportScreen({
       setPick(null);
     };
   }
-  // Pressing the same summary row again clears it.
-  function togglePick(next: RowPick) {
-    setPick((current) => (current?.by === next.by && current.key === next.key ? null : next));
+  // A summary row opens Details with only its Opportunities; pressing either
+  // tab goes back to the full filtered list (D24).
+  function pickRow(next: RowPick) {
+    setPick(next);
+    setTab("details");
+  }
+  function openTab(next: ReportTab) {
+    setTab(next);
+    setPick(null);
   }
 
   const report = query.data;
@@ -266,8 +275,31 @@ export default function SalesLossReportScreen({
         activePick.by === "reason" ? r.loss_reason_id === activePick.key : r.competitor_key === activePick.key,
       );
 
+  // On a laptop or tablet this box sits on the title's line; on a phone it is
+  // with the others behind "Filters".
+  const lossReasonBox = (
+    <TextField select size="small" label="Loss Reason" value={lossReasonId} onChange={(e) => changeFilter(setLossReasonId)(e.target.value)} slotProps={emptyMeansAll} sx={filterSx}>
+      <MenuItem value="">All Loss Reasons</MenuItem>
+      {lossReasons.map((r) => (
+        <MenuItem key={r.id} value={r.id}>{r.reason_name}</MenuItem>
+      ))}
+    </TextField>
+  );
+
   const filterBoxes = (
-    <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 2, pt: 1 }}>
+    <Box
+      sx={{
+        display: { xs: "grid", sm: "flex" },
+        gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+        flexWrap: "wrap",
+        alignItems: "center",
+        columnGap: { xs: 1, sm: 2 },
+        rowGap: { xs: 1.5, sm: 2 },
+        pt: 1,
+        // Smaller text on a phone, so the half-width boxes fit their words.
+        "& input, & [role='combobox']": { typography: { xs: "body2", sm: "body1" } },
+      }}
+    >
       {/* The closed box shows the dates themselves, as on the Margin Report. */}
       <TextField select size="small" label="Period" value={period} onChange={(e) => changeFilter(setPeriod)(e.target.value as ReportPeriod)} slotProps={{ select: { renderValue: () => reportPeriodDates(period) } }} sx={filterSx}>
         {REPORT_PERIOD_OPTIONS.map((o) => (
@@ -282,7 +314,7 @@ export default function SalesLossReportScreen({
           ))}
         </TextField>
       )}
-      <Box sx={{ ...filterSx, minWidth: 220 }}>
+      <Box sx={{ minWidth: { xs: 0, sm: 200 } }}>
         <ZonePicker label="Zone" placeholder="All Zones" value={zone} onChange={changeFilter(setZone)} />
       </Box>
       {reps.length > 1 && (
@@ -300,36 +332,47 @@ export default function SalesLossReportScreen({
           ]}
         </TextField>
       )}
-      <TextField select size="small" label="Loss Reason" value={lossReasonId} onChange={(e) => changeFilter(setLossReasonId)(e.target.value)} slotProps={emptyMeansAll} sx={filterSx}>
-        <MenuItem value="">All Loss Reasons</MenuItem>
-        {lossReasons.map((r) => (
-          <MenuItem key={r.id} value={r.id}>{r.reason_name}</MenuItem>
-        ))}
-      </TextField>
+      {phone && lossReasonBox}
     </Box>
   );
 
   return (
     <Box sx={{ flex: 1, overflow: "hidden", bgcolor: "background.default", display: "flex", flexDirection: "column" }}>
-      {/* The filters stay put; the summaries and the list scroll (§6.1). On a
-          phone they fold behind a button. */}
-      <Box sx={{ px: 2, pt: phone ? 2 : 1, pb: 1.5, flexShrink: 0 }}>
+      {/* The title, filters and tabs stay put; the open tab scrolls (§6.1).
+          On a phone the filters fold behind a button on the title's line. */}
+      <Box sx={{ px: 2, py: 1.5, bgcolor: "background.paper", borderBottom: 1, borderColor: "gray.100", flexShrink: 0, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 1 }}>
+        <Typography component="h2" sx={{ typography: "h5", fontWeight: 800, color: "gray.800", letterSpacing: "-0.025em" }}>
+          Sales Loss Report
+        </Typography>
         {phone ? (
-          <>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 1 }}>
-              <Typography variant="caption" color="text.secondary">{reportPeriodDates(period)}</Typography>
-              <Button size="small" variant="outlined" startIcon={<FilterListIcon />} aria-expanded={filtersOpen} onClick={() => setFiltersOpen((o) => !o)}>
-                Filters
-              </Button>
-            </Box>
-            <Collapse in={filtersOpen}>{filterBoxes}</Collapse>
-          </>
+          <Button size="small" variant="outlined" startIcon={<FilterListIcon />} aria-expanded={filtersOpen} onClick={() => setFiltersOpen((o) => !o)} sx={{ flexShrink: 0 }}>
+            Filters
+          </Button>
         ) : (
-          filterBoxes
+          lossReasonBox
         )}
       </Box>
 
-      <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", px: 2, pb: 2, display: "flex", flexDirection: "column", gap: 1.5, "& > *": { flexShrink: 0 }, opacity: query.isPlaceholderData ? 0.5 : 1, transition: "opacity 0.2s" }}>
+      {phone ? (
+        <>
+          <Box sx={{ px: 2, flexShrink: 0 }}>
+            <Collapse in={filtersOpen}>{filterBoxes}</Collapse>
+          </Box>
+          {/* The period in view, with the tabs after it. */}
+          <Box sx={{ px: 2, py: 1.5, flexShrink: 0, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1 }}>
+            <Typography variant="caption" color="text.secondary">Showing - {reportPeriodDates(period)}</Typography>
+            <ChipTabs inline tabs={TABS} value={tab} onChange={openTab} />
+          </Box>
+        </>
+      ) : (
+        <>
+          <Box sx={{ px: 2, pt: 1, flexShrink: 0 }}>{filterBoxes}</Box>
+          <ChipTabs tabs={TABS} value={tab} onChange={openTab} />
+        </>
+      )}
+
+      {/* Keyed so that each tab opens at the top. */}
+      <Box key={tab} sx={{ flex: 1, minHeight: 0, overflowY: "auto", px: 2, pb: 2, display: "flex", flexDirection: "column", gap: 1.5, "& > *": { flexShrink: 0 }, opacity: query.isPlaceholderData ? 0.5 : 1, transition: "opacity 0.2s" }}>
         <LoadingOrEmpty
           isLoading={query.isLoading}
           isError={query.isError}
@@ -340,28 +383,28 @@ export default function SalesLossReportScreen({
           onRetry={() => query.refetch()}
         />
 
-        {report && (
-          <>
-            <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", md: "repeat(2, minmax(0, 1fr))" }, alignItems: "start" }}>
-              <Summary title="By Loss Reason" nameLabel="Loss Reason" lines={reasonLines} emptyText="Nothing to summarise." picked={activePick} onPick={togglePick} />
-              <Summary title="By Competitor" nameLabel="Competitor" lines={competitorLines} emptyText="No competitor named." picked={activePick} onPick={togglePick} />
-            </Box>
+        {report && tab === "summary" && (
+          <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", md: "repeat(2, minmax(0, 1fr))" }, alignItems: "start" }}>
+            <Summary title="By Loss Reason" nameLabel="Loss Reason" lines={reasonLines} emptyText="Nothing to summarise." onPick={pickRow} />
+            <Summary title="By Competitor" nameLabel="Competitor" lines={competitorLines} emptyText="No competitor named." onPick={pickRow} />
+          </Box>
+        )}
 
-            <SectionCard
-              title="Lost Opportunities"
-              action={activePick && <Chip size="small" label={activePick.label} onDelete={() => setPick(null)} />}
-            >
-              {rows.length === 0 ? (
-                <Typography variant="body2" color="text.secondary">No Lost Opportunities for these filters.</Typography>
-              ) : (
-                // Nine columns: closer spacing so they fit the laptop card; on
-                // a narrower screen the list scrolls sideways inside its card.
-                <Box sx={{ overflowX: "auto", "& th, & td": { px: 1 } }}>
-                  <LossList rows={rows} onOpen={onSelectOpportunity} />
-                </Box>
-              )}
-            </SectionCard>
-          </>
+        {report && tab === "details" && (
+          <SectionCard
+            title="Lost Opportunities"
+            action={activePick && <Chip size="small" label={activePick.label} onDelete={() => setPick(null)} />}
+          >
+            {rows.length === 0 ? (
+              <Typography variant="body2" color="text.secondary">No Lost Opportunities for these filters.</Typography>
+            ) : (
+              // Nine columns: closer spacing so they fit the laptop card; on
+              // a narrower screen the list scrolls sideways inside its card.
+              <Box sx={{ overflowX: "auto", "& th, & td": { px: 1 } }}>
+                <LossList rows={rows} onOpen={onSelectOpportunity} />
+              </Box>
+            )}
+          </SectionCard>
         )}
       </Box>
     </Box>

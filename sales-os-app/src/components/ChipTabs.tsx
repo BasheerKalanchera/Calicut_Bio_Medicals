@@ -15,21 +15,25 @@ export default function ChipTabs<T extends string>({
   value,
   onChange,
   barRef,
+  inline = false,
 }: {
   tabs: { id: T; label: string }[];
   value: T;
   onChange: (id: T) => void;
   barRef?: Ref<HTMLDivElement>;
+  // A few tabs sharing a line with other things: no padding or fade of its
+  // own, and slightly smaller pills.
+  inline?: boolean;
 }) {
   return (
-    <Box sx={{ position: "relative", px: 2, pt: 2, pb: 1.5, flexShrink: 0 }}>
+    <Box sx={inline ? { flexShrink: 0 } : { position: "relative", px: 2, pt: 2, pb: 1.5, flexShrink: 0 }}>
       <Box
         ref={barRef}
         sx={{
-          display: "flex", gap: 1, overflowX: "auto", pb: 0.5,
+          display: "flex", gap: 1, overflowX: "auto",
           "&::-webkit-scrollbar": { display: "none" },
           scrollbarWidth: "none",
-          pr: "50vw",
+          ...(!inline && { pb: 0.5, pr: "50vw" }),
         }}
       >
         {tabs.map((tab) => {
@@ -40,7 +44,7 @@ export default function ChipTabs<T extends string>({
               data-tab={tab.id}
               onClick={() => onChange(tab.id)}
               sx={{
-                flexShrink: 0, display: "flex", alignItems: "center", gap: 0.75, px: 2, py: 1,
+                flexShrink: 0, display: "flex", alignItems: "center", gap: 0.75, px: inline ? 1.5 : 2, py: inline ? 0.75 : 1,
                 borderRadius: "9999px", typography: "body2", fontWeight: 700, whiteSpace: "nowrap",
                 transition: "all 0.2s", border: "1px solid", textTransform: "none",
                 ...(isOpen
@@ -54,7 +58,7 @@ export default function ChipTabs<T extends string>({
           );
         })}
       </Box>
-      <Box sx={{ position: "absolute", right: 0, top: 0, height: "100%", width: 40, pointerEvents: "none", background: (theme) => `linear-gradient(to left, ${theme.palette.background.default}, transparent)` }} />
+      {!inline && <Box sx={{ position: "absolute", right: 0, top: 0, height: "100%", width: 40, pointerEvents: "none", background: (theme) => `linear-gradient(to left, ${theme.palette.background.default}, transparent)` }} />}
     </Box>
   );
 }
