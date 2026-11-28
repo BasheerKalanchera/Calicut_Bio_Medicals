@@ -22,7 +22,8 @@ import {
 
 // Sales Loss Report (docs/Sales-Loss-Report-Implementation-Plan.md). The server
 // decides who sees what (D3), the value (D7), the competitor grouping (D9) and
-// the order (D6); this screen only shows the list.
+// the order (D6). This screen shows what it sends, and adds up the Total line
+// of "By Loss Reason" from that summary's rows (D28).
 
 // Local stopgap types -- masterData.ts's listSbus/listLossReasons return
 // Promise<unknown>.
@@ -64,20 +65,45 @@ interface SummaryLine {
   value: string | null;
 }
 
+// The Total line (D28). Added in whole hundredths so the paise can't drift;
+// null (shown "—") when no line has a value.
+function totalOf(lines: SummaryLine[]) {
+  const values = lines.flatMap((l) => (l.value === null ? [] : [Math.round(Number(l.value) * 100)]));
+  return {
+    count: lines.reduce((sum, l) => sum + l.count, 0),
+    value: values.length ? String(values.reduce((sum, v) => sum + v, 0) / 100) : null,
+  };
+}
+
+function SummaryFigures({ count, value }: { count: number; value: string | null }) {
+  const phone = useIsPhone();
+  return phone ? (
+    <TocCell>
+      {count} {count === 1 ? "Opportunity" : "Opportunities"} · {money(value)}
+    </TocCell>
+  ) : (
+    <>
+      <TocCell align="right">{count}</TocCell>
+      <TocCell align="right">{money(value)}</TocCell>
+    </>
+  );
+}
+
 function Summary({
   title,
   nameLabel,
   lines,
   emptyText,
   onPick,
+  showTotal = false,
 }: {
   title: string;
   nameLabel: string;
   lines: SummaryLine[];
   emptyText: string;
   onPick: (pick: RowPick) => void;
+  showTotal?: boolean;
 }) {
-  const phone = useIsPhone();
   return (
     <SectionCard title={title}>
       {lines.length === 0 ? (
@@ -94,21 +120,20 @@ function Summary({
           {lines.map((line) => (
             <TocRow key={line.pick.key ?? ""} onClick={() => onPick(line.pick)}>
               <TocCell title>{line.pick.label}</TocCell>
-              {phone ? (
-                <TocCell>
-                  {line.count} {line.count === 1 ? "Opportunity" : "Opportunities"} · {money(line.value)}
-                </TocCell>
-              ) : (
-                <>
-                  <TocCell align="right">{line.count}</TocCell>
-                  <TocCell align="right">{money(line.value)}</TocCell>
-                </>
-              )}
+              <SummaryFigures count={line.count} value={line.value} />
               <TocCell action align="right">
                 <ChevronRightIcon fontSize="small" sx={{ color: "gray.400" }} />
               </TocCell>
             </TocRow>
           ))}
+          {/* Not pressable: the Details tab already lists them all. */}
+          {showTotal && (
+            <TocRow total>
+              <TocCell title>Total</TocCell>
+              <SummaryFigures {...totalOf(lines)} />
+              <TocCell action align="right" />
+            </TocRow>
+          )}
         </TableOrCards>
       )}
     </SectionCard>
@@ -385,7 +410,7 @@ export default function SalesLossReportScreen({
 
         {report && tab === "summary" && (
           <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", md: "repeat(2, minmax(0, 1fr))" }, alignItems: "start" }}>
-            <Summary title="By Loss Reason" nameLabel="Loss Reason" lines={reasonLines} emptyText="Nothing to summarise." onPick={pickRow} />
+            <Summary title="By Loss Reason" nameLabel="Loss Reason" lines={reasonLines} emptyText="Nothing to summarise." onPick={pickRow} showTotal />
             <Summary title="By Competitor" nameLabel="Competitor" lines={competitorLines} emptyText="No competitor named." onPick={pickRow} />
           </Box>
         )}
