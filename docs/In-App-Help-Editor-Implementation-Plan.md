@@ -55,9 +55,10 @@ Chore (parent plan step 3a) and loaded at step 4 below.
   (migrations) so UAT gets them automatically with the move:** (a) with the
   new table, today's 8 help pages are copied in exactly as they read now,
   so no screen loses its help on Dev; (b) once Plan & Chore has agreed all
-  30 texts (parent plan section 7; 22 before parent plan D14,
-  2026-10-23; 28 before D16, 2026-10-25), a second update replaces
-  those 8 and adds the other 22 (14 screens and 8 pop-up forms). After the UAT move, help changes are made only on the
+  32 texts (parent plan section 7; 22 before parent plan D14,
+  2026-10-23; 28 before D16, 2026-10-25; 30 before D17, 2026-11-28), a
+  second update replaces those 8 and adds the other 24 (16 screens and 8
+  pop-up forms). After the UAT move, help changes are made only on the
   editor screen, never by a database update — Basheer, 2026-10-22
 - D10. **When others see an edit:** the next time they open or reload the
   app, not instantly. The editor's own preview and `?` panel update at
@@ -73,7 +74,11 @@ Chore (parent plan step 3a) and loaded at step 4 below.
   lists, read 2026-10-22; matches parent plan section 6 (2026-10-15).
   Plus 6 pop-up forms = 28 (parent plan D14, Basheer, 2026-10-23); plus
   "Why this change?" and "First activity" = 30 (parent plan D16, Basheer,
-  2026-10-25; titles at `CloseReminderModal.tsx:387`). Pop-up
+  2026-10-25; titles at `CloseReminderModal.tsx:387`); plus Sales Loss
+  Report and Margin Report = 32 (parent plan D17, Basheer, 2026-11-28;
+  menu items in `DemoApp.tsx`, the Margin Report for Admin and GM only).
+  The menu has grown since 2026-10-22 in other ways too — recount the
+  editor's screen list from `DemoApp.tsx` at build. Pop-up
   titles "Log Activity", "Close Next Action", "New Opportunity", "New
   Customer" — `LogActivityModal.tsx:279`, `CloseReminderModal.tsx:387`,
   `QuickLeadModal.tsx:425`, `AddHospitalModal.tsx:215`; "Edit
@@ -120,7 +125,7 @@ help lives in the database:
 - The user manual (PDF) is not affected; it stays a separate document.
 
 **Environments:** built and tested on Dev. The table, today's 8 help
-pages and the 30 agreed texts all reach UAT with the full UAT move (the
+pages and the 32 agreed texts all reach UAT with the full UAT move (the
 database updates run there as part of it). From then on, UAT's help is the
 copy that matters; at Production go-live it is copied across from UAT
 (`docs/Deployment-Topology.md` to gain that line at step 5).
@@ -143,7 +148,7 @@ copy that matters; at Production go-live it is copied across from UAT
 3. **Pre-E2E review and E2E** (`cabio-e2e-testing`): `/code-review`
    (high — new table, access rules, migration), then the test plan's
    sections A–E.
-4. **Agreed texts loaded.** When parent plan section 7 holds all 30
+4. **Agreed texts loaded.** When parent plan section 7 holds all 32
    agreed texts: database update (b) (D9b); Basheer runs it on Dev; test
    plan section F. *Commit.*
 5. **Ships with the full UAT move** (parent plan step 5): both database
@@ -225,7 +230,7 @@ Code search 2026-10-22 for `HELP_CONTENT`, `helpContent` and `HelpDrawer`:
 - **Migrations:** (a) `0063_help_page` — table, policies, trigger, and
   today's 8 entries converted from `helpContent.tsx` JSX to the D6 subset
   (`<strong>` → `**…**`); (b) `00NN_help_page_agreed_text` — upsert of all
-  30 from parent plan section 7 (D9b). Use the next free number at the
+  32 from parent plan section 7 (D9b). Use the next free number at the
   time; Annual Target Part 2 may take 0063 first.
 - **Backend:** small domain (`help`, or inside `reference` — Standards §2
   Domain Boundaries decides). `GET /api/v1/help-pages` (all signed-in

@@ -56,7 +56,7 @@ user manual and in-app `?` help up to date").
   Test builds the table and editor (step 3b); the agreed text is then
   loaded into the table as starting content, so neither waits for the
   other — Basheer, 2026-10-22. **Count widened to 28 by D14, 30 by
-  D16.**
+  D16, 32 by D17.**
 - D14. **Help for the six most-used pop-up forms**, each with its own `?`:
   Log Activity, Close Next Action, Edit Opportunity, New Stakeholder,
   New Customer (the add-hospital form) and New Opportunity. Chosen from
@@ -85,6 +85,14 @@ user manual and in-app `?` help up to date").
   mode only" — Basheer, 2026-10-25. For Build & Test: all three are
   built from the same code file (`CloseReminderModal.tsx`), so each of
   its three modes needs its own help key.
+- D17. **The two reports built in November get help too: Sales Loss
+  Report (`salesLossReport`) and Margin Report (`marginReport`).** Both
+  were added to the menu after the 2026-10-15 inventory, and neither has
+  a `?` today. Help pages go from 30 to 32, screens without help from 14
+  to 16. Asked for by the Build session (27 Nov, Sales Loss Report);
+  Margin Report added for the same gap — Basheer, 2026-11-28. The Margin
+  Report is seen by Admin and GM only (`DemoApp.tsx`,
+  `ADMIN_REPORTS_SECTION`), so its help is written for them.
 
 ## 1. In plain terms
 
@@ -118,16 +126,16 @@ After this work:
    *Checkpoint commit (docs only).*
 3. **In-app help, two strands in parallel (D13).**
    - **3a. Help wording (Plan & Chore, about 1 day).** Screen by screen:
-     read the screen's code, draft its help (refresh 8, write 14, plus
-     the 8 pop-up forms of D14 and D16), review it beside that screen's manual
+     read the screen's code, draft its help (refresh 8, write 16 — 14
+     plus D17's two reports — plus the 8 pop-up forms of D14 and D16), review it beside that screen's manual
      section and fix both. Agreed text is kept in section 7 of this plan
      until 3b can load it.
      *Docs-batch commits.*
    - **3b. Help table and editor (Build & Test, about 1.5–2 days,
      estimate).** Its own plan and test plan:
      `docs/In-App-Help-Editor-Implementation-Plan.md`; it loads section
-     7's text once all 30 are agreed (its step 4; 22 before D14, 28
-     before D16).
+     7's text once all 32 are agreed (its step 4; 22 before D14, 28
+     before D16, 30 before D17).
 4. **Review and test (half a day).** `/code-review` (medium); short manual
    E2E: open `?` on every screen as each role; edit a help page as Admin
    and as General Manager, check the Audit Log entry, and check another
@@ -170,11 +178,12 @@ settled.
   and the `?` button is hidden when there is no entry — `DemoApp.tsx:581`).
 - **Help that exists (8):** `customers`, `customer360`, `projectDetail`,
   `opportunities`, `opportunityDetail`, `nextActions`, `catalog`, `users`.
-- **Help missing (14):** `marketingLeads`, `marketingLeadQueue`,
+- **Help missing (16):** `marketingLeads`, `marketingLeadQueue`,
   `insights`, `targetPlanning`, `dailyActivity`, `stagnantDeals`,
   `opportunitiesOnHold`, `productPerformance`, `pipelineReport`,
   `salesReport`, `territories`, `auditLog`, `rateHospitals`,
-  `brandTargetTracking`.
+  `brandTargetTracking`; `salesLossReport`, `marginReport` (D17,
+  2026-11-28).
 - **Coverage test (D7a) — replaced 2026-10-22** by the editor's "no help
   yet" list on the help editor screen
   (`docs/In-App-Help-Editor-Implementation-Plan.md`, which holds the
@@ -192,7 +201,8 @@ Read from the code and git on 2026-10-15. **19 menu screens**
 a menu screen). 5 have help; **14 have none**; 3 more help pages cover
 pages opened from a record (Customer 360, Opportunity page, Project page),
 so **8 to refresh + 14 to write = 22 help pages** (28 with D14's six
-pop-up forms, 2026-10-23; 30 with D16's eight, 2026-10-25). Since the manual was
+pop-up forms, 2026-10-23; 30 with D16's eight, 2026-10-25; 32 with D17's
+two reports, 2026-11-28). Since the manual was
 written (`3cfa132`, 2026-08-01): 169 feature/fix commits, 117 of them
 changing screens.
 

@@ -49,6 +49,19 @@ handover note, "UAT move, Sunday 29 Nov" (27 Nov).
   to `scripts/` the same day, with no client data inside — the sheet's path
   is given when it runs; removed only once the changes reach UAT. Standing
   rule now in the `cabio-db-and-scripting` skill — Basheer, 2026-11-27
+- D4a. **Excel reader:** the load script reads Haroon's Excel file directly;
+  its reader (`openpyxl`) is installed only in the app's Python on Basheer's
+  computer (`backend/.venv`, not in git), not in the live app's package list
+  — Basheer, 2026-11-28
+- D4b. **New variations add new models only:** a sheet row whose brand or
+  category isn't in the app stops the load, and the preview names it; it is
+  added on the screen first — Basheer, 2026-11-28
+- D4c. **Revised sheet still has a mistake at 10 pm Sat:** Sunday's load
+  uses the current sheet (the 23 Nov one, already passed on Dev); the
+  revised sheet is loaded later on its own day, Dev first, then UAT with
+  Basheer's yes. New products in the revised sheet carry a "Product type"
+  column (New / Refurbished / Accessory); a new row without one is saved as
+  New equipment and listed in the preview — Basheer, 2026-11-28
 - D5. **When:** Sun 29 Nov, app off 07:00–08:00 IST, told to the team as
   1 hour — Basheer, 2026-11-27
 - D6. **No practice run;** a read-only UAT check on Sat 28 Nov afternoon
