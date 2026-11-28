@@ -338,6 +338,15 @@ skill, 2026-10-26); layout is checked in E2E. Urgent bug fixes are
 exempt until 1 Nov 2026. Origin:
 `docs/MUI-Good-Practice-Implementation-Plan.md`.
 
+What the commit check (`sales-os-app/scripts/check-mui-standard.js`)
+refuses: typed colours, typed text sizes, `className`, `style={…}`, the
+900 px tablet width used as a phone, plain MUI tables and their class
+names, the old phone-table styling, a typed ◀ and a "← Back" text button
+(◀ and ← Back added 2026-11-28). Left to the pre-E2E review: a name above
+every filter and drop-down, the back button's `aria-label`, `FormModal`
+for pop-up forms, and which arrow icon is used for which job (rule 9). A
+typed ▶ is not refused (Territory Admin's open-row marker).
+
 1. **Widths.** Phone is below 600 px (`theme.breakpoints.down("sm")`, or
    `xs` in `sx`) — Google's Material Design width classes put 99.96 % of
    upright phones under 600; anything wider uses the laptop layout. Each

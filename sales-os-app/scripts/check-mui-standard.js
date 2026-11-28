@@ -21,6 +21,10 @@
 //     or the old phone-table styling (`STACK_ON_PHONE`, `data-label`,
 //     `phone-hidden`, `phone-chevron`) — every table goes through
 //     components/TableOrCards, no exceptions (Basheer, 2026-10-26)
+//   - a typed ◀ arrow or a "← Back" text button — use ChevronLeftIcon in an
+//     IconButton, or the round back button with ArrowBackIcon (§6.11 rules
+//     8–9, §6.6 item 7; 2026-11-28). ▶ is not checked: Territory Admin uses
+//     it to mark a row that opens.
 //
 // `node scripts/check-mui-standard.js --all` lists every file's breaches (a
 // report; never fails).
@@ -50,6 +54,8 @@ const RULES = [
   { name: "plain table", pattern: /<Table[\s>]/ },
   { name: "MUI table class name", pattern: /\bMuiTable\w*-/ },
   { name: "old phone-table styling", pattern: /\bSTACK_ON_PHONE\b|\bdata-label\b|\bphone-hidden\b|\bphone-chevron\b/ },
+  { name: "typed ◀ arrow", pattern: /◀/ },
+  { name: "\"← Back\" text button", pattern: /←\s*Back\b/ },
 ];
 
 // Inside a commit in a linked worktree (/build session) git sets GIT_DIR but not
@@ -195,7 +201,8 @@ if (results.length > 0) {
   console.error(
     "\nA changed screen must follow the whole standard before it is committed: colours from the theme" +
     "\n(e.g. \"gray.400\") or theme/statusColors, text sizes from a Typography variant, styling through" +
-    "\n`sx`, a phone below 600 px (\"sm\"), and every table through components/TableOrCards."
+    "\n`sx`, a phone below 600 px (\"sm\"), every table through components/TableOrCards, and arrows" +
+    "\nas icons (ChevronLeftIcon, or ArrowBackIcon for going back), never a typed ◀ or \"← Back\"."
   );
   process.exit(1);
 }

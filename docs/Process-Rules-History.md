@@ -77,6 +77,9 @@ file for that date to find the story. Not loaded at session start.
 - **Rule:** If the feature has migrations, confirm `alembic current` = head and `Physical-Schema.sql` regenerated before E2E starts. (Companion rules: CLAUDE.md Architecture › Migrations; skill "Every migration — completion checklist".)
   **Why:** 2026-09-23, Brand-Level Target Planning — the backend commit `36385f2` said migration `0053` was "not yet applied"; it was later applied to Dev without any commit or handover note saying so (only implied by `4185135`'s "0054 … Applied to the live Dev DB"), and `docs/Physical-Schema.sql` was never regenerated after either migration, although that step is already in `Backend-Implementation-Standards.md`'s migration workflow. Basheer spotted it during manual E2E; fixed in `4fdd259`. The rule was in place but buried in a long standards doc that nothing makes you reopen when a migration is applied.
 
+- **Rule:** The MUI commit check refuses a typed ◀ and a "← Back" text button (Frontend standards §6.11, "What the commit check refuses").
+  **Why:** 2026-11-28 — asked for by the Build session on 1 Nov and again on 27 Nov: Brand Target Tracking's ◀ ▶ year arrows and Customer 360's "← Back" were found by people, not the check, though §6.11 rules 8–9 already forbade them. Backlog entry since 1 Nov; Basheer, 28 Nov: Plan & Chore builds it, as Build & Test is busy with E2E. The one ◀ left (Brand Target Tracking) is fixed when that screen is next changed.
+
 ## Mirroring an existing feature
 
 - **Rule:** When mirroring a feature, checklist every surface the original touches.

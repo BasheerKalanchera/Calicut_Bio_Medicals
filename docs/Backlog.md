@@ -276,30 +276,6 @@ without exit criteria. Touches the Target vs Actuals redesign (how
 a pilot quarter shows) and the Target & Coverage Planning tabs (built,
 awaiting merge). Likely an ADR. Basheer decides the option.
 
-### MUI-standard check: refuse typed ◀ and "← Back" — not started (2026-11-01)
-
-Harness change requested by Basheer, 2026-11-01 (from the Build
-session). In `sales-os-app/scripts/check-mui-standard.js`, add two rules
-to `RULES` so a staged `.ts`/`.tsx` file is refused if it contains (1)
-the typed arrow ◀, or (2) a "← Back" text button (`←\s*Back`). Both go
-against Frontend standards §6.11 rules 8–9 and §6.6 item 7. Leave ▶
-alone: it marks an expandable row in `TerritoryAdminScreen.tsx`. Then add
-one line to §6.11 saying which rules the check covers and which are left
-to the pre-E2E review (a label on every drop-down, a filter's name above
-its box, the back button's label), and a dated entry in
-`docs/Process-Rules-History.md`.
-
-Files affected (Plan & Chore grep, 1 Nov, both copies): Brand Target
-Tracking ◀ ▶ (`BrandTargetTrackingScreen.tsx` lines 384, 388) — would be
-refused at its next commit, so fix it in the same change; Customer 360's
-error-view "← Back" (still on the Build copy, line 861; already fixed
-but uncommitted in the main folder — the merge must keep the main
-folder's fix); Target & Coverage Planning ◀ (`TargetPlanningScreen.tsx`
-line 413, main folder only — already gone on the Build copy, so the
-merge removes it); the old `App.jsx` (not checked: the script reads
-`.ts`/`.tsx` only). Build after today's Build merge, so the check doesn't
-refuse the merge's own files.
-
 ### User Directory: org tree view — not started (2026-10-24)
 
 User Directory lists everyone flat, each row saying "reports to X"
@@ -677,9 +653,11 @@ to clear. Remove a screen from here when it is committed clean.
 - Row chevron at line 556 has `#9ca3af`.
 
 **Brand Target Tracking** (`BrandTargetTrackingScreen.tsx`)
-- Quarter arrows at lines 384 and 388 are typed ◀ ▶ characters; switch to
-  chevron icons in `IconButton`s with "Previous quarter" / "Next quarter"
-  labels (§6.11 rule 8). No other breach found by the check.
+- Year arrows at lines 384 and 388 are typed ◀ ▶ characters; switch to
+  chevron icons in `IconButton`s with "Previous year" / "Next year"
+  labels (§6.11 rule 8). Since 2026-11-28 the commit check refuses the ◀,
+  so the screen's next commit must fix both. No other breach found by the
+  check.
 
 **Territory Admin** (`TerritoryAdminScreen.tsx`)
 - 2 typed text sizes. The ▶ at line 205 marks an expandable row, not
