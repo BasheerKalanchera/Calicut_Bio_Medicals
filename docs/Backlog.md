@@ -440,9 +440,9 @@ steps 1–3. Pick up when prices are in real use.
 
 ### Lost Opportunities with no product line: Sales Report win rate and the Lost rule — not decided (2026-11-13)
 
-**The Sales Loss Report itself is planned and Approved (Basheer,
-2026-11-25):** `docs/Sales-Loss-Report-Implementation-Plan.md` (Traceability
-row 1.4). Its D10 leaves the two questions below outside that plan.
+**The Sales Loss Report itself is built and tested on Dev (2026-11-28):**
+`docs/Sales-Loss-Report-Implementation-Plan.md` (Traceability row 1.4). Its
+D10 leaves the two questions below outside that plan.
 
 Raised by the Small batch 12 Nov E2E (step 19). UAT read-only check, 13
 Nov: 25 Lost Opportunities, 6 with no product line; the Sales Report
@@ -476,6 +476,23 @@ any administrative change to one must be in the audit history.
 server's maximum, and the report's Owner box is filled from it. Beyond 100
 users some owners cannot be picked; their Lost Opportunities still show with
 "All owners". Dev had 12 active users on 25 Nov (inactive not counted).
+
+### Sales Loss Report on iPhone: tapping the Zone box may zoom the page — left as is until iPhone users report it (Basheer, 2026-11-28)
+
+On a phone the report's filter text is 14 px (plan D26). iPhone Safari
+usually enlarges the page when a box typed into has text under 16 px; Zone
+is the only typed filter. From the code review and usual iPhone behaviour;
+not tried on an iPhone. Fix if reported: apply the smaller text to the
+drop-downs only (`SalesLossReportScreen.tsx`, the style
+`& input, & [role='combobox']` → `& div[role='combobox']`) and reword D26.
+
+### Sales Loss Report: view by Product — not planned; build if the leadership team asks (Basheer, 2026-11-28)
+
+It would show which of Cabio's products are lost most, and to whom. PRD
+Appendix A.3.5 lists grouping by Product; the signed requirements list (v4
+Grouped, Feature 1.4) does not. Today the report neither lists, filters nor
+groups by Cabio's product. A Lost Opportunity with no product line would not
+appear in such a view (6 of 25 on UAT, 13 Nov).
 
 ### Block an SBU change while the user owns open Opportunities in another SBU — not started (2026-10-04)
 

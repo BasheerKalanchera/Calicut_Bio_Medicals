@@ -5,15 +5,15 @@
 
 ## Summary
 
-Of **49** signed requirements: **40 done, 7 partly done, 2 not started** — plus **19 additional features built beyond the signed contract**: some requested by the Cabio leadership team for immediate business needs, others added by our team to make the system safer and easier to use (see "Commitment beyond contract" at the end). **3 more have been requested by Cabio leadership and are pending to build** (see "Requested" below that), and **1 more has been proposed but not yet decided** (see "Pending").
+Of **49** signed requirements: **42 done, 6 partly done, 1 not started** — plus **19 additional features built beyond the signed contract**: some requested by the Cabio leadership team for immediate business needs, others added by our team to make the system safer and easier to use (see "Commitment beyond contract" at the end). **3 more have been requested by Cabio leadership and are pending to build** (see "Requested" below that), and **1 more has been proposed but not yet decided** (see "Pending").
 
 | Done | Partly done | Not started | Commitment beyond contract |
 | :---: | :---: | :---: | :---: |
-| 40 | 7 | 2 | 19 |
+| 42 | 6 | 1 | 19 |
 
 **Real progress, two honest ways to read it:**
-- **Strictly done:** 40 of 49 = **81.6%**
-- **Counting partly-done items as half-credit** (the fairer "real progress" number, since 7 items aren't zero — they're mid-flight): (40 + 7×0.5) ÷ 49 = **88.8%**
+- **Strictly done:** 42 of 49 = **85.7%**
+- **Counting partly-done items as half-credit** (the fairer "real progress" number, since 6 items aren't zero — they're mid-flight): (42 + 6×0.5) ÷ 49 = **91.8%**
 
 **Closed (optional, not in Phase 1):** Account Manager role per customer
 
@@ -55,7 +55,7 @@ Where every sales deal is tracked from first contact through to close.
 | 14 | 1.3 | Stage pipeline (Scanning→Qualified→Demo→Negotiation→Closure) with time-in-stage limits by product category | 3.3 Opportunity Lifecycle + 3.4 Stage Exit Criteria | Partial | Opportunity stages, and the checks on what must be filled in before moving to the next stage, are fully in place. Time limits for each stage are agreed; the automatic alerts are switched off while the sales team settles into regular logging, and will be switched on later. |
 | 15 | 1.3 | Systematic + manual win probability | 3.7 Win Probability Management | Done |  |
 | 16 | 1.3 | Mandatory closure date at Negotiation | 3.4 Stage Exit Criteria → Negotiation | Done |  |
-| 17 | 1.4 | Lost deal intelligence: messages, loss analysis, competitor tagging | 3.10 Lost Deal Intelligence | Partial | Reasons and competitors are captured for every lost deal; a field for the specific competing product is still to be added. |
+| 17 | 1.4 | Lost deal intelligence: messages, loss analysis, competitor tagging | 3.10 Lost Deal Intelligence | Done | Loss reason, competitor and the competing product can all be recorded on a lost Opportunity. |
 | 18 | 2.2 | Kanban pipeline sorted by probability/priority | 3.8 Pipeline Management | Done |  |
 | 19 | 2.2 | Manual High Priority toggle | 3.9 Deal Prioritization | Done |  |
 | 20 | 2.2 | Pipeline filters by region, product, salesperson | 3.8 Pipeline Management | Done |  |
@@ -88,7 +88,7 @@ Where leadership and managers see how the business is doing.
 | 33 | 11.1 | Core reports: sales, pipeline, product qty/price/margin | 5.6 Core Reports | Done | Sales, Pipeline and Product Performance reports are available, and the Margin Report is built and tested, for the General Manager and Admin only. |
 | 34 | 11.1 | Exception report: zero lead activity over 3 months | 5.7 Exception Reports | Done | Live as Customer with No Activity: hospitals and dealers with no visit, call, meeting or email in the last 90 days, or never contacted, with Rep and Zone pickers. Each person sees the customers in their own zones and team. |
 | 35 | 11.1 | Phase 1 analytics: conversion, pipeline aging, salesperson performance | Appendix A.1 Reporting Principles | Partial | Conversion figures are available today; pipeline-aging analysis (how long deals linger at each stage over time) is deferred to a later phase. |
-| 36 | 1.4 | Competitive Loss Report | Appendix A.3.5 Competitive Loss Report (also 5.5 GM Dashboard) | Not started |  |
+| 36 | 1.4 | Competitive Loss Report | Appendix A.3.5 Competitive Loss Report (also 5.5 GM Dashboard) | Done | The Sales Loss Report shows lost Opportunities and their value by loss reason and by competitor, with period, SBU, zone, owner and loss reason filters. |
 | 37 | 11.1 | Weekly Follow-up Report | 5.8 Weekly Follow-up Report | Done | Live as My Work: each person's high-priority Opportunities and those 70 %+ likely to close, Opportunities with no activity for 30 days or more, closing dates passed, and overdue next actions. |
 | 38 | 11.2 | Region → Team → Individual drill-down | 5.9 Drill-down Reporting | Done | Clicking any number on a report — by region, team, person, product, brand, or stage — now takes you straight to the exact list of deals behind it, with a button to jump back to the report. That list is now guaranteed to match the report's own count exactly. |
 

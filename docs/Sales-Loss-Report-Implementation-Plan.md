@@ -4,9 +4,11 @@
 whichever has room (Basheer, 2026-11-25).
 **Progress:** built on the Build branch 26 Nov (`e783951`, `14789d6`,
 `57c7e38`, `4d60caa`), pre-E2E review fixes `df6b2c1`; merged into `main`
-27 Nov, `c4de312`; migration 0069 applied to Dev 27 Nov; manual E2E pending.
-**Traceability rows:** 1.4 Competitive Loss Report (Not started); 1.4 Lost
-deal intelligence — the missing competing-product field (Partial).
+27 Nov, `c4de312`; migration 0069 applied to Dev 27 Nov. Changes agreed during
+the manual E2E: `bcdc054` (D22, D23), `fc47b6d` (D24–D27), `b783977` (D28) and
+small fixes `09860bf`, 28 Nov; manual E2E 38 of 38 Pass, 28 Nov.
+**Traceability rows:** 1.4 Competitive Loss Report (Done); 1.4 Lost deal
+intelligence — the competing-product field (Done), both 28 Nov.
 **Design / discussion:** Backlog "Sales Loss Report — why Cabio loses
 business"; Progress-Archive-2026-11, 13 Nov (Build & Test) and 25 Nov
 (midday, later).
@@ -83,6 +85,33 @@ business"; Progress-Archive-2026-11, 13 Nov (Build & Test) and 25 Nov
   2026-11-26
 - D21. A Lost Opportunity whose only lines are trade-ins shows "—" as its
   value, not a figure made from the trade-ins — Basheer, 2026-11-26
+- D22. The SBU filter (D4) shows only to users with no SBU of their own
+  (General Manager, Admin and the like); everyone else sees just their own
+  SBU's Opportunities, so the box is hidden for them — Basheer, 2026-11-28
+- D23. On a laptop or tablet the period dates show inside the Period box, as
+  on the Margin Report; the list's columns are spaced closer so all nine fit
+  without a sideways scroll bar on a laptop — Basheer, 2026-11-28
+- D24. Two tabs, in the pill style of My Work (changes where D5 shows
+  things): **Summary** (opens first; the two D5 cards, both always
+  shown) and **Details** (the list). Filters stay on top and apply to both.
+  Pressing a card row opens Details with only those Opportunities and a
+  removable tag naming the row; removing the tag, or pressing either tab,
+  clears the row so Details shows the full filtered list. Back from an
+  Opportunity returns to Details as left. Changing a filter keeps the same
+  tab and clears the row — Basheer, 2026-11-28
+- D25. On a phone the "Filters" button sits on the line of the screen's name,
+  which keeps its size — Basheer, 2026-11-28
+- D26. On a phone, below that line: "Showing - " and the period, with the two
+  tabs after it. "Showing - " is small and mid-grey; the period is
+  near-black and bold, the same size. The opened filters sit two to a line, in smaller
+  text — Basheer, 2026-11-28
+- D27. On a tablet or laptop the Loss Reason box sits at the right end of the
+  screen name's line; the Zone box is a little narrower, so that the other
+  boxes fit on one line — Basheer, 2026-11-28
+- D28. A "Total" line (count and value) at the bottom of **By Loss Reason**,
+  which covers every Lost Opportunity under the filters; it cannot be
+  pressed. No total on **By Competitor**, which lists only losses with a
+  competitor named (D14) — Basheer, 2026-11-28
 
 ## Figures and sources
 
@@ -110,18 +139,21 @@ business"; Progress-Archive-2026-11, 13 Nov (Build & Test) and 25 Nov
 A new screen, **Sales Loss Report**, in the Reports menu. It answers "why
 are we losing business, and to whom?".
 
-- At the top, two short tables. **By Loss Reason**: how many Opportunities
-  were lost for each reason, and their value. **By Competitor**: the same
-  for each competitor named. Pressing a row (say "Price") shows only those
-  Opportunities in the list below.
-- Below, the list of Lost Opportunities: name, customer, owner, the stage
-  it was at when lost, the reason, competitor, competing product, value
+- Two tabs, **Summary** and **Details** (D24).
+- **Summary** opens first, with two short tables. **By Loss Reason**: how many
+  Opportunities were lost for each reason, and their value, with a Total
+  line at the bottom (D28). **By
+  Competitor**: the same for each competitor named. Pressing a row (say
+  "Price") opens Details with only those Opportunities.
+- **Details** is the list of Lost Opportunities: name, customer, owner, the
+  stage it was at when lost, the reason, competitor, competing product, value
   and closed date, on one line. The rep's own words on why it was lost
   are not in the list; pressing a row opens the Opportunity, where they
   are the "Why this change?" note on its Activity tab.
-- Filters at the top, as on the other reports: period (by the closed date),
-  SBU, zone, owner, Loss Reason. Picking a zone includes the zones under
-  it ("North Kerala" includes Malappuram, D13).
+- Filters at the top, for both tabs: period (by the closed date), SBU (only
+  for users with no SBU of their own, D22), zone, owner, and Loss Reason
+  (on the screen name's line on a tablet or laptop, D27). Picking a zone
+  includes the zones under it ("North Kerala" includes Malappuram, D13).
 - It shows every Lost Opportunity, including those where the rep never
   added a product. The value then comes from the Opportunity's own
   estimated value.
@@ -147,7 +179,10 @@ shows the names are messy.
   reason, competitor and competing product (D18); value, stage lost at and
   closed date (no loss notes, D6a). Pressing the card opens that Opportunity's screen;
   Back returns to the report with its filters as they were.
-- The filters fold behind a "Filters" button (D19).
+- The filters fold behind a "Filters" button (D19) on the screen name's line
+  (D25), and open two to a line (D26).
+- Under it, "Showing - " and the period, then the Summary and Details tabs
+  (D26).
 - Lost pop-up: "Competing product" sits under Competitor Name, full width.
 
 ## 2. Build order

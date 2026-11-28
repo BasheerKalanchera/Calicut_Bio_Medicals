@@ -26,14 +26,32 @@ session edits this note._
 ## NEXT — Sales Loss Report (due Saturday 28 Nov, 6 pm)
 Margin Report is finished and qualifies for Sunday's move (56 of 56; docs batch
 `37eaf93` pushed 27 Nov).
-- **Next:** the Build session merges `worktree-build` (its skill gives it the
-  merge; message sent to it 27 Nov 20:24, Basheer yes). Then
-  Basheer applies `0069` on Dev at once (the new column is loaded with every
-  Opportunity, so those screens fail in between), and this session runs the SLR
-  pre-E2E check and E2E (37 steps).
-- **Before the merge:** `docs/Progress-Archive-2026-11.md` must have nothing
-  uncommitted on `main` (branch changes it): my docs batch, and Plan & Chore's
-  evening section committed by them.
+- Merged and pushed (`c4de312`); `0069` applied to Dev and
+  `Physical-Schema.sql` regenerated (`cd65a5b`, 27 Nov). Seen in git 28 Nov.
+- E2E (`docs/Sales-Loss-Report-Manual-E2E-Test-Plan.md`) parked 28 Nov 11:25 at
+  32 of 37 (steps 1–27 pass; pytest 1818 passed, 10 skipped; ruff, tsc clean;
+  lint 0 errors).
+- Step 1 done: step-9 fixes (D22, D23) committed and pushed, `bcdc054`, 28 Nov
+  (pytest 1818 passed, 10 skipped; ruff, tsc clean; lint 0 errors). Hidden SBU
+  box not yet checked (steps 29, 30).
+- Step 2 done: tabs and tighter layout (D24–D27) committed and pushed,
+  `fc47b6d`, 28 Nov (tsc clean; lint 0 errors). Basheer looked on Dev and
+  liked it. Plan updated (not committed).
+- Step 3 done: test plan rewritten for the tabs and layout, "First activity"
+  pop-up added to steps 1, 5, 8 (28 of 37 pass; not committed).
+- **Step 4 done:** E2E **38 of 38 pass**, 28 Nov (step 32 corrected: a
+  Marketing User has no Reports menu). Sales Loss Report qualifies for Sunday.
+- Pushed 28 Nov 16:36: `b783977` (Total line, D28) and `09860bf` (small
+  fixes). Before them: pytest 1818 passed, 10 skipped; ruff, tsc clean;
+  lint 0 errors. Zone zoom: left as is, in Backlog.
+- Post-commit done 18:15: both 1.4 rows Done (Basheer yes), scorecard
+  regenerated, `--check` OK (42/6/1); Product view in Backlog; message to Plan
+  & Chore sent. Client pages: republish after Sunday's move (UAT plan D9),
+  diff shown first.
+- **Now:** docs batch waiting for Basheer's yes — this note, Sales Loss plan
+  and test plan, Progress-Archive, Backlog, Process-Improvements (P114),
+  Traceability, Scorecard, two `.scratch` scorecard pages. Check shared files'
+  staged content first. Retro written about 11:25; add an addendum.
 - Plan & Chore's move plan: `docs/UAT-Promotion-2026-11-29-Plan.md` (read it,
   don't edit).
 - `b`/`bt`/`pc` no longer set `MSYS_NO_PATHCONV` (seen in the files, 27 Nov); a

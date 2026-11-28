@@ -2667,11 +2667,40 @@ Addendum, 20:24: no further corrections. Merge message sent to the Build session
 
 P93 +1 (retro put off): a check at the docs-only commit could stop it; for the weekly review to decide. Nothing changed live data wrongly, no UAT connection, no work lost. The old setting is already removed from the start-up files for new sessions.
 
+## 28 Nov 2026 — Build & Test: messages from other sessions
+
+- Plan & Chore, 27 Nov 20:20: `b` / `bt` / `pc` start-up shortcuts no longer set `MSYS_NO_PATHCONV` (reply to this session's message; nothing asked). Basheer, 28 Nov: "go ahead" with taking the messages up now.
+- Build, 27 Nov 20:44: Sales Loss Report merged (`c4de312`), 0069 on Dev, E2E not started, cut-off 28 Nov 6 pm; check running code before step 1. Its two pending items were since committed (`cd65a5b`, `8adc092`). Basheer, 28 Nov: take up now ("go ahead").
+
 ## 28 Nov 2026 — Plan & Chore: UAT backup; Build's two messages
 
 - **UAT backup** (Basheer yes, twice): `cabio_uat_2026-11-28_0752.dump`, 1,053,924 bytes, 537 TOC entries; pruned `cabio_uat_2026-11-13_0731.dump` (14 kept). Drive copy: Basheer. Doc tidy-up skipped (Basheer).
 - **Message from Build, 27 Nov 20:47, item 1** — add ◀ and "← Back" to `check-mui-standard.js`. Basheer, 28 Nov: "You can do it since it is small. BT session is busy with e2e testing." (He had given it to /build after its MUI round 1 fixes, ~20 Nov.) Done, committed and pushed `e6974c9` (lint 0 errors): two rules (`/◀/`, `/←\s*Back\b/`; ▶ left alone for Territory Admin), the header comment and the refusal message; Frontend standards §6.11 gains "What the commit check refuses" (and what is left to the pre-E2E review); Process-Rules-History entry under Pre-E2E code review; Backlog entry removed, Brand Target Tracking's leftover line reworded (year arrows, not quarter; its next commit must fix the ◀). Tested in the scratchpad (`mui_probe.mjs`, 8 of 8 sample lines as expected: ◀, "← Back", "←Back to list" refused; ▶, both comment forms, the ArrowBackIcon button and "Back to Insights" allowed). `--all` report: 17 files, 156 lines (report only); normal run passes (no changed screens). Typed ◀ left in `src`: one, `BrandTargetTrackingScreen.tsx:384`; no "← Back" left (grep, 28 Nov).
 - **Item 2** — Sales Loss Report into the "?" help list: help editor not built (no `help_page` in Physical-Schema); help catch-up plan's list is 30 texts and names neither new report. Asked Basheer: add both Sales Loss and Margin Report (30 → 32)? Basheer, 28 Nov: yes, both. Done: help catch-up plan D17 (both reports; Margin Report is Admin/GM only, so its help is written for them), D13 count, step 3a/3b, section 5 missing list (14 → 16), section 6 total; help editor plan D9b (24 to add: 16 screens, 8 pop-ups), figures (recount the editor's screen list from `DemoApp.tsx` at build — the menu has grown in other ways since 22 Oct), environments, step 4, migration line. Help editor E2E plan not changed: its save guard refuses any edit because the plan, written 22 Oct, has no phone-layout step; to fix when the editor is built. Help wording now 11 of 32.
+
+## 28 Nov 2026 — Build & Test: Sales Loss Report E2E findings (Basheer, step 9)
+
+- Laptop: the period dates sit on a line below the Period box; Basheer asked for them inside it, as on the Margin Report.
+- Laptop: a sideways scroll bar shows under "Lost Opportunities" with nothing apparent to scroll to; cause not yet measured.
+- The SBU filter box shows for an Area Manager (by the code, for every user with their own SBU too); the database already limits them to that SBU.
+- Steps 1–9 passed; fixes not yet approved.
+- Measured on his laptop screen (Nishad K V): the list needed 839 px in an 830 px card. With closer column spacing it needs 679 px. All three fixed the same day with his yes (plan D22, D23); screen file only, tsc clean, lint 0 errors; not committed.
+- Step 25 as written asked for a "This Quarter" filter that Product Performance does not have (Basheer, running it); rewritten from the screen code the same day.
+
+## 28 Nov 2026 — Build & Test: two tabs agreed for the Sales Loss Report; session parked
+
+- E2E at 32 of 37 (steps 1–27 pass). Basheer twice questioned the "By Loss Reason" / "By Competitor" cards as repeating the filter. Looked at: keep; remove; a total row with "By Competitor" only under "Competitor Won". Basheer's own option chosen: **Summary** and **Details** tabs (plan D24; "Yes. Go ahead.").
+- Parked before any edit for the tabs, for a session refresh (Basheer, 28 Nov). Morning's three screen fixes (D22, D23) still uncommitted.
+
+## 28 Nov 2026 — Build & Test: retro (session ending about 11:25)
+
+**Corrections from Basheer this session: 4** (counted from the session's messages)
+- Step 1: the "First activity" pop-up appeared and the test plan did not mention it.
+- Step 9: period dates below the Period box, a sideways scroll bar on the list, and an SBU box shown to people with their own SBU (all missed in build and review).
+- Step 25: asked for a "This Quarter" filter that Product Performance does not have.
+- "I have still not understood the need for" the two cards: my first answer did not settle it; led to D24.
+
+P114 added: one read-only Dev look-up ran without being announced first (nothing changed). No UAT connection, no work lost.
 
 ## 28 Nov 2026 — Plan & Chore: UAT price load script (D3b, D4)
 
@@ -2680,3 +2709,27 @@ P93 +1 (retro put off): a check at the docs-only commit could stop it; for the w
 - Found: the sheet's Check formula and number-only rule cover only rows 2–72 (the 71 products), and "How to fill" rule 6 says not to add products. That's why the note to Haroon asks him to copy an existing row.
 - Note sent to Haroon by Basheer (28 Nov; his own wording, no deadline): how to add new rows, the Product type column, ignore rule 6, and how to add a new brand or category. Draft: scratchpad `haroon_price_sheet_note_2026-11-28.txt`. Waiting on: the revised sheet. Basheer: no late night tonight; if it isn't loaded in time, Sunday uses the current sheet.
 - **Retro, Plan & Chore 28 Nov (session refresh, about midday). Corrections from Basheer this session: 3**, all re-asks about unclear wording in my replies: "On Dev it's the default", "the Check column formulas probably won't check his new rows", and "the cost is a little time". Plain-language misses, nothing a tool check could stop; no tracker line. No UAT connection, no live data changed, no work lost.
+
+## 28 Nov 2026 — Build & Test: Sales Loss Report E2E fixes shipped (`bcdc054`)
+
+- Pushed 28 Nov: SBU filter only for users with no SBU of their own (D22); on laptop and tablet the period dates show inside the Period box and the list columns are spaced closer (D23). Screen file only.
+- Before the commit: pytest 1818 passed, 10 skipped, 1 warning; ruff passed; `tsc -b` exit 0; lint 0 errors, 134 warnings; MUI standard and Tailwind checks pass.
+- Laptop look passed at step 11. The hidden SBU box is not yet checked (steps 29, 30). The first commit message shown to Basheer wrongly said step 29 had checked it; corrected before committing.
+- Feature close-out (plan and test plan hashes, Backlog, Traceability) waits for the E2E to finish.
+
+## 28 Nov 2026 — Build & Test: Sales Loss Report tabs and tighter layout shipped (`fc47b6d`)
+
+- Pushed 28 Nov: **Summary** and **Details** tabs (D24); Basheer then asked for a tighter layout in the same commit (D25–D27: on a phone, Filters on the screen name's line, filters two to a line, "Showing - <period>" with the tabs after it; on tablet and laptop, Loss Reason on the screen name's line, Zone box narrowed). The screen's name moved from `DemoApp.tsx` into the report screen; `ChipTabs.tsx` gained a compact form used only here.
+- Before the commit: `tsc -b` exit 0; lint 0 errors, 134 warnings; MUI standard and Tailwind checks pass. Backend not changed. Basheer looked on Dev: "much easier on the eyes of the user now". E2E steps not yet re-run on the new layout.
+- The phone's doubled period text (shipped in `bcdc054`, D23) was a miss in build: the in-box dates applied at all widths while the phone kept its outside line. Fixed here.
+
+## 28 Nov 2026 — Build & Test: Sales Loss Report E2E complete, 38 of 38
+
+- Last findings, from Basheer: the **Summary** tab had no total of the lost value — added a "Total" line to "By Loss Reason" (D28; code review found no faults). Phone "Showing - " line did not stand apart from the period — "Showing - " mid-grey, period near-black bold (D26). Two fixes from the review of `bcdc054` and `fc47b6d`: the open tab's shadow was cut off; two developer notes were out of date.
+- Left as is (Basheer): tapping Zone on an iPhone may zoom the page (read from the code, not tried on a phone) — Backlog.
+- Step 32 was wrong in the plan: a Marketing User has a separate side menu with only "Marketing Leads", not the Reports menu. Plan corrected; Pass. Claude gave Basheer the step without reading the menu code.
+- Checks, 16:30: pytest 1818 passed, 10 skipped; ruff clean; `tsc --noEmit` exit 0; lint 0 errors, 134 warnings; MUI standard (2 changed files) and Tailwind checks pass.
+- Pushed 28 Nov: `b783977` (Total line, D28) and `09860bf` (small fixes). The screen file's changes were staged in two parts.
+- Traceability: both 1.4 rows → Done (Basheer, 28 Nov); scorecard regenerated, check OK: 42 Done, 6 Partial, 1 Not started. Claude first proposed "Partial" for the Competitive Loss Report, calling the PRD A.3.5 grouping by Product a signed requirement; Basheer asked what the need was. The signed list (v4 Grouped, Feature 1.4) has no such item. Product view put in the Backlog. Client pages: republish after Sunday's move (UAT plan D9), diff shown first.
+- Message to Plan & Chore sent 18:15: Sales Loss qualifies (pushed 16:36, before the 6 pm cut-off).
+
