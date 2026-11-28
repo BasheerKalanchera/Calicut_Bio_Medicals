@@ -385,7 +385,10 @@ export default function SalesLossReportScreen({
           </Box>
           {/* The period in view, with the tabs after it. */}
           <Box sx={{ px: 2, py: 1.5, flexShrink: 0, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1 }}>
-            <Typography variant="caption" color="text.secondary">Showing - {reportPeriodDates(period)}</Typography>
+            <Typography variant="caption" sx={{ color: "gray.500" }}>
+              Showing -{" "}
+              <Box component="span" sx={{ color: "gray.900", fontWeight: 700 }}>{reportPeriodDates(period)}</Box>
+            </Typography>
             <ChipTabs inline tabs={TABS} value={tab} onChange={openTab} />
           </Box>
         </>

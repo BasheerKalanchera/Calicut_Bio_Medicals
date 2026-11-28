@@ -3,12 +3,13 @@ import { Box, Button } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
 import { shadows } from "../theme/shadows";
 
-// The row of pill-shaped tabs used by My Work and Target & Coverage Planning
-// (Target-Coverage-Planning-Tabs plan D10): one tab open at a time, the row
-// scrolls sideways when it doesn't fit, and a fade on the right edge hints
-// that there is more. The screen owns which tab is open and, when it wants
-// the open one brought to the middle of the row, calls centerChip
-// (utils/centerChip.ts) with the ref it passes as barRef.
+// The row of pill-shaped tabs used by My Work, Target & Coverage Planning and
+// the Sales Loss Report (Target-Coverage-Planning-Tabs plan D10): one tab open
+// at a time, the row scrolls sideways when it doesn't fit, and (except when
+// inline) a fade on the right edge hints that there is more. The screen owns
+// which tab is open and, when it wants the open one brought to the middle of
+// the row, calls centerChip (utils/centerChip.ts) with the ref it passes as
+// barRef.
 
 export default function ChipTabs<T extends string>({
   tabs,
@@ -33,7 +34,8 @@ export default function ChipTabs<T extends string>({
           display: "flex", gap: 1, overflowX: "auto",
           "&::-webkit-scrollbar": { display: "none" },
           scrollbarWidth: "none",
-          ...(!inline && { pb: 0.5, pr: "50vw" }),
+          // Room for the open pill's shadow, which the scrolling row would cut off.
+          ...(inline ? { py: 0.5 } : { pb: 0.5, pr: "50vw" }),
         }}
       >
         {tabs.map((tab) => {
